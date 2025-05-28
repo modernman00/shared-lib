@@ -1,17 +1,39 @@
 <?php
 
-
-
-
-
 declare(strict_types=1);
 
+namespace App\shared;
+
+
+
+use App\shared\Exceptions\NotFoundException;
+use App\Shared\Utility;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class SendEmail
 {
-	function sendEmail($email, $name, $subject, $message, $file = null, $filename = null)
+
+	// create a _contruct method to initialize the PHPMailer object and configure it with the SMTP settings and define the constants for encoding and type and body text
+	public function __construct()
+	{
+		// Define constants for encoding, type, and body text
+		define('ENCODING', 'base64');
+		define('TYPE', 'application/pdf');
+		define('BODY_TEXT', 'This is the body in plain text for non-HTML mail clients.');
+	}
+	/**
+	 * Sends an email using PHPMailer.
+	 *
+	 * @param string $email The recipient's email address.
+	 * @param string $name The recipient's name.
+	 * @param string $subject The subject of the email.
+	 * @param string $message The HTML message body of the email.
+	 * @param string|null $file Optional file content to attach to the email.
+	 * @param string|null $filename Optional filename for the attached file.
+	 * @return bool Returns true if the email was sent successfully, false otherwise.
+	 */
+	public 	static function sendEmail($email, $name, $subject, $message, $file = null, $filename = null)
 	{
 		$mail = new PHPMailer(true);
 		try {
@@ -20,8 +42,8 @@ class SendEmail
 			$mail->isSMTP();
 			$mail->Host = getenv('SMTP_HOST');
 			$mail->SMTPAuth = true;
-			$mail->Username = USER_APP ?? throw new Exception("email username not available");
-			$mail->Password = PASS ?? throw new Exception("email password not available");
+			$mail->Username = USER_APP ?? throw new NotFoundException("email username not available");
+			$mail->Password = PASS ?? throw new NotFoundException("email password not available");
 			$mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
 			$mail->Port = 465;
 			$mail->SMTPOptions = array(
@@ -45,11 +67,11 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
-			errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
-	function sendBulkEmail(array $emailAddresses, $subject, $message, $file = null, $filename = null)
+	public static function sendBulkEmail(array $emailAddresses, $subject, $message, $file = null, $filename = null)
 	{
 		$mail = new PHPMailer(true);
 		try {
@@ -87,7 +109,7 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
-			errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
@@ -95,7 +117,7 @@ class SendEmail
 	/**
 	 * @return bool|null
 	 */
-	function send_email_pdf($email, $name, $subject, $message, $file, $filename)
+	public static function sendEmailPdf($email, $name, $subject, $message, $file, $filename)
 	{
 		try {
 			$mail = new PHPMailer(true);
@@ -117,12 +139,12 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
-			echo errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
 
-	function send_email(string $email, string $name, string $subject, string $message): void
+	public static function sendTheEmail(string $email, string $name, string $subject, string $message): void
 	{
 		try {
 			$mail = new PHPMailer(true);
@@ -143,11 +165,11 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			$mail->send();
 		} catch (Exception $e) {
-			echo errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
-	function normal_email(string $email, string $name, $subject, string $message): void
+	public static function normalEmail(string $email, string $name, $subject, string $message): void
 	{
 		try {
 			$mail = new PHPMailer(true);
@@ -169,14 +191,14 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			$mail->send();
 		} catch (Exception $e) {
-			echo errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
 	/**
 	 * @return bool|null
 	 */
-	function send_email_self(string $subject, string $message)
+	public static function sendEmailSelf(string $subject, string $message)
 	{
 		try {
 			$mail = new PHPMailer(true);
@@ -196,14 +218,14 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
-			echo errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
 
 	/**
 	 * @return bool|null
 	 */
-	function send_to_self_pdf($subject, $message, $file, $filename)
+	public static function sendTwoSelfPdf($subject, $message, $file, $filename)
 	{
 		try {
 			$mail = new PHPMailer(true);
@@ -223,13 +245,7 @@ class SendEmail
 			$mail->AltBody = BODY_TEXT;
 			return $mail->send();
 		} catch (\Exception $e) {
-			echo errorMsg($mail, $e);
+			Utility::showError($e);
 		}
 	}
-}
-
-
-function errorMsg($mail, $e): string
-{
-	return "Mailer Error: {$mail->ErrorInfo} " . showError($e);
 }

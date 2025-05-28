@@ -29,7 +29,7 @@ class Utility
     }
   }
 
-  function toSendEmail(string $viewPath, array $data, string $subject, string $emailRoute)
+  public static function toSendEmail(string $viewPath, array $data, string $subject, string $emailRoute)
   {
     // generate the data to send the email
     $sendEmailArray = genEmailArray(
