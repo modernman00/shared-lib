@@ -2,8 +2,46 @@
 
 namespace App\Shared;
 
+use eftec\bladeone\BladeOne;
+
 class Utility
 {
+
+  public static function view($path, array $data = [])
+  {
+
+    try {
+      $view = rtrim(__DIR__ . "/../../../resources/views", '/'); // Remove trailing slash
+      $cache = rtrim(__DIR__ . "/../../../bootstrap/cache", '/');
+      $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
+      // echo $viewFile;
+      static $blade = null;
+      if (!$blade) {
+        $blade = new BladeOne($view, $cache, BladeOne::MODE_DEBUG);
+        // $blade->setIsCompiled(false);
+        $blade->pipeEnable = true;
+        $blade->setBaseUrl(getenv('APP_URL'));
+      }
+
+      echo $blade->run($viewFile, $data);
+    } catch (\Throwable $e) {
+      Utility::showError($e);
+    }
+  }
+
+  function toSendEmail(string $viewPath, array $data, string $subject, string $emailRoute)
+  {
+    // generate the data to send the email
+    $sendEmailArray = genEmailArray(
+      viewPath: $viewPath,
+      data: $data,
+      subject: $subject
+    );
+
+    // send the email
+    return sendEmailWrapper(var: $sendEmailArray, recipientType: $emailRoute);
+  }
+
 
 
   public static function printArr($data): void
