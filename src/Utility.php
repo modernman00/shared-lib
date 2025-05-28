@@ -2,6 +2,7 @@
 
 namespace App\Shared;
 
+
 use eftec\bladeone\BladeOne;
 
 class Utility
@@ -27,19 +28,6 @@ class Utility
     } catch (\Throwable $e) {
       Utility::showError($e);
     }
-  }
-
-  public static function toSendEmail(string $viewPath, array $data, string $subject, string $emailRoute)
-  {
-    // generate the data to send the email
-    $sendEmailArray = genEmailArray(
-      viewPath: $viewPath,
-      data: $data,
-      subject: $subject
-    );
-
-    // send the email
-    return sendEmailWrapper(var: $sendEmailArray, recipientType: $emailRoute);
   }
 
 
@@ -110,8 +98,7 @@ class Utility
     $newDay3 = $dt->format("Y-m-d");
     $newDay2 = $dt->format(" jS \of F Y"); // 2016-02-29
     //  return $newDay2;
-    $datetime = ['fullDate' => $newDay2, 'dateFormat' => $newDay3];
-    return $datetime;
+    return ['fullDate' => $newDay2, 'dateFormat' => $newDay3];
   }
 
 

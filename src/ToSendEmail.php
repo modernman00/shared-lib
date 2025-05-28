@@ -59,4 +59,38 @@ class ToSendEmail
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
     }
   }
+
+  /**
+   * You have to generate the $var using the genEmailArray()
+   * $var is an array of the viewPath, data, subject, email
+   * 'viewPath' => ,
+   *  data'=>
+   * 'subject'=>
+   * recipientType can be either member or admin
+   */
+
+  public static function sendEmailWrapper($var, $recipientType)
+  {
+    $notifyCustomer = new EmailData($recipientType);
+
+    if (!defined('PASS')) {
+      $notifyCustomer->getEmailData();
+    }
+
+    $data = $var['data'];
+
+    ob_start();
+    $emailPage = Utility::view($var['viewPath'], compact('data'));
+    $emailContent = ob_get_contents();
+    ob_end_clean();
+
+    $email =  Utility::checkInputEmail($data['email']);
+    $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
+    $file = $var['file'];
+    $filename = $var['fileName'];
+
+    //  mail("waledevtest@gmail.com", "TEST_EMAIL", $email);
+
+    SendEmail::sendEmail($email, $name, $var['subject'], $emailContent, $file, $filename);
+  }
 }
