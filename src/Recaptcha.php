@@ -1,8 +1,8 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\shared\Exceptions\CaptchaVerificationException;
+use Src\Exceptions\CaptchaVerificationException;
 
 class Recaptcha
 

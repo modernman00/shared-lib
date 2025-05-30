@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\shared;
+namespace Src;
 
 
 
-use App\shared\Exceptions\NotFoundException;
-use App\Shared\Utility;
+use Src\Exceptions\NotFoundException;
+use Src\Utility;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

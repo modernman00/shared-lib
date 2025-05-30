@@ -1,18 +1,18 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use \PDOException;
-use App\shared\Db;
-use App\shared\Utility;
-use App\shared\Exceptions\NotFoundException;
-use App\shared\Exceptions\BadRequestException;
+use Src\Db;
+use Src\Utility;
+use Src\Exceptions\NotFoundException;
+use Src\Exceptions\BadRequestException;
 
 /**
  * Class Update
  * Handles updating records in a database table.
  *
- * @package App\shared
+ * @package Src
  */
 
 class Update extends Db

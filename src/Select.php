@@ -1,31 +1,43 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use PDO;
 use PDOException;
-use App\shared\Db;
-use App\Shared\Utility;
+use Src\Db;
+use Src\Utility;
 
 class Select extends Db
 {
 
-
     /**
-     * Undocumented function
+     * Generates a SQL query based on the selection type and parameters provided.
      *
-     * @param [type] $selection - the selection match(SELECT_OR, SELECT_AND, SELECT_ALL, SELECT_COL_ID, SELECT_ONE, SELECT_GREATER, SELECT_GREATER_EQUAL, SELECT_COUNT_TWO, SELECT_COUNT_ONE, SELECT_COL, SELECT_COUNT_ALL, SELECT_DISTINCT, SELECT_AVERAGE, SELECT_AVERAGE_ALL, SELECT_SUM_ALL)
-     * @param [type] $table
-     * @param null|string $identifier1
-     * @param null|string $identifier2
-     * @param null|string $column
-     * @param [type] $orderBy (example) ORDER BY id DESC; use if you want order by
-     * @param [type] $limit (example) LIMIT 5; use if you want order
+     * @param string $selection The type of selection (e.g., 'SELECT_ALL', 'SELECT_ONE').
+     * @param string $table The name of the table to query.
+     * @param string|null $identifier1 The first identifier for the query (optional).
+     * @param string|null $identifier2 The second identifier for the query (optional).
+     * @param mixed $identifier3 Additional identifier for more complex queries (optional).
+     * @param string|null $column The column to select (optional).
+     * @param string|null $column2 A second column to select (optional).
+     * @param string|null $orderBy The ORDER BY clause (optional).
+     * @param string|null $limit The LIMIT clause (optional).
+     * @param array|null $colArray An array of columns to select dynamically (optional).
      *
-     * @return null|string
+     * @return string|null The generated SQL query or null if no valid selection type is provided.
      */
-    public static function formAndMatchQuery(string $selection, string $table, string|null $identifier1 = null, string|null $identifier2 = null, $identifier3 = null, string|null $column = null, $column2 = null, $orderBy = null, $limit = null, ?array $colArray = null): string|null
-    {
+    public static function formAndMatchQuery(
+        string $selection,
+        string $table,
+        ?string $identifier1 = null,
+        ?string $identifier2 = null,
+        ?string $identifier3 = null,
+        ?string $column = null,
+        ?string $column2 = null,
+        ?string $orderBy = null,
+        ?string $limit = null,
+        ?array $colArray = null
+    ): string|null {
         // for col dynamically - 
         if ($colArray) {
             $implodeColArray = implode(separator: ', ', array: $colArray);

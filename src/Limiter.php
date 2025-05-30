@@ -1,11 +1,11 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\shared\PdoStorage;
+use Src\PdoStorage;
 
 
-use App\shared\Exceptions\TooManyRequestsException;
+use Src\Exceptions\TooManyRequestsException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 

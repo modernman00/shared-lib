@@ -1,14 +1,13 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use \PDO;
-use \PDOException;
-use App\shared\Update;
-use App\Shared\Utility;
-use App\shared\CheckToken;
-use App\shared\ToSendEmail;
-use App\shared\Exceptions\HttpException;
+
+use Src\Update;
+use Src\Utility;
+use Src\CheckToken;
+use Src\ToSendEmail;
+use Src\Exceptions\HttpException;
 
 class Token extends CheckToken
 {

@@ -1,11 +1,13 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\classes\VirusScan as ScanVirus;
-use App\shared\Exceptions\ValidationException;
-use Spatie\ImageOptimizer\OptimizerChainFactory as ImgOptimizer;
+use Src\Utility;
+use Src\VirusScan as ScanVirus;
+use Src\Exceptions\ValidationException;
 use Intervention\Image\ImageManager as Image;
+use Spatie\ImageOptimizer\OptimizerChainFactory as ImgOptimizer;
+use Exception;
 
 class FileUploader
 {
@@ -51,7 +53,7 @@ class FileUploader
           UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
         ];
         $errorMsg = $errorMessages[$fileError] ?? 'Unknown upload error';
-        throwError(400, $errorMsg);
+        Utility::throwError(400, $errorMsg);
         continue;
       }
 

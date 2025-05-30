@@ -1,10 +1,10 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use PDOException;
-use App\shared\Db;
-use App\shared\Exceptions\HttpException;
+use Src\Db;
+use Src\Exceptions\HttpException;
 use PDO;
 
 class AllFunctionalities extends Db
@@ -94,6 +94,6 @@ class AllFunctionalities extends Db
         $stmt->bindParam(':whereValue', $whereValue, PDO::PARAM_INT);
         if (!$stmt->execute()) {
             throw new HttpException("Could not execute query");
-        };
+        }
     }
 }

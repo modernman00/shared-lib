@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\shared;
+namespace Src;
 
 use PDO;
 use PDOException;
-use App\shared\Db;
+use Src\Db;
 
 class InnerJoin extends Db
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\shared\Exceptions\UnauthorisedException;
+use Src\Exceptions\UnauthorisedException;
 
 class CheckToken
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\shared\Db;
-use App\Shared\Utility;
-use App\shared\Exceptions\HttpException;
+use Src\Db;
+use Src\Utility;
+use Src\Exceptions\HttpException;
 
 
 class SubmitForm extends Db

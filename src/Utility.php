@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Shared;
+namespace Src;
 
 
 use eftec\bladeone\BladeOne;
@@ -121,7 +121,7 @@ class Utility
   public static function showError(\Throwable $th): void
   {
     $isLocal = getenv('APP_ENV') === 'local';
-    $statusCode = ($th instanceof \App\shared\Exceptions\HttpException)
+    $statusCode = ($th instanceof \Src\Exceptions\HttpException)
       ? $th->getStatusCode()
       : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
 
@@ -139,13 +139,13 @@ class Utility
 
     if ($isLocal) {
       echo json_encode([
-        'error' => $th instanceof \App\shared\Exceptions\HttpException
+        'error' => $th instanceof \Src\Exceptions\HttpException
           ? $th->getMessage()
           : "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
       ]);
     } else {
       echo json_encode([
-        'error' => $th instanceof \App\shared\Exceptions\HttpException
+        'error' => $th instanceof \Src\Exceptions\HttpException
           ? $th->getMessage()
           : "An unexpected error occurred."
       ]);

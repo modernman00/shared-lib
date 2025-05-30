@@ -1,6 +1,6 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\BeforeValidException;

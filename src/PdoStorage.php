@@ -1,6 +1,6 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use Symfony\Component\RateLimiter\Storage\StorageInterface;
 use Symfony\Component\RateLimiter\LimiterStateInterface;
