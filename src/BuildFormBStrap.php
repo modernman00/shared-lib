@@ -466,7 +466,7 @@ HTML;
   
                                                     <h5 class="card-title">$cleanLabel</h5>
 
-                                                </div>
+                                                
                                     
                                                 
                         HTML;
@@ -495,6 +495,7 @@ HTML;
                                            
                                             <small id="$help" class="form-text text-muted"></small>
                                             <small id="$error" class="form-text text-danger"></small>
+                                            </div>
                                         </div>
                                         </div>
                         HTML;
