@@ -468,16 +468,31 @@ HTML;
 
                                                 </div>
                                                 <select class="form-select" arial-label='Default' id="$id" name="$name">
+                                                    
+                                                    <option value='$value'> Choose </option>
+                                                
                         HTML;
                         if ($this->entValue[$i]['options'][$y]) {
+                            echo <<<HTML
+                                                <select class="form-select" arial-label='Default' id="$id" name="$name">
+                                                    
+                                                    <option value='$value'> Choose </option>
+                            HTML;
                             $decide = $this->entValue[$i]['options'][$y];
 
                             foreach ($decide as $value=> $option) {
                                 echo "<option value='$value'> $option </option>";
                             }
+                            echo <<<HTML
+                                                </select>
+                            HTML;
+                        } else {
+                            echo <<<HTML
+                                                 <input type="text" class="form-control" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                            HTML;
                         }
                         echo <<<HTML
-                                                </select>
+                                               
                                              
                                            
                                             <small id="$help" class="form-text text-muted"></small>
