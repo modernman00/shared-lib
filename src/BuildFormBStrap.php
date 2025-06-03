@@ -458,8 +458,8 @@ HTML;
                     } elseif ($labelType === 'cardSelect') {
 
                         echo <<<HTML
-                                            <div class="$name card col" id="{$name}_div">
-                                                <div class="card h-100">
+                                            <div class="$name card col hidden" id="{$name}_div">
+                                                <div class="card h-100 hidden">
                                             <img src="$hasImg" class="card-img-top" alt="...">
                                            
                                                 <div class="card-body">
