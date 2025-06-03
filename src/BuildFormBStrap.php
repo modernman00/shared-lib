@@ -388,7 +388,7 @@ HTML;
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                 
-                        <div class="row row-cols-1 g-4 mb-3" id="$divID">
+                        <div class="row g-4 " id="$divID">
       HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); $y++) {
                     $label = $this->entValue[$i]['label'][$y];
