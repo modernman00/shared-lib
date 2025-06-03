@@ -458,15 +458,16 @@ HTML;
                     } elseif ($labelType === 'cardSelect') {
 
                         echo <<<HTML
-                                            <div class="form-group $name card" id="{$name}_div"></div>
+                                            <div class="$name card col" id="{$name}_div">
+                                                <div class="card h-100">
                                             <img src="$hasImg" class="card-img-top" alt="...">
                                            
                                                 <div class="card-body">
   
-                                                    <p class="card-text">$cleanLabel</p>
+                                                    <h5 class="card-title">$cleanLabel</h5>
 
                                                 </div>
-                                                <select class="form-control form-control-lg" id="$id" name="$name">
+                                                <select class="form-select" arial-label='Default' id="$id" name="$name">
                         HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             $decide = $this->entValue[$i]['options'][$y];
@@ -481,6 +482,7 @@ HTML;
                                            
                                             <small id="$help" class="form-text text-muted"></small>
                                             <small id="$error" class="form-text text-danger"></small>
+                                        </div>
                                         </div>
                         HTML;
                     }
