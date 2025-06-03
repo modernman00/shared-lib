@@ -387,7 +387,7 @@ HTML;
             } elseif ($this->entValue[$i][0] === 'mixed') {
                 $divID = $this->entKey[$i];
                 echo <<<HTML
-                    <div class="form-group" id="$divID">
+                    <div class="form-group allCards" id="$divID">
                         <div class="row">
       HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); $y++) {
