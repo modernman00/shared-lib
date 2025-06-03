@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Shared;
+namespace Src;
 
 class Email
 {

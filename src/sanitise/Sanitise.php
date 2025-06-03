@@ -1,8 +1,8 @@
 <?php
 
-namespace App\shared\sanitise;
+namespace Src\Sanitise;
 
-use App\shared\AllFunctionalities;
+use Src\AllFunctionalities;
 
 
 class Sanitise extends AllFunctionalities

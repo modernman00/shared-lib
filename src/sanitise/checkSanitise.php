@@ -1,18 +1,18 @@
 <?php
 
-namespace App\shared\sanitise;
+namespace Src\Sanitise;
 
-use App\shared\{
-    sanitise\Sanitise,
+use Src\{
+    Sanitise\Sanitise,
     Select,
     Update,
     AllFunctionalities,
     Token
 };
-use App\shared\Exceptions\HttpException;
-use App\shared\Exceptions\ValidationException;
-use App\shared\Exceptions\NotFoundException;
-use App\shared\Exceptions\UnauthorisedException;
+use Src\Exceptions\HttpException;
+use Src\Exceptions\ValidationException;
+use Src\Exceptions\NotFoundException;
+use Src\Exceptions\UnauthorisedException;
 
 
 class CheckSanitise

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\data;
+namespace Src\Data;
 
 class EmailData
 {

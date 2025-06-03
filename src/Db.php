@@ -1,11 +1,11 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
 use \PDO;
 use \PDOException;
-use App\Shared\Utility;
-use App\shared\CheckToken;
+use Src\Utility;
+use Src\CheckToken;
 
 class Db extends CheckToken
 {

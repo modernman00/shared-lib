@@ -1,12 +1,12 @@
 <?php
 
-namespace App\classes;
+namespace Src;
 
-use App\shared\Db;
-use App\Shared\Utility;
-use App\shared\JwtHandler;
-use App\shared\Exceptions\HttpException;
-use App\shared\Exceptions\UnauthorisedException;
+use Src\Db;
+use Src\Utility;
+use Src\JwtHandler;
+use Src\Exceptions\HttpException;
+use Src\Exceptions\UnauthorisedException;
 
 class Auth extends JwtHandler
 {

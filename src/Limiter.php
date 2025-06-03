@@ -1,11 +1,11 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\shared\PdoStorage;
+use Src\PdoStorage;
 
 
-use App\shared\Exceptions\TooManyRequestsException;
+use Src\Exceptions\TooManyRequestsException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 
@@ -19,6 +19,17 @@ class Limiter extends Db
     public static $ipLimiter;
 
 
+    /*************  ✨ Windsurf Command ⭐  *************/
+    /**
+     * Applies rate limiting to a given argument and the user's IP address.
+     * Utilizes a fixed window policy to track the number of attempts within a specified time window.
+     * If the limit is exceeded, sets a 'Retry-After' header indicating when the next attempt is allowed.
+     *
+     * @param string $arg The argument to be rate-limited, typically an email address in this format $email.
+     * @throws TooManyRequestsException if the number of attempts exceeds the allowed limit within the time window.
+     */
+
+    /*******  e4bdaa72-218f-4b19-b900-f7a504ff2c2a  *******/
     public static function limit($arg)
     {
 
@@ -35,7 +46,7 @@ class Limiter extends Db
             ], $storage);
 
             // remove $ from $email 
-            $argKey = str_replace('$', '', $arg);
+            $argKey = str_replace('$', '', "$arg");
 
             // Check rate limit
             self::$argLimiter = $rateLimiterFactory->create("$argKey:$arg");

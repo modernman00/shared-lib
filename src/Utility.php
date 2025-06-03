@@ -1,12 +1,24 @@
 <?php
 
-namespace App\Shared;
+namespace Src;
+
+use Src\Data\EmailData;
+use Src\SendEmail;
 
 
 use eftec\bladeone\BladeOne;
 
 class Utility
 {
+
+  /**
+   * Renders a BladeOne template with the given data.
+   *
+   * @param string $path The template path (e.g., 'index' or 'msg.customer.token')
+   * @param array $data Associative array of data to pass to the template
+   * @return string The rendered template output
+   * @throws \Throwable If rendering fails
+   */
 
   public static function view($path, array $data = [])
   {
@@ -18,10 +30,13 @@ class Utility
       // echo $viewFile;
       static $blade = null;
       if (!$blade) {
-        $blade = new BladeOne($view, $cache, BladeOne::MODE_DEBUG);
-        // $blade->setIsCompiled(false);
+        $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
+        $blade = new BladeOne($view, $cache, $mode);
+
+
         $blade->pipeEnable = true;
         $blade->setBaseUrl(getenv('APP_URL'));
+        $blade->setAutoescape(true);
       }
 
       echo $blade->run($viewFile, $data);
@@ -44,6 +59,18 @@ class Utility
       print_r($data);
       echo "</pre>";
     }
+  }
+
+  public static function loggedDetection(string $filename, string $receivingEmail): bool
+  {
+    //TODO send text to the user with the code
+    $emailSender = new EmailData('admin');
+    $emailSender->getEmailData();
+    $getIp = Utility::getUserIpAddr();
+    $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " .  date("h:i:sa") . "  and with this IP address: $getIp  <br><br>  IT Security Team";
+
+    SendEmail::sendEmail($receivingEmail, 'logged-in', 'LOGGED-IN DETECTION', $msg);
+    return true;
   }
 
 
@@ -121,7 +148,7 @@ class Utility
   public static function showError(\Throwable $th): void
   {
     $isLocal = getenv('APP_ENV') === 'local';
-    $statusCode = ($th instanceof \App\shared\Exceptions\HttpException)
+    $statusCode = ($th instanceof \Src\Exceptions\HttpException)
       ? $th->getStatusCode()
       : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
 
@@ -139,13 +166,13 @@ class Utility
 
     if ($isLocal) {
       echo json_encode([
-        'error' => $th instanceof \App\shared\Exceptions\HttpException
+        'error' => $th instanceof \Src\Exceptions\HttpException
           ? $th->getMessage()
           : "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
       ]);
     } else {
       echo json_encode([
-        'error' => $th instanceof \App\shared\Exceptions\HttpException
+        'error' => $th instanceof \Src\Exceptions\HttpException
           ? $th->getMessage()
           : "An unexpected error occurred."
       ]);

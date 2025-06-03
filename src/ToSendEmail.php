@@ -1,9 +1,9 @@
 <?php
 
-namespace App\shared;
+namespace Src;
 
-use App\data\EmailData;
-use App\shared\Exceptions\ForbiddenException;
+use Src\Data\EmailData;
+use Src\Exceptions\ForbiddenException;
 use InvalidArgumentException;
 
 class ToSendEmail
