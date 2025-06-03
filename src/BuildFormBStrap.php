@@ -402,6 +402,7 @@ HTML;
                     $labelType = $this->entValue[$i]['inputType'][$y] ? $this->entValue[$i]['inputType'][$y] : "";
                     $icon = $this->entValue[$i]['icon'][$y] ?? "";
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
+                    $hasImg = (isset($this->entValue[$i]['img'][$y]) ? $this->entValue[$i]['img'][$y] : '');
 
                     if ($labelType === 'select') {
 
@@ -454,7 +455,37 @@ HTML;
                                         </div>
 
                                         HTML;
-                    } else {
+                    } elseif ($labelType === 'cardSelect') {
+
+                        echo <<<HTML
+                                            <div class="form-group $name card" id="{$name}_div"></div>
+                                            <img src="$hasImg" class="card-img-top" alt="...">
+                                           
+                                                <div class="card-body">
+  
+                                                    <p class="card-text">$cleanLabel</p>
+
+                                                </div>
+                                                <select class="form-control form-control-lg" id="$id" name="$name">
+                        HTML;
+                        if ($this->entValue[$i]['options'][$y]) {
+                            $decide = $this->entValue[$i]['options'][$y];
+
+                            foreach ($decide as $value=> $option) {
+                                echo "<option value='$value'> $option </option>";
+                            }
+                        }
+                        echo <<<HTML
+                                                </select>
+                                             
+                                           
+                                            <small id="$help" class="form-text text-muted"></small>
+                                            <small id="$error" class="form-text text-danger"></small>
+                                        </div>
+                        HTML;
+                    }
+                    
+                    else {
                         echo <<<HTML
                                             <div class="form-group $name" id="{$name}_div">
                                             <label for="$id" class="form-label"><b>$cleanLabel</b></label>
