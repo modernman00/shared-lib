@@ -467,9 +467,7 @@ HTML;
                                                     <h5 class="card-title">$cleanLabel</h5>
 
                                                 </div>
-                                                <select class="form-select" arial-label='Default' id="$id" name="$name">
-                                                    
-                                                    <option value='$value'> Choose </option>
+                                    
                                                 
                         HTML;
                         if ($this->entValue[$i]['options'][$y]) {
