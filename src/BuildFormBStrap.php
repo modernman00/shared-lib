@@ -388,7 +388,7 @@ HTML;
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                 
-                        <div class="row g-4 " id="$divID">
+                        <div class="row g-5 " id="$divID">
       HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); $y++) {
                     $label = $this->entValue[$i]['label'][$y];
@@ -458,7 +458,7 @@ HTML;
                     } elseif ($labelType === 'cardSelect') {
 
                         echo <<<HTML
-                                            <div class="$name col me-2" id="{$name}_div">
+                                            <div class="$name col m-2" id="{$name}_div">
                                                 <div class="card h-100 hidden">
                                             <img src="$hasImg" class="card-img-top" alt="...">
                                            
