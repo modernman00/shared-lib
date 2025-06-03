@@ -387,8 +387,8 @@ HTML;
             } elseif ($this->entValue[$i][0] === 'mixed') {
                 $divID = $this->entKey[$i];
                 echo <<<HTML
-                    <div class="form-group" id="$divID">
-                        <div class="row g-4">
+                
+                        <div class="row g-4 mb-3" id="$divID">
       HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); $y++) {
                     $label = $this->entValue[$i]['label'][$y];
@@ -458,7 +458,7 @@ HTML;
                     } elseif ($labelType === 'cardSelect') {
 
                         echo <<<HTML
-                                            <div class="$name card col hidden" id="{$name}_div">
+                                            <div class="$name card col hidden me-2" id="{$name}_div">
                                                 <div class="card h-100 hidden">
                                             <img src="$hasImg" class="card-img-top" alt="...">
                                            
@@ -517,7 +517,7 @@ HTML;
                     }
                 }
                 echo <<<HTML
-                    </div>
+                    
                     </div>
                 HTML;
             } elseif ($this->entValue[$i][0] === 'select-many') {
