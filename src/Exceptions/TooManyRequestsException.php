@@ -5,8 +5,7 @@ namespace Src\Exceptions;
 
 
 class TooManyRequestsException extends HttpException
-{
-  /*************  ✨ Windsurf Command ⭐  *************/
+{  /*************  ✨ Windsurf Command ⭐  *************/
   /**
    * Thrown when the client sends too many requests in a given amount of time.
    * @param string $message

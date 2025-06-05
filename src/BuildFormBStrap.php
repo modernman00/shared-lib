@@ -208,17 +208,13 @@ HTML;
 <div class="form-group">
     <label for="{$nameKey}_id" class="form-label"><b>$var</b></label>
     <div class="input-group mb-3">
-        <div class="input-group-prepend">
+
             <span class="input-group-text">
                 <i class="fas fa-envelope"></i>
             </span>
-        </div>
+   
         <input type="email" class="form-control $nameKey is-medium" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
-        <div class="input-group-append">
-            <span class="input-group-text">
-                <i class="fas fa-check"></i>
-            </span>
-        </div>
+   
     </div>
     <small id="{$nameKey}_help" class="form-text text-muted"></small>
     <small id="{$nameKey}_error" class="form-text text-danger"></small>
