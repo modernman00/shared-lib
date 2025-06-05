@@ -214,8 +214,8 @@ HTML;
 
                  <div class="mb-3">
                     <label for="{$nameKey}_id" class="form-label">Email address</label>
-                    <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
-                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                    <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}_id" value="$value">
+                    <div id="emailHelp" class="form-text"></div>
                 </div>
 
             HTML;
