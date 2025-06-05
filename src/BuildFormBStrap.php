@@ -137,7 +137,7 @@ class BuildFormBStrap
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
-                    <div class='form-group'>
+                    <div class='mb-3 $nameKey ' id='{$nameKey}_div'>
                         <label for='{$nameKey}_id' class='form-label'><b>$var</b></label>
                         <input type='text' class='form-control' autocomplete='new-$nameKey' placeholder='PLEASE ENTER YOUR $var' name='$nameKey' id='{$nameKey}_id' value='$value' required>
                         <small id='{$nameKey}_help' class='form-text text-muted'></small>
@@ -171,120 +171,101 @@ class BuildFormBStrap
 HTML;
             } elseif ($this->entValue[$i] === 'date') {
                 echo <<<HTML
-                    <div class="form-group">
-                        <label for="{$nameKey}_id" class="form-label"><b>$var</b></label>
-                        <input type="date" class="form-control" id="{$nameKey}_id" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey" value="$value">
+                    <div class="mb-3 $nameKey" id="{$nameKey}_div">
+                         <label for="{$nameKey}_id" class="form-label">$var</label>
+                    <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
+
                         <small id="{$nameKey}_help" class="form-text text-muted"></small>
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                     </div>
-            HTML;
+                HTML;
             } elseif ($this->entValue[$i][0] === 'select') {
                 $options = $this->entValue[$i];
                 echo <<<HTML
-<div class="form-group">
-    <label for="{$nameKey}" class="form-label"><b>$var</b></label>
-    <select class="form-control" name="$nameKey" id="{$nameKey}">
-        <?php foreach ($options as $option): ?>
-            <option value="<?= $option ?>"><?= $option ?></option>
-        <?php endforeach; ?>
-    </select>
-    <small id="{$nameKey}_help" class="form-text text-muted"></small>
-    <small id="{$nameKey}_error" class="form-text text-danger"></small>
-</div>
+                <div class="form-group">
+                    <label for="{$nameKey}" class="form-label"><b>$var</b></label>
+                    <select class="form-select form-select-lg mb-3" name="$nameKey" id="{$nameKey}">
+                        <option value="" disabled selected>Select an option</option>
+                HTML;
+                        foreach ($options as $option) {
+                            echo <<<HTML
+                            <option value="$option">$option</option>
+                            HTML;
+                        }
+                    echo <<<HTML
+                    </select>
+                    <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                    <small id="{$nameKey}_error" class="form-text text-danger"></small>
+                </div>
 
-HTML;
+                HTML;
             } elseif ($this->entValue[$i][0] === 'textarea') {
                 echo <<<HTML
-<div class="form-group" id="{$nameKey}_div">
-    <label for="{$nameKey}_id" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
-    <textarea class="form-control" autocomplete="new-$nameKey" placeholder="{$this->entValue[$i][1]}" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}_id">$value</textarea>
-    <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
-    <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
-</div>
+                <div class="mb-3" id="{$nameKey}_div">
+                    <label for="{$nameKey}_id" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
+                    <textarea class="form-control" autocomplete="new-$nameKey" placeholder="{$this->entValue[$i][1]}" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}_id">$value</textarea>
+                    <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
+                    <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
+                </div>
 
-HTML;
+            HTML;
             } elseif ($this->entValue[$i] === 'email') {
                 echo <<<HTML
-<div class="form-group">
-    <label for="{$nameKey}_id" class="form-label"><b>$var</b></label>
-    <div class="input-group mb-3">
 
-            <span class="input-group-text">
-                <i class="fas fa-envelope"></i>
-            </span>
-   
-        <input type="email" class="form-control $nameKey is-medium" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
-   
-    </div>
-    <small id="{$nameKey}_help" class="form-text text-muted"></small>
-    <small id="{$nameKey}_error" class="form-text text-danger"></small>
-</div>
+                 <div class="mb-3">
+                    <label for="{$nameKey}_id" class="form-label">Email address</label>
+                    <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
+                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
 
-HTML;
+            HTML;
             } elseif ($this->entValue[$i] === 'password') {
                 echo <<<HTML
-<div class="form-group">
-    <label for="{$nameKey}_id" class="form-label"><b>$var</b></label>
-    <div class="input-group mb-3">
-        <div class="input-group-prepend">
-            <span class="input-group-text">
-                <i class="fas fa-lock"></i>
-            </span>
-        </div>
-        <input type="password" class="form-control $nameKey is-medium" autocomplete="new-password" placeholder="password" name="$nameKey" id="{$nameKey}_id">
-        <div class="input-group-append">
-            <span class="input-group-text">
-                <i class="fas fa-check"></i>
-            </span>
-        </div>
-    </div>
-    <small id="{$nameKey}_help" class="form-text text-muted"></small>
-    <small id="{$nameKey}_error" class="form-text text-danger"></small>
-</div>
 
-HTML;
+                <div class="mb-3 form-check">
+                    <label for="{$nameKey}_id" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="{$nameKey}_id" name="$nameKey" placeholder="Enter your password" autocomplete="new-password" value="$value">
+                    <small id="{$nameKey}_help" class="form-text text-muted">Please enter a strong password.</small>
+                    <small id="{$nameKey}_error" class="form-text text-danger"></small>
+                </div>
+
+                HTML;
             } elseif ($this->entKey[$i] === 'checkbox') {
                 echo <<<HTML
-                <div class="form-group">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="checkbox" name="$nameKey">
-                        <label class="form-check-label" for="checkbox">
-                            {$this->entValue[$i]}
-                        </label>
-                        <small id="{$nameKey}_error" class="form-text text-danger"></small>
-                    </div>
+
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="$nameKey" checked>
+                    <label class="form-check-label" for="$nameKey">
+                        {$this->entValue[$i]}
+                    </label>
+                     <small id="{$nameKey}_error" class="form-text text-danger"></small>
                 </div>
 
                 HTML;
             } elseif ($this->entValue[$i] === 'button') {
                 echo <<<HTML
                 <br>
-<div class="form-group">
-    <p class="d-flex justify-content-center">
-        <button name="button" id="button" type="button" class="btn btn-success btn-lg btn-block submit">
-            {$nameKey}
-        </button>
-    </p>
-</div>
 
-HTML;
+                <button name="button" id="button" type="button" class="btn btn-primary">
+                    {$nameKey}
+                </button>
+
+
+                HTML;
             } elseif ($this->entValue[$i] === 'submit') {
                 echo <<<HTML
-<div class="field">
-    <p class="control">
-        <button name="submit" id="submit" type="submit" class="button is-success button is-large is-fullwidth submit">
-            Submit
-        </button>
-    </p>
-</div>
-HTML;
+
+                    <button name="submit" id="submit" type="submit" class="btn btn-primary submit">
+                        Submit
+                    </button>
+
+            HTML;
             } elseif ($this->entValue[$i] === 'token') {
                 echo <<<HTML
-                    <div class="form-group">
-                        <p class="d-flex justify-content-center">
+                  
                              <input type="hidden" class="input" id="token" name="token" value="{$this->token}">
-                        </p>
-                    </div>
+                     
 
                 HTML;
             } elseif ($this->entValue[$i] === 'birthday') {
@@ -468,7 +449,7 @@ HTML;
                         HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                <select class="form-select" arial-label='Default' id="$id" name="$name">
+                                                <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$name">
                                                     
                                                     <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
                             HTML;
@@ -476,7 +457,7 @@ HTML;
 
                             foreach ($decide as $value=> $option) {
                                 echo "<option value='$value'>
-                                <span style=\"font-size: 20px;\"> $option 
+                                <span style='font-size: 20px;'> $option 
                                 </span> </option>";
                             }
                             echo <<<HTML
@@ -565,7 +546,7 @@ HTML;
             } elseif ($this->entValue[$i] === 'title') {
                 echo <<<HTML
     <hr><br>
-    <p id="{$nameKey}1" class="h3 text-center text-primary">$var</p><br>
+    <p id="{$nameKey}1" class="display-2 text-uppercase text-center text-primary">$var</p><br>
     HTML;
             } elseif ($this->entValue[$i] === 'subtitle') {
                 echo <<<HTML
@@ -578,20 +559,28 @@ HTML;
             } elseif ($this->entValue[$i][0] === 'radio') {
                 $labelValue = strtoupper($this->entValue[$i][1]);
                 echo <<<HTML
-    <hr>
-    <div class="form-group">
-        <label class="form-check-label">
-            <b class="h6">$labelValue</b>
-            <input type="radio" class="form-check-input" name="{$this->entKey[$i]}" value="{$this->entValue[$i][2]}" id="{$this->entKey[$i]}_yes"> {$this->entValue[$i][2]}
-        </label>
-        <br>
-        <label class="form-check-label">
-            <input type="radio" class="form-check-input" name="{$this->entKey[$i]}" value="{$this->entValue[$i][3]}" id="{$this->entKey[$i]}_no"> {$this->entValue[$i][3]}
-        </label>
-        <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
-        <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
-    </div>
-    HTML;
+                        <hr>
+
+
+                    <div class="form-check">
+                        <b class="h6">$labelValue</b>
+                        <input class="form-check-input" type="radio" name="{$this->entKey[$i]}" value="{$this->entValue[$i][2]}" id="{$this->entKey[$i]}_yes">
+                        <label class="form-check-label" for="{$this->entKey[$i]}_yes">
+                            {$this->entValue[$i][2]}
+                        </label>
+                    </div>
+                 
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="{$this->entKey[$i]}" value="{$this->entValue[$i][3]}" id="{$this->entKey[$i]}_no">
+                        <label class="form-check-label" for="{$this->entKey[$i]}_no">
+                            {$this->entValue[$i][3]}
+                        </label>
+                    </div>
+                <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
+                <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
+           
+            HTML;
+
             } elseif ($this->entValue[$i][0] === 'radioComment') {
                 $labelValue = strtoupper($this->entValue[$i][1]);
                 echo <<<HTML
