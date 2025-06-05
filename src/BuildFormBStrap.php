@@ -245,20 +245,19 @@ HTML;
                 HTML;
             } elseif ($this->entValue[$i] === 'button') {
                 echo <<<HTML
-                <br>
-
-                <button name="button" id="button" type="button" class="btn btn-primary">
-                    {$nameKey}
-                </button>
-
-
+                <div class="mb-3">
+                    <button name="button" id="button" type="button" class="btn btn-primary">
+                        {$nameKey}
+                    </button>
+                </div>
                 HTML;
             } elseif ($this->entValue[$i] === 'submit') {
                 echo <<<HTML
-
+                <div class="mb-3">
                     <button name="submit" id="submit" type="submit" class="btn btn-primary submit">
                         Submit
                     </button>
+                </div>  
 
             HTML;
             } elseif ($this->entValue[$i] === 'token') {
