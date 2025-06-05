@@ -610,8 +610,15 @@ HTML;
         <textarea name="{$this->entKey[$i]}Comment" id="{$this->entKey[$i]}Comment" placeholder="Please add any further relevant comment especially if you selected No" class="form-control" style="width: 110%; height: 100px; padding: 12px 20px; box-sizing: border-box; border: 2px solid #ccc; border-radius: 4px; background-color: #f8f8f8; font-size: 16px;"></textarea>
     </div>
     HTML;
-            } elseif ($this->entValue[$i] === 'empty') {
-                echo '';
+            } elseif ($this->entValue[$i] === 'hr') {
+                echo '<hr>';
+            } elseif ($this->entValue[$i] === 'br') {
+                echo '<br>';
+            } elseif ($this->entValue[$i] === 'loader') {
+                echo "<div id='setLoader' tabindex='-1' class='loader' style='display: none';></div>";
+            } elseif ($this->entValue[$i] === 'setError') {
+                $nameKey = $this->entKey[$i];
+                echo "<div class='alert alert-danger' id='$nameKey' style='display: none;'><p id='error'></p></div>";
             } elseif ($this->entValue[$i] === 'showError') {
                 echo "<div id='setLoader' tabindex='-1' class='loader' style='display: none';></div>
     <div class='alert alert-danger' id='$nameKey' style='display: none;'><p id='error'></p></div>";
