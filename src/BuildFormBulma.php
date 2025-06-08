@@ -441,7 +441,7 @@ class BuildFormBulma
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                 <div class="field" id="$divID">
-                    <div class="field-body">
+                    <div class="columns">
                 HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); $y++) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
@@ -457,6 +457,7 @@ class BuildFormBulma
                     $icon = $this->entValue[$i]['icon'][$y] ?? "";
 
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icons-left' : '');
+                     $hasImg = (isset($this->entValue[$i]['img'][$y]) ? $this->entValue[$i]['img'][$y] : '');
 
                     if ($labelType === 'select') {
 
@@ -506,7 +507,70 @@ class BuildFormBulma
                         
                         </div>
                         HTML;
-                    } else {
+                    }  elseif ($labelType === 'cardSelect') {
+
+                        echo <<<HTML
+                                            <div class="$name column" id="{$name}_div">
+                                                <div class="card h-100 hidden">
+                                                    <div class="card-image">
+                                                        <figure class="image is-4by3">
+                                                        <img src="$hasImg"
+                                                            alt="Placeholder image"
+                                                        />
+                                                        </figure>
+                                                    </div>
+
+                                                     <header class="card-header">
+                                                        <p class="card-header-title">>$cleanLabel</p>
+                                                     
+                                                    </header>
+                                           
+                                                <div class="card-content">
+  
+                                                    <div class="content">
+
+                                                
+                                    
+                                                
+                                    HTML;
+                                    if ($this->entValue[$i]['options'][$y]) {
+                                        echo <<<HTML
+                                                            <select class="select is-primary" arial-label='Default' id="$id" name="$name">
+                                                                
+                                                                <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
+                                        HTML;
+                                        $decide = $this->entValue[$i]['options'][$y];
+
+                                        foreach ($decide as $value=> $option) {
+                                            echo "<option value='$value'>
+                                            <span style='font-size: 20px;'> $option 
+                                            </span> </option>";
+                                        }
+                                        echo <<<HTML
+                                                            </select>
+                                        HTML;
+                                    } else {
+                                        echo <<<HTML
+                                                            <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                        HTML;
+                                    }
+                                    echo <<<HTML
+                                               
+                                             
+                                           
+                                            <!-- <small id="$help" class="form-text text-muted"></small>
+                                            <small id="$error" class="form-text text-danger"></small> -->
+                                        </div>
+                                        </div>
+                                        </div>
+                                         </div>
+                                        </div>
+                                        </div>
+                        HTML;
+                    }
+                    
+                    
+                    else {
                         echo <<<HTML
                         <div class="field $name" id="{$name}_div">
                             <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>

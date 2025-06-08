@@ -631,7 +631,11 @@ HTML;
             } elseif ($this->entValue[$i] === 'showError') {
                 echo "<div id='setLoader' tabindex='-1' class='loader' style='display: none';></div>
     <div class='alert alert-danger' id='$nameKey' style='display: none;'><p id='error'></p></div>";
-            } else {
+            } elseif ($this->entValue[$i] === 'hr') {
+                echo '<hr>';
+            } elseif ($this->entValue[$i] === 'br') {
+                echo '<br>';
+            }else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
