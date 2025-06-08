@@ -545,11 +545,11 @@ HTML;
             } elseif ($this->entValue[$i] === 'title') {
                 echo <<<HTML
     <hr><br>
-    <p id="{$nameKey}1" class="display-2 text-uppercase text-center text-primary">$var</p><br>
+    <h1 id="{$nameKey}1" class="text-uppercase text-center text-primary">$var</h1><br>
     HTML;
             } elseif ($this->entValue[$i] === 'subtitle') {
                 echo <<<HTML
-    <h2 class="h6 text-center text-primary">$var</h2>
+    <h3 class="text-center text-primary">$var</h3>
     HTML;
             } elseif ($this->entValue[$i] === 'p') {
                 echo <<<HTML
