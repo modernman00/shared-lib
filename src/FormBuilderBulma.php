@@ -3,7 +3,7 @@
 namespace Src;
 
 
-class BuildFormBStrap
+class FormBuilderBulma
 {
     /**
      * This function is used to build a form
