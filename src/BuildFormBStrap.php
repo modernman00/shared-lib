@@ -471,8 +471,8 @@ HTML;
                                                
                                              
                                            
-                                            <!-- <small id="$help" class="form-text text-muted"></small>
-                                            <small id="$error" class="form-text text-danger"></small> -->
+                                           <small id="$help" class="form-text text-muted"></small>
+                                            <small id="$error" class="form-text text-danger"></small> 
                                             </div>
                                         </div>
                                         </div>
