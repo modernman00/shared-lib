@@ -22,7 +22,7 @@ class ToSendEmail
   /**
    * 
    * @param mixed $array 'viewPath' => string $viewPath, 'data' => array $data,'subject' => string $subject, 'file' => $file, 'fileName' => $fileName
-   * @param mixed $recipient 
+   * @param mixed $recipient - member or admin
    * @return void 
    */
 
@@ -54,7 +54,7 @@ class ToSendEmail
         throw new InvalidArgumentException("Email not provided");
       }
 
-      $name = Utility::checkInput($data['name']) ?? $array['name'];
+      $name = Utility::checkInput($data['name']) ?? $array['name'] ?? "";
 
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
     }
