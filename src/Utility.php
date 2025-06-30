@@ -252,7 +252,7 @@ class Utility
       }
       return 'just now'; // Default fallback if time is not within any unit
     } catch (\Throwable $th) {
-      showError($th);
+      self::showError($th);
       return false;
     }
   }
@@ -312,7 +312,7 @@ class Utility
       $data = preg_replace('/[^0-9A-Za-z.@\s-]/', '', $data);
       return $data;
     } else {
-      msgException(406, 'problem with your entry');
+      self::msgException(406, 'problem with your entry');
       return null;
     }
   }
@@ -327,7 +327,7 @@ class Utility
       $data = preg_replace('/[^a-zA-Z0-9\-\_\.\s]/', '', $data);
       return $data;
     } else {
-      msgException(406, 'image name not well formed');
+      self::msgException(406, 'image name not well formed');
       return null;
     }
   }
