@@ -13,17 +13,17 @@ class EmailData
     public function __construct(private string $sender)
     {
         if ($sender === 'member') {
-            $this->username = getenv("APP_USERNAME");
-            $this->password = getenv("APP_PASSWORD");
-            $this->senderName = getenv('APP_SENDER');
-            $this->senderEmail = getenv("APP_EMAIL");
-            $this->testEmail = getenv("TEST_EMAIL");
+            $this->username = $_ENV("APP_USERNAME");
+            $this->password = $_ENV("APP_PASSWORD");
+            $this->senderName = $_ENV('APP_SENDER');
+            $this->senderEmail = $_ENV("APP_EMAIL");
+            $this->testEmail = $_ENV("TEST_EMAIL");
         } elseif ($sender === 'admin') {
-            $this->username = getenv("ADMIN_USERNAME");
-            $this->password = getenv("ADMIN_PASSWORD");
-            $this->senderName = getenv('ADMIN_SENDER');
-            $this->senderEmail = getenv("ADMIN_EMAIL");
-            $this->testEmail = getenv("TEST_EMAIL");
+            $this->username = $_ENV("ADMIN_USERNAME");
+            $this->password = $_ENV("ADMIN_PASSWORD");
+            $this->senderName = $_ENV('ADMIN_SENDER');
+            $this->senderEmail = $_ENV("ADMIN_EMAIL");
+            $this->testEmail = $_ENV("TEST_EMAIL");
         }
     }
 
