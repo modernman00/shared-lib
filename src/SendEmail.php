@@ -14,14 +14,10 @@ use PHPMailer\PHPMailer\Exception;
 class SendEmail
 {
 
-	// create a _contruct method to initialize the PHPMailer object and configure it with the SMTP settings and define the constants for encoding and type and body text
-	public function __construct()
-	{
-		// Define constants for encoding, type, and body text
-		define('ENCODING', 'base64');
-		define('TYPE', 'application/pdf');
-		define('BODY_TEXT', 'This is the body in plain text for non-HTML mail clients.');
-	}
+		public const ENCODING = 'base64';
+    public const TYPE = 'application/pdf';
+    public const BODY_TEXT = 'This is the body in plain text for non-HTML mail clients.';
+
 	/**
 	 * Sends an email using PHPMailer.
 	 *
@@ -40,7 +36,7 @@ class SendEmail
 			//Server settings
 			// $mail->SMTPDebug = SMTP::DEBUG_SERVER;
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
 			$mail->Username = USER_APP ?? throw new NotFoundException("email username not available");
 			$mail->Password = PASS ?? throw new NotFoundException("email password not available");
@@ -58,13 +54,13 @@ class SendEmail
 			$mail->addAddress($email, $name);
 			$mail->addBCC(TEST_EMAIL);
 			if ($file) {
-				$mail->AddStringAttachment($file, $filename, ENCODING, TYPE);
+				$mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
 			}
 			//Content
 			$mail->isHTML(true);                                  // Set email format to HTML
 			$mail->Subject = "$subject";
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -78,7 +74,7 @@ class SendEmail
 			//Server settings
 			// $mail->SMTPDebug = SMTP::DEBUG_SERVER;
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new Exception("SMTP host not available");
 			$mail->SMTPAuth = true;
 			$mail->Username = USER_APP ?? throw new Exception("email username not available");
 			$mail->Password = PASS ?? throw new Exception("email password not available");
@@ -100,13 +96,13 @@ class SendEmail
 			}
 
 			if ($file) {
-				$mail->AddStringAttachment($file, $filename, ENCODING, TYPE);
+				$mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
 			}
 			//Content
 			$mail->isHTML(true);                                  // Set email format to HTML
 			$mail->Subject = "$subject";
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -122,7 +118,7 @@ class SendEmail
 		try {
 			$mail = new PHPMailer(true);
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
 			$mail->Username = USER_APP;
 			$mail->Password = PASS;
@@ -131,12 +127,12 @@ class SendEmail
 			$mail->setFrom(APP_EMAIL, APP_NAME);
 			$mail->addAddress($email, $name);
 			$mail->addBCC(APP_EMAIL);
-			$mail->AddStringAttachment($file, $filename, ENCODING, TYPE);
+			$mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
 			//Content
 			$mail->isHTML(true);                                  // Set email format to HTML
 			$mail->Subject = $subject;
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -149,7 +145,7 @@ class SendEmail
 		try {
 			$mail = new PHPMailer(true);
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
 			$mail->Username = USER_APP;
 			$mail->Password = PASS;
@@ -162,7 +158,7 @@ class SendEmail
 			$mail->CharSet = "utf-8";                               // Set email format to HTML
 			$mail->Subject = $subject;
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			$mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -174,7 +170,7 @@ class SendEmail
 		try {
 			$mail = new PHPMailer(true);
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
 			$mail->Username = USER_APP;
 			$mail->Password = PASS;
@@ -188,7 +184,7 @@ class SendEmail
 			$mail->CharSet = "utf-8";                                   // Set email format to HTML
 			$mail->Subject = $subject;
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			$mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -203,19 +199,19 @@ class SendEmail
 		try {
 			$mail = new PHPMailer(true);
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
-			$mail->Username = getenv('SYSTEM_EMAIL');
-			$mail->Password = getenv('APP_PASSWORD');
+			$mail->Username = $_ENV['SYSTEM_EMAIL'] ?? throw new NotFoundException("System email not available");
+			$mail->Password = $_ENV['APP_PASSWORD'] ?? throw new NotFoundException("App password not available");
 			$mail->SMTPSecure = 'ssl';
 			$mail->Port = 465;
-			$mail->setFrom(getenv('SYSTEM_EMAIL'), 'LOANEASY');
-			$mail->addAddress(getenv('SYSTEM_EMAIL'));
+			$mail->setFrom($_ENV['SYSTEM_EMAIL']);
+			$mail->addAddress($_ENV['SYSTEM_EMAIL']);
 			$mail->isHTML(true);
 			$mail->CharSet = "utf-8";                              // Set email format to HTML
 			$mail->Subject = $subject;
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			return $mail->send();
 		} catch (Exception $e) {
 			Utility::showError($e);
@@ -230,19 +226,19 @@ class SendEmail
 		try {
 			$mail = new PHPMailer(true);
 			$mail->isSMTP();
-			$mail->Host = getenv('SMTP_HOST');
+			$mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException("SMTP host not available");
 			$mail->SMTPAuth = true;
-			$mail->Username = getenv('SYSTEM_EMAIL');
-			$mail->Password = getenv('APP_PASSWORD');
+			$mail->Username = $_ENV['SYSTEM_EMAIL'] ?? throw new NotFoundException("System email not available");
+			$mail->Password = $_ENV['APP_PASSWORD'] ?? throw new NotFoundException("App password not available");
 			$mail->SMTPSecure = 'ssl';
 			$mail->Port = 465;
-			$mail->setFrom(getenv('SYSTEM_EMAIL'), 'LOANEASY');
-			$mail->addAddress(getenv('SYSTEM_EMAIL'), 'LOANEASY');
-			$mail->AddStringAttachment($file, $filename, ENCODING, TYPE);
+			$mail->setFrom($_ENV['SYSTEM_EMAIL']);
+			$mail->addAddress($_ENV['SYSTEM_EMAIL']);
+			$mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
 			$mail->isHTML(true);
 			$mail->Subject = $subject;
 			$mail->Body    = $message;
-			$mail->AltBody = BODY_TEXT;
+			$mail->AltBody = self::BODY_TEXT;
 			return $mail->send();
 		} catch (\Exception $e) {
 			Utility::showError($e);
