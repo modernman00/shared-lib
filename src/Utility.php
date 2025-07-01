@@ -146,7 +146,7 @@ class Utility
 
   public static function showError(\Throwable $th): void
   {
-    $isLocal = $_ENV('APP_ENV') === 'local' ?? $_ENV['APP_ENV'] === 'development';
+    $isLocal = self::isLocalEnv();
     $statusCode = ($th instanceof \Src\Exceptions\HttpException)
       ? $th->getStatusCode()
       : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
@@ -340,4 +340,14 @@ class Utility
     $data = filter_var($data, FILTER_SANITIZE_EMAIL);
     return $data;
   }
+
+  // check if it is local env and return true or false
+  public static function isLocalEnv(): bool
+  {
+  
+    $env = $_ENV['APP_ENV'] ?? '';
+    return in_array($env, ['local', 'development'], true);
+
+  }
+
 }
