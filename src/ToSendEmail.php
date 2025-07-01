@@ -7,6 +7,9 @@ use Src\Exceptions\ForbiddenException;
 use InvalidArgumentException;
 use Src\SendEmail;
 use Src\Utility;
+use Pelago\Emogrifier\CssInliner;
+use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
+use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
 
 class ToSendEmail
 {
@@ -31,7 +34,7 @@ class ToSendEmail
   public static function sendEmailGeneral($array, $recipient)
   {
     
-  
+  try {
 
     if (!defined('PASS')) {
       EmailData::defineConstants($recipient, $_ENV);
@@ -39,27 +42,45 @@ class ToSendEmail
       if (!defined('PASS')) {
         throw new ForbiddenException('Email credentials (constant) not set');
       }
-
+    }
       $data = $array['data'];
 
       ob_start();
-      // $emailPage = view($array['viewPath'], compact('data'));
-      Utility::view($array['viewPath'], compact('data'));
+      $viewPath = $array['viewPath'] ?? 'email';
+      $viewContent = Utility::view($viewPath, compact('data'));
+      $emailContent = ob_get_clean() ?: throw new ForbiddenException('Failed to render email content');
 
-      $emailContent = ob_get_contents() ?? throw new ForbiddenException('email content not available');
+      // Emogrify the HTML for email client compatibility
+            $cssInliner = CssInliner::fromHtml($emailContent)->inlineCss();
+            $domDocument = $cssInliner->getDomDocument();
+            HtmlPruner::fromDomDocument($domDocument)
+                ->removeElementsWithDisplayNone()
+                ->removeRedundantClassesAfterCssInlined($cssInliner);
+            $converter = CssToAttributeConverter::fromDomDocument($domDocument)
+                ->convertCssToVisualAttributes();
+            $emogrifiedContent = $converter->render();
 
       ob_end_clean();
 
-      $email =  Utility::checkInputEmail($data['email']) ?? $array['email'];
-
-
-      if (!$email) {
-        throw new InvalidArgumentException("Email not provided");
-      }
+     // Determine email recipient
+            $email = Utility::checkInputEmail($data['email'] ?? '') ?? $array['email'] ?? '';
+            if (empty($email)) {
+                throw new InvalidArgumentException('Email address is required');
+            }
 
       $name = Utility::cleanSession($data['name']) ?? Utility::cleanSession($array['name']) ?? "";
 
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
+      } catch (ForbiddenException $e) {
+            Utility::showError($e);
+           
+        } catch (InvalidArgumentException $e) {
+            Utility::showError($e);
+           
+        } catch (\Exception $e) {
+            Utility::showError($e);
+    
+        }
     }
   }
 
