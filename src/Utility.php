@@ -146,7 +146,7 @@ class Utility
 
   public static function showError(\Throwable $th): void
   {
-    $isLocal = $_ENV('APP_ENV') === 'local';
+    $isLocal = $_ENV('APP_ENV') === 'local' ?? $_ENV['APP_ENV'] === 'development';
     $statusCode = ($th instanceof \Src\Exceptions\HttpException)
       ? $th->getStatusCode()
       : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
@@ -161,7 +161,7 @@ class Utility
 
 
 
-    file_put_contents(__DIR__ . "/../../../bootstrap/log/" . date('Y-m-d') . '.log', $logMessage, FILE_APPEND);
+    file_put_contents(__DIR__ . "/../../../../bootstrap/log/" . date('Y-m-d') . '.log', $logMessage, FILE_APPEND);
 
     if ($isLocal) {
       echo json_encode([
