@@ -20,12 +20,12 @@ class Utility
    * @throws \Throwable If rendering fails
    */
 
-  public static function view($path, array $data = [])
+   public static function view($path, array $data = [])
   {
 
     try {
-      $view = rtrim(__DIR__ . "/../../../resources/views", '/'); // Remove trailing slash
-      $cache = rtrim(__DIR__ . "/../../../bootstrap/cache", '/');
+      $view = rtrim(__DIR__ . "/../../../../resources/views", '/'); // Remove trailing slash
+      $cache = rtrim(__DIR__ . "/../../../../bootstrap/cache", '/');
       $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
       // echo $viewFile;
       static $blade = null;
@@ -36,7 +36,7 @@ class Utility
 
         $blade->pipeEnable = true;
         $blade->setBaseUrl(getenv('APP_URL'));
-        $blade->setAutoescape(true);
+        // $blade->setAutoescape(true);
       }
 
       echo $blade->run($viewFile, $data);
@@ -64,8 +64,7 @@ class Utility
   public static function loggedDetection(string $filename, string $receivingEmail): bool
   {
     //TODO send text to the user with the code
-    $emailSender = new EmailData('admin');
-    $emailSender->getEmailData();
+     EmailData::defineConstants('admin', $_ENV);
     $getIp = Utility::getUserIpAddr();
     $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " .  date("h:i:sa") . "  and with this IP address: $getIp  <br><br>  IT Security Team";
 
@@ -147,7 +146,7 @@ class Utility
 
   public static function showError(\Throwable $th): void
   {
-    $isLocal = getenv('APP_ENV') === 'local';
+    $isLocal = $_ENV('APP_ENV') === 'local';
     $statusCode = ($th instanceof \Src\Exceptions\HttpException)
       ? $th->getStatusCode()
       : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);

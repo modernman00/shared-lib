@@ -5,6 +5,8 @@ namespace Src;
 use Src\Data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use InvalidArgumentException;
+use Src\SendEmail;
+use Src\Utility;
 
 class ToSendEmail
 {
@@ -28,10 +30,11 @@ class ToSendEmail
 
   public static function sendEmailGeneral($array, $recipient)
   {
-    $notifyCustomer = new EmailData($recipient);
+    
+  
 
     if (!defined('PASS')) {
-      $notifyCustomer->getEmailData();
+      EmailData::defineConstants($recipient, $_ENV);
       // if it is still not set, then throw an error
       if (!defined('PASS')) {
         throw new ForbiddenException('Email credentials (constant) not set');
@@ -54,7 +57,7 @@ class ToSendEmail
         throw new InvalidArgumentException("Email not provided");
       }
 
-      $name = Utility::checkInput($data['name']) ?? $array['name'] ?? "";
+      $name = Utility::cleanSession($data['name']) ?? Utility::cleanSession($array['name']) ?? "";
 
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
     }
@@ -71,10 +74,10 @@ class ToSendEmail
 
   public static function sendEmailWrapper($var, $recipientType)
   {
-    $notifyCustomer = new EmailData($recipientType);
+
 
     if (!defined('PASS')) {
-      $notifyCustomer->getEmailData();
+         EmailData::defineConstants($recipientType, $_ENV);
     }
 
     $data = $var['data'];

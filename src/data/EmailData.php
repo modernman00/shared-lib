@@ -4,40 +4,38 @@ namespace Src\Data;
 
 class EmailData
 {
-    private null|string $username;
-    private null|string $password;
-    private null|string $senderEmail;
-    private null|string $senderName;
-    private null|string $testEmail;
-
-    public function __construct(private string $sender)
+    /**
+     * Load email config based on sender type.
+     *
+     * @param string $sender 'member' or 'admin'
+     * @param array $config Environment config (e.g. $_ENV)
+     * @return array
+     */
+    public static function getEmailConfig(string $sender, array $config): array
     {
-        if ($sender === 'member') {
-            $this->username = $_ENV("APP_USERNAME");
-            $this->password = $_ENV("APP_PASSWORD");
-            $this->senderName = $_ENV('APP_SENDER');
-            $this->senderEmail = $_ENV("APP_EMAIL");
-            $this->testEmail = $_ENV("TEST_EMAIL");
-        } elseif ($sender === 'admin') {
-            $this->username = $_ENV("ADMIN_USERNAME");
-            $this->password = $_ENV("ADMIN_PASSWORD");
-            $this->senderName = $_ENV('ADMIN_SENDER');
-            $this->senderEmail = $_ENV("ADMIN_EMAIL");
-            $this->testEmail = $_ENV("TEST_EMAIL");
-        }
+        $prefix = strtoupper($sender); // 'MEMBER' or 'ADMIN'
+
+        return [
+            'username'    => $config["{$prefix}_USERNAME"] ?? null,
+            'password'    => $config["{$prefix}_PASSWORD"] ?? null,
+            'senderName'  => $config["{$prefix}_SENDER"] ?? null,
+            'senderEmail' => $config["{$prefix}_EMAIL"] ?? null,
+            'testEmail'   => $config["TEST_EMAIL"] ?? null,
+        ];
     }
 
-    private function setEmailData(): void
+    /**
+     * Define constants (optional; not recommended in modern code)
+     */
+    public static function defineConstants(string $sender, array $config): void
     {
-        define('USER_APP', $this->username);
-        define('PASS', $this->password);
-        define('APP_EMAIL', $this->senderEmail);
-        define('APP_NAME', $this->senderName);
-        define('TEST_EMAIL', $this->testEmail);
-    }
+        $data = self::getEmailConfig($sender, $config);
 
-    public function getEmailData(): void
-    {
-        $this->setEmailData();
+        define('USER_APP', $data['username']);
+        define('PASS', $data['password']);
+        define('APP_EMAIL', $data['senderEmail']);
+        define('APP_NAME', $data['senderName']);
+        define('TEST_EMAIL', $data['testEmail']);
     }
 }
+
