@@ -144,10 +144,8 @@ class FileUploader
     }
   }
 
-  public static function fileUploadSingle($fileLocation, $formInputName)
+  public static function fileUploadSingle($fileLocation, $formInputName): string
 {
-    $saveFiles = [];
-
     // Check if file is uploaded
     if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
         Utility::throwError(400, 'No file was uploaded');
@@ -224,9 +222,9 @@ class FileUploader
     $optimizerChain->optimize($pathToImage);
     $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
 
-    $saveFiles[] = $fileName;
+     return $fileName;
 
-    return $saveFiles; // still returns array for compatibility
+    
 }
 
 
