@@ -54,22 +54,7 @@ class FileUploader
       $fileSize = $_FILES[$formInputName]['size'][$i];
       $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
       $fileError = $_FILES[$formInputName]['error'][$i];
-      // Check for upload errors
-      if ($fileError !== UPLOAD_ERR_OK) {
-        $errorMessages = [
-          UPLOAD_ERR_INI_SIZE => 'File size exceeds the maximum allowed size (upload_max_filesize)',
-          UPLOAD_ERR_FORM_SIZE => 'File size exceeds the maximum allowed size (form limit)',
-          UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-          UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-          UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-          UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-          UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
-        ];
-        $errorMsg = $errorMessages[$fileError] ?? 'Unknown upload error';
-        Utility::throwError(400, $errorMsg);
-        continue;
-      }
-
+    
 
       // Validate file
       $picError = "";
@@ -103,31 +88,9 @@ class FileUploader
       }
 
       // Resize and crop image
-      try {
-        if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
-          throw new Exception("Cannot read image at: $pathToImage");
-        }
-        if (!is_writable(dirname($pathToImage))) {
-          throw new Exception("Cannot write to directory: " . dirname($pathToImage));
-        }
-
-        $image = Image::imagick()->read($pathToImage) ?? Image::gd()->read($pathToImage);
-        $image->cover(300, 200);
-        $tempPath = $pathToImage . '.tmp';
-        $image->save($tempPath);
-        if (file_exists($tempPath)) {
-          rename($tempPath, $pathToImage);
-        } else {
-          throw new Exception("Failed to save resized image at $tempPath");
-        }
-      } catch (Exception $e) {
-        throw new Exception("Image processing failed: " . $e->getMessage());
-      }
-
+      self::processImageWithImagick($pathToImage);
       // Optimize the image
-      $optimizerChain = ImgOptimizer::create();
-      $optimizerChain->optimize($pathToImage);
-      $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
+      self::optimiseImg($pathToImage);
 
       $saveFiles[] = $fileName;
     }
@@ -155,11 +118,38 @@ class FileUploader
     }
   }
 
+  // private function for imagick
+  private static function processImageWithImagick($pathToImage): void
+  {
+    if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
+      throw new Exception("Cannot read image at: $pathToImage");
+    }
+
+    $image = Image::imagick()->read($pathToImage) ?? Image::gd()->read($pathToImage);
+    $image->cover(300, 200);
+    $tempPath = $pathToImage . '.tmp';
+    $image->save($tempPath);
+    if (file_exists($tempPath)) {
+      rename($tempPath, $pathToImage);
+    } else {
+      throw new Exception("Failed to save resized image at $tempPath");
+    }
+  }
+
+  private static function optimiseImg($pathToImage)
+  {
+    // Optimise the image
+    $optimizerChain = ImgOptimizer::create();
+
+    $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
+    return  $optimizerChain->optimize($pathToImage);
+  }
+
   public static function fileUploadSingle($fileLocation, $formInputName, $apiKeyVirusScan = null): string
-{
+  {
     // Check if file is uploaded
     if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
-        Utility::throwError(400, 'No file was uploaded');
+      Utility::throwError(400, 'No file was uploaded');
     }
 
     $fileName = basename($_FILES[$formInputName]['name']);
@@ -174,21 +164,9 @@ class FileUploader
     $pathToImage = "$fileLocation$fileName";
 
     // Handle upload errors
-    if ($fileError !== UPLOAD_ERR_OK) {
-        $errorMessages = [
-            UPLOAD_ERR_INI_SIZE => 'File size exceeds the maximum allowed size (upload_max_filesize)',
-            UPLOAD_ERR_FORM_SIZE => 'File size exceeds the maximum allowed size (form limit)',
-            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
-        ];
-        $errorMsg = $errorMessages[$fileError] ?? 'Unknown upload error';
-        Utility::throwError(400, $errorMsg);
-    }
+    self::ValidateFile($fileName);
 
-       // If a virus scan API key is provided, initialize the virus scan
+    // If a virus scan API key is provided, initialize the virus scan
     if ($apiKeyVirusScan) {
       new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
     }
@@ -196,50 +174,23 @@ class FileUploader
     // Validate file
     $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
     if (!in_array($extension, $allowedFormats)) {
-        throw new ValidationException("IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC or JPEG.");
+      throw new ValidationException("IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC or JPEG.");
     }
 
     if ($fileSize > 10485760) { // 10MB
-        throw new ValidationException("Error Processing Request - File size must not exceed 10MB");
+      throw new ValidationException("Error Processing Request - File size must not exceed 10MB");
     }
 
     if (!move_uploaded_file($fileTemp, $pathToImage)) {
-        $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
-        throw new ValidationException("Error Processing Request - Image was not successfully uploaded");
+      $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
+      throw new ValidationException("Error Processing Request - Image was not successfully uploaded");
     }
 
     // Resize and crop
-    try {
-        if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
-            throw new Exception("Cannot read image at: $pathToImage");
-        }
-        if (!is_writable(dirname($pathToImage))) {
-            throw new Exception("Cannot write to directory: " . dirname($pathToImage));
-        }
-
-        $image = Image::imagick()->read($pathToImage) ?? Image::gd()->read($pathToImage);
-        $image->cover(300, 200);
-        $tempPath = $pathToImage . '.tmp';
-        $image->save($tempPath);
-        if (file_exists($tempPath)) {
-            rename($tempPath, $pathToImage);
-        } else {
-            throw new Exception("Failed to save resized image at $tempPath");
-        }
-    } catch (Exception $e) {
-        throw new Exception("Image processing failed: " . $e->getMessage());
-    }
-
-    // Optimise the image
-    $optimizerChain = ImgOptimizer::create();
-    $optimizerChain->optimize($pathToImage);
-    $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
-
-     return $fileName;
-
-    
-}
+    self::processImageWithImagick($pathToImage);
+    self::optimiseImg($pathToImage);
 
 
-
+    return $fileName;
+  }
 }
