@@ -15,10 +15,10 @@ class Db extends CheckToken
     private static function dbVariables(): array
     {
         return [
-            'host' => getenv(name: 'DB_HOST'),
-            'name' => getenv(name: 'DB_NAME'),
-            'username' => getenv(name: 'DB_USERNAME'),
-            'password' => getenv(name: "DB_PASSWORD"),
+            'host' => $_ENV['DB_HOST'],
+            'name' => $_ENV[ 'DB_NAME'],
+            'username' => $_ENV[ 'DB_USERNAME'],
+            'password' => $_ENV[ "DB_PASSWORD"],
             'charset' => 'utf8mb4'
         ];
     }
