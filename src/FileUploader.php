@@ -54,7 +54,7 @@ class FileUploader
       $fileSize = $_FILES[$formInputName]['size'][$i];
       $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
       $fileError = $_FILES[$formInputName]['error'][$i];
-    
+
 
       // Validate file
       $picError = "";
@@ -97,9 +97,11 @@ class FileUploader
 
     return $saveFiles;
   }
-  private static function ValidateFile($file): void
+  private static function ValidateFile($formInputName): void
   {
-    if (!isset($file['name']) || empty($file['name'])) {
+
+    $file = $_FILES[$formInputName];
+    if (!isset($file) || empty($file)) {
       throw new ValidationException("No file uploaded");
     }
 
@@ -121,6 +123,8 @@ class FileUploader
   // private function for imagick
   private static function processImageWithImagick($pathToImage): void
   {
+
+     if (extension_loaded('imagick')) {
     if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
       throw new Exception("Cannot read image at: $pathToImage");
     }
@@ -134,6 +138,7 @@ class FileUploader
     } else {
       throw new Exception("Failed to save resized image at $tempPath");
     }
+     }
   }
 
   private static function optimiseImg($pathToImage)
@@ -163,12 +168,14 @@ class FileUploader
     $fileError = $_FILES[$formInputName]['error'];
     $pathToImage = "$fileLocation$fileName";
 
+
+
     // Handle upload errors
-    self::ValidateFile($fileName);
+    self::ValidateFile($formInputName);
 
     // If a virus scan API key is provided, initialize the virus scan
     if ($apiKeyVirusScan) {
-      new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
+      new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'], apiKey: $apiKeyVirusScan);
     }
 
     // Validate file
@@ -187,7 +194,9 @@ class FileUploader
     }
 
     // Resize and crop
-    self::processImageWithImagick($pathToImage);
+ 
+      self::processImageWithImagick($pathToImage);
+    
     self::optimiseImg($pathToImage);
 
 
