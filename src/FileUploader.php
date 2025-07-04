@@ -28,8 +28,6 @@ class FileUploader
     if ($apiKeyVirusScan) {
       new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
     }
-  {
-
 
     // scanFileForVirus($_FILES[$formInputName]);
     // Count total files
@@ -72,8 +70,6 @@ class FileUploader
         continue;
       }
 
-      // virus scan using ClamAV
-      new ScanVirus(tempFileLocation: $fileTemp);
 
       // Validate file
       $picError = "";
@@ -159,7 +155,7 @@ class FileUploader
     }
   }
 
-  public static function fileUploadSingle($fileLocation, $formInputName): string
+  public static function fileUploadSingle($fileLocation, $formInputName, $apiKeyVirusScan = null): string
 {
     // Check if file is uploaded
     if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
@@ -192,8 +188,10 @@ class FileUploader
         Utility::throwError(400, $errorMsg);
     }
 
-    // Virus scan using ClamAV
-    new ScanVirus(tempFileLocation: $fileTemp);
+       // If a virus scan API key is provided, initialize the virus scan
+    if ($apiKeyVirusScan) {
+      new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
+    }
 
     // Validate file
     $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
