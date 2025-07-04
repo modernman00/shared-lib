@@ -12,14 +12,12 @@ class VirusScan
 {
 
   // Constructor to initialize the API - remember to include the API key in your environment variables
-  public function __construct($tempFileLocation)
+  public function __construct($tempFileLocation, $apiKey)
   {
-
-    $FILE_UPLOAD_CLOUDMERSIVE = "2623535a-ed7e-4992-9170-0bac31f9fa98";
 
     try {
 
-      $setApiKey = Configuration::getDefaultConfiguration()->setApiKey('Apikey', $FILE_UPLOAD_CLOUDMERSIVE);
+      $setApiKey = Configuration::getDefaultConfiguration()->setApiKey('Apikey', $apiKey);
 
       $apiInstance = new ScanApi(
         client: new Client(),

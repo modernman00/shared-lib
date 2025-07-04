@@ -12,7 +12,22 @@ use Exception;
 class FileUploader
 {
 
-  public static function fileUploadMultiple($fileLocation, $formInputName)
+  public static function fileUploadMultiple($fileLocation, $formInputName, $apiKeyVirusScan = null): array
+  {
+    // Validate the file input
+    if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'])) {
+      Utility::throwError(400, 'No files were uploaded');
+    }
+
+    // Validate each file
+    foreach ($_FILES[$formInputName]['name'] as $file) {
+      self::ValidateFile($file);
+    }
+
+    // If a virus scan API key is provided, initialize the virus scan
+    if ($apiKeyVirusScan) {
+      new ScanVirus(tempFileLocation: $_FILES[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
+    }
   {
 
 
