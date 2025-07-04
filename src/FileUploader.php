@@ -143,4 +143,92 @@ class FileUploader
       throw new ValidationException($errorMsg);
     }
   }
+
+  public static function fileUploadSingle($fileLocation, $formInputName)
+{
+    $saveFiles = [];
+
+    // Check if file is uploaded
+    if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
+        Utility::throwError(400, 'No file was uploaded');
+    }
+
+    $fileName = basename($_FILES[$formInputName]['name']);
+    $fileName = str_replace([' ', ','], '', $fileName);
+    $fileInfo = pathinfo($fileName);
+    $baseName = preg_replace('/_+/', '_', preg_replace('/[().]/', '_', $fileInfo['filename']));
+    $extension = strtolower($fileInfo['extension']);
+    $fileName = time() . '_' . $baseName . '.' . $extension;
+    $fileTemp = $_FILES[$formInputName]['tmp_name'];
+    $fileSize = $_FILES[$formInputName]['size'];
+    $fileError = $_FILES[$formInputName]['error'];
+    $pathToImage = "$fileLocation$fileName";
+
+    // Handle upload errors
+    if ($fileError !== UPLOAD_ERR_OK) {
+        $errorMessages = [
+            UPLOAD_ERR_INI_SIZE => 'File size exceeds the maximum allowed size (upload_max_filesize)',
+            UPLOAD_ERR_FORM_SIZE => 'File size exceeds the maximum allowed size (form limit)',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+        ];
+        $errorMsg = $errorMessages[$fileError] ?? 'Unknown upload error';
+        Utility::throwError(400, $errorMsg);
+    }
+
+    // Virus scan using ClamAV
+    new ScanVirus(tempFileLocation: $fileTemp);
+
+    // Validate file
+    $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
+    if (!in_array($extension, $allowedFormats)) {
+        throw new ValidationException("IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC or JPEG.");
+    }
+
+    if ($fileSize > 10485760) { // 10MB
+        throw new ValidationException("Error Processing Request - File size must not exceed 10MB");
+    }
+
+    if (!move_uploaded_file($fileTemp, $pathToImage)) {
+        $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
+        throw new ValidationException("Error Processing Request - Image was not successfully uploaded");
+    }
+
+    // Resize and crop
+    try {
+        if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
+            throw new Exception("Cannot read image at: $pathToImage");
+        }
+        if (!is_writable(dirname($pathToImage))) {
+            throw new Exception("Cannot write to directory: " . dirname($pathToImage));
+        }
+
+        $image = Image::imagick()->read($pathToImage) ?? Image::gd()->read($pathToImage);
+        $image->cover(300, 200);
+        $tempPath = $pathToImage . '.tmp';
+        $image->save($tempPath);
+        if (file_exists($tempPath)) {
+            rename($tempPath, $pathToImage);
+        } else {
+            throw new Exception("Failed to save resized image at $tempPath");
+        }
+    } catch (Exception $e) {
+        throw new Exception("Image processing failed: " . $e->getMessage());
+    }
+
+    // Optimise the image
+    $optimizerChain = ImgOptimizer::create();
+    $optimizerChain->optimize($pathToImage);
+    $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
+
+    $saveFiles[] = $fileName;
+
+    return $saveFiles; // still returns array for compatibility
+}
+
+
+
 }
