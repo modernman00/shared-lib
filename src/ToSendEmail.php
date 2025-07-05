@@ -82,7 +82,7 @@ class ToSendEmail
     
         }
     }
-  }
+  
 
   /**
    * You have to generate the $var using the genEmailArray()
