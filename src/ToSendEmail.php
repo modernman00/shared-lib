@@ -68,6 +68,15 @@ class ToSendEmail
                 throw new InvalidArgumentException('Email address is required');
             }
 
+            // check if there is $data['name'] or $array['name']
+            if (isset($data['name']) && !empty($data['name'])) {
+                $name = Utility::cleanSession($data['name']);
+            } elseif (isset($array['name']) && !empty($array['name'])) {
+                $name = Utility::cleanSession($array['name']);
+            } else {
+                $name = 'there'; // Default name if none provided
+            }
+
       $name = Utility::cleanSession($data['name']) ?? Utility::cleanSession($array['name']) ?? "";
 
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
