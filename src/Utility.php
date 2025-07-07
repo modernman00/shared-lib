@@ -4,12 +4,136 @@ namespace Src;
 
 use Src\Data\EmailData;
 use Src\SendEmail;
-
-
 use eftec\bladeone\BladeOne;
 
 class Utility
 {
+
+  /**
+   * @param string $viewFile
+   * @param array $data
+   * @param array $cspOptions
+   *   - enable: boolean (default: true)
+   *   - report_only: boolean (default: true)
+   *   - extra: array of custom CSP directives
+   * @return string
+   *   The rendered view with CSP headers enabled
+   */
+  public static function view(string $viewFile, array $data = [])
+  {
+    return self::viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
+  }
+
+  /**
+ * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
+ *    'report_only' => false, // Enforce CSP (not just report)
+ *    'extra' => [
+ *        "script-src https://js.stripe.com",
+ *        "frame-src https://js.stripe.com"
+ *    ]
+ * ]);
+ * 
+ * <!-- Script Tag -->
+ *  <script nonce="{{ $csp_nonce }}">
+ *    window.userData = @json(auth()->user());
+ * </script>
+
+ * <!-- External Script -->
+ * <script 
+ *    nonce="{{ $csp_nonce }}" 
+ *    src="https://platform.sharethis.com/loader.js"
+ *    defer
+ * ></script>
+
+ * <!-- Inline Styles -->
+ * <style nonce="{{ $csp_nonce }}">
+ *    .featured { background: #f0f8ff; }
+ * </style>
+ * 
+ * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
+ * 
+ * Phase Out unsafe-inline.
+ * Move all inline scripts to external files
+ * Use nonce-{{ $csp_nonce }} for critical inline code
+ * 
+ * Implement report-to
+ * 'extra' => ["report-to csp-endpoint"]
+ */
+
+public static function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
+{
+    try {
+        // ===== 1. CSP SETUP =====
+        $cspEnabled = $cspOptions['enable'] ?? true;
+        $reportOnly = $cspOptions['report_only'] ?? true;
+        $nonce = '';
+
+        if ($cspEnabled) {
+            // Generate cryptographic nonce
+            $nonce = bin2hex(random_bytes(16));
+
+            // Build dynamic CSP header
+            $directives = [
+                "default-src 'self'",
+                // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
+                "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
+
+                "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
+
+                // Styles
+                "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+                "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+
+                // Fonts
+                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
+
+                // Images
+                "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
+
+                // Connections
+                "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
+
+                // Frames
+                "frame-src 'self' https://platform.sharethis.com",
+
+                // Reporting
+                "report-uri " . ($cspOptions['report_uri'] ?? '/csp-report-log'),
+                "report-to csp-endpoint"
+            ];
+            // Add custom directives if provided
+            if (!empty($cspOptions['extra'])) {
+                $directives = array_merge($directives, $cspOptions['extra']);
+            }
+
+            header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
+                . implode('; ', $directives));
+        }
+
+
+        // 2. Initialize Blade
+        static $blade = null;
+        if (!$blade) {
+            // 1. Get validated paths
+            $viewsPath = realpath(__DIR__ . '/../../resources/views');
+            $cachePath = realpath(__DIR__ . '/../../bootstrap/cache');
+            $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
+            $blade->setIsCompiled(false);
+        }
+
+        // 3. Normalize and verify view path
+        $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
+        $data['nonce'] = $nonce;
+        // 4. Render with debug
+        echo $blade->run($viewFile, $data);
+    } catch (\Exception $e) {
+        error_log("VIEW ERROR: " . $e->getMessage());
+        return "<!-- VIEW ERROR -->\n"
+            . "<h1>Rendering Error</h1>\n"
+            . "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>\n"
+            . "<p>Template: " . htmlspecialchars($viewFile) . "</p>\n"
+            . "<p>Search Path: " . htmlspecialchars($viewsPath ?? '') . "</p>";
+    }
+}
 
   /**
    * Renders a BladeOne template with the given data.
@@ -20,30 +144,30 @@ class Utility
    * @throws \Throwable If rendering fails
    */
 
-   public static function view($path, array $data = [])
-  {
+  //  public static function view($path, array $data = [])
+  // {
 
-    try {
-      $view = rtrim(__DIR__ . "/../../../../resources/views", '/'); // Remove trailing slash
-      $cache = rtrim(__DIR__ . "/../../../../bootstrap/cache", '/');
-      $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
-      // echo $viewFile;
-      static $blade = null;
-      if (!$blade) {
-        $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
-        $blade = new BladeOne($view, $cache, $mode);
+  //   try {
+  //     $view = rtrim(__DIR__ . "/../../../../resources/views", '/'); // Remove trailing slash
+  //     $cache = rtrim(__DIR__ . "/../../../../bootstrap/cache", '/');
+  //     $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
+  //     // echo $viewFile;
+  //     static $blade = null;
+  //     if (!$blade) {
+  //       $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
+  //       $blade = new BladeOne($view, $cache, $mode);
 
 
-        $blade->pipeEnable = true;
-        $blade->setBaseUrl(getenv('APP_URL'));
-        // $blade->setAutoescape(true);
-      }
+  //       $blade->pipeEnable = true;
+  //       $blade->setBaseUrl(getenv('APP_URL'));
+  //       // $blade->setAutoescape(true);
+  //     }
 
-      echo $blade->run($viewFile, $data);
-    } catch (\Throwable $e) {
-      Utility::showError($e);
-    }
-  }
+  //     echo $blade->run($viewFile, $data);
+  //   } catch (\Throwable $e) {
+  //     Utility::showError($e);
+  //   }
+  // }
 
 
 
