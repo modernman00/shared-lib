@@ -19,9 +19,9 @@ class Utility
    * @return string
    *   The rendered view with CSP headers enabled
    */
-  public static function view(string $viewFile, array $data = [])
+  public static function view2(string $viewFile, array $data = [])
   {
-    return self::viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
+    self::viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
   }
 
   /**
@@ -144,30 +144,30 @@ public static function viewBuilderWithCSP(string $viewFile, array $data = [], ar
    * @throws \Throwable If rendering fails
    */
 
-  //  public static function view($path, array $data = [])
-  // {
+   public static function view($path, array $data = [])
+  {
 
-  //   try {
-  //     $view = rtrim(__DIR__ . "/../../../../resources/views", '/'); // Remove trailing slash
-  //     $cache = rtrim(__DIR__ . "/../../../../bootstrap/cache", '/');
-  //     $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
-  //     // echo $viewFile;
-  //     static $blade = null;
-  //     if (!$blade) {
-  //       $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
-  //       $blade = new BladeOne($view, $cache, $mode);
+    try {
+      $view = rtrim(__DIR__ . "/../../../../resources/views", '/'); // Remove trailing slash
+      $cache = rtrim(__DIR__ . "/../../../../bootstrap/cache", '/');
+      $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
+      // echo $viewFile;
+      static $blade = null;
+      if (!$blade) {
+        $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
+        $blade = new BladeOne($view, $cache, $mode);
 
 
-  //       $blade->pipeEnable = true;
-  //       $blade->setBaseUrl(getenv('APP_URL'));
-  //       // $blade->setAutoescape(true);
-  //     }
+        $blade->pipeEnable = true;
+        $blade->setBaseUrl(getenv('APP_URL'));
+        // $blade->setAutoescape(true);
+      }
 
-  //     echo $blade->run($viewFile, $data);
-  //   } catch (\Throwable $e) {
-  //     Utility::showError($e);
-  //   }
-  // }
+      echo $blade->run($viewFile, $data);
+    } catch (\Throwable $e) {
+      Utility::showError($e);
+    }
+  }
 
 
 
