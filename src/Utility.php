@@ -20,7 +20,7 @@ class Utility
    * @throws \Throwable If rendering fails
    */
 
-   public static function view($path, array $data = [])
+  public static function view($path, array $data = [])
   {
 
     try {
@@ -64,7 +64,7 @@ class Utility
   public static function loggedDetection(string $filename, string $receivingEmail): bool
   {
     //TODO send text to the user with the code
-     EmailData::defineConstants('admin', $_ENV);
+    EmailData::defineConstants('admin', $_ENV);
     $getIp = Utility::getUserIpAddr();
     $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " .  date("h:i:sa") . "  and with this IP address: $getIp  <br><br>  IT Security Team";
 
@@ -331,23 +331,24 @@ class Utility
     }
   }
 
-  public static function checkInputEmail($data): string
+  public static function checkInputEmail(string $data): string
   {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    $data = strip_tags($data);
-    $data = filter_var($data, FILTER_SANITIZE_EMAIL);
-    return $data;
+    if ($data) {
+      $data = trim($data);
+      $data = stripslashes($data);
+      $data = htmlspecialchars($data);
+      $data = strip_tags($data);
+      $data = filter_var($data, FILTER_SANITIZE_EMAIL);
+     
+    }
+     return $data;
   }
 
   // check if it is local env and return true or false
   public static function isLocalEnv(): bool
   {
-  
+
     $env = $_ENV['APP_ENV'] ?? '';
     return in_array($env, ['local', 'development'], true);
-
   }
-
 }
