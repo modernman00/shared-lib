@@ -71,13 +71,13 @@ class ToSendEmail
       // check if $data['name'] or $array['name'] is set
       if (isset($data['name'])) {
         $name = $data['name'];
-      } else {
+      } elseif(isset($array['name'])) {
         $name = $array['name'];
+      } else {
+        $name = 'there';
       }
 
       $name = Utility::cleanSession($name);
-      // check if there is $data['name'] or $array['name']
-      $name = $name ?? 'there';
 
 
 
