@@ -107,6 +107,8 @@ class BuildFormBStrap
         return $_SESSION['token'];
     }
 
+
+
     /**
      * important ones are mixed, select-many, setError
      * example - mixed 'spouse' => ['mixed','label' => ["Spouse's name", "Spouse's mobile", "Spouse's Email"],'attribute' => ['spouseName', 'spouseMobile', 'spouseEmail'],'placeholder' => ['Toyin', '23480364168089', "toyin@gmail.com"], 'inputType' => ['text', 'text', 'email'],'icon' => ['<i class="fas fa-user"></i>','<i class="fas fa-user"></i>','<i class="fas fa-envelope-square"></i>']],
@@ -448,23 +450,24 @@ HTML;
                         HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$name">
-                                                    
-                                                    <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
+                                    <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$name">
+                                        <option value='$value'> 
+                                            <span class="option_text">Choose </span>
+                                            </option>
                             HTML;
                             $decide = $this->entValue[$i]['options'][$y];
 
                             foreach ($decide as $value=> $option) {
                                 echo "<option value='$value'>
-                                <span style='font-size: 20px;'> $option 
+                                <span class='option_text'> $option 
                                 </span> </option>";
                             }
                             echo <<<HTML
-                                                </select>
+                                </select>
                             HTML;
                         } else {
                             echo <<<HTML
-                                                 <input type="text" class="form-control" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                <input type="text" class="form-control" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
                             HTML;
                         }
                         echo <<<HTML

@@ -33,20 +33,20 @@ class ToSendEmail
 
   public static function sendEmailGeneral($array, $recipient)
   {
+
     try {
+
       if (!defined('PASS')) {
         EmailData::defineConstants($recipient, $_ENV);
+        // if it is still not set, then throw an error
         if (!defined('PASS')) {
           throw new ForbiddenException('Email credentials (constant) not set');
         }
       }
+      $data = $array['data'];
 
-      $data = $array['data'] ?? [];
-      $viewPath = $array['viewPath'] ?? 'email';
-      $subject = $array['subject'] ?? throw new InvalidArgumentException('Subject is required');
-
-      // Render email content
       ob_start();
+      $viewPath = $array['viewPath'] ?? 'email';
       $viewContent = Utility::view($viewPath, compact('data'));
       $emailContent = ob_get_clean() ?: throw new ForbiddenException('Failed to render email content');
 
@@ -68,10 +68,21 @@ class ToSendEmail
         throw new InvalidArgumentException('Email address is required');
       }
 
-      // Determine name, with fallback to 'there'
-      $name = Utility::cleanSession($data['name'] ?? $array['name'] ?? 'there');
+      // check if $data['name'] or $array['name'] is set
+      if (isset($data['name'])) {
+        $name = $data['name'];
+      } elseif(isset($array['name'])) {
+        $name = $array['name'];
+      } else {
+        $name = 'there';
+      }
 
-      SendEmail::sendEmail($email, $name, $subject, $emogrifiedContent);
+      $name = Utility::cleanSession($name);
+
+
+
+
+      SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
     } catch (ForbiddenException $e) {
       Utility::showError($e);
     } catch (InvalidArgumentException $e) {
@@ -80,6 +91,7 @@ class ToSendEmail
       Utility::showError($e);
     }
   }
+
 
   /**
    * You have to generate the $var using the genEmailArray()
@@ -95,7 +107,7 @@ class ToSendEmail
 
 
     if (!defined('PASS')) {
-         EmailData::defineConstants($recipientType, $_ENV);
+      EmailData::defineConstants($recipientType, $_ENV);
     }
 
     $data = $var['data'];
