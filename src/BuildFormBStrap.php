@@ -122,6 +122,7 @@ class BuildFormBStrap
      * 
      *'jobSuitability'=> [ 'radio', 'Do you have any health conditions that would prevent you from meeting these intrinsic requirements for which the company might need to make reasonable adjustments? (If yes, please be aware that we may need to discuss these with you at your interview)  ', 'Yes', 'No' ],
      textarea 'rightToWorkMoreInfo'=> ['textarea', 'if you answered yes, what document will you provide to prove this?'],
+     *create a nonDisplay class which hide the div or element
      * @return void 
      */
 
@@ -611,7 +612,7 @@ HTML;
                 $nameKey = $this->entKey[$i];
                 echo "<div class='alert alert-danger' id='$nameKey' style='display: none;'><p id='error'></p></div>";
             } elseif ($this->entValue[$i] === 'showError') {
-                echo "<div id='setLoader' tabindex='-1' class='loader' style='display: none';></div>
+                echo "<div id='setLoader' tabindex='-1' class='loader nonDisplay'></div>
     <div class='alert alert-danger' id='$nameKey' style='display: none;'><p id='error'></p></div>";
             } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
