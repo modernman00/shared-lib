@@ -11,7 +11,8 @@ use Src\Exceptions\HttpException;
 
 class Token extends CheckToken
 {
-  public static function generateSendTokenEmail($data)
+  
+  public static function generateSendTokenEmail($data, $viewPath ="msg/customer/token" )
   {
     $id = $data['id'];
     // 1. check if email exists 
@@ -23,7 +24,7 @@ class Token extends CheckToken
 
     //3. ACCOMPANY EMAIL CONTENT             
     $emailData = ['token' => $deriveToken, 'email' => $email];
-    $generateEmailArray = ToSendEmail::genEmailArray(viewPath: "msg/customer/token", data: $emailData, subject: "TOKEN");
+    $generateEmailArray = ToSendEmail::genEmailArray(viewPath: $viewPath, data: $emailData, subject: "TOKEN");
 
     ToSendEmail::sendEmailWrapper(var: $generateEmailArray, recipientType: 'member');
   }
