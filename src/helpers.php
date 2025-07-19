@@ -1,11 +1,10 @@
 <?php
 
-namespace Src;
 
 use Src\Data\EmailData;
 use Src\SendEmail;
 use eftec\bladeone\BladeOne;
-use RuntimeException;
+// use RuntimeException;
 
 
 
@@ -165,7 +164,7 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
 
       echo $blade->run($viewFile, $data);
     } catch (\Throwable $e) {
-      Utility::showError($e);
+     showError($e);
     }
   }
 
@@ -189,7 +188,7 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
   {
     //TODO send text to the user with the code
     EmailData::defineConstants('admin', $_ENV);
-    $getIp = Utility::getUserIpAddr();
+    $getIp =getUserIpAddr();
     $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " .  date("h:i:sa") . "  and with this IP address: $getIp  <br><br>  IT Security Team";
 
     SendEmail::sendEmail($receivingEmail, 'logged-in', 'LOGGED-IN DETECTION', $msg);
