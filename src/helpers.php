@@ -588,7 +588,13 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
     }
 
   function viteAsset(string $path): string
-{
+{    // If you're in development, point to the dev server
+  $isDev = $_ENV['APP_ENV'] === 'local'; // Or use getenv(), or set a flag
+
+  if ($isDev) {
+    return "http://localhost:5173/$path"; // served by Vite dev server
+  }
+
     static $manifest = null;
 
         // Cache the manifest only once
