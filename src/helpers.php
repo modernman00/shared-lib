@@ -114,8 +114,8 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
         static $blade = null;
         if (!$blade) {
             // 1. Get validated paths
-            $viewsPath = realpath(__DIR__ . '/../../resources/views');
-            $cachePath = realpath(__DIR__ . '/../../bootstrap/cache');
+            $viewsPath = realpath(__DIR__ . '/../../../../resources/views');
+            $cachePath = realpath(__DIR__ . '/../../../../bootstrap/cache');
             $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
             $blade->setIsCompiled(false);
         }
