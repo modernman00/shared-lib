@@ -614,7 +614,14 @@ HTML;
             } elseif ($this->entValue[$i] === 'showError') {
                 echo "<div id='setLoader' tabindex='-1' class='loader noDisplay'></div>
     <div class='alert alert-danger noDisplay' id='$nameKey'><p id='error'></p></div>";
-            } else {
+            } elseif ($this->entValue[$i] == 'showPassword') {
+                echo <<<HTML
+                   <label class="checkbox">
+                    <input type="checkbox" id="showPassword_id">
+                        Show Password
+                    </label><br>
+                HTML;
+            }else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
