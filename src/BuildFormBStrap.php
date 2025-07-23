@@ -621,7 +621,24 @@ HTML;
                         Show Password
                     </label><br>
                 HTML;
-            }else {
+            } elseif ($this->entValue[$i][0] === 'button_captcha') {
+    $js = $this->entValue[$i]['js'];
+    $siteKey = $this->entValue[$i]['key'];
+    $action = $this->entValue[$i]['action'];
+    echo <<<HTML
+    <div class="mb-3">
+        <button 
+            type="button"
+            id="button"
+            class="btn btn-success btn-lg w-100 g-recaptcha"
+            data-sitekey="$siteKey" 
+            data-callback="$js" 
+            data-action="$action">
+            {$nameKey}
+        </button>
+    </div>
+    HTML;
+} else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
