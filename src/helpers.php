@@ -4,6 +4,8 @@
 use Src\Data\EmailData;
 use Src\SendEmail;
 use eftec\bladeone\BladeOne;
+use Src\LoggerFactory;
+use Monolog\Logger;
 // use RuntimeException;
 
 
@@ -612,6 +614,11 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
         }
 
         return '/public/build/' . $manifest[$path]['file'];
+}
+
+function logger(): Logger
+{
+    return LoggerFactory::getLogger();
 }
 
 

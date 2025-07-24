@@ -10,7 +10,32 @@ use Src\Utility;
 use Pelago\Emogrifier\CssInliner;
 use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
 use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
+use Src\LoggerFactory;
 
+
+/**
+ *   ## Setup
+ * In your bootstrap file (e.g., bootstrap.php):
+ * ```php
+ * use Src\LoggerFactory;
+ * use Monolog\Level;
+ * use Dotenv\Dotenv;
+ *
+ * require_once __DIR__ . '/vendor/autoload.php';
+ * $dotenv = Dotenv::createImmutable(__DIR__);
+ * $dotenv->load();
+ *
+ * $logger = LoggerFactory::createWithMailer(
+ *     name: $_ENV['LOGGER_NAME'] ?? 'app',
+ *     logPath: $_ENV['LOGGER_PATH'] ?? '/../../bootstrap/log/idecide.log',
+ *     mailerDsn: $_ENV['MAILER_DSN'] ?? null,
+ *     fromEmail: $_ENV['USER_EMAIL'] ?? 'no-reply@example.com',
+ *     toEmail: 'waledevtest@gmail.com',
+ *     level: Level::Error
+ * );
+ *
+ * require_once __DIR__ . '/helpers.php';
+ */
 class ToSendEmail
 {
   public static function genEmailArray($viewPath, $data, $subject, $file = null, $fileName = null): array
@@ -84,12 +109,15 @@ class ToSendEmail
 
       SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
     } catch (ForbiddenException $e) {
-      Utility::showError($e);
-    } catch (InvalidArgumentException $e) {
-      Utility::showError($e);
-    } catch (\Exception $e) {
-      Utility::showError($e);
-    }
+            Utility::showError($e);
+            throw $e;
+        } catch (InvalidArgumentException $e) {
+            Utility::showError($e);
+            throw $e;
+        } catch (\Throwable $e) {
+            Utility::showError($e);
+            throw $e;
+        }
   }
 
 

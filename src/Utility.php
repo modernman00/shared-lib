@@ -5,6 +5,10 @@ namespace Src;
 use Src\Data\EmailData;
 use Src\SendEmail;
 use eftec\bladeone\BladeOne;
+use Monolog\Logger;
+use Src\Exceptions\HttpException;
+use Src\LoggerFactory;
+use Monolog\Level;
 
 class Utility
 {
@@ -25,115 +29,115 @@ class Utility
   }
 
   /**
- * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
- *    'report_only' => false, // Enforce CSP (not just report)
- *    'extra' => [
- *        "script-src https://js.stripe.com",
- *        "frame-src https://js.stripe.com"
- *    ]
- * ]);
- * 
- * <!-- Script Tag -->
- *  <script nonce="{{ $csp_nonce }}">
- *    window.userData = @json(auth()->user());
- * </script>
+   * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
+   *    'report_only' => false, // Enforce CSP (not just report)
+   *    'extra' => [
+   *        "script-src https://js.stripe.com",
+   *        "frame-src https://js.stripe.com"
+   *    ]
+   * ]);
+   * 
+   * <!-- Script Tag -->
+   *  <script nonce="{{ $csp_nonce }}">
+   *    window.userData = @json(auth()->user());
+   * </script>
 
- * <!-- External Script -->
- * <script 
- *    nonce="{{ $csp_nonce }}" 
- *    src="https://platform.sharethis.com/loader.js"
- *    defer
- * ></script>
+   * <!-- External Script -->
+   * <script 
+   *    nonce="{{ $csp_nonce }}" 
+   *    src="https://platform.sharethis.com/loader.js"
+   *    defer
+   * ></script>
 
- * <!-- Inline Styles -->
- * <style nonce="{{ $csp_nonce }}">
- *    .featured { background: #f0f8ff; }
- * </style>
- * 
- * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
- * 
- * Phase Out unsafe-inline.
- * Move all inline scripts to external files
- * Use nonce-{{ $csp_nonce }} for critical inline code
- * 
- * Implement report-to
- * 'extra' => ["report-to csp-endpoint"]
- */
+   * <!-- Inline Styles -->
+   * <style nonce="{{ $csp_nonce }}">
+   *    .featured { background: #f0f8ff; }
+   * </style>
+   * 
+   * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
+   * 
+   * Phase Out unsafe-inline.
+   * Move all inline scripts to external files
+   * Use nonce-{{ $csp_nonce }} for critical inline code
+   * 
+   * Implement report-to
+   * 'extra' => ["report-to csp-endpoint"]
+   */
 
-public static function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
-{
+  public static function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
+  {
     try {
-        // ===== 1. CSP SETUP =====
-        $cspEnabled = $cspOptions['enable'] ?? true;
-        $reportOnly = $cspOptions['report_only'] ?? true;
-        $nonce = '';
+      // ===== 1. CSP SETUP =====
+      $cspEnabled = $cspOptions['enable'] ?? true;
+      $reportOnly = $cspOptions['report_only'] ?? true;
+      $nonce = '';
 
-        if ($cspEnabled) {
-            // Generate cryptographic nonce
-            $nonce = bin2hex(random_bytes(16));
+      if ($cspEnabled) {
+        // Generate cryptographic nonce
+        $nonce = bin2hex(random_bytes(16));
 
-            // Build dynamic CSP header
-            $directives = [
-                "default-src 'self'",
-                // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
-                "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
+        // Build dynamic CSP header
+        $directives = [
+          "default-src 'self'",
+          // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
+          "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
 
-                "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
+          "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
 
-                // Styles
-                "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-                "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+          // Styles
+          "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+          "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
 
-                // Fonts
-                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
+          // Fonts
+          "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
 
-                // Images
-                "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
+          // Images
+          "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
 
-                // Connections
-                "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
+          // Connections
+          "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
 
-                // Frames
-                "frame-src 'self' https://platform.sharethis.com",
+          // Frames
+          "frame-src 'self' https://platform.sharethis.com",
 
-                // Reporting
-                "report-uri " . ($cspOptions['report_uri'] ?? '/csp-report-log'),
-                "report-to csp-endpoint"
-            ];
-            // Add custom directives if provided
-            if (!empty($cspOptions['extra'])) {
-                $directives = array_merge($directives, $cspOptions['extra']);
-            }
-
-            header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
-                . implode('; ', $directives));
+          // Reporting
+          "report-uri " . ($cspOptions['report_uri'] ?? '/csp-report-log'),
+          "report-to csp-endpoint"
+        ];
+        // Add custom directives if provided
+        if (!empty($cspOptions['extra'])) {
+          $directives = array_merge($directives, $cspOptions['extra']);
         }
 
+        header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
+          . implode('; ', $directives));
+      }
 
-        // 2. Initialize Blade
-        static $blade = null;
-        if (!$blade) {
-            // 1. Get validated paths
-            $viewsPath = realpath(__DIR__ . '/../../resources/views');
-            $cachePath = realpath(__DIR__ . '/../../bootstrap/cache');
-            $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
-            $blade->setIsCompiled(false);
-        }
 
-        // 3. Normalize and verify view path
-        $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
-        $data['nonce'] = $nonce;
-        // 4. Render with debug
-        echo $blade->run($viewFile, $data);
+      // 2. Initialize Blade
+      static $blade = null;
+      if (!$blade) {
+        // 1. Get validated paths
+        $viewsPath = realpath(__DIR__ . '/../../resources/views');
+        $cachePath = realpath(__DIR__ . '/../../bootstrap/cache');
+        $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
+        $blade->setIsCompiled(false);
+      }
+
+      // 3. Normalize and verify view path
+      $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
+      $data['nonce'] = $nonce;
+      // 4. Render with debug
+      echo $blade->run($viewFile, $data);
     } catch (\Exception $e) {
-        error_log("VIEW ERROR: " . $e->getMessage());
-        return "<!-- VIEW ERROR -->\n"
-            . "<h1>Rendering Error</h1>\n"
-            . "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>\n"
-            . "<p>Template: " . htmlspecialchars($viewFile) . "</p>\n"
-            . "<p>Search Path: " . htmlspecialchars($viewsPath ?? '') . "</p>";
+      error_log("VIEW ERROR: " . $e->getMessage());
+      return "<!-- VIEW ERROR -->\n"
+        . "<h1>Rendering Error</h1>\n"
+        . "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>\n"
+        . "<p>Template: " . htmlspecialchars($viewFile) . "</p>\n"
+        . "<p>Search Path: " . htmlspecialchars($viewsPath ?? '') . "</p>";
     }
-}
+  }
 
   /**
    * Renders a BladeOne template with the given data.
@@ -268,7 +272,16 @@ public static function viewBuilderWithCSP(string $viewFile, array $data = [], ar
 
   // SHOW THE ERROR EXCEPTION MESSAGE
 
-  public static function showError(\Throwable $th): void
+  /**
+   * Display or log an error, using Monolog for logging.
+   *
+   * @param \Throwable $th The exception to handle
+   * @param Logger $logger Monolog logger instance
+   * @param bool $returnResponse If true, return the response instead of echoing it
+   * @return void|string Returns JSON response string if $returnResponse is true
+   */
+
+  public static function showErrorD(\Throwable $th): void
   {
     $isLocal = self::isLocalEnv();
     $statusCode = ($th instanceof \Src\Exceptions\HttpException)
@@ -301,6 +314,85 @@ public static function viewBuilderWithCSP(string $viewFile, array $data = [], ar
       ]);
     }
   }
+
+  /**
+   * Display or log an error, using Monolog for logging.
+   *
+   * @param \Throwable $th The exception to handle
+   * @param Logger $logger Monolog logger instance
+   * @param bool $returnResponse If true, return the response instead of echoing it
+   * ENSURE YOU HAVE THESE ENVIRONMENT VARIABLES SET:
+   * - LOGGER_NAME: The name of the logger channel (e.g., 'app', 'errors')
+   * - USER_EMAIL: The email address to send error alerts from
+   * - MAILER_DSN: The SMTP DSN for sending emails
+   * @return string|null JSON response if $returnResponse is true.
+   * @example - Utility::showError2($e, LoggerFactory::getLogger());
+   */
+  private static function showError2(\Throwable $th, Logger $logger): ?string
+  {
+    $isLocal = self::isLocalEnv();
+
+    // Determine HTTP status code
+    $statusCode = ($th instanceof HttpException)
+      ? $th->getStatusCode()
+      : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
+
+
+
+    // Set HTTP response code
+    if (!headers_sent()) {
+      http_response_code($statusCode);
+    } else {
+      $logger->warning('⚠️ Headers already sent, cannot set HTTP response code: ' . $statusCode);
+    }
+
+    // Map status codes or exception types to Monolog log levels
+        $logLevel = match (true) {
+            $statusCode >= 500 => Level::Critical, // Server errors (500-599)
+            $th instanceof \Src\Exceptions\ForbiddenException => Level::Alert, // Security-related
+            $th instanceof \Src\Exceptions\InvalidArgumentException => Level::Error, // Input errors
+            $th instanceof \Src\Exceptions\NotFoundException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\UnauthorisedException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\HttpException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\TooManyLoginAttemptsException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\TooManyRequestsException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\ValidationException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\CaptchaVerificationException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\RecaptchaCheatingException => Level::Alert,
+            $th instanceof \Src\Exceptions\RecaptchaFailedException || $th instanceof \Src\Exceptions\InvalidArgumentException => Level::Error,
+            $th instanceof \Src\Exceptions\RecaptchaBrokenException => Level::Critical,
+            default => Level::Error // Default for other exceptions
+        };
+
+    // Log the error with context
+    $logger->log($logLevel, '🚨 Application Error', [
+      'message' => $th->getMessage(),
+      'code' => $statusCode,
+      'file' => $th->getFile(),
+      'line' => $th->getLine(),
+      'trace' => $th->getTraceAsString(),
+    ]);
+
+    // 5. Prepare a nice message for the user or developer
+    $errorMessage = $th instanceof HttpException
+      ? $th->getMessage()
+      : ($isLocal
+        ? "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
+        : "An unexpected error occurred.");
+
+    // 6. Return or display the JSON error message
+    $response = json_encode(['error' => $errorMessage]);
+
+    return $response;
+  }
+
+  public static function showError($th): void {
+    $error = self::showError2($th, LoggerFactory::getLogger());
+    if ($error) {
+      echo $error;
+    }
+  }
+
 
 
   // public static FUNCTION TO SEND TEXT TO PHONE
@@ -463,9 +555,8 @@ public static function viewBuilderWithCSP(string $viewFile, array $data = [], ar
       $data = htmlspecialchars($data);
       $data = strip_tags($data);
       $data = filter_var($data, FILTER_SANITIZE_EMAIL);
-     
     }
-     return $data;
+    return $data;
   }
 
   // check if it is local env and return true or false
