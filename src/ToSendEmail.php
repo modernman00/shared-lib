@@ -1,17 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
+use InvalidArgumentException;
+use Pelago\Emogrifier\CssInliner;
+use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
+use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
 use Src\Data\EmailData;
 use Src\Exceptions\ForbiddenException;
-use InvalidArgumentException;
-use Src\SendEmail;
-use Src\Utility;
-use Pelago\Emogrifier\CssInliner;
-use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
-use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
-use Src\LoggerFactory;
-
 
 /**
  *   ## Setup
@@ -19,7 +17,7 @@ use Src\LoggerFactory;
  * ```php
  * use Src\LoggerFactory;
  * use Monolog\Level;
- * use Dotenv\Dotenv;
+ * use Dotenv\Dotenv;.
  *
  * require_once __DIR__ . '/vendor/autoload.php';
  * $dotenv = Dotenv::createImmutable(__DIR__);
@@ -38,77 +36,69 @@ use Src\LoggerFactory;
  */
 class ToSendEmail
 {
-  public static function genEmailArray($viewPath, $data, $subject, $file = null, $fileName = null): array
-  {
-    return [
-      'viewPath' => $viewPath,
-      'data' => $data,
-      'subject' => $subject,
-      'file' => $file,
-      'fileName' => $fileName
-    ];
-  }
+    public static function genEmailArray($viewPath, $data, $subject, $file = null, $fileName = null): array
+    {
+        return [
+          'viewPath' => $viewPath,
+          'data' => $data,
+          'subject' => $subject,
+          'file' => $file,
+          'fileName' => $fileName,
+        ];
+    }
 
-  /**
-   * 
-   * @param mixed $array 'viewPath' => string $viewPath, 'data' => array $data,'subject' => string $subject, 'file' => $file, 'fileName' => $fileName
-   * @param mixed $recipient - member or admin
-   * @return void 
-   */
+    /**
+     * @param mixed $array 'viewPath' => string $viewPath, 'data' => array $data,'subject' => string $subject, 'file' => $file, 'fileName' => $fileName
+     * @param mixed $recipient - member or admin
+     */
+    public static function sendEmailGeneral($array, $recipient)
+    {
+        try {
+            if (!defined('PASS')) {
+                EmailData::defineConstants($recipient, $_ENV);
+                // if it is still not set, then throw an error
+                if (!defined('PASS')) {
+                    throw new ForbiddenException('Email credentials (constant) not set');
+                }
+            }
+            $data = $array['data'];
 
-  public static function sendEmailGeneral($array, $recipient)
-  {
+            ob_start();
+            $viewPath = $array['viewPath'] ?? 'email';
+            $viewContent = Utility::view($viewPath, compact('data'));
+            $emailContent = ob_get_clean() ?: throw new ForbiddenException('Failed to render email content');
 
-    try {
+            // Emogrify the HTML for email client compatibility
+            $cssInliner = CssInliner::fromHtml($emailContent)->inlineCss();
+            $domDocument = $cssInliner->getDomDocument();
+            HtmlPruner::fromDomDocument($domDocument)
+              ->removeElementsWithDisplayNone()
+              ->removeRedundantClassesAfterCssInlined($cssInliner);
+            $converter = CssToAttributeConverter::fromDomDocument($domDocument)
+              ->convertCssToVisualAttributes();
+            $emogrifiedContent = $converter->render();
 
-      if (!defined('PASS')) {
-        EmailData::defineConstants($recipient, $_ENV);
-        // if it is still not set, then throw an error
-        if (!defined('PASS')) {
-          throw new ForbiddenException('Email credentials (constant) not set');
-        }
-      }
-      $data = $array['data'];
+            ob_end_clean();
 
-      ob_start();
-      $viewPath = $array['viewPath'] ?? 'email';
-      $viewContent = Utility::view($viewPath, compact('data'));
-      $emailContent = ob_get_clean() ?: throw new ForbiddenException('Failed to render email content');
+            // Determine email recipient
+            $email = Utility::checkInputEmail($data['email'] ?? $array['email'] ?? '');
+            if (empty($email)) {
+                throw new InvalidArgumentException('Email address is required');
+            }
 
-      // Emogrify the HTML for email client compatibility
-      $cssInliner = CssInliner::fromHtml($emailContent)->inlineCss();
-      $domDocument = $cssInliner->getDomDocument();
-      HtmlPruner::fromDomDocument($domDocument)
-        ->removeElementsWithDisplayNone()
-        ->removeRedundantClassesAfterCssInlined($cssInliner);
-      $converter = CssToAttributeConverter::fromDomDocument($domDocument)
-        ->convertCssToVisualAttributes();
-      $emogrifiedContent = $converter->render();
+            // check if $data['name'] or $array['name'] is set
+            if (isset($data['name'])) {
+                $name = $data['name'];
+            } elseif (isset($array['name'])) {
+                $name = $array['name'];
+            } else {
+                $name = 'there';
+            }
 
-      ob_end_clean();
+            $name = Utility::cleanSession($name);
 
-      // Determine email recipient
-      $email = Utility::checkInputEmail($data['email'] ?? $array['email'] ?? '');
-      if (empty($email)) {
-        throw new InvalidArgumentException('Email address is required');
-      }
-
-      // check if $data['name'] or $array['name'] is set
-      if (isset($data['name'])) {
-        $name = $data['name'];
-      } elseif(isset($array['name'])) {
-        $name = $array['name'];
-      } else {
-        $name = 'there';
-      }
-
-      $name = Utility::cleanSession($name);
-
-
-
-
-      SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
-    } catch (ForbiddenException $e) {
+            SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
+        } catch (ForbiddenException $e) {
             Utility::showError($e);
             throw $e;
         } catch (InvalidArgumentException $e) {
@@ -118,40 +108,36 @@ class ToSendEmail
             Utility::showError($e);
             throw $e;
         }
-  }
-
-
-  /**
-   * You have to generate the $var using the genEmailArray()
-   * $var is an array of the viewPath, data, subject, email
-   * 'viewPath' => ,
-   *  data'=>
-   * 'subject'=>
-   * recipientType can be either member or admin
-   */
-
-  public static function sendEmailWrapper($var, $recipientType)
-  {
-
-
-    if (!defined('PASS')) {
-      EmailData::defineConstants($recipientType, $_ENV);
     }
 
-    $data = $var['data'];
+    /**
+     * You have to generate the $var using the genEmailArray()
+     * $var is an array of the viewPath, data, subject, email
+     * 'viewPath' => ,
+     *  data'=>
+     * 'subject'=>
+     * recipientType can be either member or admin.
+     */
+    public static function sendEmailWrapper($var, $recipientType)
+    {
+        if (!defined('PASS')) {
+            EmailData::defineConstants($recipientType, $_ENV);
+        }
 
-    ob_start();
-    $emailPage = Utility::view($var['viewPath'], compact('data'));
-    $emailContent = ob_get_contents();
-    ob_end_clean();
+        $data = $var['data'];
 
-    $email =  Utility::checkInputEmail($data['email']);
-    $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
-    $file = $var['file'];
-    $filename = $var['fileName'];
+        ob_start();
+        $emailPage = Utility::view($var['viewPath'], compact('data'));
+        $emailContent = ob_get_contents();
+        ob_end_clean();
 
-    //  mail("waledevtest@gmail.com", "TEST_EMAIL", $email);
+        $email = Utility::checkInputEmail($data['email']);
+        $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
+        $file = $var['file'];
+        $filename = $var['fileName'];
 
-    SendEmail::sendEmail($email, $name, $var['subject'], $emailContent, $file, $filename);
-  }
+        //  mail("waledevtest@gmail.com", "TEST_EMAIL", $email);
+
+        SendEmail::sendEmail($email, $name, $var['subject'], $emailContent, $file, $filename);
+    }
 }

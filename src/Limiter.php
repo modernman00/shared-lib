@@ -1,23 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
-
-use Src\PdoStorage;
-
 
 use Src\Exceptions\TooManyRequestsException;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 
-
-
 class Limiter extends Db
 {
-
     private const int MAX_ATTEMPTS = 5;
     private const int TIME_WINDOW = 15 * 60;
-    public static $argLimiter;
-    public static $ipLimiter;
 
+    public static $argLimiter;
+
+    public static $ipLimiter;
 
     /*************  ✨ Windsurf Command ⭐  *************/
     /**
@@ -25,14 +22,14 @@ class Limiter extends Db
      * Utilizes a fixed window policy to track the number of attempts within a specified time window.
      * If the limit is exceeded, sets a 'Retry-After' header indicating when the next attempt is allowed.
      *
-     * @param string $arg The argument to be rate-limited, typically an email address in this format $email.
-     * @throws TooManyRequestsException if the number of attempts exceeds the allowed limit within the time window.
+     * @param string $arg the argument to be rate-limited, typically an email address in this format $email
+     *
+     * @throws TooManyRequestsException if the number of attempts exceeds the allowed limit within the time window
      */
 
     /*******  e4bdaa72-218f-4b19-b900-f7a504ff2c2a  *******/
     public static function limit($arg)
     {
-
         try {
             $ipAddress = Utility::getUserIpAddr();
 
@@ -45,7 +42,7 @@ class Limiter extends Db
                 'interval' => sprintf('%d seconds', self::TIME_WINDOW),
             ], $storage);
 
-            // remove $ from $email 
+            // remove $ from $email
             $argKey = str_replace('$', '', "$arg");
 
             // Check rate limit
@@ -66,7 +63,6 @@ class Limiter extends Db
                 throw new TooManyRequestsException('Too many login attempts. Please try again in ' . ceil($retryAfter / 60) . ' minutes.');
             }
         } catch (\Throwable $e) {
-
             Utility::showError($e);
         }
     }

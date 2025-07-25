@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Sanitise;
 
 use Src\AllFunctionalities;
 
-
 class Sanitise extends AllFunctionalities
 {
     public array $error = [];
+
     public array $cleanData;
 
     public function __construct(private array $formData, private ?array $dataLength = null)
@@ -26,27 +28,30 @@ class Sanitise extends AllFunctionalities
     private function validateEmail(): static
     {
         if (isset($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
-            $this->error[] = "Invalid Email Format";
+            $this->error[] = 'Invalid Email Format';
         }
+
         return $this;
     }
 
     private function validatePassword(): static
     {
         if (isset($this->formData['password']) && isset($this->formData['confirm_password']) && $this->formData['password'] !== $this->formData['confirm_password']) {
-            $this->error[] = "Your passwords do not match";
+            $this->error[] = 'Your passwords do not match';
         }
+
         return $this;
     }
 
     private function checkEmpty(): static
     {
         foreach ($this->formData as $key => $value) {
-            if (empty($value) && ($value == "" || $value == 'select')) {
+            if (empty($value) && ($value == '' || $value == 'select')) {
                 $cleanNameKey = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $key));
                 $this->error[] = "The $cleanNameKey question is required";
             }
         }
+
         return $this;
     }
 
@@ -64,6 +69,7 @@ class Sanitise extends AllFunctionalities
                 }
             }
         }
+
         return $this;
     }
 
@@ -72,6 +78,7 @@ class Sanitise extends AllFunctionalities
         foreach ($this->formData as $key => $value) {
             $this->formData[$key] = htmlspecialchars(strip_tags(trim(stripslashes($value))));
         }
+
         return $this;
     }
 
@@ -98,6 +105,7 @@ class Sanitise extends AllFunctionalities
     public function getCleanData(): array
     {
         $this->runValidation();
+
         return $this->cleanData;
     }
 }

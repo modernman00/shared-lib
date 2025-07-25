@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Data;
 
 class EmailData
@@ -9,6 +11,7 @@ class EmailData
      *
      * @param string $sender 'member' or 'admin'
      * @param array $config Environment config (e.g. $_ENV)
+     *
      * @return array
      */
     public static function getEmailConfig(string $sender, array $config): array
@@ -20,12 +23,12 @@ class EmailData
             'password'    => $config["{$prefix}_PASSWORD"] ?? null,
             'senderName'  => $config["{$prefix}_SENDER"] ?? null,
             'senderEmail' => $config["{$prefix}_EMAIL"] ?? null,
-            'testEmail'   => $config["TEST_EMAIL"] ?? null,
+            'testEmail'   => $config['TEST_EMAIL'] ?? null,
         ];
     }
 
     /**
-     * Define constants (optional; not recommended in modern code)
+     * Define constants (optional; not recommended in modern code).
      */
     public static function defineConstants(string $sender, array $config): void
     {
@@ -38,4 +41,3 @@ class EmailData
         define('TEST_EMAIL', $data['testEmail']);
     }
 }
-

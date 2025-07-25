@@ -1,27 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use \PDOException;
-use Src\Db;
-use Src\Utility;
-use Src\Exceptions\NotFoundException;
+use PDOException;
 use Src\Exceptions\BadRequestException;
+use Src\Exceptions\NotFoundException;
 
 /**
  * Class Update
  * Handles updating records in a database table.
- *
- * @package Src
  */
-
 class Update extends Db
 {
-
-    public function __construct(public string $table) {}
+    public function __construct(public string $table)
+    {
+    }
 
     /**
-     * Update a specific column in the table based on an identifier
+     * Update a specific column in the table based on an identifier.
      *
      * @param string $column The column to update
      * @param int|string|array $columnAnswer The new value for the column
@@ -46,10 +44,10 @@ class Update extends Db
         } catch (PDOException $e) {
             // Log or handle the exception as needed
             Utility::showError($e);
+
             return false;
         }
     }
-
 
     public function updateTableMulti(string $column, string $columnAnswer, array $identifiers)
     {
@@ -75,10 +73,10 @@ class Update extends Db
             $result = parent::connect2()->prepare($query);
 
             $result->execute($params);
+
             return $result;
         } catch (PDOException $e) {
             Utility::showError($e);
-            PHP_EOL;
         }
     }
 
@@ -104,13 +102,12 @@ class Update extends Db
 
             $result = parent::connect2()->prepare($query);
             $result->execute($params);
+
             return $result;
         } catch (PDOException $e) {
             Utility::showError($e);
-            PHP_EOL;
         }
     }
-
 
     public function updateMultiplePOST(array $data, string $identifier): bool
     {
@@ -128,7 +125,7 @@ class Update extends Db
             unset($data[$identifier]);     // Remove from SET clause
 
             if (empty($data)) {
-                throw new BadRequestException("No data to update.");
+                throw new BadRequestException('No data to update.');
             }
 
             // Build SQL
@@ -145,6 +142,7 @@ class Update extends Db
             return $stmt->execute($values);
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return false;
         }
     }

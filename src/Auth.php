@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use Src\Db;
-use Src\Utility;
-use Src\JwtHandler;
 use Src\Exceptions\HttpException;
 use Src\Exceptions\UnauthorisedException;
 
 class Auth extends JwtHandler
 {
     protected $headers;
+
     protected $token;
 
     public function __construct($headers)
@@ -25,13 +25,14 @@ class Auth extends JwtHandler
             if (array_key_exists('waleToken', $_COOKIE) && !empty(trim($this->headers))) {
                 $data = $this->jwtDecodeData($this->headers);
                 if (isset($data['auth']) && isset($data['data']->id)) {
-                    $fetchData =  $this->fetchUser($data['data']->id);
+                    $fetchData = $this->fetchUser($data['data']->id);
                 } else {
-                    throw new UnauthorisedException("Could not use token to locate users");
+                    throw new UnauthorisedException('Could not use token to locate users');
                 }
             } else {
-                throw new HttpException("Header not found");
+                throw new HttpException('Header not found');
             }
+
             return $fetchData;
         } catch (\Throwable $th) {
             Utility::showError($th);
@@ -46,11 +47,11 @@ class Auth extends JwtHandler
     protected function fetchUser($user_id)
     {
         try {
-            $query = "SELECT `email` FROM `account` WHERE `id`=?";
+            $query = 'SELECT `email` FROM `account` WHERE `id`=?';
             $query_stmt = Db::connect2()->prepare($query);
             $query_stmt->execute([$user_id]);
             if ($query_stmt->rowCount()) {
-                return "SUCCESSFUL";
+                return 'SUCCESSFUL';
             } else {
                 return null;
             }

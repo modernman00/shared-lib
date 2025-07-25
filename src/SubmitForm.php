@@ -1,11 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use Src\Db;
-use Src\Utility;
 use Src\Exceptions\HttpException;
-
 
 class SubmitForm extends Db
 {
@@ -25,21 +24,23 @@ class SubmitForm extends Db
             $query = $connection->prepare($stmt);
             if (!$query) {
                 http_response_code(417);
-                throw new HttpException("Not able to insert data", 1);
+                throw new HttpException('Not able to insert data', 1);
             }
             foreach ($field as $keys => $values) {
                 if (!$query->bindValue(":$keys", $values)) {
-                    throw new HttpException("Not able to insert data");
+                    throw new HttpException('Not able to insert data');
                 }
             }
+
             return $query->execute();
         } catch (\PDOException $e) {
             Utility::showError($e);
+
             return false;
         } catch (\Throwable $th) {
             Utility::showError($th);
+
             return false;
         }
-        //
     }
 }

@@ -1,15 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use PDOException;
-use Src\Db;
-use Src\Exceptions\HttpException;
 use PDO;
+use PDOException;
+use Src\Exceptions\HttpException;
 
 class AllFunctionalities extends Db
 {
-
     /**
      * @psalm-param 'email'|'id' $identifier
      */
@@ -18,12 +18,12 @@ class AllFunctionalities extends Db
         try {
             $query = "UPDATE $table SET $column =? WHERE $identifier = ?";
             $result = $this->connect()->prepare($query);
+
             return $result->execute([$column_ans, $identifier_ans]);
         } catch (PDOException $e) {
             Utility::showError($e);
         }
     }
-
 
     /**
      * @psalm-param 'events'|'post' $table
@@ -35,18 +35,17 @@ class AllFunctionalities extends Db
         try {
             $query = "UPDATE $table SET $column =? WHERE $identifier = ?";
             $result = parent::connect2()->prepare($query);
+
             return $result->execute([$column_ans, $identifier_ans]);
         } catch (PDOException $e) {
             Utility::showError($e);
         }
     }
 
-
-
     // UPDATE MULTIPLE PARAMETER DYNAMICALLY
 
     /**
-     * Undocumented function
+     * Undocumented function.
      *
      * @param array $data - the array from the $_POST
      * @param string $table
@@ -67,13 +66,14 @@ class AllFunctionalities extends Db
 
             $data[$identifier] = $id;
 
-
             $sql = "UPDATE $table SET $implodeKey=? WHERE $identifier =?";
             // example - 'UPDATE register SET title=?, first_name=?, second_name=? WHERE id =?'
             $stmt = $this->connect()->prepare($sql);
+
             return $stmt->execute($implodeValue);
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return false;
         }
     }
@@ -87,13 +87,13 @@ class AllFunctionalities extends Db
         $stmt = parent::connect2()->prepare($query);
 
         if (!$stmt) {
-            throw new HttpException("Could not connect");
+            throw new HttpException('Could not connect');
         }
 
         $stmt->bindParam(':likesValue', $likesValue, PDO::PARAM_INT);
         $stmt->bindParam(':whereValue', $whereValue, PDO::PARAM_INT);
         if (!$stmt->execute()) {
-            throw new HttpException("Could not execute query");
+            throw new HttpException('Could not execute query');
         }
     }
 }

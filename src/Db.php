@@ -1,25 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use \PDO;
-use \PDOException;
-use Src\Utility;
-use Src\CheckToken;
+use PDO;
+use PDOException;
 
 class Db extends CheckToken
 {
-    public const BR = "<br>"; // can't be changed
+    public const BR = '<br>'; // can't be changed
+
     private static $conn = null;
 
     private static function dbVariables(): array
     {
         return [
             'host' => $_ENV['DB_HOST'],
-            'name' => $_ENV[ 'DB_NAME'],
-            'username' => $_ENV[ 'DB_USERNAME'],
-            'password' => $_ENV[ "DB_PASSWORD"],
-            'charset' => 'utf8mb4'
+            'name' => $_ENV['DB_NAME'],
+            'username' => $_ENV['DB_USERNAME'],
+            'password' => $_ENV['DB_PASSWORD'],
+            'charset' => 'utf8mb4',
         ];
     }
 
@@ -30,9 +31,9 @@ class Db extends CheckToken
         try {
             if (!isset($conn)) {
                 $dbVar = self::dbVariables();
-                $conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'],  password: $dbVar['password'], options: array(
-                    PDO::ATTR_PERSISTENT => true
-                ));
+                $conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
+                    PDO::ATTR_PERSISTENT => true,
+                ]);
 
                 $conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
                 $conn->setAttribute(attribute: PDO::ATTR_ERRMODE, value: PDO::ERRMODE_EXCEPTION);
@@ -59,14 +60,14 @@ class Db extends CheckToken
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ]);
             }
+
             return self::$conn;
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return null;
         }
     }
-
-
 
     public function connectSql()
     {

@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Exceptions; // Adjust path if needed
 
 class TooManyLoginAttemptsException extends HttpException
 {
-
-  public function __construct(string $message = "Too many login attempts. Please try again later.")
-  {
-    parent::__construct($message, 429);
-  }
+    public function __construct(string $message = 'Too many login attempts. Please try again later.')
+    {
+        parent::__construct($message, 429);
+    }
 }

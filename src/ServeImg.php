@@ -1,19 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
 /**
  * Dynamically serve an image file from a specified/protected subfolder instead of the public folder
  * 🧪 How to Use It Dynamically In your router or controller handler:
- * $serve = new ServeImgController(); 
+ * $serve = new ServeImgController();
  * $serve->serve($folder, $img);
  * Then call it like: $url =  /serveImage.php?folder=passport&img=photo123.jpg
  *  $data['staffShareCodeImg'] = $url;
- * <p><a href="{{ $data['staffShareCodeImg'] }}" target="_blank">View the Right to Work Document</a></p> <p><img src="{{ $data['staffShareCodeImg'] }}" alt="{{ $data['carerName'] }}'s Right to Work Document" style="max-width: 100%; height: auto; border: 1px solid #ccc;"></p>
- * 
-
+ * <p><a href="{{ $data['staffShareCodeImg'] }}" target="_blank">View the Right to Work Document</a></p> <p><img src="{{ $data['staffShareCodeImg'] }}" alt="{{ $data['carerName'] }}'s Right to Work Document" style="max-width: 100%; height: auto; border: 1px solid #ccc;"></p>.
  */
-
 class ServeImg
 {
     // Define the base image root folder (adjust as needed)
@@ -26,7 +25,8 @@ class ServeImg
     protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
 
     /**
-     * Dynamically serve an image file from a specified subfolder
+     * Dynamically serve an image file from a specified subfolder.
+     *
      * @param string $folder Subdirectory under baseDir (e.g., 'passport')
      * @param string $imgName File name (e.g., 'user123.jpg')
      */

@@ -1,5 +1,20 @@
 name: CI/CD Pipeline
 
+# # Fix code formatting issues
+# ./dev cs-fix
+
+# # Check formatting without fixing (like CI does)
+# ./dev cs-fix --dry-run
+
+# # Run static analysis
+# ./dev analyze
+
+# # Check for security vulnerabilities
+# ./dev audit
+
+# # Run everything (same as CI pipeline)
+# ./dev ci
+
 on:
   push:
     branches: [ main, develop ]

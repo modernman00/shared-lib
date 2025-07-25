@@ -1,31 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\Exceptions;
 
 use Exception;
 
-
 class CaptchaVerificationException extends HttpException
 {
-  public function __construct(string $message = 'reCAPTCHA verification failed.')
-  {
-    parent::__construct($message, 400); // 400 = Bad Request
-  }
+    public function __construct(string $message = 'reCAPTCHA verification failed.')
+    {
+        parent::__construct($message, 400); // 400 = Bad Request
+    }
 }
 
 /**
- * 🚨 reCAPTCHA Exception Family
- * 
- * Like special alarm bells that ring differently 
+ * 🚨 reCAPTCHA Exception Family.
+ *
+ * Like special alarm bells that ring differently
  * depending on what went wrong
  */
 
 /**
  * Grandpa of all reCAPTCHA exceptions
- * (Used when we don't need to be specific)
+ * (Used when we don't need to be specific).
  */
-class RecaptchaException extends Exception {
-    public function __construct(string $message = "CAPTCHA verification problem", int $code = 400) {
+class RecaptchaException extends Exception
+{
+    public function __construct(string $message = 'CAPTCHA verification problem', int $code = 400)
+    {
         parent::__construct($message, $code);
     }
 }
@@ -34,10 +37,12 @@ class RecaptchaException extends Exception {
  * When users mess up (they can try again)
  * - Forgot to check the box
  * - Expired token
- * - Incorrect solution
+ * - Incorrect solution.
  */
-class RecaptchaFailedException extends RecaptchaException {
-    public function __construct(string $message = "CAPTCHA verification failed") {
+class RecaptchaFailedException extends RecaptchaException
+{
+    public function __construct(string $message = 'CAPTCHA verification failed')
+    {
         parent::__construct($message, 400); // HTTP 400 Bad Request
     }
 }
@@ -46,10 +51,12 @@ class RecaptchaFailedException extends RecaptchaException {
  * When we catch suspicious behavior
  * - Action mismatch
  * - Low score
- * - Potential bot activity
+ * - Potential bot activity.
  */
-class RecaptchaCheatingException extends RecaptchaException {
-    public function __construct(string $message = "Suspicious activity detected") {
+class RecaptchaCheatingException extends RecaptchaException
+{
+    public function __construct(string $message = 'Suspicious activity detected')
+    {
         parent::__construct($message, 403); // HTTP 403 Forbidden
     }
 }
@@ -58,10 +65,12 @@ class RecaptchaCheatingException extends RecaptchaException {
  * When our system has problems
  * - Missing API key
  * - Google service down
- * - Network issues
+ * - Network issues.
  */
-class RecaptchaBrokenException extends RecaptchaException {
-    public function __construct(string $message = "CAPTCHA service unavailable") {
+class RecaptchaBrokenException extends RecaptchaException
+{
+    public function __construct(string $message = 'CAPTCHA service unavailable')
+    {
         parent::__construct($message, 503); // HTTP 503 Service Unavailable
     }
 }

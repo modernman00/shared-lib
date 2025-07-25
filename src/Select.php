@@ -1,30 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
 use PDO;
 use PDOException;
-use Src\Db;
-use Src\Utility;
 
 class Select extends Db
 {
-
     /**
      * Generates a SQL query based on the selection type and parameters provided.
      *
      * @param string $selection The type of selection (e.g., 'SELECT_ALL', 'SELECT_ONE').
-     * @param string $table The name of the table to query.
-     * @param string|null $identifier1 The first identifier for the query (optional).
-     * @param string|null $identifier2 The second identifier for the query (optional).
-     * @param mixed $identifier3 Additional identifier for more complex queries (optional).
-     * @param string|null $column The column to select (optional).
-     * @param string|null $column2 A second column to select (optional).
-     * @param string|null $orderBy The ORDER BY clause (optional).
-     * @param string|null $limit The LIMIT clause (optional).
-     * @param array|null $colArray An array of columns to select dynamically (optional).
+     * @param string $table the name of the table to query
+     * @param string|null $identifier1 the first identifier for the query (optional)
+     * @param string|null $identifier2 the second identifier for the query (optional)
+     * @param mixed $identifier3 additional identifier for more complex queries (optional)
+     * @param string|null $column the column to select (optional)
+     * @param string|null $column2 a second column to select (optional)
+     * @param string|null $orderBy the ORDER BY clause (optional)
+     * @param string|null $limit the LIMIT clause (optional)
+     * @param array|null $colArray an array of columns to select dynamically (optional)
      *
-     * @return string|null The generated SQL query or null if no valid selection type is provided.
+     * @return string|null the generated SQL query or null if no valid selection type is provided
      */
     public static function formAndMatchQuery(
         string $selection,
@@ -38,13 +37,12 @@ class Select extends Db
         ?string $limit = null,
         ?array $colArray = null
     ): string|null {
-        // for col dynamically - 
+        // for col dynamically -
         if ($colArray) {
             $implodeColArray = implode(separator: ', ', array: $colArray);
         }
 
         // validate or escape $table and $column
-
 
         $table = isset($table) ? Utility::checkInput(data: $table) : null;
         $column = isset($column) ? Utility::checkInput(data: $column) : null;
@@ -53,7 +51,6 @@ class Select extends Db
         // $identifier2 = isset($identifier2) ? checkInput(data: $identifier2) : null;
         // $orderBy = isset($orderBy) ? checkInput(data: $orderBy) : null;
         // $limit = isset($limit) ? checkInput(data: $limit) : null;
-
 
         return match ($selection) {
             'SELECT_OR' => "SELECT * FROM $table WHERE $identifier1 =? OR $identifier2 = ? $orderBy $limit",
@@ -86,9 +83,9 @@ class Select extends Db
     }
 
     /**
-     * @param string $table 
+     * @param string $table
      * @param string $query SELECT * FROM account WHERE id = ? || SELECT * FROM $table WHERE $dev = ? AND $dev2 = ?
-     * @param array|null $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"]; 
+     * @param array|null $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"];
      */
     public function selectFn(string $query, ?array $bind = null): array|int|string
     {
@@ -96,9 +93,11 @@ class Select extends Db
             $sql = $query;
             $result = $this->connect()->prepare($sql);
             $result->execute($bind);
+
             return $result->fetchAll();
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return false;
         }
     }
@@ -109,35 +108,38 @@ class Select extends Db
             $sql = $query;
             $result = $this->connect()->prepare($sql);
             $result->execute($bind);
+
             return $result->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return false;
         }
     }
 
     /**
-     * 
-     * @param string $query 
-     * @param array|null $bind 
-     * @return string|array|int 
+     * @param string $query
+     * @param array|null $bind
+     *
+     * @return string|array|int
      */
-
     public static function selectFn2(string $query, ?array $bind = null): string|array|int
     {
         try {
             $sql = $query;
             $result = self::connect2()->prepare($sql);
             $result->execute($bind);
+
             return $result->fetchAll();
         } catch (PDOException $e) {
             Utility::showError($e);
+
             return false;
         }
     }
 
     /**
-     * Undocumented function
+     * Undocumented function.
      *
      * @param string $query - SELECT * FROM account WHERE id = ? || SELECT * FROM $table WHERE $dev = ? AND $dev2 = ?
      * @param array $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"];
@@ -150,44 +152,46 @@ class Select extends Db
             $sql = $query;
             $result = $this->connect()->prepare(query: $sql);
             $result->execute(params: $bind);
+
             return $result->rowCount();
         } catch (PDOException $e) {
             Utility::showError(th: $e);
+
             return false;
         }
     }
 
     /**
-     * 
-     * @param string $query 
-     * @param array|null $bind 
-     * @return string|array|int 
+     * @param string $query
+     * @param array|null $bind
+     *
+     * @return string|array|int
      */
-
     public static function selectCountFn2(string $query, ?array $bind = null): string|array|int
     {
         try {
             $sql = $query;
             $result = self::connect2()->prepare(query: $sql);
             $result->execute(params: $bind);
+
             return $result->rowCount();
         } catch (PDOException $e) {
             Utility::showError(th: $e);
+
             return false;
         }
     }
 
     /**
-     * 
-     * @param mixed $table 
-     * @return mixed 
+     * @param mixed $table
+     *
+     * @return mixed
      */
-
     public function selectCountAll($table): mixed
     {
-
         try {
             $query = "SELECT COUNT(*) FROM $table";
+
             return $this->connect()->query($query)->fetchColumn();
         } catch (PDOException $e) {
             Utility::showError(th: $e);
@@ -195,27 +199,25 @@ class Select extends Db
     }
 
     /**
-     * 
      * @param array $array [selection => SELECT_ALL, table =>account, identifier1 =>id, identifier2(null), bind=>[$id]]
      * @param mixed $callback the Select function albeit in string example - selectCountFn, selectFn
      * @param string $switch to switch between ONE_IDENTIFIER or TWO_IDENTIFIERS
-     * @return mixed 
+     *
+     * @return mixed
      */
-
     public static function combineSelect(array $array, $callback, string $switch)
     {
         try {
-
             $query = match ($switch) {
-                "ONE_IDENTIFIER_COLUMN" => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column']),
+                'ONE_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column']),
 
-                "ONE_IDENTIFIER_COLUMN_ID" => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], identifier1: $array['identifier1']),
+                'ONE_IDENTIFIER_COLUMN_ID' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], identifier1: $array['identifier1']),
 
-                "TWO_IDENTIFIER_COLUMN" => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], column2: $array['column2']),
+                'TWO_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], column2: $array['column2']),
 
-                "ONE_IDENTIFIER" => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1']),
+                'ONE_IDENTIFIER' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1']),
 
-                "TWO_IDENTIFIERS" => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1'], identifier2: $array['identifier2']),
+                'TWO_IDENTIFIERS' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1'], identifier2: $array['identifier2']),
             };
 
             return self::$callback($query, $array['bind'] ?? null);

@@ -1,19 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use \Firebase\JWT\JWT;
-use \Firebase\JWT\BeforeValidException;
-use \Firebase\JWT\SignatureInvalidException;
-use \Firebase\JWT\ExpiredException;
-
+use Firebase\JWT\BeforeValidException;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
+use Firebase\JWT\SignatureInvalidException;
 
 class JwtHandler
 {
     protected $jwtSecret;
+
     protected $token;
+
     protected $issuedAt;
+
     protected $expired;
+
     protected $jwt;
 
     public function __construct()
@@ -25,31 +30,32 @@ class JwtHandler
         //Token validity  2 hours (7300)
         $this->expired = $this->issuedAt + getenv('COOKIE_EXPIRE');
 
-        // secret word or signature 
+        // secret word or signature
         $this->jwtSecret = getenv('JWT_TOKEN');
     }
 
-    // encoding the token 
+    // encoding the token
 
     public function jwtEncodeData($serverName, $data)
     {
-        $this->token = array(
+        $this->token = [
             'iss' => $serverName,
             'aud' => $serverName,
             'iat' => $this->issuedAt,
             'nbf' => $this->issuedAt,
             'exp' => $this->expired,
-            'data' => $data
-        );
+            'data' => $data,
+        ];
         $this->jwt = JWT::encode($this->token, $this->jwtSecret, 'HS512');
+
         return $this->jwt;
     }
 
     protected function errMsg($msg)
     {
         return [
-            "auth" => 0,
-            "message" => $msg
+            'auth' => 0,
+            'message' => $msg,
         ];
     }
 
@@ -57,10 +63,11 @@ class JwtHandler
     public function jwtDecodeData($jwtToken)
     {
         try {
-            $decode = JWT::decode($jwtToken, $this->jwtSecret, array('HS512'));
+            $decode = JWT::decode($jwtToken, $this->jwtSecret, ['HS512']);
+
             return [
-                "auth" => 1,
-                "data" => $decode->data
+                'auth' => 1,
+                'data' => $decode->data,
             ];
         } catch (ExpiredException | SignatureInvalidException | BeforeValidException | \DomainException | \InvalidArgumentException | \UnexpectedValueException $e) {
             return $this->errMsg($e->getMessage());

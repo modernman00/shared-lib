@@ -1,17 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
 class LaravelHelper
 {
-  
-
     /**
      * Get the base URL of the application.
      */
     public static function baseUrl(): string
     {
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+
         return $scheme . '://' . $_SERVER['HTTP_HOST'];
     }
 
@@ -40,6 +41,7 @@ class LaravelHelper
         foreach ($params as $key => $val) {
             $uri = str_replace("{{$key}}", urlencode($val), $uri);
         }
+
         return self::url($uri);
     }
 
@@ -56,10 +58,13 @@ class LaravelHelper
      */
     public static function csrfToken(): string
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         if (!isset($_SESSION['_csrf_token'])) {
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
         }
+
         return $_SESSION['_csrf_token'];
     }
 
@@ -76,7 +81,10 @@ class LaravelHelper
      */
     public static function sessionGet(string $key, $default = null): mixed
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
         return $_SESSION[$key] ?? $default;
     }
 
@@ -85,7 +93,9 @@ class LaravelHelper
      */
     public static function sessionFlash(string $key, $value): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         $_SESSION['_flash'][$key] = $value;
     }
 
@@ -94,7 +104,10 @@ class LaravelHelper
      */
     public static function sessionHas(string $key): bool
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
         return isset($_SESSION[$key]);
     }
 
@@ -103,7 +116,9 @@ class LaravelHelper
      */
     public static function sessionForget(string $key): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
         unset($_SESSION[$key]);
     }
 
