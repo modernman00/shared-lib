@@ -1,1 +1,28 @@
 /vendor/
+
+# Development and CI/CD files
+.php-cs-fixer.cache
+.phpunit.result.cache
+.phpstan-cache/
+*.tar.gz
+*.zip
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.*.local

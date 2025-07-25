@@ -1,0 +1,31 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    
+    # Ignore specific errors that might be expected in a shared library
+    ignoreErrors:
+        # Allow mixed types for flexible utility functions
+        - '#Function .* has parameter \$.*? with no value type specified in iterable type array#'
+        # Allow dynamic property access patterns
+        - '#Access to an undefined property#'
+        # Allow magic methods
+        - '#Call to an undefined method#'
+    
+    # Additional rules
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    
+    # Bootstrap files
+    bootstrapFiles:
+        - src/helpers.php
+    
+    # Symfony extensions (if needed)
+    symfony:
+        constantHassers: false
+        containerXmlPath: null
+    
+    # Exclude patterns
+    excludePaths:
+        - */vendor/*
+        - */tests/*

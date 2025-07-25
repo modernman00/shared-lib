@@ -1,0 +1,131 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+jobs:
+  test:
+    name: Test PHP ${{ matrix.php-version }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+        coverage: xdebug
+        
+    - name: Get composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+    - name: Cache composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+        
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist --optimize-autoloader
+      
+    - name: Run PHP CS Fixer (dry-run)
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+      
+    - name: Run static analysis
+      run: |
+        if [ ! -f phpstan.neon ]; then
+          echo "Creating basic PHPStan configuration..."
+          echo "parameters:" > phpstan.neon
+          echo "    level: 5" >> phpstan.neon
+          echo "    paths:" >> phpstan.neon
+          echo "        - src" >> phpstan.neon
+        fi
+        composer require --dev phpstan/phpstan --no-interaction
+        vendor/bin/phpstan analyse --memory-limit=1G
+        
+    - name: Check for security vulnerabilities
+      run: |
+        composer require --dev roave/security-advisories:dev-latest --no-interaction || true
+        composer audit
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
+        
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist --optimize-autoloader
+      
+    - name: Run PHP CS Fixer
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+      
+    - name: Check syntax errors
+      run: find src -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
+
+  deploy:
+    name: Deploy to Packagist
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        
+    - name: Validate composer.json
+      run: composer validate --strict
+      
+    - name: Create release archive
+      run: |
+        git archive --format=tar.gz --prefix=shared-lib-${{ github.event.release.tag_name }}/ HEAD > shared-lib-${{ github.event.release.tag_name }}.tar.gz
+        
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./shared-lib-${{ github.event.release.tag_name }}.tar.gz
+        asset_name: shared-lib-${{ github.event.release.tag_name }}.tar.gz
+        asset_content_type: application/gzip
+
+  auto-merge:
+    name: Auto-merge dependabot PRs
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+    if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
+    
+    steps:
+    - name: Enable auto-merge for Dependabot PRs
+      run: gh pr merge --auto --merge "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
