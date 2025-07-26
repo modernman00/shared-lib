@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src;
 
-use GuzzleHttp\Client;
+
 use Src\Exceptions\RecaptchaBrokenException;
 use Src\Exceptions\RecaptchaCheatingException;
 use Src\Exceptions\RecaptchaException;
@@ -23,7 +23,7 @@ use Src\Exceptions\RecaptchaFailedException;
 
 final class Recaptcha
 {
-    private static ?Client $client = null;
+
 
     /**
      * 🚪 THE MAIN DOOR CHECK.
@@ -67,18 +67,14 @@ final class Recaptcha
 
         // 3. 📞 Call Google's robot-checker
         try {
-            $client = self::getClient();
-            $response = $client->post('https://www.google.com/recaptcha/api/siteverify', [
-                'form_params' => [
+            $data = sendPostRequest(
+                url: 'https://www.google.com/recaptcha/api/siteverify',
+                formData: [
                     'secret' => $secret,
                     'response' => $token,
                     'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null,
-                ],
-                'timeout' => 5,
-            ]);
-
-            // 4. 📖 Read Google's answer
-            $data = json_decode($response->getBody(), true);
+                ]
+            );
 
             // 5. 🤖 Did Google spot a bot?
             if (!isset($data['success'])) {

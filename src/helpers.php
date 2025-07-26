@@ -7,6 +7,7 @@ use Monolog\Logger;
 use Src\Data\EmailData;
 use Src\LoggerFactory;
 use Src\SendEmail;
+use GuzzleHttp\Client;
 
 // use RuntimeException;
 
@@ -632,3 +633,40 @@ function logger(): Logger
 {
     return LoggerFactory::getLogger();
 }
+
+/**
+ * Send a POST request with Guzzle
+ *
+ * @param string $url
+ * @param array $formData
+ * @param array $options
+ * @return array|null
+ */
+function sendPostRequest(string $url, array $formData, array $options = []): ?array {
+    try {
+        static $client = null;
+
+        if($client === null){
+            $client = new \GuzzleHttp\Client();
+        }
+
+        // Merge default options
+        $requestOptions = array_merge([
+            'form_params' => $formData,
+            'timeout' => 5,
+        ], $options);
+
+        $response = $client->post($url, $requestOptions);
+
+        $body = $response->getBody()->getContents();
+        $data = json_decode($body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Src\Exceptions\RecaptchaException("Invalid JSON: " . json_last_error_msg());
+        }
+        return $data;
+    } catch (\Exception $e) {
+        showError($e);
+        return null;
+    }
+}
+
