@@ -5,22 +5,18 @@ declare(strict_types=1);
 namespace Src;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Src\UserLoggedOutEvent;
 use Src\RedirectInterface;
 
 class LogoutService implements RedirectInterface
 {
     private LoggerInterface $logger;
-    private EventDispatcherInterface $eventDispatcher;
+
 
     // Constructor Injection: Dependencies are provided when the service is instantiated
     public function __construct(
         LoggerInterface $logger,
-        EventDispatcherInterface $eventDispatcher,
     ) {
         $this->logger = $logger;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -66,31 +62,17 @@ class LogoutService implements RedirectInterface
             // This effectively starts a *new* empty session, but with a fresh ID.
             session_regenerate_id(true);
 
-            // Encapsulated event dispatching logic
-            if ($userId !== null) {
-                $this->dispatchUserLoggedOutEvent($userId, $currentSessionId);
-            }
 
             $this->logger->info("User ID {$userId} logged out successfully. Session ID: {$currentSessionId}");
 
         } catch (\Throwable $e) {
-            $this->logger->error("Logout failed for User ID {$userId}. Error: " . $e->getMessage(), ['exception' => $e]);
-            // Re-throw if the calling context should also handle/know about the failure
-            throw new \RuntimeException("Logout process encountered an error.", 0, $e);
+            showError($e);
+          
+            
         }
 
         // Redirect the user
         $this->redirect($redirectPath);
-    }
-
-    /**
-     * Dispatches the UserLoggedOutEvent.
-     * This is a private helper method to encapsulate event creation/dispatching.
-     */
-    private function dispatchUserLoggedOutEvent(int $userId, string $sessionId): void
-    {
-        $event = new UserLoggedOutEvent($userId, $sessionId);
-        $this->eventDispatcher->dispatch($event, UserLoggedOutEvent::NAME);
     }
 
     /**
