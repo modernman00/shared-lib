@@ -87,6 +87,7 @@ class LoggedOut implements RedirectInterface
 
     public function redirect(string $uri, int $statusCode = 302): void
     {
+        $uri = url($uri);
         http_response_code($statusCode);
         header("Location: $uri");
         exit(); // Stops further execution
