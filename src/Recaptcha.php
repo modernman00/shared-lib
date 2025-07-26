@@ -35,14 +35,13 @@ final class Recaptcha
      *
      * @param string $token reCAPTCHA response token
      * @param string $action Expected action (e.g., 'login', 'signup')
-     * @param Logger $logger Monolog logger instance
-     * @param float $minScore Minimum score for human verification (0.0 to 1.0)
+     * only works with V2 CAPTCHA 
      *
      * @return bool True if verification succeeds
      *
      * @throws RecaptchaException On verification failure
      */
-    public static function verifyCaptcha(string $action, float $minScore = 0.5)
+    public static function verifyCaptcha(string $action)
     {
         // 1. 🕵️‍♂️ Get their CAPTCHA answer
         $token = $_POST['g-recaptcha-response'] ?? '';
@@ -76,29 +75,23 @@ final class Recaptcha
                 ]
             );
 
-            print_r($data);
 
-            // 5. 🤖 Did Google spot a bot?
-            if (!isset($data['success'])) {
-                throw new RecaptchaBrokenException('🤯 Google sent nonsense!');
-            }
 
-            if (!$data['success']) {
-                throw new RecaptchaFailedException('❌ Google says: FAKE HUMAN!');
-            }
+// 5. 🤖 Did Google respond with expected structure?
+if (!isset($data['success'])) {
+    throw new RecaptchaBrokenException('🤯 Unexpected response from Google!');
+}
 
-            // 6. 🎭 Are they doing what they said?
-            if (!isset($data['action']) || !hash_equals($data['action'], $action)) {
-                throw new RecaptchaCheatingException('🕵️‍♂️ Sneaky action switch!');
-            }
+// 6. ❌ Was verification successful?
+if (!$data['success']) {
+    throw new RecaptchaFailedException('🚫 reCAPTCHA failed — bot suspected!');
+}
 
-            // 7. 📊 Check their "human-ness score"
-            if (($data['score'] ?? 0) < $minScore) {
-                throw new RecaptchaCheatingException(
-                    '👾 Suspicious! Score: ' . round($data['score'], 1) .
-                    ' (needed ' . $minScore . ')'
-                );
-            }
+// 7. 🧾 Optional: Check hostname matches your domain
+if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['APP_URL']) {
+    throw new RecaptchaCheatingException('🔐 Hostname mismatch — possible tampering!');
+}
+
 
             // 8. 🎉 Welcome, human!
             return true;
