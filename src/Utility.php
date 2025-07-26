@@ -266,6 +266,12 @@ class Utility
         }
     }
 
+    // Allow only letters, numbers, and underscores. Must start with a letter.
+    public static function onlyLettersNumbersUnderscore(string $input): bool
+    {
+        return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $input) === 1;
+    }
+
     // SHOW THE ERROR EXCEPTION MESSAGE
 
     /**
@@ -522,7 +528,7 @@ class Utility
 
             return $data;
         } else {
-            self::msgException(406, 'problem with your entry');
+            throw new \Src\Exceptions\ValidationException('problem with your entry');
 
             return null;
         }
@@ -539,7 +545,7 @@ class Utility
 
             return $data;
         } else {
-            self::msgException(406, 'image name not well formed');
+            throw new \Src\Exceptions\ValidationException('image name not well formed');
 
             return null;
         }

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Exceptions;
 
-use Src\Exceptions\RecaptchaException;
-
 /**
  * When our system has problems
  * - Missing API key

@@ -1,9 +1,8 @@
 <?php
 
 declare(strict_types=1);
-namespace Src\Exceptions;
 
-use Src\Exceptions\RecaptchaException;
+namespace Src\Exceptions;
 
 /**
  * When users mess up (they can try again)

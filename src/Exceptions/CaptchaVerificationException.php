@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Src\Exceptions;
 
-use Exception;
-
 class CaptchaVerificationException extends HttpException
 {
     public function __construct(string $message = 'reCAPTCHA verification failed.')

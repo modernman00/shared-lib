@@ -44,13 +44,25 @@ class Select extends Db
 
         // validate or escape $table and $column
 
-        $table = isset($table) ? Utility::checkInput(data: $table) : null;
-        $column = isset($column) ? Utility::checkInput(data: $column) : null;
-        $column2 = isset($column2) ? Utility::checkInput(data: $column2) : null;
-        // $identifier1 = isset($identifier1) ? checkInput(data: $identifier1) : null;
-        // $identifier2 = isset($identifier2) ? checkInput(data: $identifier2) : null;
-        // $orderBy = isset($orderBy) ? checkInput(data: $orderBy) : null;
-        // $limit = isset($limit) ? checkInput(data: $limit) : null;
+        if (!Utility::onlyLettersNumbersUnderscore($selection)) {
+            throw new \Src\Exceptions\ValidationException('selection not well formed');
+        } elseif (!Utility::onlyLettersNumbersUnderscore($table)) {
+            throw new \Src\Exceptions\ValidationException('table not well formed');
+        } elseif ($identifier1 !== null && !Utility::onlyLettersNumbersUnderscore($identifier1)) {
+            throw new \Src\Exceptions\ValidationException('identifier1 not well formed');
+        } elseif ($identifier2 !== null && !Utility::onlyLettersNumbersUnderscore($identifier2)) {
+            throw new \Src\Exceptions\ValidationException('identifier2 not well formed');
+        } elseif ($identifier3 !== null && !Utility::onlyLettersNumbersUnderscore($identifier3)) {
+            throw new \Src\Exceptions\ValidationException('identifier3 not well formed');
+        } elseif ($column !== null && !Utility::onlyLettersNumbersUnderscore($column)) {
+            throw new \Src\Exceptions\ValidationException('column not well formed');
+        } elseif ($column2 !== null && !Utility::onlyLettersNumbersUnderscore($column2)) {
+            throw new \Src\Exceptions\ValidationException('column2 not well formed');
+        } elseif ($orderBy !== null && !Utility::onlyLettersNumbersUnderscore($orderBy)) {
+            throw new \Src\Exceptions\ValidationException('orderBy not well formed');
+        } elseif ($limit !== null && !Utility::onlyLettersNumbersUnderscore($limit)) {
+            throw new \Src\Exceptions\ValidationException('limit not well formed');
+        }
 
         return match ($selection) {
             'SELECT_OR' => "SELECT * FROM $table WHERE $identifier1 =? OR $identifier2 = ? $orderBy $limit",
@@ -98,7 +110,7 @@ class Select extends Db
         } catch (PDOException $e) {
             Utility::showError($e);
 
-            return false;
+            return [];
         }
     }
 
@@ -113,7 +125,7 @@ class Select extends Db
         } catch (PDOException $e) {
             Utility::showError($e);
 
-            return false;
+            return [];
         }
     }
 
@@ -134,7 +146,7 @@ class Select extends Db
         } catch (PDOException $e) {
             Utility::showError($e);
 
-            return false;
+            return [];
         }
     }
 
@@ -157,7 +169,7 @@ class Select extends Db
         } catch (PDOException $e) {
             Utility::showError(th: $e);
 
-            return false;
+            return [];
         }
     }
 
@@ -178,7 +190,7 @@ class Select extends Db
         } catch (PDOException $e) {
             Utility::showError(th: $e);
 
-            return false;
+            return [];
         }
     }
 
@@ -195,6 +207,7 @@ class Select extends Db
             return $this->connect()->query($query)->fetchColumn();
         } catch (PDOException $e) {
             Utility::showError(th: $e);
+            return [];
         }
     }
 

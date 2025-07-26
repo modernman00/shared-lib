@@ -2,6 +2,7 @@
   "name": "waleolaogun/shared-lib",
   "description": "Shared library for common functions and classes across projects",
   "type": "library",
+  "license": "MIT",
   "autoload": {
     "psr-4": {
       "Src\\": "src/"

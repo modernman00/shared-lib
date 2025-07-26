@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Src;
 
 use Psr\Log\LoggerInterface;
-use Src\RedirectInterface;
 
 class LoggedOut implements RedirectInterface
 {
     private LoggerInterface $logger;
-
 
     // Constructor Injection: Dependencies are provided when the service is instantiated
     public function __construct(
@@ -22,9 +20,10 @@ class LoggedOut implements RedirectInterface
     /**
      * Executes the logout sequence for the current user.
      *
-     * @param string $redirectPath The path to redirect to after logout.
+     * @param string $redirectPath the path to redirect to after logout
      * @param array $options Optional settings, e.g., 'clear_other_sessions' => true.
-     * @throws \RuntimeException If session management fails unexpectedly.
+     *
+     * @throws \RuntimeException if session management fails unexpectedly
      */
     public function logout(string $redirectPath = '/login', array $options = []): void
     {
@@ -42,16 +41,16 @@ class LoggedOut implements RedirectInterface
             $_SESSION = [];
 
             // Invalidate the session cookie in the client's browser
-            if (ini_get("session.use_cookies")) {
+            if (ini_get('session.use_cookies')) {
                 $params = session_get_cookie_params();
                 setcookie(
                     session_name(),
                     '',
                     time() - 42000, // Expire in the past
-                    $params["path"],
-                    $params["domain"],
-                    $params["secure"],
-                    $params["httponly"]
+                    $params['path'],
+                    $params['domain'],
+                    $params['secure'],
+                    $params['httponly']
                 );
             }
 
@@ -62,13 +61,9 @@ class LoggedOut implements RedirectInterface
             // This effectively starts a *new* empty session, but with a fresh ID.
             session_regenerate_id(true);
 
-
             $this->logger->info("User ID {$userId} logged out successfully. Session ID: {$currentSessionId}");
-
         } catch (\Throwable $e) {
             showError($e);
-          
-            
         }
 
         // Redirect the user

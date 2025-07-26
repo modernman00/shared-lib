@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src;
 
-
 use Src\Exceptions\RecaptchaBrokenException;
 use Src\Exceptions\RecaptchaCheatingException;
 use Src\Exceptions\RecaptchaException;
@@ -23,8 +22,6 @@ use Src\Exceptions\RecaptchaFailedException;
 
 final class Recaptcha
 {
-
-
     /**
      * 🚪 THE MAIN DOOR CHECK.
      *
@@ -35,8 +32,8 @@ final class Recaptcha
      *
      * @param string $token reCAPTCHA response token
      * @param string $action Expected action (e.g., 'login', 'signup')
-     * only works with V2 CAPTCHA 
-     * INCLUDE $_ENV['DOMAIN_NAME'] in your ENV file
+     *                       only works with V2 CAPTCHA
+     *                       INCLUDE $_ENV['DOMAIN_NAME'] in your ENV file
      *
      * @return bool True if verification succeeds
      *
@@ -76,23 +73,20 @@ final class Recaptcha
                 ]
             );
 
+            // 5. 🤖 Did Google respond with expected structure?
+            if (!isset($data['success'])) {
+                throw new RecaptchaBrokenException('🤯 Unexpected response from Google!');
+            }
 
+            // 6. ❌ Was verification successful?
+            if (!$data['success']) {
+                throw new RecaptchaFailedException('🚫 reCAPTCHA failed — bot suspected!');
+            }
 
-// 5. 🤖 Did Google respond with expected structure?
-if (!isset($data['success'])) {
-    throw new RecaptchaBrokenException('🤯 Unexpected response from Google!');
-}
-
-// 6. ❌ Was verification successful?
-if (!$data['success']) {
-    throw new RecaptchaFailedException('🚫 reCAPTCHA failed — bot suspected!');
-}
-
-// 7. 🧾 Optional: Check hostname matches your domain
-if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['DOMAIN_NAME']) {
-    throw new RecaptchaCheatingException('🔐 Hostname mismatch — possible tampering!');
-}
-
+            // 7. 🧾 Optional: Check hostname matches your domain
+            if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['DOMAIN_NAME']) {
+                throw new RecaptchaCheatingException('🔐 Hostname mismatch — possible tampering!');
+            }
 
             // 8. 🎉 Welcome, human!
             return true;
@@ -100,5 +94,4 @@ if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['DOMAIN_NAME']) {
             Utility::showError($e);
         }
     }
-
 }
