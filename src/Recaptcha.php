@@ -76,6 +76,8 @@ final class Recaptcha
                 ]
             );
 
+            print_r($data);
+
             // 5. 🤖 Did Google spot a bot?
             if (!isset($data['success'])) {
                 throw new RecaptchaBrokenException('🤯 Google sent nonsense!');
@@ -105,15 +107,4 @@ final class Recaptcha
         }
     }
 
-    /**
-     * Get or create Guzzle client.
-     */
-    private static function getClient(): Client
-    {
-        if (self::$client === null) {
-            self::$client = new Client();
-        }
-
-        return self::$client;
-    }
 }
