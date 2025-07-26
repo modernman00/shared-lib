@@ -36,6 +36,7 @@ final class Recaptcha
      * @param string $token reCAPTCHA response token
      * @param string $action Expected action (e.g., 'login', 'signup')
      * only works with V2 CAPTCHA 
+     * INCLUDE $_ENV['DOMAIN_NAME'] in your ENV file
      *
      * @return bool True if verification succeeds
      *
@@ -88,7 +89,7 @@ if (!$data['success']) {
 }
 
 // 7. 🧾 Optional: Check hostname matches your domain
-if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['APP_URL']) {
+if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['DOMAIN_NAME']) {
     throw new RecaptchaCheatingException('🔐 Hostname mismatch — possible tampering!');
 }
 
