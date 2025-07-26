@@ -7,7 +7,7 @@ namespace Src;
 use Psr\Log\LoggerInterface;
 use Src\RedirectInterface;
 
-class LogoutService implements RedirectInterface
+class LoggedOut implements RedirectInterface
 {
     private LoggerInterface $logger;
 
