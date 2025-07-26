@@ -9,21 +9,18 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Src\UserLoggedOutEvent;
 use Src\RedirectInterface;
 
-class LogoutService
+class LogoutService implements RedirectInterface
 {
     private LoggerInterface $logger;
     private EventDispatcherInterface $eventDispatcher;
-    private RedirectInterface $redirector;
 
     // Constructor Injection: Dependencies are provided when the service is instantiated
     public function __construct(
         LoggerInterface $logger,
         EventDispatcherInterface $eventDispatcher,
-        RedirectInterface $redirector
     ) {
         $this->logger = $logger;
         $this->eventDispatcher = $eventDispatcher;
-        $this->redirector = $redirector;
     }
 
     /**
@@ -83,7 +80,7 @@ class LogoutService
         }
 
         // Redirect the user
-        $this->redirector->redirect($redirectPath);
+        $this->redirect($redirectPath);
     }
 
     /**
@@ -104,5 +101,12 @@ class LogoutService
     {
         // Example: Retrieve from session if that's where your user ID is stored
         return $_SESSION['user_id'] ?? $_SESSION['ID'] ?? $_SESSION['auth']['ID'] ?? $_SESSION['auth']['id'] ?? $_SESSION['auth']['user_id'] ?? $_SESSION['id'] ?? null;
+    }
+
+    public function redirect(string $uri, int $statusCode = 302): void
+    {
+        http_response_code($statusCode);
+        header("Location: $uri");
+        exit(); // Stops further execution
     }
 }
