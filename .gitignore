@@ -9,6 +9,11 @@
 .env
 ec-private.pem
 ec-public.pem
+.gitignore
+.git
+
+.phpunit.cache/test-results
+.phpunit.cache/logs
 
 # IDE files
 .vscode/

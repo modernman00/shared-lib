@@ -12,6 +12,7 @@ class Db extends CheckToken
     public const BR = '<br>'; // can't be changed
 
     private static $conn = null;
+    private static ?PDO $mockConnection = null;
 
     private static function dbVariables(): array
     {
@@ -27,6 +28,9 @@ class Db extends CheckToken
     public function connect()
     {
         // apply singleton pattern by checking if db connection is already established before connecting again
+        if (self::$mockConnection !== null) {
+            return self::$mockConnection;
+        }
         $conn = null;
         try {
             if (!isset($conn)) {
@@ -50,6 +54,9 @@ class Db extends CheckToken
 
     public static function connect2()
     {
+        if (self::$mockConnection !== null) {
+            return self::$mockConnection;
+        }
         try {
             if (self::$conn === null) {
                 $dbVar = self::dbVariables();
@@ -77,5 +84,15 @@ class Db extends CheckToken
         } catch (\Throwable $e) {
             Utility::showError($e);
         }
+    }
+
+    public static function setMockConnection(PDO $pdo): void
+    {
+        self::$mockConnection = $pdo;
+    }
+
+    public static function clearMockConnection(): void
+    {
+        self::$mockConnection = null;
     }
 }
