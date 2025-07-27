@@ -35,11 +35,6 @@ class SignInTest extends TestCase
         $_SERVER['HTTP_ORIGIN'] = 'http://idecide.test';
         $_SESSION = [];
         $_COOKIE = [];
-
-        // Mock Utility::showError
-        if (!function_exists('Src\showError')) {
-            eval('namespace Src; function showError($e) { return; }');
-        }
     }
 
     protected function tearDown(): void
@@ -80,14 +75,14 @@ class SignInTest extends TestCase
     public function testVerifyThrowsUnauthorisedException(): void
     {
         // Arrange
-        $role = 'users';
+        $role = 'admin';
 
         $this->roleMiddlewareMock->shouldReceive('__construct')
             ->once()
             ->with([$role]);
         $this->roleMiddlewareMock->shouldReceive('handle')
             ->once()
-            ->andThrow(new UnauthorisedException('Invalid token or role'));
+            ->andThrow(new UnauthorisedException('Invalid role'));
 
         // Act
         $result = SignIn::verify($role);

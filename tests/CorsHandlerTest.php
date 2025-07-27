@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
+use Src\CorsHandler;
 
 /**
  * CORS Handler Tests

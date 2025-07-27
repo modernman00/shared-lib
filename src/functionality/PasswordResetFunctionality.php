@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Src\Library;
+namespace Src\functionality;
 
 use Src\{
     CheckToken,
