@@ -20,7 +20,7 @@ use Src\Exceptions\RecaptchaFailedException;
 
 // 🚨 Our custom walkie-talkie messages
 
-final class Recaptcha
+class Recaptcha
 {
     /**
      * 🚪 THE MAIN DOOR CHECK.

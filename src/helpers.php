@@ -7,6 +7,7 @@ use Monolog\Logger;
 use Src\Data\EmailData;
 use Src\LoggerFactory;
 use Src\SendEmail;
+use Src\Utility;
 
 // use RuntimeException;
 
@@ -672,3 +673,4 @@ function sendPostRequest(string $url, array $formData, array $options = []): ?ar
         return null;
     }
 }
+

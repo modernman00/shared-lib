@@ -4,73 +4,119 @@ declare(strict_types=1);
 
 namespace Src;
 
-use Firebase\JWT\BeforeValidException;
-use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
-use Firebase\JWT\SignatureInvalidException;
+use Src\Sanitise\CheckSanitise;
+use Src\Exceptions\NotFoundException;
 
+/**
+ * JwtHandler
+ *
+ * Manages user authentication and JWT token generation.
+ *
+ * Notes:
+ * - Designed for modular use across login flows.
+ * - Encodes secure tokens with RS256.
+ * - Supports "remember me" cookie-based logic.
+ * - Uses .env configuration for expiry, domain, and strictness.
+ */
 class JwtHandler
 {
-    protected $jwtSecret;
+    /** @var int $expiredTime - Unix timestamp for token expiry */
+    private int $expiredTime;
 
-    protected $token;
-
-    protected $issuedAt;
-
-    protected $expired;
-
-    protected $jwt;
-
+    /**
+     * Initializes expiration time based on .env setting.
+     * Uses London timezone for consistency with UK deployments.
+     */
     public function __construct()
     {
         date_default_timezone_set('Europe/London');
-
-        $this->issuedAt = time();
-
-        //Token validity  2 hours (7300)
-        $this->expired = $this->issuedAt + getenv('COOKIE_EXPIRE');
-
-        // secret word or signature
-        $this->jwtSecret = getenv('JWT_TOKEN');
+        $this->expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
     }
 
-    // encoding the token
-
-    public function jwtEncodeData($serverName, $data)
+    /**
+     * Authenticates user via email & password, returns token if valid.
+     *
+     * Flow:
+     * 1. Sanitises input using validation rules.
+     * 2. Finds user by email and verifies password.
+     * 3. Generates JWT token payload and sets cookie if "rememberMe" is enabled.
+     *
+     * @param array $input - Login data containing 'email' and 'password'
+     * @return array - ['token' => string, 'user' => array]
+     * @throws NotFoundException - If credentials are invalid
+     */
+    public function authenticate(array $input): array
     {
-        $this->token = [
-            'iss' => $serverName,
-            'aud' => $serverName,
-            'iat' => $this->issuedAt,
-            'nbf' => $this->issuedAt,
-            'exp' => $this->expired,
-            'data' => $data,
-        ];
-        $this->jwt = JWT::encode($this->token, $this->jwtSecret, 'HS512');
+        $sanitised = CheckSanitise::getSanitisedInputData($input, [
+            'data' => ['email', 'password'],
+            'min'  => [5, 5],
+            'max'  => [30, 100]
+        ]);
 
-        return $this->jwt;
-    }
+        $user = CheckSanitise::useEmailToFindData($sanitised);
 
-    protected function errMsg($msg)
-    {
-        return [
-            'auth' => 0,
-            'message' => $msg,
-        ];
-    }
-
-    //DECODING THE TOKEN
-    public function jwtDecodeData($jwtToken)
-    {
-        try {
-            $decode = JWT::decode($jwtToken, $this->jwtSecret, ['HS512']);
-
-            return [
-                'auth' => 1,
-                'data' => $decode->data,
-            ];
-        } catch (ExpiredException | SignatureInvalidException | BeforeValidException | \DomainException | \InvalidArgumentException | \UnexpectedValueException $e) {
-            return $this->errMsg($e->getMessage());
+        if (empty($user) || !CheckSanitise::checkPassword($sanitised, $user)) {
+            throw new NotFoundException('Oops! Wrong email or password.');
         }
+
+        $generatedToken = $this->jwtEncodeData($user);
+
+        $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
+        $tokenName = $_ENV['TOKEN_NAME'] ?? 'auth_token';
+
+        /**
+         * Strictness control:
+         * - true for production
+         * - false for development and testing
+         */
+        $strictness = !in_array($_ENV['APP_ENV'], ['local', 'development', 'staging', 'testing'], true);
+
+        // Set secure cookie only if not already present and rememberMe is checked
+        if (!empty($tokenName) && !isset($_COOKIE[$tokenName]) && $rememberMe) {
+            setcookie(
+                $tokenName, 
+                $generatedToken, 
+                $this->expiredTime, 
+                '/',
+                $_ENV['APP_URL'],
+                $strictness,
+                $strictness
+            );
+        }
+
+        return [
+            'token' => $generatedToken,
+            'user' => $user
+        ];
+    }
+
+    /**
+     * Encodes JWT token using RS256 algorithm.
+     *
+     * Payload includes:
+     * - iss/aud: issuer and audience match APP_URL
+     * - iat/nbf/exp: issued at, not before, expiry times
+     * - data: full user record
+     * - sub: user ID as string
+     * - role: default to 'users' if absent
+     *
+     * @param array $user - User data must contain 'id', 'role', 'email'
+     * @return string - Encoded JWT string
+     */
+    public function jwtEncodeData(array $user): string
+    {
+        $token = [
+            'iss' => $_ENV['APP_URL'],
+            'aud' => $_ENV['APP_URL'],
+            'iat' => time(),
+            'nbf' => time(),
+            'exp' => $this->expiredTime,
+            'data' => $user,
+            'sub' => (string)$user['id'],
+            'role' => $user['role'] ?? 'users',
+        ];
+
+        return JWT::encode($token, $_ENV['JWT_TOKEN'], 'RS256');
     }
 }

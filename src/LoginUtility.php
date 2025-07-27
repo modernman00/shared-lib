@@ -28,7 +28,7 @@ class LoginUtility
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
-            throw new UnauthorisedException(401, 'There is a problem with your login credential! - Password');
+            throw new UnauthorisedException('There is a problem with your login credential! - Password');
         }
 
         if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
@@ -40,7 +40,7 @@ class LoginUtility
             $result = $passUpdate->updateMultiplePOST($data, $table, 'id');
 
             if (!$result) {
-                throw new UnauthorisedException(422, 'Password could not be updated');
+                throw new UnauthorisedException('Password could not be updated');
 
                 return false;
             }
@@ -64,7 +64,7 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-            throw new UnauthorisedException(401, 'We do not recognise your account');
+            throw new UnauthorisedException('We do not recognise your account');
         }
 
         return $emailData[0];
@@ -83,7 +83,7 @@ class LoginUtility
         $data = Select::selectCountFn2(query: $query, bind: [$email]);
 
         if (!$data) {
-            throw new NotFoundException(404, 'We cannot find your email');
+            throw new NotFoundException('We cannot find your email');
         }
         foreach ($data as $data);
 
@@ -109,7 +109,7 @@ class LoginUtility
         $result = Select::selectFn2(query: $query, bind: [$colOne, $colTwo]);
 
         if (!$result) {
-            throw new NotFoundException(404, 'We cannot locate the information');
+            throw new NotFoundException('We cannot locate the information');
         }
         foreach ($result as $data);
 
@@ -133,7 +133,7 @@ class LoginUtility
         $data = Select::selectFn2(query: $query, bind: [$email]);
 
         if (!$data) {
-            throw new NotFoundException(404, 'We cannot locate the information');
+            throw new NotFoundException('We cannot locate the information');
         }
         foreach ($data as $data);
 
@@ -154,10 +154,10 @@ class LoginUtility
     {
         $sanitise = new Sanitise($inputData, $minMaxData);
         $sanitisedData = $sanitise->getCleanData();
-        $error = $sanitise->error;
+        $error = $sanitise->errors;
         if ($error) {
             $theError = 'There is a problem with your input<br>' . implode('; <br>', $error);
-            throw new BadRequestException(400, $theError);
+            throw new BadRequestException($theError);
         }
 
         return $sanitisedData;
@@ -191,7 +191,7 @@ class LoginUtility
         $updateCodeToCustomer = new Update('account');
         $updateCodeToCustomer->updateTable('token', $token, 'id', $customerId);
         if (!$updateCodeToCustomer) {
-            throw new UnauthorisedException(406, 'Error : Could not update token');
+            throw new UnauthorisedException('Error : Could not update token');
         }
         $_SESSION['2FA_token_ts'] = time();
         $_SESSION['identifyCust'] = $customerId ?? 'TEST';

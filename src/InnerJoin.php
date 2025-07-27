@@ -7,6 +7,18 @@ namespace Src;
 use PDO;
 use PDOException;
 
+/**
+ * Class InnerJoin
+ *
+ * A database utility for dynamically constructing and executing
+ * INNER, LEFT, and RIGHT JOIN queries between multiple tables.
+ *
+ * Usage Notes:
+ * - All methods rely on well-formed table/column input. Consider sanitising user-supplied values via Utility::checkInput.
+ * - Returns either a result set array or false if an exception occurs.
+ * - Designed for use with PDO and procedural routing.
+ */
+
 class InnerJoin extends Db
 {
     /**

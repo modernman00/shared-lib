@@ -6,6 +6,9 @@
 .phpstan-cache/
 *.tar.gz
 *.zip
+.env
+ec-private.pem
+ec-public.pem
 
 # IDE files
 .vscode/

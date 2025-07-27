@@ -3,17 +3,14 @@
 declare(strict_types=1);
 
 namespace Src\Sanitise;
+use Illuminate\Support\Facades\DB;
 
 use Src\{
-    AllFunctionalities,
     Select,
     Token,
     Update
 };
-use Src\Exceptions\HttpException;
-use Src\Exceptions\NotFoundException;
-use Src\Exceptions\UnauthorisedException;
-use Src\Exceptions\ValidationException;
+use Src\Exceptions\{HttpException, NotFoundException, ValidationException, DatabaseException};
 
 class CheckSanitise
 {
@@ -25,28 +22,41 @@ class CheckSanitise
      *
      * @throws \Exception
      */
-    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData): bool
+    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData, int $bcryptCost = 12): bool
     {
         $textPassword = $inputData['password'];
         $dbPassword = $databaseData['password'];
         $id = $databaseData['id'];
-        $table = 'account';
-        $options = ['cost' => 12];
+        $table = $_ENV['DB_TABLE_LOGIN'] ?? 'account' ?? 'login';
 
-        if (password_verify($textPassword, $dbPassword) === false) {
-            throw new UnauthorisedException('There is a problem with your login credential! - Password');
+
+        // Validate input data
+        if (!isset($inputData['password']) || !is_string($inputData['password'])) {
+            throw new \InvalidArgumentException('Invalid or missing password in input data');
+        }
+        if (!isset($databaseData['user_id'], $databaseData['password']) ||
+            (!is_int($databaseData['user_id']) && !is_string($databaseData['user_id'])) ||
+            !is_string($databaseData['password'])
+        ) {
+            throw new \InvalidArgumentException('Invalid or missing user_id or password in database data');
         }
 
-        if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
-            // If so, create a new hash, and replace the old one
-            $newHash = password_hash($textPassword, PASSWORD_DEFAULT, $options);
+        // Check if rehashing is needed
+        if (password_needs_rehash($dbPassword, PASSWORD_BCRYPT, ['cost' => $bcryptCost])) {
+            $newHash = password_hash($textPassword, PASSWORD_BCRYPT, ['cost' => $bcryptCost]);
+            if ($newHash === false) {
+                throw new HttpException('Failed to generate new password hash', 500);
+            }
 
-            $data = ['password' => $newHash, 'id' => $id];
-            $passUpdate = new AllFunctionalities();
-            $result = $passUpdate->updateMultiplePOST($data, $table, 'id');
-
-            if (!$result) {
-                throw new HttpException('Password could not be updated');
+            // Update password hash in a transaction
+            try {
+                $update = new Update($table);
+                $result = $update->updateTable('password', $newHash, 'id', $id);
+                if (!$result) {
+                    throw new DatabaseException('Failed to update password');
+                }
+            } catch (\PDOException $e) {
+                showError($e);
             }
         }
 
@@ -157,7 +167,7 @@ class CheckSanitise
     {
         $sanitise = new Sanitise($inputData, $minMaxData);
         $sanitisedData = $sanitise->getCleanData();
-        $error = $sanitise->error;
+        $error = $sanitise->getErrors();
         if ($error) {
             $theError = 'There is a problem with your input<br>' . implode('; <br>', $error);
             throw new ValidationException($theError);

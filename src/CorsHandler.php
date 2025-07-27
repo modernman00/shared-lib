@@ -6,6 +6,8 @@ namespace Src;
 
 class CorsHandler
 {
+    // Whitelisted origins for development/testing.
+    // You should strictly validate these in production.
     private const ALLOWED_ORIGINS = [
         'http://localhost:8080',
         'http://127.0.0.1:8080',
@@ -13,6 +15,15 @@ class CorsHandler
         'http://idecide.test:80',
     ];
 
+    /**
+     * Core CORS header setter.
+     * Applies essential access controls, security headers, and preflight handling.
+     *
+     * @param string $contentType Desired content-type response header.
+     * @param string $allowedMethods Allowed HTTP verbs.
+     * @param int    $maxAge Duration (in seconds) browsers cache preflight results.
+     * @param array  $allowedHeaders List of permitted custom headers for cross-origin.
+     */
     public static function setHeaders(
         string $contentType = 'application/json; charset=UTF-8',
         string $allowedMethods = 'POST, GET, OPTIONS',
@@ -26,27 +37,26 @@ class CorsHandler
             'X-CSRF-TOKEN',
         ]
     ): void {
-        // Get the request origin
         $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-        // Determine allowed origin
+        // Dynamically resolve allowed origin based on environment
         $allowedOrigin = self::getAllowedOrigin($requestOrigin);
 
-        // Set CORS headers
+        // CORS headers – crucial for secure API exposure
         header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-        header('Access-Control-Allow-Credentials: true'); // Allow cookies/sessions
+        header('Access-Control-Allow-Credentials: true'); // Enables cookie/session sharing
         header('Content-Type: ' . $contentType);
         header('Access-Control-Allow-Methods: ' . $allowedMethods);
         header('Access-Control-Max-Age: ' . $maxAge);
         header('Access-Control-Allow-Headers: ' . implode(', ', $allowedHeaders));
 
-        // Security headers
+        // Extra security headers (prevent attacks via MIME sniffing, framing, XSS, referrer leakage)
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('X-XSS-Protection: 1; mode=block');
         header('Referrer-Policy: strict-origin-when-cross-origin');
 
-        // Handle preflight OPTIONS requests
+        // Handle preflight OPTIONS requests separately
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
             http_response_code(200);
             exit();
@@ -54,37 +64,33 @@ class CorsHandler
     }
 
     /**
-     * Determine the allowed origin based on environment and request.
+     * Dynamically determine the allowed origin.
+     * Allows flexibility based on dev/test/production environments.
      */
     private static function getAllowedOrigin(string $requestOrigin): string
     {
-        // For development/testing, allow configured origins
         if (self::isDevelopment()) {
+            // Permit from whitelist or fallback to APP_URL
             if (in_array($requestOrigin, self::ALLOWED_ORIGINS, true)) {
                 return $requestOrigin;
             }
 
-            // Fallback to APP_URL for development
-            $appUrl = getenv('APP_URL');
-            if ($appUrl) {
-                return $appUrl;
-            }
-
-            return 'http://localhost:8080'; // Default development origin
+            return getenv('APP_URL') ?: 'http://localhost:8080';
         }
 
-        // For production, be more strict
+        // Production: match only known app URL or fall back to local domain
         $appUrl = getenv('APP_URL');
+
         if ($appUrl && $requestOrigin === $appUrl) {
             return $appUrl;
         }
 
-        // Default to same origin for production
-        return self::getCurrentDomain();
+        return self::getCurrentDomain(); // Fallback: same-origin enforcement
     }
 
     /**
-     * Check if we're in development environment.
+     * Environment check for adaptive CORS behavior.
+     * Prevents exposing dev-level permissions in production.
      */
     private static function isDevelopment(): bool
     {
@@ -94,7 +100,7 @@ class CorsHandler
     }
 
     /**
-     * Get current domain.
+     * Helper to infer origin from request context when no APP_URL is available.
      */
     private static function getCurrentDomain(): string
     {
@@ -105,7 +111,8 @@ class CorsHandler
     }
 
     /**
-     * Set headers specifically for API endpoints.
+     * Set CORS headers tailored for API responses.
+     * Grants access to common RESTful verbs and authentication headers.
      */
     public static function setApiHeaders(): void
     {
@@ -124,7 +131,7 @@ class CorsHandler
     }
 
     /**
-     * Set headers for form submissions.
+     * Apply CORS headers suitable for form submissions.
      */
     public static function setFormHeaders(): void
     {
@@ -140,25 +147,26 @@ class CorsHandler
     }
 
     /**
-     * Validate origin against whitelist.
+     * Validate current request's origin against expected rules.
+     * Useful for pre-checking before responding or allowing session cookies.
      */
     public static function validateOrigin(): bool
     {
         $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
         if (self::isDevelopment()) {
-            return in_array($requestOrigin, self::ALLOWED_ORIGINS, true) ||
-                   $requestOrigin === getenv('APP_URL');
+            return in_array($requestOrigin, self::ALLOWED_ORIGINS, true)
+                || $requestOrigin === getenv('APP_URL');
         }
 
-        // Production validation
         $appUrl = getenv('APP_URL');
 
         return $requestOrigin === $appUrl || $requestOrigin === self::getCurrentDomain();
     }
 
     /**
-     * Block request if origin is not allowed.
+     * Reject request if origin fails validation.
+     * Always returns structured JSON error message.
      */
     public static function enforceOrigin(): void
     {
