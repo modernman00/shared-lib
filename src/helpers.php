@@ -265,40 +265,85 @@ function cleanSession($x): string|null|int
     }
 }
 
-// SHOW THE ERROR EXCEPTION MESSAGE
 
-function showError(\Throwable $th): void
-{
-    $isLocal = isLocalEnv();
-    $statusCode = ($th instanceof \Src\Exceptions\HttpException)
-      ? $th->getStatusCode()
-      : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
+    /**
+     * Display or log an error, using Monolog for logging.
+     *
+     * @param \Throwable $th The exception to handle
+     * @param Logger $logger Monolog logger instance
+     * @param bool $returnResponse If true, return the response instead of echoing it
+     *                             ENSURE YOU HAVE THESE ENVIRONMENT VARIABLES SET:
+     *                             - LOGGER_NAME: The name of the logger channel (e.g., 'app', 'errors')
+     *                             - USER_EMAIL: The email address to send error alerts from
+     *                             - MAILER_DSN: The SMTP DSN for sending emails
+     *
+     * @return string|null JSON response if $returnResponse is true
+     *
+     * @example - Utility::showError2($e, LoggerFactory::getLogger());
+     */
+    function showError2(\Throwable $th, Logger $logger): ?string
+    {
+        $isLocal = isLocalEnv();
 
-    http_response_code($statusCode);
+        // Determine HTTP status code
+        $statusCode = ($th instanceof \Src\Exceptions\HttpException)
+          ? $th->getStatusCode()
+          : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
 
-    $logMessage = '[' . date('Y-m-d H:i:s') . '] '
-      . "Code: {$statusCode}, "
-      . "Message: {$th->getMessage()}, "
-      . "File: {$th->getFile()}, "
-      . "Line: {$th->getLine()}\n";
+        // Set HTTP response code
+        if (!headers_sent()) {
+            http_response_code($statusCode);
+        } else {
+            $logger->warning('⚠️ Headers already sent, cannot set HTTP response code: ' . $statusCode);
+        }
 
-    file_put_contents(__DIR__ . '/../../../../bootstrap/log/' . date('Y-m-d') . '.log', $logMessage, FILE_APPEND);
+        // Map status codes or exception types to Monolog log levels
+        $logLevel = match (true) {
+            $statusCode >= 500 => Level::Critical, // Server errors (500-599)
+            $th instanceof \Src\Exceptions\ForbiddenException => Level::Alert, // Security-related
+            $th instanceof \Src\Exceptions\InvalidArgumentException => Level::Error, // Input errors
+            $th instanceof \Src\Exceptions\NotFoundException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\UnauthorisedException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\HttpException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\TooManyLoginAttemptsException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\TooManyRequestsException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\ValidationException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\CaptchaVerificationException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\RecaptchaCheatingException => Level::Alert,
+            $th instanceof \Src\Exceptions\RecaptchaFailedException || $th instanceof \Src\Exceptions\InvalidArgumentException => Level::Error,
+            $th instanceof \Src\Exceptions\RecaptchaBrokenException => Level::Critical,
+            default => Level::Error // Default for other exceptions
+        };
 
-    if ($isLocal) {
-        echo json_encode([
-          'error' => $th instanceof \Src\Exceptions\HttpException
-            ? $th->getMessage()
-            : "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}",
+        // Log the error with context
+        $logger->log($logLevel, '🚨 Application Error', [
+          'message' => $th->getMessage(),
+          'code' => $statusCode,
+          'file' => $th->getFile(),
+          'line' => $th->getLine(),
+          'trace' => $th->getTraceAsString(),
         ]);
-    } else {
-        echo json_encode([
-          'error' => $th instanceof \Src\Exceptions\HttpException
-            ? $th->getMessage()
-            : 'An unexpected error occurred.',
-        ]);
+
+        // 5. Prepare a nice message for the user or developer
+        $errorMessage = $th instanceof \Src\Exceptions\HttpException
+          ? $th->getMessage()
+          : ($isLocal
+            ? "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
+            : 'An unexpected error occurred.');
+
+        // 6. Return or display the JSON error message
+        $response = json_encode(['error' => $errorMessage]);
+
+        return $response;
     }
-}
 
+    function showError($th): void
+    {
+        $error = showError2($th, LoggerFactory::getLogger());
+        if ($error) {
+            echo $error;
+        }
+    }
 // FUNCTION TO SEND TEXT TO PHONE
 
 function sendText($message, $numbers): void
