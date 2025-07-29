@@ -9,7 +9,7 @@
 .env
 ec-private.pem
 ec-public.pem
-.gitignore
+.gitignorem 
 .git
 
 .phpunit.cache/test-results

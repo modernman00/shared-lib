@@ -156,11 +156,11 @@ function view($path, array $data = [])
         // echo $viewFile;
         static $blade = null;
         if (!$blade) {
-            $mode = getenv('APP_ENV') === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
+            $mode = $_ENV['APP_ENV'] === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
             $blade = new BladeOne($view, $cache, $mode);
 
             $blade->pipeEnable = true;
-            $blade->setBaseUrl(getenv('APP_URL'));
+            $blade->setBaseUrl($_ENV['APP_URL']);
             // $blade->setAutoescape(true);
         }
 
