@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use eftec\bladeone\BladeOne;
 use Monolog\Logger;
+use Monolog\Level;
 use Src\Data\EmailData;
 use Src\LoggerFactory;
 use Src\SendEmail;
