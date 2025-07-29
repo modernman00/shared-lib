@@ -110,7 +110,7 @@ final class LoggerFactory
     public static function getLogger(): Logger
     {
         if (self::$logger === null) {
-            throw new \InvalidArgumentException('Logger not initialized. Call createWithMailer first.');
+            self::createWithMailer();
         }
 
         return self::$logger;
