@@ -378,7 +378,7 @@ public static function viewBuilderWithCSP(
             default => Level::Error // Default for other exceptions
         };
 
-        // Log the error with context
+        // Log the error with context to the log directory in the LoggerFactory.php
         $logger->log($logLevel, '🚨 Application Error', [
           'message' => $th->getMessage(),
           'code' => $statusCode,

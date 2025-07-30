@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Src;
 
-use Monolog\Handler\RotatingFileHandler;
-use Monolog\Handler\SymfonyMailerHandler;
 use Monolog\Level;
 use Monolog\Logger;
+use Symfony\Component\Mime\Email;
+use Monolog\Formatter\HtmlFormatter;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
-use Symfony\Component\Mime\Email;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\SymfonyMailerHandler;
 
 /**
  * 📦 LoggerFactory builds a logger that:
@@ -92,6 +93,8 @@ final class LoggerFactory
           ->html('<p>An error happened. Check logs for details.</p>');
 
         $emailHandler = new SymfonyMailerHandler($mailer, $email, $level);
+        $emailHandler->setFormatter(new HtmlFormatter());
+
 
         $logger->pushHandler($emailHandler);
 
