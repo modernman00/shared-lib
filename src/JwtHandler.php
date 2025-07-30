@@ -7,7 +7,7 @@ namespace Src;
 use Firebase\JWT\JWT;
 use Src\Sanitise\CheckSanitise;
 use Src\Exceptions\NotFoundException;
-use Src\Sanitise\Sanitise;
+
 
 /**
  * JwtHandler
@@ -42,6 +42,7 @@ class JwtHandler
      * 1. Sanitises input using validation rules.
      * 2. Finds user by email and verifies password.
      * 3. Generates JWT token payload and sets cookie if "rememberMe" is enabled.
+     * $COOKIE_TOKEN_NAME must be set in .env. IT COULD BE 'auth_token' or login_token.
      *
      * @param array $input - Login data containing 'email' and 'password'
      * @return array - ['token' => string, 'user' => array]
@@ -64,7 +65,7 @@ class JwtHandler
         $generatedToken = $this->jwtEncodeData($user);
 
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
-        $tokenName = $_ENV['TOKEN_NAME'] ?? 'auth_token';
+        $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
 
         /**
          * Strictness control:
@@ -118,6 +119,6 @@ class JwtHandler
             'role' => $user['role'] ?? 'users',
         ];
 
-        return JWT::encode($token, $_ENV['JWT_TOKEN'], 'RS256');
+        return JWT::encode($token, $_ENV['JWT_KEY_PRIVATE'], 'RS256');
     }
 }

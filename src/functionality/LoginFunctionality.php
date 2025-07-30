@@ -38,6 +38,7 @@ class LoginFunctionality
    * 3. Enforce rate limiting based on identifier.
    * 4. Authenticate credentials using JwtHandler.
    * 5. Respond with success (JWT or session-based) or throw exception.
+   * $_ENV must have COOKIE_TOKEN_NAME for cookie handling, JWT_KEY_PUBLIC for JWT validation, and CAPTCHA_KEY for reCAPTCHA, JWT_KEY_PRIVATE for signing DB_TABLE_LOGIN for login table name
    *
    * @param array $input - Login payload, expected to include 'email' or 'username'.
    * @param string $captchaAction - Contextual action label for CAPTCHA verification.
