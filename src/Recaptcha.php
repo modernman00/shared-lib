@@ -55,10 +55,6 @@ class Recaptcha
             throw new RecaptchaBrokenException('Invalid reCAPTCHA secret key format');
         }
 
-        //2.2
-        if (empty($action)) {
-            throw new RecaptchaException('Action parameter cannot be empty');
-        }
 
         // 3. 📞 Call Google's robot-checker
         try {
