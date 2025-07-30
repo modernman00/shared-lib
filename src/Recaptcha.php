@@ -25,21 +25,19 @@ class Recaptcha
     /**
      * 🚪 THE MAIN DOOR CHECK.
      *
-     * @param string $action What they're doing ('login', 'signup')
      *
      * @throws RecaptchaException When something fishy happens
      *                            ENV MUST HAVE SECRET_RECAPTCHA_KEY and SECRET_RECAPTCHA_KEY_TWO_START_LETTER
      *
      * @param string $token reCAPTCHA response token
-     * @param string $action Expected action (e.g., 'login', 'signup')
-     *                       only works with V2 CAPTCHA
+
      *                       INCLUDE $_ENV['DOMAIN_NAME'] in your ENV file
      *
      * @return bool True if verification succeeds
      *
      * @throws RecaptchaException On verification failure
      */
-    public static function verifyCaptcha(string $action)
+    public static function verifyCaptcha()
     {
         // 1. 🕵️‍♂️ Get their CAPTCHA answer
         $token = $_POST['g-recaptcha-response'] ?? '';

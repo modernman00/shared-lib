@@ -45,7 +45,7 @@ class LoginFunctionality
    *
    * @throws NotFoundException - If post data is missing.
    */
-  public static function login(array $input, string $captchaAction = 'login', bool $issueJwt = true): void
+  public static function login(array $input,  bool $issueJwt = true): void
   {
     try {
       // Allow flexibility between 'email' and 'username' login styles
@@ -55,7 +55,7 @@ class LoginFunctionality
       CorsHandler::setHeaders();
 
       // CAPTCHA to prevent bot submissions
-      Recaptcha::verifyCaptcha($captchaAction);
+      Recaptcha::verifyCaptcha();
 
       // Rate limiting by identifier (email or username)
       Limiter::limit($email);
