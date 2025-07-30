@@ -7,6 +7,7 @@ namespace Src;
 use Firebase\JWT\JWT;
 use Src\Sanitise\CheckSanitise;
 use Src\Exceptions\NotFoundException;
+use Src\Sanitise\Sanitise;
 
 /**
  * JwtHandler
