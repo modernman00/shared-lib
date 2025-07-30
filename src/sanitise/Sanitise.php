@@ -7,7 +7,18 @@ namespace Src\Sanitise;
 use Src\Exceptions\InvalidArgumentException;
 use RuntimeException;
 
-class Sanitise
+/**
+ * CheckSanitise
+ *
+ * Validates and sanitizes form data with optional length constraints.
+ *
+ * Notes:
+ * - Designed for modular use across various forms.
+ * - Handles CSRF token validation, email format, password matching, and input sanitization.
+ * - Throws exceptions for validation errors.
+ */
+
+class CheckSanitise
 {
     public array $errors = [];
 

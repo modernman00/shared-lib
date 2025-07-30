@@ -34,12 +34,7 @@ class CheckSanitise
         if (!isset($inputData['password']) || !is_string($inputData['password'])) {
             throw new \InvalidArgumentException('Invalid or missing password in input data');
         }
-        if (!isset($databaseData['user_id'], $databaseData['password']) ||
-            (!is_int($databaseData['user_id']) && !is_string($databaseData['user_id'])) ||
-            !is_string($databaseData['password'])
-        ) {
-            throw new \InvalidArgumentException('Invalid or missing user_id or password in database data');
-        }
+   
 
         // Check if rehashing is needed
         if (password_needs_rehash($dbPassword, PASSWORD_BCRYPT, ['cost' => $bcryptCost])) {
