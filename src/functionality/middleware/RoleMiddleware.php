@@ -46,7 +46,7 @@ final class RoleMiddleware
      */
     public function handle(): array
     {
-        $tokenName = $_ENV['TOKEN_NAME'] ?? 'auth_token';
+        $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
         $token = $_COOKIE[$tokenName] ?? '';
 
         if (empty($token)) {

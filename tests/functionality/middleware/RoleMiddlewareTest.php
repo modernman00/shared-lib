@@ -58,7 +58,7 @@ class RoleMiddlewareTest extends TestCase
     public function testHandleThrowsExceptionWhenTokenMissing()
     {
         $_ENV['JWT_PUBLIC_KEY'] = 'test_public_key';
-        $_ENV['TOKEN_NAME'] = 'auth_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'auth_token';
         $_COOKIE = []; // No auth token cookie
         
         $middleware = new RoleMiddleware(['user']);
@@ -72,7 +72,7 @@ class RoleMiddlewareTest extends TestCase
     public function testHandleWithValidTokenStructure()
     {
         $_ENV['JWT_PUBLIC_KEY'] = 'test_public_key';
-        $_ENV['TOKEN_NAME'] = 'auth_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'auth_token';
         $_COOKIE['auth_token'] = 'valid.jwt.token';
         
         $middleware = new RoleMiddleware(['user']);
@@ -106,7 +106,7 @@ class RoleMiddlewareTest extends TestCase
     public function testHandleWithInvalidJwtToken()
     {
         $_ENV['JWT_PUBLIC_KEY'] = 'test_public_key';
-        $_ENV['TOKEN_NAME'] = 'auth_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'auth_token';
         $_COOKIE['auth_token'] = 'invalid.jwt.token';
         
         $middleware = new RoleMiddleware(['admin']);
@@ -201,7 +201,7 @@ class RoleMiddlewareTest extends TestCase
     public function testHandleReturnsEmptyArrayOnError()
     {
         $_ENV['JWT_PUBLIC_KEY'] = 'invalid_key';
-        $_ENV['TOKEN_NAME'] = 'auth_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'auth_token';
         $_COOKIE['auth_token'] = 'malformed.token';
         
         $middleware = new RoleMiddleware(['user']);

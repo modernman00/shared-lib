@@ -70,7 +70,7 @@ class PasswordRecoveryServiceTest extends TestCase
         $_ENV['APP_ENV'] = 'testing';
         $_ENV['APP_URL'] = 'http://idecide.test';
         $_ENV['DOMAIN_NAME'] = 'idecide.test';
-        $_ENV['TOKEN_NAME'] = 'auth_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'auth_token';
         $_ENV['COOKIE_EXPIRE'] = 3600;
         $_ENV['SECRET_RECAPTCHA_KEY'] = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
         $_ENV['SECRET_RECAPTCHA_KEY_TWO_START_LETTER'] = '6L';

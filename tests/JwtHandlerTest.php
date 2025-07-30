@@ -15,7 +15,7 @@ class JwtHandlerTest extends TestCase
         // Set up test environment variables
         $_ENV['COOKIE_EXPIRE'] = '3600';
         $_ENV['APP_URL'] = 'https://test.com';
-        $_ENV['TOKEN_NAME'] = 'test_token';
+        $_ENV['COOKIE_TOKEN_NAME'] = 'test_token';
         $_ENV['APP_ENV'] = 'testing';
         $_ENV['JWT_TOKEN'] = 'test_jwt_secret_key';
         
