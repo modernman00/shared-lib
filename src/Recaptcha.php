@@ -67,6 +67,8 @@ class Recaptcha
                 ]
             );
 
+            
+
             // 5. 🤖 Did Google respond with expected structure?
             if (!isset($data['success'])) {
                 throw new RecaptchaBrokenException('🤯 Unexpected response from Google!');

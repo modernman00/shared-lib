@@ -63,6 +63,7 @@ class Sanitise
      */
     private function validateEmail(): self
     {
+ 
         if (isset($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
             $this->errors[] = 'Invalid email format';
         }
@@ -91,6 +92,11 @@ class Sanitise
      */
     private function checkEmpty(): self
     {
+
+        // if key is submit  skip it
+        if (isset($this->formData['submit'])) {
+            unset($this->formData['submit']);
+        }
         foreach ($this->formData as $key => $value) {
             if (is_string($value) && ($value === '' || $value === 'select')) {
                 $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', $key));
