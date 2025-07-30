@@ -8,7 +8,7 @@ use Src\Exceptions\InvalidArgumentException;
 use RuntimeException;
 
 /**
- * CheckSanitise
+ * Sanitise
  *
  * Validates and sanitizes form data with optional length constraints.
  *
@@ -18,7 +18,7 @@ use RuntimeException;
  * - Throws exceptions for validation errors.
  */
 
-class CheckSanitise
+class Sanitise
 {
     public array $errors = [];
 
