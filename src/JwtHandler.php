@@ -76,7 +76,7 @@ class JwtHandler
         );
 
         if (empty($confirmedUser)) {
-            throw new NotFoundException('Oops! No user found with that email and password.');
+            throw new NotFoundException("Oops! We can't find you.");
         }
 
     
