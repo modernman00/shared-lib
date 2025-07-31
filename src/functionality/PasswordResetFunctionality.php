@@ -8,7 +8,7 @@ use Src\{
     CheckToken,
     Exceptions\NotFoundException,
     Exceptions\UnauthorisedException,
-    Sanitise\CheckSanitise,
+    Sanitise\checkSanitise as CheckSanitise,
     Update,
     Utility
 };

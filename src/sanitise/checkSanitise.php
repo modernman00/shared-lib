@@ -12,7 +12,7 @@ use Src\{
 };
 use Src\Exceptions\{HttpException, NotFoundException, ValidationException, DatabaseException};
 
-class CheckSanitise
+class checkSanitise
 {
     /**
      * @param mixed $inputData this is the form data

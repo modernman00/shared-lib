@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Src;
 
 use Firebase\JWT\JWT;
-use Src\Sanitise\CheckSanitise;
+use Src\Sanitise\checkSanitise as CheckSanitise;
 use Src\Exceptions\NotFoundException;
-use Illuminate\Container\Attributes\DB;
-use Illuminate\Support\Facades\DB as FacadesDB;
+
 
 /**
  * JwtHandler
