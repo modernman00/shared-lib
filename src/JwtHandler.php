@@ -10,7 +10,7 @@ use Src\Exceptions\NotFoundException;
 
 
 /**
- * JwtHandler
+ * JwtHandler -
  *
  * Manages user authentication and JWT token generation.
  *
