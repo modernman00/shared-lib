@@ -7,7 +7,8 @@ namespace Src;
 use Firebase\JWT\JWT;
 use Src\Sanitise\CheckSanitise;
 use Src\Exceptions\NotFoundException;
-
+use Illuminate\Container\Attributes\DB;
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 /**
  * JwtHandler
@@ -58,35 +59,53 @@ class JwtHandler
 
         $user = CheckSanitise::useEmailToFindData($sanitised);
 
-        if (empty($user) || !CheckSanitise::checkPassword($sanitised, $user)) {
+        if(empty($user)) {
+            throw new NotFoundException('Oops! No user found with that email.');
+        }
+
+        $verified = CheckSanitise::checkPassword($sanitised['password'], $user['password']);
+
+        if (!$verified) {
             throw new NotFoundException('Oops! Wrong email or password.');
         }
 
+        // If user is found and password is verified, check if the user exists in the database
+        $confirmedUser = CheckSanitise::findUserByEmailPassword(
+            $sanitised['email'], 
+            $sanitised['password']
+        );
+
+        if (empty($confirmedUser)) {
+            throw new NotFoundException('Oops! No user found with that email and password.');
+        }
+
+    
         $generatedToken = $this->jwtEncodeData($user);
 
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
 
-        /**
+         /**
          * Strictness control:
          * - true for production
          * - false for development and testing
          */
-        $strictness = !in_array($_ENV['APP_ENV'], ['local', 'development', 'staging', 'testing'], true);
+        $secure = (!in_array($_ENV['APP_ENV'], ['local', 'development']) && isset($_SERVER['HTTPS']));
+        $httponly = true;
+        $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
 
         // Set secure cookie only if not already present and rememberMe is checked
-        if (!empty($tokenName) && !isset($_COOKIE[$tokenName]) && $rememberMe) {
+        if (!empty($tokenName) && $rememberMe) {
             setcookie(
                 $tokenName, 
                 $generatedToken, 
-                $this->expiredTime, 
+                $this->expiredTime,
                 '/',
-                $_ENV['APP_URL'],
-                $strictness,
-                $strictness
+                $domain,
+                $secure,
+                $httponly
             );
         }
-
         return [
             'token' => $generatedToken,
             'user' => $user
@@ -119,6 +138,6 @@ class JwtHandler
             'role' => $user['role'] ?? 'users',
         ];
 
-        return JWT::encode($token, $_ENV['JWT_KEY_PRIVATE'], 'RS256');
+        return JWT::encode($token, $_ENV['JWT_KEY'], 'HS256');
     }
 }

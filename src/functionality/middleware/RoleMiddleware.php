@@ -30,7 +30,7 @@ final class RoleMiddleware
     public function __construct(array $allowedRoles = [])
     {
         $this->allowedRoles = $allowedRoles;
-        $this->publicKey = $_ENV['JWT_KEY_PUBLIC']; // RSA public key loaded from environment
+        $this->publicKey = $_ENV['JWT_KEY']; // RSA public key loaded from environment
     }
 
     /**

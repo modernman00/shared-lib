@@ -64,11 +64,18 @@ class LoginFunctionality
       // Token integrity validation
       CheckToken::tokenCheck('token');
 
+      
       // Authenticate user and generate JWT tokens if requested
       $jwtService = new JwtHandler();
-      [$token, $user] = $jwtService->authenticate($input);
+      $userD = $jwtService->authenticate($input);
+      
+      if (!is_array($userD) || !isset($userD['token'], $userD['user'])) {
+          throw new \UnexpectedValueException('Malformed authentication result');
+      }
+      $token = $userD['token'];
+      $user = $userD['user'];
 
-      self::onSuccessfulLogin($user, $token, $issueJwt);
+      self::onSuccessfulLogin($user, $token,  $issueJwt);
       
     } catch (\Throwable $th) {
       // Allow calling code to handle specific failure scenarios

@@ -34,7 +34,7 @@ class CheckSanitise
         if (!isset($inputData['password']) || !is_string($inputData['password'])) {
             throw new \InvalidArgumentException('Invalid or missing password in input data');
         }
-   
+
 
         // Check if rehashing is needed
         if (password_needs_rehash($dbPassword, PASSWORD_BCRYPT, ['cost' => $bcryptCost])) {
@@ -204,5 +204,26 @@ class CheckSanitise
         $_SESSION['auth']['identifyCust'] = $customerId ?? 'TEST'; // Use 'auth' namespace
 
         return $token;
+    }
+
+    /**
+     * find a user on the database  .
+     *
+     * @param mixed $email
+     *
+     * @return array
+     *
+     * @throws \Exception
+     */
+    public static function findUserByEmailPassword(string $email,string $password): array
+    {
+        $query = Select::formAndMatchQuery(
+            selection: 'SELECT_COUNT_TWO', 
+            table: $_ENV['DB_TABLE_LOGIN'], 
+            identifier1: 'email', 
+            identifier2: 'password'
+        );
+        $data = Select::selectFn2(query: $query, bind: [$email, $password]);
+        return $data[0] ?? [];
     }
 }
