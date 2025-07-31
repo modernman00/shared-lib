@@ -63,7 +63,7 @@ class JwtHandler
             throw new NotFoundException('Oops! No user found with that email.');
         }
 
-        $verified = CheckSanitise::checkPassword($sanitised['password'], $user['password']);
+        $verified = CheckSanitise::checkPassword($sanitised, $user);
 
         if (!$verified) {
             throw new NotFoundException('Oops! Wrong email or password.');
