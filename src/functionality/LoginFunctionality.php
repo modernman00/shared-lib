@@ -68,7 +68,7 @@ class LoginFunctionality
       // Authenticate user and generate JWT tokens if requested
       $jwtService = new JwtHandler();
       $userD = $jwtService->authenticate($input);
-      
+
       if (!is_array($userD) || !isset($userD['token'], $userD['user'])) {
           throw new \UnexpectedValueException('Malformed authentication result');
       }
@@ -79,7 +79,7 @@ class LoginFunctionality
       
     } catch (\Throwable $th) {
       // Allow calling code to handle specific failure scenarios
-      throw $th;
+      showError($th);
     }
   }
 
