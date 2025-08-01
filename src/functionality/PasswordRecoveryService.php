@@ -10,7 +10,7 @@ use Src\{
     Limiter,
     Exceptions\NotFoundException,
     Token,
-    Sanitise\checkSanitise as CheckSanitise,
+    Sanitise\CheckSanitise,
     CheckToken,
     Utility,
     Exceptions\UnauthorisedException

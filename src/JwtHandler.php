@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Src;
 
 use Firebase\JWT\JWT;
-use Src\sanitise\checkSanitise as CheckSanitise;
+use Src\sanitise\CheckSanitise;
 use Src\Exceptions\NotFoundException;
 
 
