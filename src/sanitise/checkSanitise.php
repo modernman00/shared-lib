@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Src\Sanitise;
 
+use Src\{Select, Token, Update};
 
-use Src\{
-    Select,
-    Token,
-    Update
-};
 use Src\Exceptions\{HttpException, NotFoundException, ValidationException, DatabaseException};
 
 class checkSanitise

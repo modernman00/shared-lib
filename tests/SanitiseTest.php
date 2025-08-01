@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
-use Src\Sanitise\Sanitise;
+use Src\sanitise\Sanitise;
 use Src\Exceptions\InvalidArgumentException;
 
 class SanitiseTest extends TestCase
