@@ -198,4 +198,25 @@ class LoginUtility
 
         return $token;
     }
+
+        /**
+     * find a user on the database  .
+     *
+     * @param mixed $email
+     *
+     * @return array
+     *
+     * @throws \Exception
+     */
+    public static function findUserByEmailPassword(string $email,string $password): array
+    {
+        $query = Select::formAndMatchQuery(
+            selection: 'SELECT_COUNT_TWO', 
+            table: $_ENV['DB_TABLE_LOGIN'], 
+            identifier1: 'email', 
+            identifier2: 'password'
+        );
+        $data = Select::selectFn2(query: $query, bind: [$email, $password]);
+        return $data[0] ?? [];
+    }
 }
