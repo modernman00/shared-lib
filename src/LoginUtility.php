@@ -7,7 +7,7 @@ namespace Src;
 use Src\Exceptions\BadRequestException;
 use Src\Exceptions\NotFoundException;
 use Src\Exceptions\UnauthorisedException;
-use Src\sanitise\Sanitise;
+use Src\Sanitise\Sanitise;
 
 class LoginUtility
 {
