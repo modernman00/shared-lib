@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{Utility, CorsHandler, Recaptcha, CheckToken, Limiter, JwtHandler};
+use Error;
+use Src\ErrorCollector;
 use Src\Exceptions\NotFoundException;
 use Src\Exceptions\UnauthorisedException;
+use Src\{Utility, CorsHandler, Recaptcha, CheckToken, Limiter, JwtHandler};
 
 /**
  * Handles user login functionality within the application.
@@ -52,17 +54,14 @@ class LoginFunctionality
       // Allow flexibility between 'email' and 'username' login styles
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
-      // Set required CORS headers
-      CorsHandler::setHeaders();
+      ErrorCollector::capture(fn()=> CorsHandler::setHeaders());
+      ErrorCollector::capture(fn()=> Recaptcha::verifyCaptcha());
+      ErrorCollector::capture(fn()=> Limiter::limit($email));
+      ErrorCollector::capture(fn()=> CheckToken::tokenCheck('token'));
 
-      // CAPTCHA to prevent bot submissions
-      Recaptcha::verifyCaptcha();
-
-      // Rate limiting by identifier (email or username)
-      Limiter::limit($email);
-
-      // Token integrity validation
-      CheckToken::tokenCheck('token');
+      if (ErrorCollector::hasErrors()) {
+          ErrorCollector::respond();
+      }
 
       
       // Authenticate user and generate JWT tokens if requested
