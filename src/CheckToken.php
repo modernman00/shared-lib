@@ -21,8 +21,7 @@ class CheckToken
         $sessionToken = $_SESSION['token'] ?? '';
         $postToken = $_POST['token'] ?? $token;
         $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
-        // invalidate $token stored in session
-        unset($_SESSION['token']);
+
 
 
         $valid = false;

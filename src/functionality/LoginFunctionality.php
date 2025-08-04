@@ -96,6 +96,8 @@ class LoginFunctionality
     Limiter::$argLimiter->reset();
     Limiter::$ipLimiter->reset();
 
+    // After successful login unset the CSRF token to prevent reuse
+      unset($_SESSION['token']);
 
     // Mitigate session fixation vulnerabilities
     session_regenerate_id(true);
