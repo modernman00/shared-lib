@@ -41,8 +41,6 @@ class LoginUtility
 
             if (!$result) {
                 throw new UnauthorisedException('Password could not be updated');
-
-                return false;
             }
         }
 
@@ -65,6 +63,7 @@ class LoginUtility
 
         if (empty($emailData)) {
             throw new UnauthorisedException('We do not recognise your account');
+       
         }
 
         return $emailData[0];

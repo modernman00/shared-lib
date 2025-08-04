@@ -53,7 +53,7 @@ class LoginFunctionality
       // Allow flexibility between 'email' and 'username' login styles
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
-      CorsHandler::setHeaders() ;
+      CorsHandler::setHeaders();
       Recaptcha::verifyCaptcha($input);
       Limiter::limit($email);
       $token = $input['token'] ?? '';

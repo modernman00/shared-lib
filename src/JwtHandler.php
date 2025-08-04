@@ -57,30 +57,14 @@ class JwtHandler
         ]);
 
         $user = CheckSanitise::useEmailToFindData($sanitised);
-
-        if(empty($user)) {
-            throw new NotFoundException('Oops! No user found with that email.');
-        }
-
-        $verified = CheckSanitise::checkPassword($sanitised, $user);
-
-        if (!$verified) {
-            throw new NotFoundException('Oops! Wrong email or password.');
-        }
-
+        CheckSanitise::checkPassword($sanitised, $user);
         // If user is found and password is verified, check if the user exists in the database
         $confirmedUser = CheckSanitise::findUserByEmailPassword(
             $sanitised['email'], 
             $sanitised['password']
         );
 
-        if (empty($confirmedUser)) {
-            throw new NotFoundException("Oops! We can't find you.");
-        }
-
-    
         $generatedToken = self::jwtEncodeData($user);
-
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
 
