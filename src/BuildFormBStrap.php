@@ -39,6 +39,15 @@ class BuildFormBStrap
     public function __construct(public array $question)
     {
         $this->token = urlencode(base64_encode((random_bytes(32))));
+        setcookie('XSRF-TOKEN', $this->token, [
+    'expires' => time() + 3600,
+    'path' => '/',
+    'samesite' => 'strict',
+    'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
+    'httponly' => false,
+]);
+$_SESSION['token'] = $this->token;
+
     }
 
     /**
@@ -108,9 +117,9 @@ class BuildFormBStrap
 
     public function setSessionToken(): string
     {
-        $_SESSION['token'] = $this->token;
+        $_SESSION['csrf_token'] = $this->token;
 
-        return $_SESSION['token'];
+        return $_SESSION['csrf_token'];
     }
 
     /**
@@ -132,7 +141,7 @@ class BuildFormBStrap
     {
         $this->setEntValue();
         $this->setEntKey();
-        $this->setSessionToken();
+
 
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';

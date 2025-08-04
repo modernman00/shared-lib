@@ -40,11 +40,13 @@ class BuildFormBulma
     {
         $this->token = urlencode(base64_encode((random_bytes(32))));
         setcookie('XSRF-TOKEN', $this->token, [
-            'expires' => time() + 3600,
-            'path' => '/',
-            'samesite' => 'Lax',
-            'httponly' => false, // Allow JavaScript to read it for Axios
-        ]);
+    'expires' => time() + 3600,
+    'path' => '/',
+    'samesite' => 'Lax',
+    'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
+    'httponly' => false,
+]);
+
     }
 
     /**

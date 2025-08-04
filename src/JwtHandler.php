@@ -23,7 +23,7 @@ use Src\Exceptions\NotFoundException;
 class JwtHandler
 {
     /** @var int $expiredTime - Unix timestamp for token expiry */
-    private int $expiredTime;
+    private static int $expiredTime;
 
     /**
      * Initializes expiration time based on .env setting.
@@ -32,7 +32,7 @@ class JwtHandler
     public function __construct()
     {
         date_default_timezone_set('Europe/London');
-        $this->expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
+        self::$expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
     }
 
     /**
@@ -48,7 +48,7 @@ class JwtHandler
      * @return array - ['token' => string, 'user' => array]
      * @throws NotFoundException - If credentials are invalid
      */
-    public function authenticate(array $input): array
+    public static function authenticate(array $input): array
     {
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['email', 'password'],
@@ -79,7 +79,7 @@ class JwtHandler
         }
 
     
-        $generatedToken = $this->jwtEncodeData($user);
+        $generatedToken = self::jwtEncodeData($user);
 
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
@@ -98,7 +98,7 @@ class JwtHandler
             setcookie(
                 $tokenName, 
                 $generatedToken, 
-                $this->expiredTime,
+                self::$expiredTime,
                 '/',
                 $domain,
                 $secure,
@@ -124,14 +124,14 @@ class JwtHandler
      * @param array $user - User data must contain 'id', 'role', 'email'
      * @return string - Encoded JWT string
      */
-    public function jwtEncodeData(array $user): string
+    public static function jwtEncodeData(array $user): string
     {
         $token = [
             'iss' => $_ENV['APP_URL'],
             'aud' => $_ENV['APP_URL'],
             'iat' => time(),
             'nbf' => time(),
-            'exp' => $this->expiredTime,
+            'exp' => self::$expiredTime,
             'data' => $user,
             'sub' => (string)$user['id'],
             'role' => $user['role'] ?? 'users',

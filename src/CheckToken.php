@@ -18,11 +18,21 @@ class CheckToken
     public static function tokenCheck(): void
     {
         // try {
-        $tokenCheck = $_SESSION['csrf_token'] ?? 'bad';
-        $postToken = $_POST['_token'] ?? 'bad';
+        $sessionToken = $_SESSION['token'] ?? '';
+        $postToken = $_POST['token'] ?? '';
+        $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
         // invalidate $token stored in session
-        unset($_SESSION['csrf_token']);
-        if ($tokenCheck != $postToken) {
+        unset($_SESSION['token']);
+
+
+        $valid = false;
+        if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
+            $valid = true;
+        } elseif ($sessionToken && hash_equals($sessionToken, $postToken)) {
+            $valid = true;
+        }
+
+        if (!$valid) {
             throw new UnauthorisedException('We are not familiar with the nature of your activities.');
         }
     }

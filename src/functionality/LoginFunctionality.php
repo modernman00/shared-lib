@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Error;
 use Src\ErrorCollector;
 use Src\Exceptions\NotFoundException;
 use Src\Exceptions\UnauthorisedException;
@@ -65,8 +64,8 @@ class LoginFunctionality
 
       
       // Authenticate user and generate JWT tokens if requested
-      $jwtService = new JwtHandler();
-      $userD = $jwtService->authenticate($input);
+
+      $userD = JwtHandler::authenticate($input);
 
       if (!is_array($userD) || !isset($userD['token'], $userD['user'])) {
           throw new \UnexpectedValueException('Malformed authentication result');
