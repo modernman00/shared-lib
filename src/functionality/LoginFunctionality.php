@@ -53,15 +53,11 @@ class LoginFunctionality
       // Allow flexibility between 'email' and 'username' login styles
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
-      ErrorCollector::capture(fn()=> CorsHandler::setHeaders());
-      ErrorCollector::capture(fn()=> Recaptcha::verifyCaptcha($input));
-      ErrorCollector::capture(fn()=> Limiter::limit($email));
-      ErrorCollector::capture(fn()=> CheckToken::tokenCheck('token'));
-
-      if (ErrorCollector::hasErrors()) {
-          ErrorCollector::respond();
-      }
-
+      CorsHandler::setHeaders() ;
+      Recaptcha::verifyCaptcha($input);
+      Limiter::limit($email);
+      $token = $input['token'] ?? '';
+      CheckToken::tokenCheck($token);
       
       // Authenticate user and generate JWT tokens if requested
 

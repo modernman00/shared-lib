@@ -15,11 +15,11 @@ class CheckToken
      *
      * @psalm-param 'token' $token
      */
-    public static function tokenCheck(): void
+    public static function tokenCheck($token): void
     {
         // try {
         $sessionToken = $_SESSION['token'] ?? '';
-        $postToken = $_POST['token'] ?? '';
+        $postToken = $_POST['token'] ?? $token;
         $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
         // invalidate $token stored in session
         unset($_SESSION['token']);
