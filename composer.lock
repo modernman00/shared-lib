@@ -429,16 +429,16 @@
         },
         {
             "name": "eftec/bladeone",
-            "version": "4.18",
+            "version": "4.19",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EFTEC/BladeOne.git",
-                "reference": "fb51dcd21ba6c998b96d26ac5babfca1bd05acdf"
+                "reference": "3332fab956de4192ad28053f5d3849d983f5b568"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EFTEC/BladeOne/zipball/fb51dcd21ba6c998b96d26ac5babfca1bd05acdf",
-                "reference": "fb51dcd21ba6c998b96d26ac5babfca1bd05acdf",
+                "url": "https://api.github.com/repos/EFTEC/BladeOne/zipball/3332fab956de4192ad28053f5d3849d983f5b568",
+                "reference": "3332fab956de4192ad28053f5d3849d983f5b568",
                 "shasum": ""
             },
             "require": {
@@ -482,9 +482,9 @@
             ],
             "support": {
                 "issues": "https://github.com/EFTEC/BladeOne/issues",
-                "source": "https://github.com/EFTEC/BladeOne/tree/4.18"
+                "source": "https://github.com/EFTEC/BladeOne/tree/4.19"
             },
-            "time": "2025-02-22T00:12:47+00:00"
+            "time": "2025-07-29T12:17:30+00:00"
         },
         {
             "name": "egulias/email-validator",
