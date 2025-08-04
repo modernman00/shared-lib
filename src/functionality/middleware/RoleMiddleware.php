@@ -70,6 +70,7 @@ final class RoleMiddleware
 
             return [
                 'id' => $decoded->data->id ?? $decoded->id,
+                'email' => $decoded->data->email ?? $decoded->email,
                 'role' => $role,
             ];
         } catch (\Throwable $e) {
