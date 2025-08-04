@@ -23,7 +23,7 @@ use Src\Exceptions\NotFoundException;
 class JwtHandler
 {
     /** @var int $expiredTime - Unix timestamp for token expiry */
-    private static int $expiredTime;
+    // private static int $expiredTime;
 
     /**
      * Initializes expiration time based on .env setting.
@@ -32,7 +32,7 @@ class JwtHandler
     public function __construct()
     {
         date_default_timezone_set('Europe/London');
-        self::$expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
+        // self::$expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
     }
 
     /**
@@ -82,7 +82,7 @@ class JwtHandler
             setcookie(
                 $tokenName, 
                 $generatedToken, 
-                self::$expiredTime,
+                time() + (int)$_ENV['COOKIE_EXPIRE'],
                 '/',
                 $domain,
                 $secure,
@@ -115,7 +115,7 @@ class JwtHandler
             'aud' => $_ENV['APP_URL'],
             'iat' => time(),
             'nbf' => time(),
-            'exp' => self::$expiredTime,
+            'exp' => time() + (int)$_ENV['COOKIE_EXPIRE'],
             'data' => $user,
             'sub' => (string)$user['id'],
             'role' => $user['role'] ?? 'users',
