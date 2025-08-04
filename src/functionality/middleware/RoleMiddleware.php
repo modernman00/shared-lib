@@ -55,7 +55,7 @@ final class RoleMiddleware
 
         try {
             // Decode and verify JWT using RS256 algorithm
-            $decoded = JWT::decode($token, new Key($this->publicKey, 'RS256'));
+            $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
 
             // Fallback: extract role from either `data` or direct payload
             $role = $decoded->data->role ?? $decoded->role ?? 'users';
