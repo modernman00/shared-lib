@@ -667,6 +667,13 @@ class BuildFormBulma
                     HTML;
             } elseif ($this->entValue[$i] === 'captcha') {
                 echo sprintf('<div class="g-recaptcha" data-sitekey="%s"></div>', getenv('RECAPTCHA_KEY'));
+            }elseif ($this->entValue[$i] == 'showPassword') {
+                echo <<<HTML
+                       <label class="checkbox">
+                        <input type="checkbox" id="showPassword_id">
+                            Show Password
+                        </label><br>
+                    HTML;
             } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
