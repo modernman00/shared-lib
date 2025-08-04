@@ -37,10 +37,10 @@ class Recaptcha
      *
      * @throws RecaptchaException On verification failure
      */
-    public static function verifyCaptcha()
+    public static function verifyCaptcha($input)
     {
         // 1. 🕵️‍♂️ Get their CAPTCHA answer
-        $token = $_POST['g-recaptcha-response'] ?? '';
+        $token = $input['g']['recaptcha']['response'] ?? '';
         if ($token === '') {
             throw new RecaptchaFailedException("🚨 Oops! Forgot the 'I'm not a robot' box!");
         }

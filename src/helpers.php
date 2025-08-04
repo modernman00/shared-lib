@@ -333,7 +333,7 @@ function cleanSession($x): string|null|int
             : 'An unexpected error occurred.');
 
         // 6. Return or display the JSON error message
-        $response = json_encode(['error' => $errorMessage]);
+        $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return $response;
     }

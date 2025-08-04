@@ -54,7 +54,7 @@ class LoginFunctionality
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
       ErrorCollector::capture(fn()=> CorsHandler::setHeaders());
-      ErrorCollector::capture(fn()=> Recaptcha::verifyCaptcha());
+      ErrorCollector::capture(fn()=> Recaptcha::verifyCaptcha($input));
       ErrorCollector::capture(fn()=> Limiter::limit($email));
       ErrorCollector::capture(fn()=> CheckToken::tokenCheck('token'));
 
