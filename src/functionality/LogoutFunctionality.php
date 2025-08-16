@@ -11,7 +11,7 @@ use Src\CorsHandler;
 use Src\LoggedOut;
 use Src\Utility;
 
-class LogoutController 
+class LogoutFunctionality 
 {
     public static function signout(array $redirect): void
     {
