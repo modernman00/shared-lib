@@ -23,15 +23,19 @@ use Src\{
  * CAPTCHA verification, rate limiting, and token issuance.
  *
  * Usage:
- * $service = new PasswordRecoveryService();
+ * show function is used to display the forgot-password page
+ * the forgot link must have an $_get['verify'] parameter like this  <a href="/appTestForgot?verify=1"> Forgot password? Please click this link</a>
+ *  $verify = $_GET['verify'] ?? null;
+ * PasswordRecoveryService::show(['verify' => 1]);
+ 
  * $service->processRecovery($postInput, 'emailResetView');
  */
 class PasswordRecoveryService
 {
 
-    public static function show(array $session, string $sessionName, string $viewPath): void
+    public static function show($sGet, string $viewPath): void
     {
-        if (!isset($session[$sessionName])) {
+        if (!isset($sGet)) {
             throw new UnauthorisedException('NOT SURE WE KNOW YOU');
         }
 
