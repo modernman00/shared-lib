@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Src;
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Src\LoginUtility as CheckSanitise;
-use Src\Exceptions\NotFoundException;
+use Src\Exceptions\{NotFoundException, UnauthorisedException};
 
 
 /**
@@ -60,7 +61,7 @@ class JwtHandler
         CheckSanitise::checkPassword($sanitised, $user);
         // If user is found and password is verified, check if the user exists in the database
         $confirmedUser = CheckSanitise::findUserByEmailPassword(
-            $sanitised['email'], 
+            $sanitised['email'],
             $sanitised['password']
         );
 
@@ -70,7 +71,7 @@ class JwtHandler
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
 
-         /**
+        /**
          * Strictness control:
          * - true for production
          * - false for development and testing
@@ -82,8 +83,8 @@ class JwtHandler
         // Set secure cookie only if not already present and rememberMe is checked
         if (!empty($tokenName) && $rememberMe) {
             setcookie(
-                $tokenName, 
-                $generatedToken, 
+                $tokenName,
+                $generatedToken,
                 time() + (int)$_ENV['COOKIE_EXPIRE'],
                 '/',
                 $domain,
@@ -124,5 +125,61 @@ class JwtHandler
         ];
 
         return JWT::encode($token, $_ENV['JWT_KEY'], 'HS256');
+    }
+
+
+    public static function jwtEncodeDataAndSetCookies(array $user, $cookieName = 'auth_token'): bool
+    {
+        $data = self::jwtEncodeData($user);
+        $tokenName = $cookieName;
+        $secure = (!in_array($_ENV['APP_ENV'], ['local', 'development']) && isset($_SERVER['HTTPS']));
+        $httponly = true;
+        $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
+        setcookie(
+            $tokenName,
+            $data,
+            time() + (int)$_ENV['COOKIE_EXPIRE'],
+            '/',
+            $domain,
+            $secure,
+            $httponly
+        );
+        return true;
+    }
+
+    // decode JWT token
+    public static function jwtDecodeData(string $cookieName = 'auth_token')
+    {
+        $token = $_COOKIE[$cookieName] ?? '';
+        if (empty($token)) {
+            throw new UnauthorisedException('Missing authentication cookie 🍪');
+        }
+        // Decode and verify JWT using RS256 algorithm
+        $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
+
+        $userId = $decoded->data->id ?? $decoded->id;
+        $userEmail = $decoded->data->email ?? $decoded->email;
+        $userParam = $userId ?? $userEmail;
+
+        self::fetchUser($userParam);
+
+
+        return $decoded;
+    }
+
+    public static function fetchUser(int|string $user_id_email): ?string
+    {
+        try {
+            $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
+
+            $query = "SELECT email FROM $dbTable WHERE id = ? OR email = ?";
+            $stmt = Db::connect2()->prepare($query);
+            $stmt->execute([$user_id_email, $user_id_email]);
+
+            return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
+        } catch (\PDOException $e) {
+            Utility::showError($e);
+            return null;
+        }
     }
 }

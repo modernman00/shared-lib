@@ -8,6 +8,7 @@ use Src\{
     CorsHandler,
     Recaptcha,
     Limiter,
+    JwtHandler,
     Exceptions\NotFoundException,
     Token,
     LoginUtility as CheckSanitise,
@@ -28,7 +29,7 @@ use Src\{
  *  $verify = $_GET['verify'] ?? null;
  * PasswordRecoveryService::show(['verify' => 1]);
  
- * $service->processRecovery($postInput, 'emailResetView');
+ * $service->processRecovery();
  */
 class PasswordRecoveryService
 {
@@ -45,6 +46,7 @@ class PasswordRecoveryService
 
     /**
      * Process forgot-password recovery request.
+     * you have to use JS to process the submit button  
      *
      * Flow:
      * 1. Apply CORS and CAPTCHA security controls.
@@ -52,22 +54,25 @@ class PasswordRecoveryService
      * 3. Validate and sanitise input.
      * 4. Locate user record.
      * 5. Generate and optionally send recovery token.
+     * $viewPath is the path to the view file for the token message
      *
-     * @param array $input Raw POST payload (e.g. ['email' => 'user@example.com'])
-     * @param string $viewPath Optional path used in recovery email rendering
      *
      * @throws NotFoundException If input is invalid or user not found
      */
-    public static function processRecovery(array $input, string $viewPath): void
+    public static function processRecovery($viewPath): void
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
-            Recaptcha::verifyCaptcha('forgot');      // Verify CAPTCHA against brute force
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            Recaptcha::verifyCaptcha($input);      // Verify CAPTCHA against brute force
             Limiter::limit($input['email']);         // Rate limit by email address
 
             if (empty($input)) {
                 throw new NotFoundException('Missing recovery input');
             }
+            $token = $input['token'] ?? '';
+            
 
             // Apply field-level sanitisation constraints
             $sanitised = CheckSanitise::getSanitisedInputData($input, [
@@ -79,14 +84,19 @@ class PasswordRecoveryService
             // Attempt to locate user record
             $user = CheckSanitise::useEmailToFindData($sanitised);
 
+            // create a JWT token
+            JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot');
+
+
+
             if (empty($user)) {
                 throw new NotFoundException('User not found');
             }
 
-            // Issue and optionally send recovery token via email
+            // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
             Token::generateSendTokenEmail($user, $viewPath);
 
-            self::finaliseRecovery();
+            self::finaliseRecovery($token);
         } catch (\Throwable $error) {
             showError($error);
         }
@@ -96,13 +106,15 @@ class PasswordRecoveryService
      * Finalise recovery flow after token delivery.
      * Handles session security and user messaging.
      */
-    private function finaliseRecovery(): void
+    private function finaliseRecovery(string $token): void
     {
         Limiter::$argLimiter->reset();              // Reset argument-based rate limiter
         Limiter::$ipLimiter->reset();               // Reset IP-level rate limiter
 
-        CheckToken::tokenCheck();                   // Revalidate token integrity
+        CheckToken::tokenCheck($token);                   // Revalidate token integrity
         session_regenerate_id(true);                // Prevent session fixation attack
+
+        //
 
         \msgSuccess(200, 'Recovery token sent successfully'); // Response for client use
     }

@@ -19,11 +19,8 @@ use Src\{Utility, CorsHandler, Recaptcha, CheckToken, Limiter, JwtHandler};
 class LoginFunctionality
 {
 
-    public static function show(array $session, string $sessionName, string $viewPath): void
+    public static function show(string $viewPath): void
     {
-        if (!isset($session[$sessionName])) {
-            throw new UnauthorisedException('NOT SURE WE KNOW YOU');
-        }
 
         // Optional: trigger view layer response (depends on app structure)
         Utility::view2($viewPath);
@@ -31,6 +28,7 @@ class LoginFunctionality
 
   /**
    * Processes the login request and returns authentication outcome.
+   * you have to use JS to process the submit button  
    *
    * Flow:
    * 1. Sanitize input and extract identifier.
@@ -46,9 +44,10 @@ class LoginFunctionality
    *
    * @throws NotFoundException - If post data is missing.
    */
-  public static function login(array $input,  bool $issueJwt = true): void
+  public static function login(bool $issueJwt = true): void
   {
     try {
+      $input = json_decode(file_get_contents('php://input'), true);
       // Allow flexibility between 'email' and 'username' login styles
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
