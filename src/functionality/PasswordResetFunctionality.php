@@ -50,7 +50,7 @@ class PasswordResetFunctionality
      *
      * @throws NotFoundException
      */
-    public static function processRequest($viewPath): void
+    public static function process($viewPath): void
     {
         $input = json_decode(file_get_contents('php://input'), true);
         // Extract and sanitise incoming password field

@@ -59,7 +59,7 @@ class PasswordRecoveryService
      *
      * @throws NotFoundException If input is invalid or user not found
      */
-    public static function processRecovery($viewPath, bool $issueJwt = true): void
+    public static function process($viewPath, bool $issueJwt = true): void
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access

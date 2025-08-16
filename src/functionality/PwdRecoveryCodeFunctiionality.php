@@ -17,7 +17,7 @@ class PwdRecoveryCodeFunctiionality
     Utility::view2($viewPath);
   }
 
-  public static function processRequest(): void
+  public static function process(): void
   {
     $input = json_decode(file_get_contents('php://input'), true);
 
