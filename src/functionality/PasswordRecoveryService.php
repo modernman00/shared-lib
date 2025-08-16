@@ -59,7 +59,7 @@ class PasswordRecoveryService
      *
      * @throws NotFoundException If input is invalid or user not found
      */
-    public static function processRecovery($viewPath): void
+    public static function processRecovery($viewPath, bool $issueJwt = true): void
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -81,11 +81,13 @@ class PasswordRecoveryService
                 'max'  => [30],
             ]);
 
+            CheckToken::tokenCheck($token); // Revalidate token integrity
+
             // Attempt to locate user record
             $user = CheckSanitise::useEmailToFindData($sanitised);
 
             // create a JWT token
-            JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot');
+            $token = JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot');
 
 
 
@@ -96,7 +98,7 @@ class PasswordRecoveryService
             // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
             Token::generateSendTokenEmail($user, $viewPath);
 
-            self::finaliseRecovery($token);
+            self::finaliseRecovery($token, $issueJwt);
         } catch (\Throwable $error) {
             showError($error);
         }
@@ -106,16 +108,23 @@ class PasswordRecoveryService
      * Finalise recovery flow after token delivery.
      * Handles session security and user messaging.
      */
-    private function finaliseRecovery(string $token): void
+    private function finaliseRecovery(string $token, bool $issueJwt = true): void
     {
         Limiter::$argLimiter->reset();              // Reset argument-based rate limiter
         Limiter::$ipLimiter->reset();               // Reset IP-level rate limiter
 
-        CheckToken::tokenCheck($token);                   // Revalidate token integrity
+
+         // After successful login unset the CSRF token to prevent reuse
+      unset($_SESSION['token']);
         session_regenerate_id(true);                // Prevent session fixation attack
 
-        //
+        if ($issueJwt) {
+            // Return JWT token to client (e.g. SPA or mobile client)
+            \msgSuccess(200, 'Recovery token sent successfully', $token);
+          } else {
+      
+            \msgSuccess(200, 'Recovery token sent successfully');
+          }
 
-        \msgSuccess(200, 'Recovery token sent successfully'); // Response for client use
     }
 }

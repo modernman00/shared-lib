@@ -128,7 +128,7 @@ class JwtHandler
     }
 
 
-    public static function jwtEncodeDataAndSetCookies(array $user, $cookieName = 'auth_token'): bool
+    public static function jwtEncodeDataAndSetCookies(array $user, $cookieName = 'auth_token')
     {
         $data = self::jwtEncodeData($user);
         $tokenName = $cookieName;
@@ -144,7 +144,7 @@ class JwtHandler
             $secure,
             $httponly
         );
-        return true;
+        return $data;
     }
 
     // decode JWT token

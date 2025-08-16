@@ -12,7 +12,8 @@ use Src\{
     ToSendEmail,
     JwtHandler,
     Update,
-    Utility
+    Utility,
+    Limiter
 };
 
 /**
@@ -33,10 +34,10 @@ class PasswordResetFunctionality
      */
     public static function show(string $viewPath): void
     {
-         if (!isset($_SESSION['auth']['codeVerified'])) {
-      throw new UnauthorisedException('NOT SURE WE KNOW YOU');
-    }
-    // Optional: trigger view layer response (depends on app structure)
+        if (!isset($_SESSION['auth']['codeVerified'])) {
+            throw new UnauthorisedException('NOT SURE WE KNOW YOU');
+        }
+        // Optional: trigger view layer response (depends on app structure)
         Utility::view2($viewPath);
     }
 
@@ -51,7 +52,7 @@ class PasswordResetFunctionality
      */
     public static function processRequest($viewPath): void
     {
-         $input = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents('php://input'), true);
         // Extract and sanitise incoming password field
         $cleanData = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['password'],
@@ -69,22 +70,26 @@ class PasswordResetFunctionality
 
         $userEmail = $user->data->email ?? $user->email;
 
+        Limiter::limit($userEmail);
+
         // Update password in persistent store
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
 
         $update->updateTable('password', $cleanData['password'], $_ENV['DB_TABLE_LOGIN'], 'email', $userEmail);
 
-         $emailData = ToSendEmail::genEmailArray(
-                viewPath: $viewPath,
-                data: ['email' => $userEmail],
-                subject: 'PASSWORD CHANGE'
-            );
+        $emailData = ToSendEmail::genEmailArray(
+            viewPath: $viewPath,
+            data: ['email' => $userEmail],
+            subject: 'PASSWORD CHANGE'
+        );
 
-            ToSendEmail::sendEmailWrapper(var: $emailData, recipientType: 'member');
+        ToSendEmail::sendEmailWrapper(var: $emailData, recipientType: 'member');
 
-            session_regenerate_id();
-    
-            Utility::msgSuccess(200, "Password was successfully changed");
+        // Prevent brute-force abuse by clearing rate limits
+        Limiter::$argLimiter->reset();
+        Limiter::$ipLimiter->reset();
+
+        unset($_SESSION['token']);
 
         // Session renewal and cleanup post-password reset
         session_regenerate_id(true);
@@ -93,7 +98,7 @@ class PasswordResetFunctionality
         // DESTROY COOKIES
         setcookie('auth_forgot', '', time() - 3600, '/');
         setcookie('auth_token', '', time() - 3600, '/');
-        // destroy all cookies
-    }
 
+        Utility::msgSuccess(200, "Password was successfully changed");
+    }
 }
