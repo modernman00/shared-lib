@@ -63,13 +63,13 @@ class LoginFunctionality
 
       $userD = JwtHandler::authenticate($input);
 
-      if (!is_array($userD) || !isset($userD['token'], $userD['user'])) {
+      if (!is_array($userD) || !isset($userD['token'], $userD['userId'])) {
           throw new \UnexpectedValueException('Malformed authentication result');
       }
       $token = $userD['token'];
-      $user = $userD['user'];
+      $userId = $userD['userId'];
 
-      self::onSuccessfulLogin($user, $token,  $issueJwt);
+      self::onSuccessfulLogin($userId, $token,  $issueJwt);
       
     } catch (\Throwable $th) {
       // Allow calling code to handle specific failure scenarios
@@ -90,7 +90,7 @@ class LoginFunctionality
    * @param array $token - JWT token set (access, refresh, etc).
    * @param bool $issueJwt - Whether to return JWT or session-based response.
    */
-  private static function onSuccessfulLogin(array $user, string $token, bool $issueJwt = true): void
+  private static function onSuccessfulLogin(string $userId, string $token, bool $issueJwt = true): void
   {
     // Prevent brute-force abuse by clearing rate limits
     Limiter::$argLimiter->reset();
@@ -107,7 +107,7 @@ class LoginFunctionality
       \msgSuccess(200, 'Login Successful', $token);
     } else {
       // Store user ID in session for classic web login
-      $_SESSION['ID'] = $user['id'];
+      $_SESSION['ID'] = $userId;
       \msgSuccess(200, 'Login Successful');
     }
   }

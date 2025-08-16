@@ -216,6 +216,9 @@ class LoginUtility
             identifier2: 'password'
         );
         $data = Select::selectFn2(query: $query, bind: [$email, $password]);
+        if (!$data) {
+            throw new NotFoundException('We cannot locate the information');
+        }
         return $data[0] ?? [];
     }
 }

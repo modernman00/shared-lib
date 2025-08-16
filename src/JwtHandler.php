@@ -64,6 +64,8 @@ class JwtHandler
             $sanitised['password']
         );
 
+        $userId = $confirmedUser['id'];
+
         $generatedToken = self::jwtEncodeData($user);
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
@@ -91,7 +93,7 @@ class JwtHandler
         }
         return [
             'token' => $generatedToken,
-            'user' => $user
+            'userId' => $userId
         ];
     }
 
