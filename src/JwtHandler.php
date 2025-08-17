@@ -44,6 +44,7 @@ class JwtHandler
      * 2. Finds user by email and verifies password.
      * 3. Generates JWT token payload and sets cookie if "rememberMe" is enabled.
      * $COOKIE_TOKEN_NAME must be set in .env. IT COULD BE 'auth_token' or login_token.
+     * suspicious email alert must be set in the .env file as SUSPICIOUS_ALERT
      *
      * @param array $input - Login data containing 'email' and 'password'
      * @return array - ['token' => string, 'user' => array]
@@ -59,15 +60,15 @@ class JwtHandler
 
 
         $user = CheckSanitise::useEmailToFindData($sanitised);
+
+
         CheckSanitise::checkPassword($sanitised, $user);
         // If user is found and password is verified, check if the user exists in the database
-       CheckSanitise::findUserByEmailPassword(
-            $sanitised['email'],
-            $sanitised['password']
-        );
-
+  
 
         $userId = $user['id'];
+
+        LoginUtility::logAudit($userId, $user['email'], 'success', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
         // remove password from user data
         unset($user['password']);   

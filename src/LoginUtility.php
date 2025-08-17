@@ -24,12 +24,20 @@ class LoginUtility
         $textPassword = $inputData['password'];
         $dbPassword = $databaseData['password'];
         $id = $databaseData['id'];
-        $table = 'account';
+        $table = $_ENV['DB_TABLE_LOGIN'];
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
+
+            LoginUtility::logAudit(null, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+
+            LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
+
             throw new UnauthorisedException('There is a problem with your login credential! - Password');
         }
+
+        // After successful verification, it checks if the stored password hash is outdated (e.g., algorithm changed or cost parameter updated).
+        // If so, it updates the password hash in the database with a new, more secure hash.
 
         if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
             // If so, create a new hash, and replace the old one
@@ -62,6 +70,11 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
+
+            LoginUtility::logAudit(null, $email, 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+
+            LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR']);
+
             throw new UnauthorisedException('We do not recognise your account');
        
         }
@@ -213,7 +226,8 @@ class LoginUtility
             selection: 'SELECT_COUNT_TWO', 
             table: $_ENV['DB_TABLE_LOGIN'], 
             identifier1: 'email', 
-            identifier2: 'password'
+            identifier2: 'password',
+            limit: 'LIMIT 1'
         );
         $data = Select::selectCountFn2(query: $query, bind: [$email, $password]);
         if (!$data) {
@@ -221,4 +235,48 @@ class LoginUtility
         }
         return $data;
     }
+
+      /**
+     * Log login attempts (success or failure)
+     */
+    public static function logAudit(?int $userId, string $email, string $status, string $ip, string $userAgent): void
+    {
+        $data = [
+            'user_id'    => $userId,
+            'email'      => $email,
+            'status'     => $status,
+            'ip'         => $ip,
+            'user_agent' => $userAgent
+        ];
+
+        SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'], $data);
+    }
+
+    public static function checkSuspiciousActivity(string $email, string $ip): void
+    {
+        $stmt = Db::connect2()->prepare("
+            SELECT COUNT(*) as attempts FROM audit_logs
+            WHERE email = :email AND status = 'failure' AND timestamp > (NOW() - INTERVAL 10 MINUTE)
+        ");
+        $stmt->execute([':email' => $email]);
+        $count = (int)$stmt->fetchColumn();
+
+        if ($count >= 5) {
+
+
+            // create email data 
+            $emailData = [
+                'email'      => $email,
+                'attempts'     => $count,
+                'ip'         => $ip,
+            ];
+            $viewPath = $_ENV['SUSPICIOUS_ALERT'] ?? 'msg/admin/suspicious';
+
+            $emailData = ToSendEmail::genEmailArray(viewPath: $viewPath, data: $emailData, subject: 'Suspicious Activity Alert');
+
+            ToSendEmail::sendEmailGeneral($emailData, 'admin');
+        }
+    }
+
 }
+

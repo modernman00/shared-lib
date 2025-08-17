@@ -41,6 +41,8 @@ class LoginFunctionality
    * @param array $input - Login payload, expected to include 'email' or 'username'.
    * @param string $captchaAction - Contextual action label for CAPTCHA verification.
    * @param bool $issueJwt - Flag to determine if JWT token should be issued.
+   * 
+   * DONT FORGET TO CREATE A TABLE FOR AUDIT_LOGS called audit_logs
    *
    * @throws NotFoundException - If post data is missing.
    */
