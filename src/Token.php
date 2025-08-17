@@ -53,6 +53,7 @@ class Token extends CheckToken
      *
      * @param mixed $customerId
      * session
+     * MUST HAVE DB_TABLE_CODE_MGT in the .env file
      *
      * @return string|array|null|false
      *
@@ -61,16 +62,17 @@ class Token extends CheckToken
     public static function generateUpdateTableWithToken($customerId)
     {
         //5. generate code
-        $token = self::generateAuthToken();
+        $code = self::generateAuthToken();
         //6.  update login account table with the code
-        $updateCodeToCustomer = new Update('account');
-        $updateCodeToCustomer->updateTable('token', $token, 'id', $customerId);
+        $table = $_ENV['DB_TABLE_CODE_MGT'];
+        $updateCodeToCustomer = new Update($table);
+        $updateCodeToCustomer->updateTable('code', $code, 'id', $customerId);
         if (!$updateCodeToCustomer) {
             throw new HttpException('Could not update token');
         }
        
 
-        return $token;
+        return $code;
     }
 /**
  * Checks if the token is valid
@@ -80,10 +82,10 @@ class Token extends CheckToken
     public static function verifyToken($code)
     {
         $id = $_SESSION['auth']['identifyCust'];
-        $code = checkInput($code);
+        $code = Utility::checkInput($code);
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COL_DYNAMICALLY_ID_AND', 
-            table: $_ENV['DB_TABLE_LOGIN'], 
+            table: $_ENV['DB_TABLE_CODE_MGT'], 
             identifier1: 'id', 
             identifier2: 'code',
             colArray: ['code', 'email']

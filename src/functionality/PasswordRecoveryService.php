@@ -55,6 +55,7 @@ class PasswordRecoveryService
      * 4. Locate user record.
      * 5. Generate and optionally send recovery token.
      * $viewPath is the path to the view file for the token message
+     * MUST HAVE DB_TABLE_CODE_MGT in the .env file
      *
      *
      * @throws NotFoundException If input is invalid or user not found
