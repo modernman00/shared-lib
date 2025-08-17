@@ -108,7 +108,7 @@ class LoginUtility
         $result = Select::selectFn2(query: $query, bind: [$colOne, $colTwo]);
 
         if (!$result) {
-            throw new NotFoundException('We cannot locate the information');
+            throw new NotFoundException('opps!We cannot locate the information');
         }
         foreach ($result as $data);
 
@@ -132,7 +132,7 @@ class LoginUtility
         $data = Select::selectFn2(query: $query, bind: [$email]);
 
         if (!$data) {
-            throw new NotFoundException('We cannot locate the information');
+            throw new NotFoundException('can\'t locate the information');
         }
         foreach ($data as $data);
 
@@ -215,10 +215,10 @@ class LoginUtility
             identifier1: 'email', 
             identifier2: 'password'
         );
-        $data = Select::selectFn2(query: $query, bind: [$email, $password]);
+        $data = Select::selectCountFn2(query: $query, bind: [$email, $password]);
         if (!$data) {
             throw new NotFoundException('We cannot locate the information');
         }
-        return $data[0] ?? [];
+        return $data;
     }
 }

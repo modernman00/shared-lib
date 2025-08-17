@@ -57,15 +57,20 @@ class JwtHandler
             'max'  => [30, 100]
         ]);
 
+
         $user = CheckSanitise::useEmailToFindData($sanitised);
         CheckSanitise::checkPassword($sanitised, $user);
         // If user is found and password is verified, check if the user exists in the database
-        $confirmedUser = CheckSanitise::findUserByEmailPassword(
+       CheckSanitise::findUserByEmailPassword(
             $sanitised['email'],
             $sanitised['password']
         );
 
-        $userId = $confirmedUser['id'];
+
+        $userId = $user['id'];
+
+        // remove password from user data
+        unset($user['password']);   
 
         $generatedToken = self::jwtEncodeData($user);
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
