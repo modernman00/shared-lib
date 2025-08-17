@@ -77,7 +77,7 @@ class PasswordResetFunctionality
         // Update password in persistent store
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
 
-        $update->updateTable('password', $hashedPassword, $_ENV['DB_TABLE_LOGIN'], 'email', $userEmail);
+        $update->updateTable('password', $hashedPassword, 'email', $userEmail);
 
         $emailData = ToSendEmail::genEmailArray(
             viewPath: $viewPath,
