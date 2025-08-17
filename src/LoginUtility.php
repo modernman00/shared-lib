@@ -245,7 +245,7 @@ class LoginUtility
             'user_id'    => $userId,
             'email'      => $email,
             'status'     => $status,
-            'ip'         => $ip,
+            'ip_address' => $ip,
             'user_agent' => $userAgent
         ];
 
@@ -267,8 +267,8 @@ class LoginUtility
             // create email data 
             $emailData = [
                 'email'      => $email,
-                'attempts'     => $count,
-                'ip'         => $ip,
+                'attempts'   => $count,
+                'ip_address' => $ip,
             ];
             $viewPath = $_ENV['SUSPICIOUS_ALERT'] ?? 'msg/admin/suspicious';
 
