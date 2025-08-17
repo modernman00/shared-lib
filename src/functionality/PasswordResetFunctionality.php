@@ -66,6 +66,10 @@ class PasswordResetFunctionality
         // get the users information using jwt decode 
         $user = JwtHandler::jwtDecodeData('auth_forgot');
 
+        if (!$user) {
+            throw new NotFoundException('We cannot locate the information');
+        }
+
         $userEmail = $user->data->email ?? $user->email;
 
         Limiter::limit($userEmail);
@@ -74,7 +78,7 @@ class PasswordResetFunctionality
         $hashedPassword = password_hash($cleanData['password'], PASSWORD_DEFAULT, ['cost' => 12]);
 
 
-        // Update password in persistent store
+        // Update password 
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
 
         $update->updateTable('password', $hashedPassword, 'email', $userEmail);
@@ -93,8 +97,6 @@ class PasswordResetFunctionality
 
         unset($_SESSION['token']);
 
-        // Session renewal and cleanup post-password reset
-        session_regenerate_id(true);
         // DESTROY SESSION
         session_destroy();
         // DESTROY COOKIES
