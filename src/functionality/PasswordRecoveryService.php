@@ -109,7 +109,7 @@ class PasswordRecoveryService
      * Finalise recovery flow after token delivery.
      * Handles session security and user messaging.
      */
-    private function finaliseRecovery(string $token, bool $issueJwt = true): void
+    private static function finaliseRecovery(string $token, bool $issueJwt = true): void
     {
         Limiter::$argLimiter->reset();              // Reset argument-based rate limiter
         Limiter::$ipLimiter->reset();               // Reset IP-level rate limiter
