@@ -103,7 +103,7 @@ class Token extends CheckToken
 /**
  * Checks if the token is valid
  * @param mixed $code
- * @return void 
+ * @return bool 
  */
     public static function verifyToken($code)
     {
@@ -124,7 +124,7 @@ class Token extends CheckToken
             throw new UnauthorisedException('Cannot verify token');
         }
 
-        return $data;
+        return true;
 
     }
 }
