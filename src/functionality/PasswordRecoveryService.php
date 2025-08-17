@@ -73,7 +73,7 @@ class PasswordRecoveryService
                 throw new NotFoundException('Missing recovery input');
             }
             $token = $input['token'] ?? '';
-            
+
 
             // Apply field-level sanitisation constraints
             $sanitised = CheckSanitise::getSanitisedInputData($input, [
@@ -115,17 +115,16 @@ class PasswordRecoveryService
         Limiter::$ipLimiter->reset();               // Reset IP-level rate limiter
 
 
-         // After successful login unset the CSRF token to prevent reuse
-      unset($_SESSION['token']);
+        // After successful login unset the CSRF token to prevent reuse
+        unset($_SESSION['token']);
         session_regenerate_id(true);                // Prevent session fixation attack
 
         if ($issueJwt) {
             // Return JWT token to client (e.g. SPA or mobile client)
-            \msgSuccess(200, 'Recovery token sent successfully', $token);
-          } else {
-      
-            \msgSuccess(200, 'Recovery token sent successfully');
-          }
+            \msgSuccess(200, 'Recovery token sent to your email successfully', $token);
+        } else {
 
+            \msgSuccess(200, 'Recovery token sent to your email successfully');
+        }
     }
 }
