@@ -55,12 +55,10 @@ class PasswordResetFunctionality
         $input = json_decode(file_get_contents('php://input'), true);
         // Extract and sanitise incoming password field
         $cleanData = CheckSanitise::getSanitisedInputData($input, [
-            'data' => ['password'],
+            'data' => ['password', 'confirm_password'],
             'min'  => [6],
             'max'  => [30],
         ]);
-
-
 
         // Token integrity validation
         CheckToken::tokenCheck('token');
@@ -72,10 +70,14 @@ class PasswordResetFunctionality
 
         Limiter::limit($userEmail);
 
+        // Step 6: Hash new password
+        $hashedPassword = password_hash($cleanData['password'], PASSWORD_DEFAULT, ['cost' => 12]);
+
+
         // Update password in persistent store
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
 
-        $update->updateTable('password', $cleanData['password'], $_ENV['DB_TABLE_LOGIN'], 'email', $userEmail);
+        $update->updateTable('password', $hashedPassword, $_ENV['DB_TABLE_LOGIN'], 'email', $userEmail);
 
         $emailData = ToSendEmail::genEmailArray(
             viewPath: $viewPath,
@@ -83,7 +85,7 @@ class PasswordResetFunctionality
             subject: 'PASSWORD CHANGE'
         );
 
-        ToSendEmail::sendEmailWrapper(var: $emailData, recipientType: 'member');
+        ToSendEmail::sendEmailGeneral($emailData, 'member');
 
         // Prevent brute-force abuse by clearing rate limits
         Limiter::$argLimiter->reset();
