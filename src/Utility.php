@@ -185,6 +185,33 @@ public static function viewBuilderWithCSP(
         }
     }
 
+
+    public static function viewTemplateEmail(
+        $path, array $data = [], 
+        string $realPathView = "/../../../../resources/views", 
+        string $realPathCache = "/../../../../bootstrap/cache", 
+        string $mode = BladeOne::MODE_DEBUG)
+    {
+        try {
+            $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
+            $cache = rtrim(__DIR__ . $realPathCache, '/');
+            $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
+            // echo $viewFile;
+            static $blade = null;
+            if (!$blade) {
+                $blade = new BladeOne($view, $cache, $mode);
+
+                $blade->pipeEnable = true;
+                $blade->setBaseUrl($_ENV['APP_URL']);
+                // $blade->setAutoescape(true);
+            }
+
+            return $blade->run($viewFile, $data);
+        } catch (\Throwable $e) {
+            Utility::showError($e);
+        }
+    }
+
     public static function printArr($data): void
     {
         if ($data === []) {

@@ -31,7 +31,7 @@ class ToSendEmail
      * @return void 
      */
 
-    public static function sendEmailGeneral($array, $recipient)
+    public static function sendEmailGeneral(array $params, string $recipient)
     {
 
         try {
@@ -43,43 +43,50 @@ class ToSendEmail
                     throw new ForbiddenException('Email credentials (constant) not set');
                 }
             }
-            $data = $array['data'];
 
-            ob_start();
-            $viewPath = $array['viewPath'] ?? 'email';
-            $viewContent = Utility::view($viewPath, compact('data'));
-            $emailContent = ob_get_clean() ?: throw new ForbiddenException('Failed to render email content');
+            // 2) Extract + validate inputs
+            $data     = $params['data'] ?? [];
+            $viewPath = $params['viewPath'] ?? 'email';
 
-            // Emogrify the HTML for email client compatibility
-            $cssInliner = CssInliner::fromHtml($emailContent)->inlineCss();
+            $subjectRaw = $params['subject'] ?? 'No Subject';
+            // Guard against header/HTML injection in subject
+            $subject = trim(preg_replace('/[\r\n]+/', ' ', $subjectRaw) ?? '');
+            $subject = htmlspecialchars($subject, ENT_QUOTES, 'UTF-8');
+
+            // Prefer data.email, fallback to params.email
+            $email = Utility::checkInputEmail($data['email'] ?? ($params['email'] ?? ''));
+            if ($email === null) {
+                throw new InvalidArgumentException('A valid recipient email is required.');
+            }
+
+            $name = Utility::cleanSession($data['name'] ?? ($params['name'] ?? 'there'));
+            // Mild header-injection protection for name
+            $name = preg_replace('/[\r\n]+/', ' ', $name) ?? 'there';
+
+            // 3) Render HTML from Blade
+            $html = Utility::viewTemplateEmail($viewPath, ['data' => $data]);
+            if ($html === '') {
+                throw new ForbiddenException('Failed to render email content.');
+            }
+
+            // 4) CSS inline + prune (Emogrifier)
+            $cssInliner  = CssInliner::fromHtml($html)->inlineCss();
             $domDocument = $cssInliner->getDomDocument();
+
             HtmlPruner::fromDomDocument($domDocument)
                 ->removeElementsWithDisplayNone()
                 ->removeRedundantClassesAfterCssInlined($cssInliner);
-            $converter = CssToAttributeConverter::fromDomDocument($domDocument)
-                ->convertCssToVisualAttributes();
-            $emogrifiedContent = $converter->render();
 
-            ob_end_clean();
+            $emogrifiedContent = CssToAttributeConverter::fromDomDocument($domDocument)
+                ->convertCssToVisualAttributes()
+                ->render();
 
-            // Determine email recipient
-            $email = Utility::checkInputEmail($data['email'] ?? '') ?? $array['email'] ?? '';
-            if (empty($email)) {
-                throw new InvalidArgumentException('Email address is required');
-            }
-
-            // check if there is $data['name'] or $array['name']
-            if (isset($data['name']) && !empty($data['name'])) {
-                $name = Utility::cleanSession($data['name']);
-            } elseif (isset($array['name']) && !empty($array['name'])) {
-                $name = Utility::cleanSession($array['name']);
-            } else {
-                $name = 'there'; // Default name if none provided
-            }
-
-            $name = Utility::cleanSession($data['name']) ?? Utility::cleanSession($array['name']) ?? "";
-
-            SendEmail::sendEmail($email, $name, $array['subject'], $emailContent);
+            SendEmail::sendEmail(
+                $email,
+                $name,
+                $subject,
+                $emogrifiedContent
+            );
         } catch (ForbiddenException $e) {
             Utility::showError($e);
         } catch (InvalidArgumentException $e) {
@@ -109,10 +116,7 @@ class ToSendEmail
 
         $data = $var['data'];
 
-        ob_start();
-        $emailPage = Utility::view($var['viewPath'], compact('data'));
-        $emailContent = ob_get_contents();
-        ob_end_clean();
+        $emailContent = Utility::viewTemplateEmail($var['viewPath'], compact('data'));
 
         $email =  Utility::checkInputEmail($data['email']);
         $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
