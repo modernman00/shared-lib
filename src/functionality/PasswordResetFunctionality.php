@@ -56,8 +56,8 @@ class PasswordResetFunctionality
         // Extract and sanitise incoming password field
         $cleanData = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['password', 'confirm_password'],
-            'min'  => [6],
-            'max'  => [30],
+            'min'  => [6, 6],
+            'max'  => [30, 30],
         ]);
 
         // Token integrity validation
