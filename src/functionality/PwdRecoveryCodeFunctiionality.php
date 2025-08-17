@@ -27,8 +27,8 @@ class PwdRecoveryCodeFunctiionality
 
     $sanitised = CheckSanitise::getSanitisedInputData($input, [
       'data' => ['code'],
-      'min'  => [5],
-      'max'  => [6],
+      'min'  => [6],
+      'max'  => [15],
     ]);
 
     $code = $sanitised['code'] ?? '';
