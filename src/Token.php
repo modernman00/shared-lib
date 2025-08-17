@@ -34,9 +34,17 @@ class Token extends CheckToken
 
         //3. ACCOMPANY EMAIL CONTENT
         $emailData = ['token' => $deriveToken, 'email' => $email];
-        $generateEmailArray = ToSendEmail::genEmailArray(viewPath: $viewPath, data: $emailData, subject: 'TOKEN');
 
-        ToSendEmail::sendEmailWrapper(var: $generateEmailArray, recipientType: 'member');
+        $generateEmailArray = ToSendEmail::genEmailArray(
+            viewPath: $viewPath,
+            data: $emailData,
+            subject: 'TOKEN'
+        );
+
+        ToSendEmail::sendEmailGeneral(
+            $generateEmailArray,
+            'member'
+        );
     }
 
     /**

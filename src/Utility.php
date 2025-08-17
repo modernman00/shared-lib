@@ -175,7 +175,7 @@ public static function viewBuilderWithCSP(
                 $blade = new BladeOne($view, $cache, $mode);
 
                 $blade->pipeEnable = true;
-                $blade->setBaseUrl(getenv('APP_URL'));
+                $blade->setBaseUrl($_ENV['APP_URL']);
                 // $blade->setAutoescape(true);
             }
 
