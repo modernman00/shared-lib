@@ -134,15 +134,15 @@ class JwtHandler
     }
 
 
-    public static function jwtEncodeDataAndSetCookies(array $user, $cookieName = 'auth_token')
+    public static function jwtEncodeDataAndSetCookies(array $user, $cookieName = 'auth_forgot')
     {
         $data = self::jwtEncodeData($user);
-        $tokenName = $cookieName;
+        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? 'auth_forgot';
         $secure = (!in_array($_ENV['APP_ENV'], ['local', 'development']) && isset($_SERVER['HTTPS']));
         $httponly = true;
         $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
         setcookie(
-            $tokenName,
+            $cookieName,
             $data,
             time() + (int)$_ENV['COOKIE_EXPIRE'],
             '/',
@@ -154,9 +154,9 @@ class JwtHandler
     }
 
     // decode JWT token
-    public static function jwtDecodeData(string $cookieName = 'auth_token')
+    public static function jwtDecodeData(string $cookieName = 'auth_forgot')
     {
-        $token = $_COOKIE[$cookieName] ?? '';
+        $token = $_COOKIE[$_ENV['COOKIE_NAME_GENERAL']] ?? $cookieName;
         if (empty($token)) {
             throw new UnauthorisedException('Missing authentication cookie 🍪');
         }
