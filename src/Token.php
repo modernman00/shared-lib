@@ -124,5 +124,7 @@ class Token extends CheckToken
             throw new UnauthorisedException('Cannot verify token');
         }
 
+        return $data;
+
     }
 }
