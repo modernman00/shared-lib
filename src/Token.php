@@ -18,17 +18,18 @@ class Token extends CheckToken
  * @throws \Throwable 
  * @throws \InvalidArgumentException 
  */
-    public static function generateSendTokenEmail($data, $viewPath = 'msg/customer/token')
+    public static function generateSendTokenEmail($data, $viewPath)
     {
         $id = $data['id'];
         // 1. check if email exists
         $email = Utility::checkInputEmail($data['email']);
 
         //2. generate token and update table
-        $deriveToken = self::generateUpdateTableWithToken($id);
+        $deriveToken = self::generateUpdateTableWithToken($email);
 
         $_SESSION['auth']['2FA_token_ts'] = time(); // Use 'auth' namespace
-        $_SESSION['auth']['identifyCust'] = $customerId ?? 'TEST'; // Use 'auth' namespace
+        $_SESSION['auth']['identifyCust'] = $id ?? 'TEST'; // Use 'auth' namespace
+        $_SESSION['auth']['email'] = $email ?? 'TEST'; // Use 'auth' namespace
         //TODO send text to the user with the code
 
         //3. ACCOMPANY EMAIL CONTENT
@@ -59,18 +60,35 @@ class Token extends CheckToken
      *
      * @throws \Exception
      */
-    public static function generateUpdateTableWithToken($customerId)
+    public static function generateUpdateTableWithToken($email)
     {
         //5. generate code
         $code = self::generateAuthToken();
-        //6.  update login account table with the code
         $table = $_ENV['DB_TABLE_CODE_MGT'];
-        $updateCodeToCustomer = new Update($table);
-        $updateCodeToCustomer->updateTable('code', $code, 'id', $customerId);
-        if (!$updateCodeToCustomer) {
-            throw new HttpException('Could not update token');
+
+        // then check if the account is active on code_mgt table
+        $query = Select::formAndMatchQuery(
+            selection: 'SELECT_ONE',
+            table: $table,
+            identifier1: 'email'
+        );
+        $codeData = Select::selectFn2(query: $query, bind: [$email]);
+
+        if (empty($codeData)) {
+
+            // then insert the email into the code_mgt table
+            $data = ['email' => $email, 'code' => $code];
+            SubmitForm::submitForm($table, $data);
+        } else {
+
+            //6.  update login account table with the code
+            $updateCodeToCustomer = new Update($table);
+            $updateCodeToCustomer->updateTable('code', $code, 'email', $email);
+            if (!$updateCodeToCustomer) {
+                throw new UnauthorisedException('Error : Could not update token');
+            }
         }
-       
+
 
         return $code;
     }
@@ -81,18 +99,18 @@ class Token extends CheckToken
  */
     public static function verifyToken($code)
     {
-        $id = $_SESSION['auth']['identifyCust'];
         $code = Utility::checkInput($code);
+        $email = cleanSession($_SESSION['auth']['email']);
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COL_DYNAMICALLY_ID_AND', 
             table: $_ENV['DB_TABLE_CODE_MGT'], 
-            identifier1: 'id', 
+            identifier1: 'email', 
             identifier2: 'code',
             colArray: ['code', 'email']
         );
         $data = Select::selectCountFn2(
             query: $query, 
-            bind: [$id, $code]
+            bind: [$email, $code]
         );
         if (!$data) {
             throw new UnauthorisedException('Cannot verify token');

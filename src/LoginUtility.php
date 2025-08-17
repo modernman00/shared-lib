@@ -76,8 +76,9 @@ class LoginUtility
             LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR']);
 
             throw new UnauthorisedException('We do not recognise your account');
-       
         }
+
+
 
         return $emailData[0];
     }
@@ -175,43 +176,9 @@ class LoginUtility
         return $sanitisedData;
     }
 
-    /**
-     * to generate random byte - token.
-     *
-     * @throws \Exception
-     */
-    public static function generateAuthToken(): string
-    {
-        return mb_strtoupper(bin2hex(random_bytes(4)));
-    }
+  
 
     /**
-     * Helps to generate token, and it updates the login table as well.
-     *
-     * @param mixed $customerId
-     *
-     * @return string|array|null|false
-     *
-     * @throws \Exception
-     */
-    public static function generateUpdateTableWithToken($customerId)
-    {
-        //5. generate code
-        $token = self::generateAuthToken();
-
-        //6.  update login account table with the code
-        $updateCodeToCustomer = new Update('account');
-        $updateCodeToCustomer->updateTable('token', $token, 'id', $customerId);
-        if (!$updateCodeToCustomer) {
-            throw new UnauthorisedException('Error : Could not update token');
-        }
-        $_SESSION['2FA_token_ts'] = time();
-        $_SESSION['identifyCust'] = $customerId ?? 'TEST';
-
-        return $token;
-    }
-
-        /**
      * find a user on the database  .
      *
      * @param mixed $email
@@ -220,12 +187,12 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function findUserByEmailPassword(string $email,string $password): array
+    public static function findUserByEmailPassword(string $email, string $password): array
     {
         $query = Select::formAndMatchQuery(
-            selection: 'SELECT_COUNT_TWO', 
-            table: $_ENV['DB_TABLE_LOGIN'], 
-            identifier1: 'email', 
+            selection: 'SELECT_COUNT_TWO',
+            table: $_ENV['DB_TABLE_LOGIN'],
+            identifier1: 'email',
             identifier2: 'password',
             limit: 'LIMIT 1'
         );
@@ -236,7 +203,7 @@ class LoginUtility
         return $data;
     }
 
-      /**
+    /**
      * Log login attempts (success or failure)
      */
     public static function logAudit(?int $userId, string $email, string $status, string $ip, string $userAgent): void
@@ -277,6 +244,4 @@ class LoginUtility
             ToSendEmail::sendEmailGeneral($emailData, 'admin');
         }
     }
-
 }
-
