@@ -33,8 +33,8 @@ class PwdRecoveryCodeFunctiionality
 
     $code = $sanitised['code'] ?? '';
 
-    if ((time() - ($_SESSION['2FA_token_ts'])) > 1000) {
-      $diff = time() - $_SESSION['2FA_token_ts'];
+    if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1000) {
+      $diff = time() - $_SESSION['auth']['2FA_token_ts'];
       Utility::msgException(401, "Invalid or expired Token $diff");
     }
 
@@ -50,7 +50,7 @@ class PwdRecoveryCodeFunctiionality
     if ($data) {
       unset($_SESSION['token']);
       // unset the time session 
-      unset($_SESSION['2FA_token_ts']);
+      unset($_SESSION['auth']['2FA_token_ts']);
 
       // Prevent brute-force abuse by clearing rate limits
       Limiter::$argLimiter->reset();
