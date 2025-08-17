@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Src\Data;
+namespace Src\data;
 
 class EmailData
 {

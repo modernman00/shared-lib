@@ -2,7 +2,7 @@
 
 namespace Src;
 
-use Src\Data\EmailData;
+use Src\data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use InvalidArgumentException;
 use Src\SendEmail;
