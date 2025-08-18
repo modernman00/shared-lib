@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
+use Hamcrest\Util;
 use Src\{
     CorsHandler,
     Recaptcha,
@@ -37,7 +38,7 @@ class PasswordRecoveryService
     public static function show($sGet, string $viewPath): void
     {
         if (!isset($sGet)) {
-            throw new UnauthorisedException('NOT SURE WE KNOW YOU');
+            Utility::view2($_ENV['401']);
         }
 
         // Optional: trigger view layer response (depends on app structure)
@@ -98,7 +99,7 @@ class PasswordRecoveryService
             Token::generateSendTokenEmail($user, $viewPath);
 
             self::finaliseRecovery($token, $issueJwt);
-            
+
         } catch (\Throwable $error) {
             showError($error);
         }

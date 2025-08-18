@@ -11,7 +11,7 @@ class PwdRecoveryCodeFunctiionality
   public static function show(string $viewPath): void
   {
     if (!isset($_SESSION['auth']['identifyCust'])) {
-      throw new UnauthorisedException('NOT SURE WE KNOW YOU');
+       Utility::view2($_ENV['401']);
     }
     // Optional: trigger view layer response (depends on app structure)
     Utility::view2($viewPath);

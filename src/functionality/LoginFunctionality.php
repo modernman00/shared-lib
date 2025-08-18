@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Src\functionality;
 
 use Src\Exceptions\NotFoundException;
-use Src\Exceptions\UnauthorisedException;
 use Src\{Utility, CorsHandler, Recaptcha, CheckToken, Limiter, JwtHandler};
 
 /**
