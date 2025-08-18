@@ -101,8 +101,7 @@ class PasswordResetFunctionality
         // DESTROY SESSION
         session_destroy();
         // DESTROY COOKIES
-        setcookie('auth_forgot', '', time() - 3600, '/');
-        setcookie('auth_token', '', time() - 3600, '/');
+        \destroyCookie();
 
         Utility::msgSuccess(200, "Password was successfully changed");
     }

@@ -647,6 +647,16 @@ function redirect(string $path): void
     exit;
 }
 
+/**
+ * destroy all cookies
+ */
+function destroyCookie(): void
+{
+    foreach ($_COOKIE as $key => $value) {
+        setcookie($key, '', time() - 3600);
+    }
+}
+
 function viteAsset(string $path): string
 {    // If you're in development, point to the dev server
     $isDev = $_ENV['APP_ENV'] === 'local'; // Or use getenv(), or set a flag
