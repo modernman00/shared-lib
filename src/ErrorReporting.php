@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src;
 
-class ErrorController
+class ErrorReporting
 {
     public static function unauthorized401(): void
     {
