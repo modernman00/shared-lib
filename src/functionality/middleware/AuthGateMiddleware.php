@@ -24,8 +24,9 @@ final class AuthGateMiddleware
         $isValid = isset($value) && ($expectedValue === null || $value === $expectedValue);
 
         if (!$isValid) {
-            \redirect("/error/401");
-            exit;
+          $viewPath = $_ENV['error401'];
+            \redirect($viewPath);
+          
         }
     }
 
