@@ -163,7 +163,7 @@ public static function viewBuilderWithCSP(
      *
      * @throws \Throwable If rendering fails
      */
-    public static function view($path, array $data = [], string $realPathView = "/../../../../resources/views", string $realPathCache = "/../../../../bootstrap/cache", string $mode = BladeOne::MODE_DEBUG)
+    public static function view($path, array $data = [], string $realPathView = "/../../../../resources/views", string $realPathCache = "/../../../../bootstrap/cache", int $mode = BladeOne::MODE_DEBUG)
     {
         try {
             $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
