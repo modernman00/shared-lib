@@ -90,8 +90,6 @@ class PasswordRecoveryService
             // create a JWT token
             $token = JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot');
 
-
-
             if (empty($user)) {
                 throw new NotFoundException('User not found');
             }
@@ -100,6 +98,7 @@ class PasswordRecoveryService
             Token::generateSendTokenEmail($user, $viewPath);
 
             self::finaliseRecovery($token, $issueJwt);
+            
         } catch (\Throwable $error) {
             showError($error);
         }

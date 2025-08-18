@@ -6,7 +6,7 @@ namespace Src\Exceptions;
 
 class ValidationException extends HttpException
 {
-    public function __construct(string $message = 'Bad Request')
+    public function __construct(string $message = 'Validation failed')
     {
         parent::__construct($message, 422);
     }

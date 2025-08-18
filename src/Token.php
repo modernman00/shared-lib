@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Src;
 
-use Src\Exceptions\HttpException;
-use Src\{ToSendEmail, Select, Update, Utility, Exceptions\NotFoundException, Exceptions\UnauthorisedException };
+use Src\{ToSendEmail, Select, Update, Utility,Exceptions\UnauthorisedException };
+use Src\Exceptions\NotFoundException;
 
 class Token extends CheckToken
 {/**
@@ -23,6 +23,10 @@ class Token extends CheckToken
         $id = $data['id'];
         // 1. check if email exists
         $email = Utility::checkInputEmail($data['email']);
+
+        if (empty($email) || empty($id)) {
+            throw new NotFoundException('Error : could not find email and id');
+        }
 
         //2. generate token and update table
         $deriveToken = self::generateUpdateTableWithToken($email);
@@ -72,7 +76,19 @@ class Token extends CheckToken
     {
         //5. generate code
         $code = self::generateAuthToken();
+
+        // check if code is empty
+        if (empty($code)) {
+            throw new UnauthorisedException('Error : Could not generate token');
+        }
+
         $table = $_ENV['DB_TABLE_CODE_MGT'];
+
+        // check if table is empty
+
+        if (empty($table)) {
+            throw new UnauthorisedException('Error : Could not generate token');
+        }
 
         // then check if the account is active on code_mgt table
         $query = Select::formAndMatchQuery(

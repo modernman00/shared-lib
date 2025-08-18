@@ -4,9 +4,10 @@ namespace Src\Exceptions;
 
 class DatabaseException extends \Exception
 {
-    public function __construct($message = 'Database error', $code = 500)
+
+     public function __construct(string $message = 'Database Error')
     {
-        parent::__construct($message, $code);
+        parent::__construct($message, 500);
     }
 }
     
