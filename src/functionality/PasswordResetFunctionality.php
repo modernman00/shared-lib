@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
+use Illuminate\Container\Attributes\Auth;
 use Src\{
     CheckToken,
     Exceptions\NotFoundException,
@@ -15,6 +16,7 @@ use Src\{
     Utility,
     Limiter
 };
+use Src\functionality\middleware\AuthGateMiddleware;
 
 /**
  * Handles secure password change flow via token-based recovery.
@@ -34,11 +36,8 @@ class PasswordResetFunctionality
      */
     public static function show(string $viewPath): void
     {
-        if (!isset($_SESSION['auth']['codeVerified'])) {
-
-             Utility::view2($_ENV['401']);
-        }
-        // Optional: trigger view layer response (depends on app structure)
+     
+        AuthGateMiddleware::enforce('auth.codeVerified');
         Utility::view2($viewPath);
     }
 

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{Utility, CorsHandler, Recaptcha, Token, Limiter, JwtHandler, CheckToken, Update, LoginUtility as CheckSanitise, Exceptions\UnauthorisedException};
+use Src\functionality\middleware\AuthGateMiddleware;
+use Src\{Utility,Token, Limiter, CheckToken, LoginUtility as CheckSanitise,};
 
 class PwdRecoveryCodeFunctiionality
 {
   public static function show(string $viewPath): void
   {
-    if (!isset($_SESSION['auth']['identifyCust'])) {
-       Utility::view2($_ENV['401']);
-    }
-    // Optional: trigger view layer response (depends on app structure)
+
+    AuthGateMiddleware::enforce('auth.identifyCust');
     Utility::view2($viewPath);
   }
 

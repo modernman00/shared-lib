@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Hamcrest\Util;
 use Src\{
     CorsHandler,
     Recaptcha,
@@ -15,7 +14,7 @@ use Src\{
     LoginUtility as CheckSanitise,
     CheckToken,
     Utility,
-    Exceptions\UnauthorisedException
+
 };
 
 /**
@@ -38,7 +37,7 @@ class PasswordRecoveryService
     public static function show($sGet, string $viewPath): void
     {
         if (!isset($sGet)) {
-            Utility::view2($_ENV['401']);
+            redirect('/error/401');
         }
 
         // Optional: trigger view layer response (depends on app structure)
