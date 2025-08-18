@@ -4,35 +4,30 @@ namespace Src;
 
 final class ErrorController
 {
-    public static function unauthorized(): void
+    public static function unauthorized401(): void
     {
-        self::renderError(401, 'Unauthorized access');
+        Utility::view2($_ENV['error401']); 
     }
 
-    public static function forbidden(): void
+    public static function forbidden403(): void
     {
-        self::renderError(403, 'Forbidden');
+
+         Utility::view2($_ENV['error403']);
     }
 
-    public static function notFound(): void
+    public static function notFound404(): void
     {
-        self::renderError(404, 'Page not found');
+         Utility::view2($_ENV['error404']);
     }
 
-    public static function tooManyRequests(): void
+    public static function tooManyRequests429(): void
     {
-        self::renderError(429, 'Too many requests');
+         Utility::view2($_ENV['error429']);
     }
 
-    public static function serverError(): void
+    public static function serverError500(): void
     {
-        self::renderError(500, 'Internal server error');
-    }
-
-    private static function renderError(int $code, ?string $message = null): void
-    {
-        // Render view
-        Utility::view2("errors/$code", ['error' => $message]); // e.g. views/errors/404.php
+         Utility::view2($_ENV['error500']);
     }
 
 }

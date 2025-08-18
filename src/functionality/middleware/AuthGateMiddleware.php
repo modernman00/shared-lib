@@ -2,8 +2,6 @@
 
 namespace Src\functionality\middleware;
 
-use Src\Utility;
-
 final class AuthGateMiddleware
 {
     /**
@@ -24,8 +22,7 @@ final class AuthGateMiddleware
         $isValid = isset($value) && ($expectedValue === null || $value === $expectedValue);
 
         if (!$isValid) {
-          $viewPath = $_ENV['error401'];
-            \redirect($viewPath);
+            \redirect($_ENV['401URL']);
           
         }
     }
