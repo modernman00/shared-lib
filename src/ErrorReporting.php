@@ -1,8 +1,10 @@
 <?php 
 
+declare(strict_types=1);
+
 namespace Src;
 
-final class ErrorController
+class ErrorController
 {
     public static function unauthorized401(): void
     {
