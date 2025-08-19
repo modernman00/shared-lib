@@ -118,7 +118,8 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
             // 1. Get validated paths
             $viewsPath = realpath(__DIR__ . '/../../../../resources/views');
             $cachePath = realpath(__DIR__ . '/../../../../bootstrap/cache');
-            $blade = new BladeOne($viewsPath, $cachePath);
+             $mode = $_ENV['APP_ENV'] === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
+            $blade = new BladeOne($viewsPath, $cachePath, $mode);
             $blade->setIsCompiled(false);
         }
 
@@ -127,7 +128,7 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
         $data['nonce'] = $nonce;
         // 4. Render with debug
         echo $blade->run($viewFile, $data);
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) {
         error_log('VIEW ERROR: ' . $e->getMessage());
 
         return "<!-- VIEW ERROR -->\n"

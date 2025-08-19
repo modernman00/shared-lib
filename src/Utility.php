@@ -33,8 +33,7 @@ public static function view2(
         viewFile:$viewFile, 
         data:$data, 
         realPathView: $realPathView, 
-        realPathCache: $realPathCache,
-        cspOptions: ['enable' => true]
+        realPathCache: $realPathCache
     );
 }
 
@@ -78,7 +77,7 @@ public static function viewBuilderWithCSP(
     string $realPathView,
     string $realPathCache,
     array $data = [], 
-    array $cspOptions = [])
+    array $cspOptions = ['enable' => true, 'report_only' => true])
 {
     try {
         // ===== 1. CSP SETUP =====
