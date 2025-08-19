@@ -123,7 +123,7 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
         }
 
         // 3. Normalize and verify view path
-        $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
+        $viewFile = str_replace('/', '.', $viewFile);
         $data['nonce'] = $nonce;
         // 4. Render with debug
         echo $blade->run($viewFile, $data);
