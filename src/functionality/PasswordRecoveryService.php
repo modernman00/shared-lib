@@ -45,21 +45,36 @@ class PasswordRecoveryService
     }
 
     /**
-     * Process forgot-password recovery request.
-     * you have to use JS to process the submit button  
-     *
-     * Flow:
-     * 1. Apply CORS and CAPTCHA security controls.
-     * 2. Apply rate limiting for the target identifier.
-     * 3. Validate and sanitise input.
-     * 4. Locate user record.
-     * 5. Generate and optionally send recovery token.
-     * $viewPath is the path to the view file for the token message
-     * MUST HAVE DB_TABLE_CODE_MGT in the .env file
-     *
-     *
-     * @throws NotFoundException If input is invalid or user not found
-     */
+ * Handles a forgot-password recovery request and initiates token-based authentication.
+ *
+ * This function is triggered via JavaScript when the recovery form is submitted.
+ * It applies security controls, validates input, locates the user, and issues a recovery token.
+ *
+ * 🔄 Recovery Flow:
+ * 1. Apply CORS headers for cross-origin access.
+ * 2. Verify CAPTCHA to prevent automated abuse.
+ * 3. Enforce rate limiting based on the user's email.
+ * 4. Validate and sanitize input fields.
+ * 5. Locate the user record in the database.
+ * 6. Generate a JWT token and optionally send a recovery email.
+ * 7. Finalize recovery by setting session variables and issuing token.
+ *
+ * ⚙️ Required Environment Variables (set in `.env`):
+ * - `DB_TABLE_CODE_MGT` — Name of the database table used for managing recovery codes.
+ *
+ * 📁 Required View Configuration:
+ * - `$pathToSentCodeNotification` — Path to the view file used for rendering the recovery token message.
+ *
+ * 🧠 Developer Notes:
+ * - JavaScript must be used to handle the form submission and trigger this function.
+ * - Recovery email sets `$_SESSION['auth']['2FA_token_ts']` and `$_SESSION['auth']['identifyCust']`.
+ *
+ * @param string $pathToSentCodeNotification  Path to the view file for token notification.
+ * @param bool   $issueJwt                    Whether to issue a JWT token during recovery.
+ *
+ * @throws NotFoundException                  If input is missing or user cannot be found.
+ */
+
     public static function process($pathToSentCodeNotification, bool $issueJwt = true): void
     {
         try {

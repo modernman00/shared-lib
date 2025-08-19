@@ -26,25 +26,35 @@ class LoginFunctionality
     }
 
   /**
-   * Processes the login request and returns authentication outcome.
-   * you have to use JS to process the submit button  
-   *
-   * Flow:
-   * 1. Sanitize input and extract identifier.
-   * 2. Apply CORS headers and CAPTCHA verification.
-   * 3. Enforce rate limiting based on identifier.
-   * 4. Authenticate credentials using JwtHandler.
-   * 5. Respond with success (JWT or session-based) or throw exception.
-   * $_ENV must have COOKIE_TOKEN_NAME for cookie handling, JWT_KEY_PUBLIC for JWT validation, and CAPTCHA_KEY for reCAPTCHA, JWT_KEY_PRIVATE for signing DB_TABLE_LOGIN for login table name
-   *
-   * @param array $input - Login payload, expected to include 'email' or 'username'.
-   * @param string $captchaAction - Contextual action label for CAPTCHA verification.
-   * @param bool $issueJwt - Flag to determine if JWT token should be issued.
-   * 
-   * DONT FORGET TO CREATE A TABLE FOR AUDIT_LOGS called audit_logs
-   *
-   * @throws NotFoundException - If post data is missing.
-   */
+ * Authenticates a login request and returns either a JWT or session-based response.
+ *
+ * This function is triggered via JavaScript when the login form is submitted.
+ * It performs input sanitization, CAPTCHA verification, rate limiting, and credential authentication.
+ *
+ * 🔐 Authentication Flow:
+ * 1. Sanitize input and extract user identifier (e.g., email or username).
+ * 2. Apply CORS headers and verify CAPTCHA using the provided action label.
+ * 3. Enforce rate limiting based on the identifier to prevent brute-force attempts.
+ * 4. Authenticate credentials using JwtHandler.
+ * 5. Respond with a JWT (if $issueJwt is true) or session-based login.
+ *
+ * ⚙️ Required Environment Variables (set in `.env`):
+ * - `COOKIE_TOKEN_NAME` — Name of the cookie used to store the token.
+ * - `JWT_KEY_PUBLIC` — Public key for validating JWTs.
+ * - `JWT_KEY_PRIVATE` — Private key for signing JWTs.
+ * - `CAPTCHA_KEY` — Secret key for reCAPTCHA verification.
+ * - `DB_TABLE_LOGIN` — Name of the login table in your database.
+ *
+ * 🗂️ Required Database Setup:
+ * - Create an `audit_logs` table to track login attempts and authentication events.
+ *
+ * @param array $input           Login payload, must include 'email' or 'username'.
+ * @param string $captchaAction  Action label used for CAPTCHA verification.
+ * @param bool $issueJwt         Whether to issue a JWT token upon successful login.
+ *
+ * @throws NotFoundException     If the login payload is missing or malformed.
+ */
+
   public static function login(bool $issueJwt = true): void
   {
     try {

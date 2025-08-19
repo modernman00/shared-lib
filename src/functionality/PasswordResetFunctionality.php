@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Illuminate\Container\Attributes\Auth;
 use Src\{
     CheckToken,
     Exceptions\NotFoundException,
@@ -42,14 +41,37 @@ class PasswordResetFunctionality
     }
 
     /**
-     * Processes password change via session email and token.
-     *
-     * @param array $post POST input payload
-     * remember to set the DB_TABLE_LOGIN in the .env file
-     * $viewPath is the path to the view file for the PASSWORD CHANGE message
-     *
-     * @throws NotFoundException
-     */
+ * Handles a password change request using session-based email and token authentication.
+ *
+ * This function is triggered via JavaScript when the user submits the password change form.
+ * It validates the input, verifies the token, updates the password, and sends a confirmation email.
+ *
+ * 🔐 Password Change Flow:
+ * 1. Decode and sanitize incoming POST data (`password`, `confirm_password`).
+ * 2. Verify token integrity using `CheckToken`.
+ * 3. Decode user identity from JWT (`auth_forgot`).
+ * 4. Enforce rate limiting based on the user's email.
+ * 5. Hash the new password securely using bcrypt.
+ * 6. Update the password in the login table.
+ * 7. Send a confirmation email using the provided view template.
+ * 8. Clear rate limits, destroy session and cookies, and respond with success.
+ *
+ * ⚙️ Required Environment Variables (set in `.env`):
+ * - `DB_TABLE_LOGIN` — Name of the database table used for storing login credentials.
+ *
+ * 📁 Required View Configuration:
+ * - `$pathToPwdChangeNotification` — Path to the view file used for rendering the password change confirmation message.
+ *
+ * 🧠 Developer Notes:
+ * - JavaScript must be used to handle the form submission and trigger this function.
+ * - JWT must be issued and stored in session under `auth_forgot` before this function is called.
+ * - This function clears `$_SESSION['token']` and destroys the session and cookies after execution.
+ *
+ * @param string $pathToPwdChangeNotification  Path to the view file for password change notification.
+ *
+ * @throws NotFoundException                   If user data is missing or invalid.
+ */
+
     public static function process($pathToPwdChangeNotification): void
     {
         $input = json_decode(file_get_contents('php://input'), true);
