@@ -50,7 +50,7 @@ class PasswordResetFunctionality
      *
      * @throws NotFoundException
      */
-    public static function process($viewPath): void
+    public static function process($pathToPwdChangeNotification): void
     {
         $input = json_decode(file_get_contents('php://input'), true);
         // Extract and sanitise incoming password field
@@ -84,7 +84,7 @@ class PasswordResetFunctionality
         $update->updateTable('password', $hashedPassword, 'email', $userEmail);
 
         $emailData = ToSendEmail::genEmailArray(
-            viewPath: $viewPath,
+            viewPath: $pathToPwdChangeNotification,
             data: ['email' => $userEmail],
             subject: 'PASSWORD CHANGE'
         );

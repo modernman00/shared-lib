@@ -1,7 +1,8 @@
 #!/bin/bash
 
 VERSION_FILE="config/version.php"
-echo APP_VERSION;
+echo "📦 Current APP_VERSION: $CURRENT"
+
 # --- Parse arguments ---
 MODE="patch"
 for arg in "$@"; do
@@ -35,6 +36,19 @@ NEW="v$MAJOR.$MINOR.$PATCH"
 
 echo "🔧 Current version: $CURRENT"
 echo "⏫ Bumping to: $NEW ($MODE)"
+
+# Stop if there are no changes
+if git diff --quiet && git diff --cached --quiet; then
+  echo "⚠️ No changes to commit."
+  exit 0
+fi
+
+# Stop if gh CLI is not installed
+if ! command -v gh &> /dev/null; then
+  echo "❌ GitHub CLI (gh) not found. Install it to publish releases."
+  exit 1
+fi
+
 
 # --- Update version.php ---
 sed -i '' "s/$CURRENT/$NEW/" "$VERSION_FILE"  # macOS
