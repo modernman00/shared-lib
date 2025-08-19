@@ -13,7 +13,7 @@ class PwdRecoveryCodeFunctiionality
   {
 
     AuthGateMiddleware::enforce('auth.identifyCust');
-    Utility::view2($viewPath);
+    view($viewPath);
   }
 
 /**

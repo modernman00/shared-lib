@@ -22,7 +22,8 @@ class LoginFunctionality
     {
 
         // Optional: trigger view layer response (depends on app structure)
-        Utility::view2($viewPath);
+        
+        view2($viewPath);
     }
 
   /**

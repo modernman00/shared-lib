@@ -37,7 +37,7 @@ class PasswordResetFunctionality
     {
      
         AuthGateMiddleware::enforce('auth.codeVerified');
-        Utility::view2($viewPath);
+        view($viewPath);
     }
 
     /**

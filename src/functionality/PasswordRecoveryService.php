@@ -37,11 +37,11 @@ class PasswordRecoveryService
     public static function show($sGet, string $viewPath): void
     {
         if (!isset($sGet)) {
-            redirect('/error/401');
+            \redirect($_ENV['401URL']);
         }
 
         // Optional: trigger view layer response (depends on app structure)
-        Utility::view2($viewPath);
+        view($viewPath);
     }
 
     /**
