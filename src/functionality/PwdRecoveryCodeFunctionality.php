@@ -7,7 +7,7 @@ namespace Src\functionality;
 use Src\functionality\middleware\AuthGateMiddleware;
 use Src\{Utility,Token, Limiter, CheckToken, LoginUtility as CheckSanitise,};
 
-class PwdRecoveryCodeFunctiionality
+class PwdRecoveryCodeFunctionality
 {
   public static function show(string $viewPath): void
   {
