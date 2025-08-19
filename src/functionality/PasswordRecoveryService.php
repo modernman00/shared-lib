@@ -12,9 +12,7 @@ use Src\{
     Exceptions\NotFoundException,
     Token,
     LoginUtility as CheckSanitise,
-    CheckToken,
-    Utility,
-
+    CheckToken
 };
 
 /**
