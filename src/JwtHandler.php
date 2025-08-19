@@ -36,20 +36,39 @@ class JwtHandler
         // self::$expiredTime = time() + (int)$_ENV['COOKIE_EXPIRE'];
     }
 
-    /**
-     * Authenticates user via email & password, returns token if valid.
-     *
-     * Flow:
-     * 1. Sanitises input using validation rules.
-     * 2. Finds user by email and verifies password.
-     * 3. Generates JWT token payload and sets cookie if "rememberMe" is enabled.
-     * $COOKIE_TOKEN_NAME must be set in .env. IT COULD BE 'auth_token' or login_token.
-     * suspicious email alert must be set in the .env file as SUSPICIOUS_ALERT
-     *
-     * @param array $input - Login data containing 'email' and 'password'
-     * @return array - ['token' => string, 'user' => array]
-     * @throws NotFoundException - If credentials are invalid
-     */
+   /**
+ * Authenticates a user via email and password, issues JWT token, and sets secure cookie if requested.
+ *
+ * 🔐 Authentication Flow:
+ * 1. Sanitizes input (`email`, `password`) using defined length constraints.
+ * 2. Locates user by email and verifies password hash.
+ * 3. Logs successful login attempt for audit trail.
+ * 4. Generates JWT token and optionally sets a secure cookie if `rememberMe` is enabled.
+ * 5. Sends a 2FA recovery code via email and stores timestamp/session data.
+ *
+ * ⚙️ Required Environment Variables:
+ * - `COOKIE_TOKEN_LOGIN` — Name of the cookie to store the JWT (e.g. `auth_token`, `login_token`)
+ * - `COOKIE_EXPIRE` — Expiry time for the cookie in seconds
+ * - `APP_ENV` — Used to determine cookie strictness (`local`, `development`, `production`)
+ * - `APP_URL` — Used to extract domain for cookie scope
+ * - `PATH_TO_SENT_CODE_NOTIFICATION` — Path to the email view template for sending 2FA code
+ * - `SUSPICIOUS_ALERT` — Optional flag for triggering alerts on suspicious login attempts
+ *
+ * 🍪 Cookie Behavior:
+ * - Cookie is only set if `rememberMe` is present in the POST payload.
+ * - Cookie is `secure` and `httponly` in production environments with HTTPS.
+ *
+ * 🧠 Developer Notes:
+ * - Password is removed from the returned user payload for safety.
+ * - Audit logs include IP and user agent for traceability.
+ * - Session variables `auth.2FA_token_ts` and `auth.identifyCust` are set for downstream verification.
+ * - This method does not handle login throttling or brute-force protection—consider integrating `Limiter`.
+ *
+ * @param array $input Login credentials containing 'email' and 'password'
+ * @return array ['token' => string, 'userId' => int]
+ * @throws NotFoundException If user is not found or password is invalid
+ */
+
     public static function authenticate(array $input): array
     {
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
@@ -75,7 +94,12 @@ class JwtHandler
 
         $generatedToken = self::jwtEncodeData($user);
         $rememberMe = isset($_POST['rememberMe']) ? 'true' : 'false';
-        $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
+        $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+
+          // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
+          $pathToSentCodeNotification = $_ENV['PATH_TO_SENT_CODE_NOTIFICATION']; 
+        
+        Token::generateSendTokenEmail($user, $pathToSentCodeNotification);
 
         /**
          * Strictness control:

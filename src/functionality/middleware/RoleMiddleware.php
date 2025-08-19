@@ -22,7 +22,7 @@ use Src\Utility;
 final class RoleMiddleware
 {
     private array $allowedRoles;
-    private string $publicKey;
+
 
     /**
      * @param array $allowedRoles - List of permitted roles (e.g. ['admin', 'user']).
@@ -46,7 +46,7 @@ final class RoleMiddleware
      */
     public function handle(): array
     {
-        $tokenName = $_ENV['COOKIE_TOKEN_NAME'] ?? 'auth_token';
+        $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
         $token = $_COOKIE[$tokenName] ?? '';
 
         if (empty($token)) {

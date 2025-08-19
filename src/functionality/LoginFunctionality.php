@@ -39,14 +39,31 @@ class LoginFunctionality
  * 5. Respond with a JWT (if $issueJwt is true) or session-based login.
  *
  * ⚙️ Required Environment Variables (set in `.env`):
- * - `COOKIE_TOKEN_NAME` — Name of the cookie used to store the token.
+ * - `COOKIE_TOKEN_LOGIN` — Name of the cookie used to store the token.
  * - `JWT_KEY_PUBLIC` — Public key for validating JWTs.
  * - `JWT_KEY_PRIVATE` — Private key for signing JWTs.
  * - `CAPTCHA_KEY` — Secret key for reCAPTCHA verification.
  * - `DB_TABLE_LOGIN` — Name of the login table in your database.
+ * - `COOKIE_TOKEN_LOGIN` — Name of the cookie to store the JWT (e.g. `auth_token`, `login_token`)
+ * - `COOKIE_EXPIRE` — Expiry time for the cookie in seconds
+ * - `APP_ENV` — Used to determine cookie strictness (`local`, `development`, `production`)
+ * - `APP_URL` — Used to extract domain for cookie scope
+ * - `PATH_TO_SENT_CODE_NOTIFICATION` — Path to the email view template for sending 2FA code
+ * - `SUSPICIOUS_ALERT` — Optional flag for triggering alerts on suspicious login attempts
+ *
+ * 🍪 Cookie Behavior:
+ * - Cookie is only set if `rememberMe` is present in the POST payload.
+ * - Cookie is `secure` and `httponly` in production environments with HTTPS.
+ *
  *
  * 🗂️ Required Database Setup:
  * - Create an `audit_logs` table to track login attempts and authentication events.
+ *
+ * 🧠 Developer Notes:
+ * - Password is removed from the returned user payload for safety.
+ * Ensure to set role in your DB table for role-based access control (e.g. `users` table).
+ * - Audit logs include IP and user agent for traceability.
+ * - Session variables `auth.2FA_token_ts` and `auth.identifyCust` are set for downstream verification.
  *
  * @param array $input           Login payload, must include 'email' or 'username'.
  * @param string $captchaAction  Action label used for CAPTCHA verification.
@@ -68,7 +85,7 @@ class LoginFunctionality
       $token = $input['token'] ?? '';
       CheckToken::tokenCheck($token);
       
-      // Authenticate user and generate JWT tokens if requested
+      // Authenticate user, send code and generate JWT tokens if requested
 
       $userD = JwtHandler::authenticate($input);
 
@@ -106,18 +123,18 @@ class LoginFunctionality
     Limiter::$ipLimiter->reset();
 
     // After successful login unset the CSRF token to prevent reuse
-      unset($_SESSION['token']);
+    unset($_SESSION['token']);
 
     // Mitigate session fixation vulnerabilities
     session_regenerate_id(true);
 
     if ($issueJwt) {
       // Return JWT token to client (e.g. SPA or mobile client)
-      \msgSuccess(200, 'Login Successful', $token);
+      \msgSuccess(200, 'Verification code sent to your email successfully', $token);
     } else {
       // Store user ID in session for classic web login
       $_SESSION['ID'] = $userId;
-      \msgSuccess(200, 'Login Successful');
+      \msgSuccess(200, 'Verification code sent to your email successfully');
     }
   }
 }

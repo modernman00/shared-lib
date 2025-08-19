@@ -75,7 +75,7 @@ class PasswordRecoveryService
  * @throws NotFoundException                  If input is missing or user cannot be found.
  */
 
-    public static function process($pathToSentCodeNotification, bool $issueJwt = true): void
+    public static function process(bool $issueJwt = true): void
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -110,6 +110,7 @@ class PasswordRecoveryService
             }
 
             // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
+              $pathToSentCodeNotification = $_ENV['PATH_TO_SENT_CODE_NOTIFICATION']; 
             Token::generateSendTokenEmail($user, $pathToSentCodeNotification);
 
             self::finaliseRecovery($token, $issueJwt);
