@@ -58,21 +58,17 @@ class PasswordResetFunctionality
  *
  * ⚙️ Required Environment Variables (set in `.env`):
  * - `DB_TABLE_LOGIN` — Name of the database table used for storing login credentials.
- *
- * 📁 Required View Configuration:
- * - `$pathToPwdChangeNotification` — Path to the view file used for rendering the password change confirmation message.
+ * - `PATH_TO_PASSWORD_CHANGE_NOTIFICATION` — Path to the view file used for rendering the password change confirmation message.
  *
  * 🧠 Developer Notes:
  * - JavaScript must be used to handle the form submission and trigger this function.
  * - JWT must be issued and stored in session under `auth_forgot` before this function is called.
  * - This function clears `$_SESSION['token']` and destroys the session and cookies after execution.
  *
- * @param string $pathToPwdChangeNotification  Path to the view file for password change notification.
- *
  * @throws NotFoundException                   If user data is missing or invalid.
  */
 
-    public static function process($pathToPwdChangeNotification): void
+    public static function process(): void
     {
         $input = json_decode(file_get_contents('php://input'), true);
         // Extract and sanitise incoming password field
@@ -104,6 +100,8 @@ class PasswordResetFunctionality
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
 
         $update->updateTable('password', $hashedPassword, 'email', $userEmail);
+        $pathToPwdChangeNotification = $_ENV['PATH_TO_PASSWORD_CHANGE_NOTIFICATION'];
+
 
         $emailData = ToSendEmail::genEmailArray(
             viewPath: $pathToPwdChangeNotification,
