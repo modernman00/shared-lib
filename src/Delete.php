@@ -45,7 +45,7 @@ class Delete extends Db
      *
      * @throws PDOException if an error occurs during query execution
      */
-    public static function deleteFn(string $query, ?array $bind = null): bool
+    public static function deleteFn(string $query, ?array $bind = null): int
     {
         try {
             $statement = parent::connect2()->prepare($query);
@@ -55,7 +55,9 @@ class Delete extends Db
         } catch (PDOException $e) {
             Utility::showError($e);
 
-            return false;
+            return 0; // Return 0 if an error occurs
         }
     }
+
+    
 }
