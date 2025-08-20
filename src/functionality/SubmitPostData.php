@@ -114,11 +114,12 @@ class SubmitPostData
      *
      * @return string Sanitized filename
      */
-    public static function submitImgDataSingle($formInputName, $uploadPath): string
+    public static function submitImgDataSingle($formInputName, $uploadPath, $sFile): string
     {
-        $fileName = FileUploader::fileUploadSingle($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+        $fileName = FileUploader::fileUploadSingle($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
+        return Utility::checkInputImage(\str_replace(' ', '', $fileName)); 
 
-        return $fileName;
+  
     }
 
     /**
@@ -129,10 +130,10 @@ class SubmitPostData
      *
      * @return array Array of sanitized filenames
      */
-    public static function submitImgDataMultiple($formInputName, $uploadPath): array
+    public static function submitImgDataMultiple($formInputName, $uploadPath, $sFile): array
     {
-        $fileName = FileUploader::fileUploadMultiple($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+        $fileName = FileUploader::fileUploadMultiple($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
 
-        return $fileName;
+          return Utility::checkInputImage(\str_replace(' ', '', $fileName)); 
     }
 }
