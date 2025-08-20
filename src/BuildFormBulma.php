@@ -417,6 +417,7 @@ class BuildFormBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
                     $name = empty($this->entValue[$i]['attribute'][$y]) ? '' : $this->entValue[$i]['attribute'][$y];
+                    $nestedName = $divID[$name] ?? $name;
                     $placeholder = empty($this->entValue[$i]['placeholder'][$y]) ? '' : $this->entValue[$i]['placeholder'][$y];
                     $id = $name . '_id';
                     $error = $name . '_error';
@@ -436,7 +437,7 @@ class BuildFormBulma
                                 <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
-                                        <select class="input is-medium" id="$id" name="$name">
+                                        <select class="input is-medium" id="$id" name="$nestedName">
                                         
                             HTML;
 
@@ -466,7 +467,7 @@ class BuildFormBulma
                                 
 
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" id="{$name}_id" type="text" placeholder="$cleanLabel">
+                                    <input class="input $name input is-medium" id="{$name}_id" type="text" placeholder="$cleanLabel" name="$nestedName">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                 </div>
@@ -503,7 +504,7 @@ class BuildFormBulma
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name">
+                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$nestedName">
                                                         
                                                         <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
                                 HTML;
@@ -519,7 +520,7 @@ class BuildFormBulma
                                 HTML;
                         } else {
                             echo <<<HTML
-                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
                                 HTML;
                         }
                         echo <<<HTML
@@ -540,7 +541,7 @@ class BuildFormBulma
                             <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>

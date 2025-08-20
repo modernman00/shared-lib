@@ -9,12 +9,14 @@ use Src\{
     CheckToken,
     CorsHandler,
     Db,
+    LoginUtility,
     FileUploader,
     Recaptcha,
     SubmitForm,
     Transaction,
     Utility
 };
+use Src\functionality\middleware\GetRequestData;
 
 /**
  * SubmitwithSingleImg.
@@ -66,18 +68,30 @@ class SubmitPostData
      *          'mobile' => $cleanPostData['mobile'],
      *           'id' => $cleanPostData['id'],
      *       ],
+     * @param $imgPath Path to the directory where images will be uploaded 'public/images/blog/'
+     * @param string|null $fileName Optional name for the file input field (e.g. 'image')
      *
      * @throws \Throwable If CAPTCHA fails, token is invalid, or any table insertion fails
      */
-    public static function submit(array $multipleTablesnData, array $cleanData): void
+    public static function submitToOneTable(string $table, ?string $fileName = null, ?string $imgPath = null, ?array $minMaxData = null): void
     {
         CorsHandler::setHeaders();
 
         try {
-            Recaptcha::verifyCaptcha($cleanData);
+            $input = GetRequestData::getRequestData();
+            Recaptcha::verifyCaptcha($input);
             $token = $cleanData['token'] ?? '';
             CheckToken::tokenCheck($token);
-            self::insertMultipleTables($multipleTablesnData);
+            $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
+
+            $sFile = $input['files'] ?? null;
+
+            if($sFile){
+                $getProcessedFileName = SubmitPostData::submitImgDataSingle($imgPath, $fileName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
+                $sanitisedData[$fileName] =  $getProcessedFileName;  
+            }
+            SubmitForm::submitForm($table, $sanitisedData);
+
             Utility::msgSuccess(201, 'Record created successfully');
         } catch (\Throwable $th) {
             Transaction::rollback();
@@ -105,6 +119,8 @@ class SubmitPostData
         }
         Transaction::commit();
     }
+
+
 
     /**
      * Uploads a single image file and returns the sanitized filename.
