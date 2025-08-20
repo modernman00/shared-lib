@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Src\functionality\middleware;
 
-use Src\Exceptions\UnauthorisedException;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Src\Db;
+use Src\Exceptions\UnauthorisedException;
 use Src\Utility;
 
 /**
@@ -23,14 +23,12 @@ final class RoleMiddleware
 {
     private array $allowedRoles;
 
-
     /**
      * @param array $allowedRoles - List of permitted roles (e.g. ['admin', 'user']).
      */
     public function __construct(array $allowedRoles = [])
     {
         $this->allowedRoles = $allowedRoles;
-     
     }
 
     /**
@@ -42,6 +40,7 @@ final class RoleMiddleware
      * - DB table lookup is optional but ensures user existence
      *
      * @return array{id: int, role: string}
+     *
      * @throws UnauthorisedException if token or role are invalid
      */
     public function handle(): array
@@ -76,6 +75,7 @@ final class RoleMiddleware
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload
             showError($e);
+
             return [];
         }
     }
@@ -86,8 +86,9 @@ final class RoleMiddleware
      * - The target table is defined by $_ENV['DB_TABLE_LOGIN'] (defaults to 'users').
      * - Only validates presence via email match, returns status string.
      *
-     * @param int $user_id - The ID of the user from JWT payload.
-     * @return string|null - 'SUCCESSFUL' if user exists, null otherwise.
+     * @param int $user_id - The ID of the user from JWT payload
+     *
+     * @return string|null - 'SUCCESSFUL' if user exists, null otherwise
      */
     protected function fetchUser(int $user_id): ?string
     {
@@ -101,6 +102,7 @@ final class RoleMiddleware
             return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
         } catch (\PDOException $e) {
             Utility::showError($e);
+
             return null;
         }
     }

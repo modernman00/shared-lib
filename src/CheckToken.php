@@ -11,7 +11,7 @@ class CheckToken
     /**
      * Undocumented function.
      *
-     * @param [type] $token  this token is the same for session and post
+     * @param $token the post token   this token is the same for session and post
      *
      * @psalm-param 'token' $token
      */
@@ -19,10 +19,8 @@ class CheckToken
     {
         // try {
         $sessionToken = $_SESSION['token'] ?? '';
-        $postToken = $token ?? $_POST['token'];
+        $postToken = $token;
         $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
-
-
 
         $valid = false;
         if ($sessionToken && hash_equals($sessionToken, $headerToken)) {

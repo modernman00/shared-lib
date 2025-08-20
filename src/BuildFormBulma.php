@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src;
 
+use InvalidArgumentException;
+
 class BuildFormBulma
 {
     /**
@@ -19,16 +21,6 @@ class BuildFormBulma
 
     private int $entCount;
 
-    public ?string $ref = null;
-
-    public ?string $year = null;
-
-    public ?string $month = null;
-
-    private array $setYear = [];
-
-    private array $setDay = [];
-
     /**
      * enter the array to create the form 'name'=> 's' s denotes string, 1 integer, date for date, textera for textera and select is an array ['select' followed by the options]
      * mixed - you can use to generate text, number, select, inputButton
@@ -40,86 +32,63 @@ class BuildFormBulma
     {
         $this->token = urlencode(base64_encode((random_bytes(32))));
         setcookie('XSRF-TOKEN', $this->token, [
-    'expires' => time() + 3600,
-    'path' => '/',
-    'samesite' => 'Lax',
-    'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
-    'httponly' => false,
-]);
+            'expires' => time() + 3600,
+            'path' => '/',
+            'samesite' => 'Lax',
+            'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
+            'httponly' => false,
+        ]);
 
-    }
-
-    /**
-     * it extracts out the values of the form. this is what we use to decide the type of question.
-     *
-     * @return array
-     */
-    public function setEntValue(): array
-    {
-        $this->entValue = array_values($this->question);
-        $this->entCount = count($this->entValue);
-
-        return $this->entValue;
-    }
-
-    /**
-     * to create the year of birth
-     * set the years and create an array.
-     */
-    private function createYear(int $startVar, int $dayOrYear): array
-    {
-        $setYear = [];
-        for ($i = $startVar; $i <= $dayOrYear; ++$i) {
-            $setYear[] = $i;
-        }
-
-        return $setYear;
-    }
-
-    private function createDay(int $startVar, int $dayOrYear): array
-    {
-        $setDay = [];
-        for ($i = $startVar; $i < $dayOrYear; ++$i) {
-            $setDay[] = $i;
-        }
-
-        return $setDay;
-    }
-
-    public function getYear(): void
-    {
-        $yearLimit = (int) date('Y');
-        $this->setYear = $this->createYear(1930, $yearLimit);
-
-        foreach ($this->setYear as $no) {
-            echo "<option value=\"$no\">$no</option>";
-        }
-    }
-
-    private function getDay()
-    {
-        $this->setDay = $this->createDay(0o1, 32);
-        foreach ($this->setDay as $no) {
-            echo "<option value=\"$no\">$no</option>";
-        }
-    }
-
-    /**
-     * function to set the key of the form. Keys are the names of questions and the names of the database.
-     */
-    public function setEntKey(): array
-    {
         $this->entKey = array_keys($this->question);
-
-        return $this->entKey;
-    }
-
-    public function setSessionToken(): string
-    {
+           $this->entValue = array_values($this->question);
+        $this->entCount = count($this->entValue);
         $_SESSION['token'] = $this->token;
-
-        return $_SESSION['token'];
     }
+
+
+
+        /**
+     * Generates an array of days.
+     *
+     * @return array ['days' => array, 'selected' => int|null]
+     * @throws InvalidArgumentException If day range is invalid
+     */
+    private function createDay(): array
+    {
+        return range(1, 31);
+
+    }
+
+      /**
+     * Generates an array of months.
+     *
+     * @return array ['months' => array, 'selected' => string|null]
+     */
+    private function createMonth(): array
+    {
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+     
+    }
+
+       /**
+     * Generates an array of years.
+     *
+     * @param int $startYear Starting year (default: 1930)
+     * @param int|null $endYear Ending year (default: current year)
+     * @return array ['years' => array, 'selected' => int|null]
+     * @throws InvalidArgumentException If year range is invalid
+     */
+
+      private function createYear(int $startYear = 1930, ?int $endYear = null): array
+    {
+        $endYear = $endYear ?? (int) date('Y');
+        if ($startYear > $endYear) {
+            throw new InvalidArgumentException('Start year must be less than or equal to end year');
+        }
+        return range($startYear, $endYear);
+          
+    }
+
 
     /**
      * important ones are mixed, select-many, setError.
@@ -136,9 +105,7 @@ class BuildFormBulma
      */
     public function genForm(): void
     {
-        $this->setEntValue();
-        $this->setEntKey();
-        $this->setSessionToken();
+
 
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['submit']) ? $_POST[$this->entKey[$i]] : '';
@@ -374,7 +341,9 @@ class BuildFormBulma
                                                 <select name="day" id="day">
                                                     <option selected value="select">Day</option>
                     HTML;
-                echo $this->getDay();
+                foreach ($this->createDay() as $day) {
+                    echo "<option value=\"$day\">$day</option>";
+                }
                 echo <<<HTML
                                         </select>
                                     </div>
@@ -386,18 +355,11 @@ class BuildFormBulma
                                     <div class="select is-fullwidth is-medium">
                                         <select name="month" id="month">
                                             <option selected value="select">Month</option>
-                                            <option value="Jan">Jan</option>
-                                            <option value="Feb">Feb</option>
-                                            <option value="Mar">Mar</option>
-                                            <option value="Apr">Apr</option>
-                                            <option value="May">May</option>
-                                            <option value="Jun">Jun</option>
-                                            <option value="Jul">Jul</option>
-                                            <option value="Aug">Aug</option>
-                                            <option value="Sep">Sep</option>
-                                            <option value="Oct">Oct</option>
-                                            <option value="Nov">Nov</option>
-                                            <option value="Dec">Dec</option>
+                    HTML;
+                foreach ($this->createMonth() as $month) {
+                    echo "<option value=\"$month\">$month</option>";
+                }
+                echo <<<HTML
                                         </select>
                                     </div>
                                 </div>
@@ -409,7 +371,9 @@ class BuildFormBulma
                                         <select name="year" id="year">
                                             <option selected value="select">Year</option>
                     HTML;
-                echo $this->getYear();
+                foreach ($this->createYear() as $year) {
+                    echo "<option value=\"$year\">$year</option>";
+                }
                 echo <<<HTML
                                         </select>
                                     </div>
@@ -509,7 +473,7 @@ class BuildFormBulma
                                 <div class="control">
                                     <button class="button is-success is-medium" id="{$name}_button">Search</button>
                                 </div>
-                        
+
                             </div>
                             HTML;
                     } elseif ($labelType === 'cardSelect') {
@@ -545,7 +509,7 @@ class BuildFormBulma
                                 HTML;
                             $decide = $this->entValue[$i]['options'][$y];
 
-                            foreach ($decide as $value=> $option) {
+                            foreach ($decide as $value => $option) {
                                 echo "<option value='$value'>
                                             <span style='font-size: 20px;'> $option 
                                             </span> </option>";
@@ -667,7 +631,7 @@ class BuildFormBulma
                     HTML;
             } elseif ($this->entValue[$i] === 'captcha') {
                 echo sprintf('<div class="g-recaptcha" data-sitekey="%s"></div>', getenv('RECAPTCHA_KEY'));
-            }elseif ($this->entValue[$i] == 'showPassword') {
+            } elseif ($this->entValue[$i] == 'showPassword') {
                 echo <<<HTML
                        <label class="checkbox">
                         <input type="checkbox" id="showPassword_id">

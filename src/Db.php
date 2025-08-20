@@ -11,7 +11,8 @@ class Db extends CheckToken
 {
     public const BR = '<br>'; // can't be changed
 
-    private static $conn = null;
+    private static ?PDO $conn = null;
+
     private static ?PDO $mockConnection = null;
 
     private static function dbVariables(): array
@@ -25,34 +26,33 @@ class Db extends CheckToken
         ];
     }
 
-    public function connect()
+    public function connect(): ?PDO
     {
         // apply singleton pattern by checking if db connection is already established before connecting again
         if (self::$mockConnection !== null) {
             return self::$mockConnection;
         }
-        $conn = null;
         try {
-            if (!isset($conn)) {
+            if (!isset(self::$conn)) {
                 $dbVar = self::dbVariables();
-                $conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
+                self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
                     PDO::ATTR_PERSISTENT => true,
                 ]);
 
-                $conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
-                $conn->setAttribute(attribute: PDO::ATTR_ERRMODE, value: PDO::ERRMODE_EXCEPTION);
-                $conn->setAttribute(attribute: PDO::ATTR_EMULATE_PREPARES, value: false);
+                self::$conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
+                self::$conn->setAttribute(attribute: PDO::ATTR_ERRMODE, value: PDO::ERRMODE_EXCEPTION);
+                self::$conn->setAttribute(attribute: PDO::ATTR_EMULATE_PREPARES, value: false);
 
-                return $conn;
-            } else {
-                return $conn;
-            }
+            } 
+                return self::$conn;
+            
         } catch (PDOException $e) {
             Utility::showError($e);
+            return null;
         }
     }
 
-    public static function connect2()
+    public static function connect2():? PDO
     {
         if (self::$mockConnection !== null) {
             return self::$mockConnection;
@@ -76,13 +76,14 @@ class Db extends CheckToken
         }
     }
 
-    public function connectSql()
+    public function connectSql() : ?\mysqli
     {
         $dbVar2 = self::dbVariables();
         try {
             return mysqli_connect($dbVar2['host'], $dbVar2['username'], $dbVar2['password'], $dbVar2['name']);
         } catch (\Throwable $e) {
             Utility::showError($e);
+            return null;
         }
     }
 

@@ -12,7 +12,7 @@ use Src\VirusScan as ScanVirus;
 
 class FileUploader
 {
-    public static function fileUploadMultiple($fileLocation, $formInputName, $apiKeyVirusScan = null): array
+    public static function fileUploadMultiple(string $fileLocation, string $formInputName, ?string $apiKeyVirusScan = null): array
     {
         // Validate the file input
         if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'])) {
@@ -56,17 +56,17 @@ class FileUploader
             $fileError = $_FILES[$formInputName]['error'][$i];
 
             // Validate file
-            $picError = '';
+            $picError = [];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
             $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
 
             if (!in_array($fileExtension, $allowedFormats)) {
-                $picError .= 'Format must be PNG, JPG, GIF, HEIC or JPEG. ';
+                $picError['format']= 'Format must be PNG, JPG, GIF, HEIC or JPEG. ';
                 throw new ValidationException("IMAGE FORMAT - $picError");
             }
 
             if ($fileSize > 10485760) { // 10 MB
-                $picError .= 'File size must not exceed 10MB';
+                $picError['size']= 'File size must not exceed 10MB';
                 throw new ValidationException("Error Processing Request - post images - $picError");
             }
             // if (file_exists($pathToImage)) {
@@ -74,7 +74,11 @@ class FileUploader
             //     throwError(401, "Error Processing Request - post images - $picError");
             // }
             if ($picError) {
-                throw new ValidationException("Error Processing Request - post images - $picError");
+                $errorSize = $picError['size'] ?? '';
+                $errorFormat = $picError['format'] ?? '';
+                $picError = $errorSize . $errorFormat;
+                $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
+                throw new ValidationException("Error $picError");
                 continue; // skip this file upload
             }
 
@@ -96,7 +100,7 @@ class FileUploader
         return $saveFiles;
     }
 
-    private static function ValidateFile($formInputName): void
+    private static function ValidateFile(string$formInputName): void
     {
         $file = $_FILES[$formInputName];
         if (!isset($file) || empty($file)) {
@@ -119,7 +123,7 @@ class FileUploader
     }
 
     // private function for imagick
-    private static function processImageWithImagick($pathToImage): void
+    private static function processImageWithImagick(string $pathToImage): void
     {
         if (extension_loaded('imagick')) {
             if (!file_exists($pathToImage) || !is_readable($pathToImage)) {
@@ -138,7 +142,7 @@ class FileUploader
         }
     }
 
-    private static function optimiseImg($pathToImage)
+    private static function optimiseImg(string $pathToImage)
     {
         // Optimise the image
         $optimizerChain = ImgOptimizer::create();
@@ -148,7 +152,7 @@ class FileUploader
         return  $optimizerChain->optimize($pathToImage);
     }
 
-    public static function fileUploadSingle($fileLocation, $formInputName, $apiKeyVirusScan = null): string
+    public static function fileUploadSingle(string $fileLocation, string $formInputName, ?string $apiKeyVirusScan = null): string
     {
         // Check if file is uploaded
         if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {

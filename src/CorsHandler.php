@@ -19,10 +19,10 @@ class CorsHandler
      * Core CORS header setter.
      * Applies essential access controls, security headers, and preflight handling.
      *
-     * @param string $contentType Desired content-type response header.
-     * @param string $allowedMethods Allowed HTTP verbs.
-     * @param int    $maxAge Duration (in seconds) browsers cache preflight results.
-     * @param array  $allowedHeaders List of permitted custom headers for cross-origin.
+     * @param string $contentType desired content-type response header
+     * @param string $allowedMethods allowed HTTP verbs
+     * @param int $maxAge duration (in seconds) browsers cache preflight results
+     * @param array $allowedHeaders list of permitted custom headers for cross-origin
      */
     public static function setHeaders(
         string $contentType = 'application/json; charset=UTF-8',

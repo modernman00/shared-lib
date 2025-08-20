@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Src;
 
-
-use Src\Exceptions\HttpException;
 use PDO;
 use PDOStatement;
+use Src\Exceptions\HttpException;
 use Src\Exceptions\NotFoundException;
 
 /**
- * SubmitForm
+ * SubmitForm.
  *
  * Securely inserts form data into a database table.
  * Assumes trust in the source of table names (consider escaping or mapping).
@@ -25,6 +24,7 @@ class SubmitForm extends Db
      * @param array<string, scalar> $fields Associative array of column => value pairs
      *
      * @throws HttpException If insertion fails at any point
+     *
      * @return bool True on success
      */
     public static function submitForm(string $table, array $fields, ?PDO $pdo = null): bool
@@ -54,7 +54,7 @@ class SubmitForm extends Db
             }
 
             if (!$stmt->execute()) {
-                throw new HttpException("Insert execution failed");
+                throw new HttpException('Insert execution failed');
             }
 
             return true;

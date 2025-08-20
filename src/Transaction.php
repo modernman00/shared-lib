@@ -1,16 +1,15 @@
 <?php
-declare(strict_types=1);
-namespace Src;
 
-use Src\Db;
+declare(strict_types=1);
+
+namespace Src;
 
 class Transaction extends Db
 {
-
     public static function beginTransaction()
     {
         return self::connect2()->beginTransaction();
-        }
+    }
 
     public static function lastId()
     {
@@ -26,5 +25,4 @@ class Transaction extends Db
     {
         return self::connect2()->rollBack();
     }
-
 }

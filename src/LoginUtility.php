@@ -28,7 +28,6 @@ class LoginUtility
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
-
             LoginUtility::logAudit(null, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
             LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
@@ -44,8 +43,11 @@ class LoginUtility
             $newHash = password_hash($textPassword, PASSWORD_DEFAULT, $options);
 
             $data = ['password' => $newHash, 'id' => $id];
-            $passUpdate = new AllFunctionalities();
-            $result = $passUpdate->updateMultiplePOST($data, $table, 'id');
+            $table = $_ENV['DB_TABLE_LOGIN'];
+            // Update the password in the database
+            $update = new Update($table);
+            $result = $update->updateTable('password', $newHash, 'id', $id);
+
 
             if (!$result) {
                 throw new UnauthorisedException('Password could not be updated');
@@ -70,15 +72,12 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-
             LoginUtility::logAudit(null, $email, 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
             LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR']);
 
             throw new UnauthorisedException('We do not recognise your account');
         }
-
-
 
         return $emailData[0];
     }
@@ -176,8 +175,6 @@ class LoginUtility
         return $sanitisedData;
     }
 
-  
-
     /**
      * find a user on the database  .
      *
@@ -200,11 +197,12 @@ class LoginUtility
         if (!$data) {
             throw new NotFoundException('We cannot locate the information');
         }
+
         return $data;
     }
 
     /**
-     * Log login attempts (success or failure)
+     * Log login attempts (success or failure).
      */
     public static function logAudit(?int $userId, string $email, string $status, string $ip, string $userAgent): void
     {
@@ -213,7 +211,7 @@ class LoginUtility
             'email'      => $email,
             'status'     => $status,
             'ip_address' => $ip,
-            'user_agent' => $userAgent
+            'user_agent' => $userAgent,
         ];
 
         SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'], $data);
@@ -226,12 +224,10 @@ class LoginUtility
             WHERE email = :email AND status = 'failure' AND timestamp > (NOW() - INTERVAL 10 MINUTE)
         ");
         $stmt->execute([':email' => $email]);
-        $count = (int)$stmt->fetchColumn();
+        $count = (int) $stmt->fetchColumn();
 
         if ($count >= 5) {
-
-
-            // create email data 
+            // create email data
             $emailData = [
                 'email'      => $email,
                 'attempts'   => $count,

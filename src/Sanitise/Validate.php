@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Src\Sanitise;
 
 /**
- * Class Validate
+ * Class Validate.
  *
  * A utility class for validating form input arrays.
  * Designed for use within a sanitisation library.
@@ -22,6 +22,7 @@ class Validate
      * Returns a string containing human-readable error messages.
      *
      * @param array $array Nested array of required field names grouped logically (e.g. ['group' => ['field1', 'field2']])
+     *
      * @return string Error messages formatted for display
      */
     public static function cleanArray(array $array): string

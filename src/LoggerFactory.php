@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Src;
 
-use Monolog\Level;
-use Monolog\Logger;
-use Symfony\Component\Mime\Email;
 use Monolog\Formatter\HtmlFormatter;
-use Symfony\Component\Mailer\Mailer;
-use Symfony\Component\Mailer\Transport;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\SymfonyMailerHandler;
+use Monolog\Level;
+use Monolog\Logger;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mime\Email;
 
 /**
  * 📦 LoggerFactory builds a logger that:
@@ -94,7 +94,6 @@ final class LoggerFactory
 
         $emailHandler = new SymfonyMailerHandler($mailer, $email, $level);
         $emailHandler->setFormatter(new HtmlFormatter());
-
 
         $logger->pushHandler($emailHandler);
 

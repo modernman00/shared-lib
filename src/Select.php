@@ -207,6 +207,7 @@ class Select extends Db
             return $this->connect()->query($query)->fetchColumn();
         } catch (PDOException $e) {
             Utility::showError(th: $e);
+
             return [];
         }
     }

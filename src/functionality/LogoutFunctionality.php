@@ -11,7 +11,7 @@ use Src\CorsHandler;
 use Src\LoggedOut;
 use Src\Utility;
 
-class LogoutFunctionality 
+class LogoutFunctionality
 {
     public static function signout(array $redirect): void
     {
@@ -34,7 +34,6 @@ class LogoutFunctionality
             $logoutService->logout($redirect);
         } catch (\Throwable $e) {
             Utility::showError($e);
-           
         }
     }
 }

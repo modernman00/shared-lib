@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Src;
 
 use PDOException;
+use PDO;
 use Src\Exceptions\BadRequestException;
+use Src\Exceptions\DatabaseException;
 use Src\Exceptions\NotFoundException;
 
 /**
@@ -144,6 +146,25 @@ class Update extends Db
             Utility::showError($e);
 
             return false;
+        }
+    }
+
+        public static function updateWithTimestamp($table, $likesColumn, $likesValue, $timestampColumn, $whereColumn, $whereValue)
+    {
+        $query = "UPDATE $table
+        SET $likesColumn = :likesValue, $timestampColumn = CURRENT_TIMESTAMP
+        WHERE $whereColumn = :whereValue
+    ";
+        $stmt = parent::connect2()->prepare($query);
+
+        if (!$stmt) {
+            throw new DatabaseException('Could not connect');
+        }
+
+        $stmt->bindParam(':likesValue', $likesValue, PDO::PARAM_INT);
+        $stmt->bindParam(':whereValue', $whereValue, PDO::PARAM_INT);
+        if (!$stmt->execute()) {
+            throw new DatabaseException('Could not execute query');
         }
     }
 }

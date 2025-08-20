@@ -34,7 +34,7 @@ return (new PhpCsFixer\Config())
             'spacing' => 'one'
         ],
         'declare_strict_types' => true,
-        'function_typehint_space' => true,
+        'type_declaration_spaces' => true,
         'include' => true,
         'increment_style' => true,
         'lowercase_cast' => true,
@@ -45,7 +45,7 @@ return (new PhpCsFixer\Config())
             'on_multiline' => 'ensure_fully_multiline'
         ],
         'native_function_casing' => true,
-        'new_with_braces' => true,
+        'new_with_parentheses' => true,
         'no_blank_lines_after_class_opening' => true,
         'no_blank_lines_after_phpdoc' => true,
         'no_empty_comment' => true,
@@ -70,8 +70,8 @@ return (new PhpCsFixer\Config())
         'no_short_bool_cast' => true,
         'no_singleline_whitespace_before_semicolons' => true,
         'no_spaces_around_offset' => true,
-        'no_trailing_comma_in_list_call' => true,
-        'no_trailing_comma_in_singleline_array' => true,
+        'no_trailing_comma_in_singleline' => true,
+        'no_trailing_comma_in_singleline' => true,
         'no_unneeded_control_parentheses' => true,
         'no_unused_imports' => true,
         'no_whitespace_before_comma_in_array' => true,

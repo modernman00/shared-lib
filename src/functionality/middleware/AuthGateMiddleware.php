@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src\functionality\middleware;
 
 final class AuthGateMiddleware
@@ -23,7 +25,6 @@ final class AuthGateMiddleware
 
         if (!$isValid) {
             \redirect($_ENV['401URL']);
-          
         }
     }
 
@@ -31,6 +32,7 @@ final class AuthGateMiddleware
      * Retrieve a nested session value using dot notation.
      *
      * @param string $path
+     *
      * @return mixed|null
      */
     private static function getSessionValue(string $path): mixed

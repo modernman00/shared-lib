@@ -20,10 +20,6 @@ parameters:
     bootstrapFiles:
         - src/helpers.php
     
-    # Symfony extensions (if needed)
-    symfony:
-        constantHassers: false
-        containerXmlPath: null
     
     # Exclude patterns
     excludePaths:

@@ -55,7 +55,6 @@ class Recaptcha
             throw new RecaptchaBrokenException('Invalid reCAPTCHA secret key format');
         }
 
-
         // 3. 📞 Call Google's robot-checker
         try {
             $data = sendPostRequest(
@@ -66,8 +65,6 @@ class Recaptcha
                     'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null,
                 ]
             );
-
-            
 
             // 5. 🤖 Did Google respond with expected structure?
             if (!isset($data['success'])) {

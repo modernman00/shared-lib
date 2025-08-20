@@ -1,17 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Src;
 
-use Src\Utility;
-use Src\SendEmail;
-use Src\data\EmailData;
-use Mockery\Matcher\Not;
 use InvalidArgumentException;
+use Mockery\Matcher\Not;
 use Pelago\Emogrifier\CssInliner;
-use Src\Exceptions\NotFoundException;
-use Src\Exceptions\ForbiddenException;
-use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
 use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
+use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
+use Src\data\EmailData;
+use Src\Exceptions\ForbiddenException;
+use Src\Exceptions\NotFoundException;
 
 class ToSendEmail
 {
@@ -22,22 +22,17 @@ class ToSendEmail
             'data' => $data,
             'subject' => $subject,
             'file' => $file,
-            'fileName' => $fileName
+            'fileName' => $fileName,
         ];
     }
 
     /**
-     * 
      * @param mixed $array 'viewPath' => string $viewPath, 'data' => array $data,'subject' => string $subject, 'file' => $file, 'fileName' => $fileName
      * @param mixed $recipient - member or admin
-     * @return void 
      */
-
     public static function sendEmailGeneral(array $params, string $recipient)
     {
-
         try {
-
             if (!defined('PASS')) {
                 EmailData::defineConstants($recipient, $_ENV);
                 // if it is still not set, then throw an error
@@ -47,7 +42,7 @@ class ToSendEmail
             }
 
             // 2) Extract + validate inputs
-            $data     = $params['data'];
+            $data = $params['data'];
             $viewPath = $params['viewPath'];
             $subject = Utility::checkInput($params['subject']) ?? 'No Subject';
             $email = Utility::checkInputEmail($data['email'] ?? ($params['email'] ?? ''));
@@ -64,7 +59,7 @@ class ToSendEmail
             }
 
             // 4) CSS inline + prune (Emogrifier)
-            $cssInliner  = CssInliner::fromHtml($html)->inlineCss();
+            $cssInliner = CssInliner::fromHtml($html)->inlineCss();
             $domDocument = $cssInliner->getDomDocument();
 
             HtmlPruner::fromDomDocument($domDocument)
@@ -90,20 +85,16 @@ class ToSendEmail
         }
     }
 
-
     /**
      * You have to generate the $var using the genEmailArray()
      * $var is an array of the viewPath, data, subject, email
      * 'viewPath' => ,
      *  data'=>
      * 'subject'=>
-     * recipientType can be either member or admin
+     * recipientType can be either member or admin.
      */
-
     public static function sendEmailWrapper($var, $recipientType)
     {
-
-
         if (!defined('PASS')) {
             EmailData::defineConstants($recipientType, $_ENV);
         }
@@ -112,13 +103,13 @@ class ToSendEmail
 
         $emailContent = Utility::viewTemplateEmail($var['viewPath'], compact('data'));
 
-        $email =  Utility::checkInputEmail($data['email']);
+        $email = Utility::checkInputEmail($data['email']);
         $email = Utility::checkInputEmail($data['email'] ?? ($params['email'] ?? ''));
-            if ($email === null) {
-                throw new NotFoundException('A valid recipient email is required.');
-            }
+        if ($email === null) {
+            throw new NotFoundException('A valid recipient email is required.');
+        }
         $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
-        
+
         $file = $var['file'];
         $filename = $var['fileName'];
 

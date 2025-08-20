@@ -8,7 +8,7 @@ use PDO;
 use PDOException;
 
 /**
- * Class InnerJoin
+ * Class InnerJoin.
  *
  * A database utility for dynamically constructing and executing
  * INNER, LEFT, and RIGHT JOIN queries between multiple tables.
@@ -18,7 +18,6 @@ use PDOException;
  * - Returns either a result set array or false if an exception occurs.
  * - Designed for use with PDO and procedural routing.
  */
-
 class InnerJoin extends Db
 {
     /**
@@ -29,7 +28,7 @@ class InnerJoin extends Db
      */
     public function joinParamOr(string $firstTable, string $para, array $table, mixed $id): array|bool
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
             $buildInnerJoinQuery = array_map(
@@ -66,7 +65,7 @@ class InnerJoin extends Db
      */
     public function joinParam(string $firstTable, string $para, string $paraWhere, array $table, mixed $bind): array|bool
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
             $buildInnerJoinQuery = array_map(
@@ -97,7 +96,7 @@ class InnerJoin extends Db
 
     public function joinAll(string $firstTable, string $para, array $table, string $orderBy): mixed
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(
                 callback: fn ($tab): string => " INNER JOIN $tab ON $firstTable.$para = $tab.$para",
@@ -128,7 +127,7 @@ class InnerJoin extends Db
      */
     public static function joinAll2(string $firstTable, string $para, array $table, string $orderBy): mixed
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(fn ($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
             $innerQueryToString = join(' ', $buildInnerJoinQuery);
@@ -146,7 +145,7 @@ class InnerJoin extends Db
 
     public static function joinAll4(string $firstTable, string $para, array $table, string $orderBy): mixed
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
             $buildInnerJoinQuery = array_map(fn ($tab) => " RIGHT JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
@@ -165,7 +164,7 @@ class InnerJoin extends Db
 
     public static function joinAll3(string $firstTable, string $para, array $table, string $orderBy): void
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
             $buildInnerJoinQuery = array_map(fn ($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
@@ -182,7 +181,7 @@ class InnerJoin extends Db
 
     public function joinParamAnd(string $firstTable, string $para, array $table, mixed $id): mixed
     {
-        $firstTable = isset($firstTable) ? Utility::checkInput(data: $firstTable) : null;
+        $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(fn ($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
             $innerQueryToString = join(' ', $buildInnerJoinQuery);

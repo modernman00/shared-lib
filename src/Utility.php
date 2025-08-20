@@ -12,145 +12,145 @@ use Src\Exceptions\HttpException;
 
 class Utility
 {
- /**
- * @param string $viewFile
- * @param array $data
- * @param array $cspOptions
- *                          - enable: boolean (default: true)
- *                          - report_only: boolean (default: true)
- *                          - extra: array of custom CSP directives
- *
- * @return string
- *                The rendered view with CSP headers enabled
- */
-public static function view2(
-    string $viewFile, 
-    array $data = [], 
-    string $realPathView = "/../../../../resources/views", 
-    string $realPathCache = "/../../../../bootstrap/cache")
-{
-    return self::viewBuilderWithCSP(
-        viewFile:$viewFile, 
-        data:$data, 
-        realPathView: $realPathView, 
-        realPathCache: $realPathCache
-    );
-}
+    /**
+     * @param string $viewFile
+     * @param array $data
+     * @param array $cspOptions
+     *                          - enable: boolean (default: true)
+     *                          - report_only: boolean (default: true)
+     *                          - extra: array of custom CSP directives
+     *
+     * @return string
+     *                The rendered view with CSP headers enabled
+     */
+    public static function view2(
+        string $viewFile,
+        array $data = [],
+        string $realPathView = '/../../../../resources/views',
+        string $realPathCache = '/../../../../bootstrap/cache'
+    ) {
+        return self::viewBuilderWithCSP(
+            viewFile:$viewFile,
+            data:$data,
+            realPathView: $realPathView,
+            realPathCache: $realPathCache
+        );
+    }
 
-/**
- * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
- *    'report_only' => false, // Enforce CSP (not just report)
- *    'extra' => [
- *        "script-src https://js.stripe.com",
- *        "frame-src https://js.stripe.com"
- *    ]
- * ]);.
- *
- * <!-- Script Tag -->
- *  <script nonce="{{ $csp_nonce }}">
- *    window.userData = @json(auth()->user());
- * </script>
+    /**
+     * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
+     *    'report_only' => false, // Enforce CSP (not just report)
+     *    'extra' => [
+     *        "script-src https://js.stripe.com",
+     *        "frame-src https://js.stripe.com"
+     *    ]
+     * ]);.
+     *
+     * <!-- Script Tag -->
+     *  <script nonce="{{ $csp_nonce }}">
+     *    window.userData = @json(auth()->user());
+     * </script>
 
- * <!-- External Script -->
- * <script
- *    nonce="{{ $csp_nonce }}"
- *    src="https://platform.sharethis.com/loader.js"
- *    defer
- * ></script>
+     * <!-- External Script -->
+     * <script
+     *    nonce="{{ $csp_nonce }}"
+     *    src="https://platform.sharethis.com/loader.js"
+     *    defer
+     * ></script>
 
- * <!-- Inline Styles -->
- * <style nonce="{{ $csp_nonce }}">
- *    .featured { background: #f0f8ff; }
- * </style>
- *
- * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
- *
- * Phase Out unsafe-inline.
- * Move all inline scripts to external files
- * Use nonce-{{ $csp_nonce }} for critical inline code
- *
- * Implement report-to
- * 'extra' => ["report-to csp-endpoint"]
- */
-public static function viewBuilderWithCSP(
-    string $viewFile, 
-    string $realPathView,
-    string $realPathCache,
-    array $data = [], 
-    array $cspOptions = ['enable' => true, 'report_only' => true])
-{
-    try {
-        // ===== 1. CSP SETUP =====
-        $cspEnabled = $cspOptions['enable'] ?? true;
-        $reportOnly = $cspOptions['report_only'] ?? true;
-        $nonce = '';
+     * <!-- Inline Styles -->
+     * <style nonce="{{ $csp_nonce }}">
+     *    .featured { background: #f0f8ff; }
+     * </style>
+     *
+     * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
+     *
+     * Phase Out unsafe-inline.
+     * Move all inline scripts to external files
+     * Use nonce-{{ $csp_nonce }} for critical inline code
+     *
+     * Implement report-to
+     * 'extra' => ["report-to csp-endpoint"]
+     */
+    public static function viewBuilderWithCSP(
+        string $viewFile,
+        string $realPathView,
+        string $realPathCache,
+        array $data = [],
+        array $cspOptions = ['enable' => true, 'report_only' => true]
+    ) {
+        try {
+            // ===== 1. CSP SETUP =====
+            $cspEnabled = $cspOptions['enable'] ?? true;
+            $reportOnly = $cspOptions['report_only'] ?? true;
+            $nonce = '';
 
-        if ($cspEnabled) {
-            // Generate cryptographic nonce
-            $nonce = bin2hex(random_bytes(16));
+            if ($cspEnabled) {
+                // Generate cryptographic nonce
+                $nonce = bin2hex(random_bytes(16));
 
-            // Build dynamic CSP header
-            $directives = [
-                "default-src 'self'",
-                // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
-                "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
+                // Build dynamic CSP header
+                $directives = [
+                    "default-src 'self'",
+                    // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
+                    "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
 
-                "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
+                    "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
 
-                // Styles
-                "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-                "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
+                    // Styles
+                    "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+                    "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
 
-                // Fonts
-                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
+                    // Fonts
+                    "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
 
-                // Images
-                "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
+                    // Images
+                    "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
 
-                // Connections
-                "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
+                    // Connections
+                    "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
 
-                // Frames
-                "frame-src 'self' https://platform.sharethis.com",
+                    // Frames
+                    "frame-src 'self' https://platform.sharethis.com",
 
-                // Reporting
-                'report-uri ' . ($cspOptions['report_uri'] ?? '/csp-report-log'),
-                'report-to csp-endpoint',
-            ];
-            // Add custom directives if provided
-            if (!empty($cspOptions['extra'])) {
-                $directives = array_merge($directives, $cspOptions['extra']);
+                    // Reporting
+                    'report-uri ' . ($cspOptions['report_uri'] ?? '/csp-report-log'),
+                    'report-to csp-endpoint',
+                ];
+                // Add custom directives if provided
+                if (!empty($cspOptions['extra'])) {
+                    $directives = array_merge($directives, $cspOptions['extra']);
+                }
+
+                header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
+                    . implode('; ', $directives));
             }
 
-            header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
-                . implode('; ', $directives));
+            // 2. Initialize Blade
+            static $blade = null;
+            if (!$blade) {
+                // 1. Get validated paths
+                $viewsPath = realpath(__DIR__ . "$realPathView");
+                $cachePath = realpath(__DIR__ . "$realPathCache");
+                $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
+                $blade->setIsCompiled(false);
+            }
+
+            // 3. Normalize and verify view path
+            $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
+            $data['nonce'] = $nonce;
+            // 4. Render with debug
+            echo $blade->run($viewFile, $data);
+        } catch (\Exception $e) {
+            error_log('VIEW ERROR: ' . $e->getMessage());
+
+            return "<!-- VIEW ERROR -->\n"
+                . "<h1>Rendering Error</h1>\n"
+                . '<pre>' . htmlspecialchars($e->getMessage()) . "</pre>\n"
+                . '<p>Template: ' . htmlspecialchars($viewFile) . "</p>\n"
+                . '<p>Search Path: ' . htmlspecialchars($viewsPath ?? '') . '</p>';
         }
-
-        // 2. Initialize Blade
-        static $blade = null;
-        if (!$blade) {
-            // 1. Get validated paths
-            $viewsPath = realpath(__DIR__ . "$realPathView");
-            $cachePath = realpath(__DIR__ . "$realPathCache");
-            $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
-            $blade->setIsCompiled(false);
-        }
-
-        // 3. Normalize and verify view path
-        $viewFile = str_replace(['.', '/'], DIRECTORY_SEPARATOR, $viewFile);
-        $data['nonce'] = $nonce;
-        // 4. Render with debug
-        echo $blade->run($viewFile, $data);
-    } catch (\Exception $e) {
-        error_log('VIEW ERROR: ' . $e->getMessage());
-
-        return "<!-- VIEW ERROR -->\n"
-            . "<h1>Rendering Error</h1>\n"
-            . '<pre>' . htmlspecialchars($e->getMessage()) . "</pre>\n"
-            . '<p>Template: ' . htmlspecialchars($viewFile) . "</p>\n"
-            . '<p>Search Path: ' . htmlspecialchars($viewsPath ?? '') . '</p>';
     }
-}
 
     /**
      * Renders a BladeOne template with the given data.
@@ -162,7 +162,7 @@ public static function viewBuilderWithCSP(
      *
      * @throws \Throwable If rendering fails
      */
-    public static function view($path, array $data = [], string $realPathView = "/../../../../resources/views", string $realPathCache = "/../../../../bootstrap/cache", int $mode = BladeOne::MODE_DEBUG)
+    public static function view($path, array $data = [], string $realPathView = '/../../../../resources/views', string $realPathCache = '/../../../../bootstrap/cache', int $mode = BladeOne::MODE_DEBUG)
     {
         try {
             $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
@@ -184,13 +184,13 @@ public static function viewBuilderWithCSP(
         }
     }
 
-
     public static function viewTemplateEmail(
-        $path, array $data = [], 
-        string $realPathView = "/../../../../resources/views", 
-        string $realPathCache = "/../../../../bootstrap/cache", 
-        string $mode = BladeOne::MODE_DEBUG)
-    {
+        $path,
+        array $data = [],
+        string $realPathView = '/../../../../resources/views',
+        string $realPathCache = '/../../../../bootstrap/cache',
+        string $mode = BladeOne::MODE_DEBUG
+    ) {
         try {
             $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
             $cache = rtrim(__DIR__ . $realPathCache, '/');
@@ -421,7 +421,7 @@ public static function viewBuilderWithCSP(
             : 'An unexpected error occurred.');
 
         // 6. Return or display the JSON error message
-         // 6. Return or display the JSON error message
+        // 6. Return or display the JSON error message
         $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return $response;

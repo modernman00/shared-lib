@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Src\Sanitise;
 
-use Src\Exceptions\InvalidArgumentException;
 use RuntimeException;
+use Src\Exceptions\InvalidArgumentException;
 
 /**
- * Sanitise
+ * Sanitise.
  *
  * Validates and sanitizes form data with optional length constraints.
  *
@@ -17,16 +17,16 @@ use RuntimeException;
  * - Handles CSRF token validation, email format, password matching, and input sanitization.
  * - Throws exceptions for validation errors.
  */
-
 class Sanitise
 {
     public array $errors = [];
 
     public array $cleanData = [];
 
-/**
+    /**
      * @param array<string, mixed> $formData Input data to sanitize and validate
      * @param array{data: string[], min: int[], max: int[]}|null $dataLength Optional length constraints
+     *
      * @throws InvalidArgumentException If formData is empty or dataLength is malformed
      */
     public function __construct(
@@ -55,7 +55,9 @@ class Sanitise
      * Validates CSRF token against session token.
      *
      * @param string $sessionToken The expected CSRF token
+     *
      * @return $this
+     *
      * @throws RuntimeException If CSRF token is invalid or missing
      */
     public function validateCsrfToken(string $sessionToken): self
@@ -64,6 +66,7 @@ class Sanitise
             throw new RuntimeException('Invalid or missing CSRF token');
         }
         unset($this->formData['token']);
+
         return $this;
     }
 
@@ -74,10 +77,10 @@ class Sanitise
      */
     private function validateEmail(): self
     {
- 
         if (isset($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
             $this->errors[] = 'Invalid email format';
         }
+
         return $this;
     }
 
@@ -93,6 +96,7 @@ class Sanitise
         ) {
             $this->errors[] = 'Passwords do not match';
         }
+
         return $this;
     }
 
@@ -103,7 +107,6 @@ class Sanitise
      */
     private function checkEmpty(): self
     {
-
         // if key is submit  skip it
         if (isset($this->formData['submit'])) {
             unset($this->formData['submit']);
@@ -114,10 +117,11 @@ class Sanitise
                 $this->errors[] = "The $cleanKey field is required";
             }
         }
+
         return $this;
     }
 
-   /**
+    /**
      * Validates input lengths against constraints.
      *
      * @return $this
@@ -142,6 +146,7 @@ class Sanitise
                 }
             }
         }
+
         return $this;
     }
 
@@ -163,6 +168,7 @@ class Sanitise
                 $this->cleanData[$key] = htmlspecialchars(trim($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             }
         }
+
         return $this;
     }
 
@@ -170,6 +176,7 @@ class Sanitise
      * Hashes password if present.
      *
      * @return $this
+     *
      * @throws RuntimeException If password hashing fails
      */
     private function hashPassword(): self
@@ -182,6 +189,7 @@ class Sanitise
             $this->cleanData['password'] = $hashed;
             unset($this->cleanData['confirm_password']);
         }
+
         return $this;
     }
 
@@ -206,6 +214,7 @@ class Sanitise
      * Returns sanitized data if no errors occurred.
      *
      * @return array<string, mixed>
+     *
      * @throws RuntimeException If validation errors occurred
      */
     public function getCleanData(): array
@@ -228,9 +237,4 @@ class Sanitise
     {
         return $this->errors;
     }
-
-
-
-
-
 }
