@@ -12,7 +12,7 @@ class SelectFn extends Select
    * @param array $params The parameters to bind to the query.
    * @return array|null The selected row or null if no row is found.
    */
-  public static function selectOne(string $table, string $identifiers, string $identifierAnswer): ?array
+  public static function selectOneRow(string $table, string $identifiers, string $identifierAnswer): ?array
   {
     $query = parent::formAndMatchQuery(selection: "SELECT_ONE", table: $table, identifier1: $identifiers);
     $result = parent::selectFn2(query: $query, bind: [$identifierAnswer]);
