@@ -78,6 +78,9 @@ class PasswordRecoveryService
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
             $input = json_decode(file_get_contents('php://input'), true);
+               if (!$input) {
+                throw new NotFoundException('There was no post data');
+            }
 
             Recaptcha::verifyCaptcha($input);      // Verify CAPTCHA against brute force
             Limiter::limit($input['email']);         // Rate limit by email address

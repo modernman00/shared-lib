@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Src;
 
+
 use Src\Exceptions\HttpException;
 use PDO;
 use PDOStatement;
+use Src\Exceptions\NotFoundException;
 
 /**
  * SubmitForm
@@ -25,14 +27,14 @@ class SubmitForm extends Db
      * @throws HttpException If insertion fails at any point
      * @return bool True on success
      */
-    public static function submitForm(string $table, array $fields): bool
+    public static function submitForm(string $table, array $fields, ?PDO $pdo = null): bool
     {
         if (empty($table) || empty($fields)) {
-            throw new HttpException('Table name and fields cannot be empty', 400);
+            throw new NotFoundException();
         }
 
         try {
-            $connection = self::connect2(); // Trusts that connect2() returns a valid PDO instance
+            $connection = $pdo ?? Db::connect2(); // Trusts that connect2() returns a valid PDO instance
 
             // Defensive: escape column names if table is dynamic (not shown here)
             $columns = implode(', ', array_keys($fields));
@@ -42,27 +44,27 @@ class SubmitForm extends Db
             $stmt = $connection->prepare($sql);
 
             if (!$stmt instanceof PDOStatement) {
-                throw new HttpException('Unable to prepare SQL statement', 500);
+                throw new HttpException('Unable to prepare SQL statement');
             }
 
             foreach ($fields as $key => $value) {
                 if (!$stmt->bindValue(":{$key}", $value)) {
-                    throw new HttpException("Binding failed for '{$key}'", 500);
+                    throw new HttpException("Binding failed for '{$key}'");
                 }
             }
 
             if (!$stmt->execute()) {
-                throw new HttpException("Insert execution failed", 500);
+                throw new HttpException("Insert execution failed");
             }
 
             return true;
         } catch (\PDOException $pdoEx) {
             // Log this internally, but avoid leaking stack traces
             Utility::showError($pdoEx);
-            throw new HttpException('Database error occurred', 500);
+            throw new HttpException('Database error occurred');
         } catch (\Throwable $th) {
             Utility::showError($th);
-            throw new HttpException('Unexpected error occurred', 500);
+            throw new HttpException('Unexpected error occurred');
         }
     }
 }

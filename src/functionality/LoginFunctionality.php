@@ -77,6 +77,10 @@ class LoginFunctionality
   {
     try {
       $input = json_decode(file_get_contents('php://input'), true);
+         if (!$input) {
+                throw new NotFoundException('There was no post data');
+            }
+
       // Allow flexibility between 'email' and 'username' login styles
       $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 

@@ -19,7 +19,7 @@ class CheckToken
     {
         // try {
         $sessionToken = $_SESSION['token'] ?? '';
-        $postToken = $_POST['token'] ?? $token;
+        $postToken = $token ?? $_POST['token'];
         $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
 
 

@@ -71,15 +71,18 @@ class PasswordResetFunctionality
     public static function process(): void
     {
         $input = json_decode(file_get_contents('php://input'), true);
+           if (!$input) {
+                throw new NotFoundException('There was no post data');
+            }
         // Extract and sanitise incoming password field
         $cleanData = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['password', 'confirm_password'],
             'min'  => [6, 6],
             'max'  => [30, 30],
         ]);
-
+         $token = $input['token'] ?? '';
         // Token integrity validation
-        CheckToken::tokenCheck('token');
+        CheckToken::tokenCheck($token);
 
         // get the users information using jwt decode 
         $user = JwtHandler::jwtDecodeData('auth_forgot');

@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-use eftec\bladeone\BladeOne;
-use Monolog\Logger;
-use Monolog\Level;
-use Src\Data\EmailData;
-use Src\LoggerFactory;
-use Src\SendEmail;
+use Src\Select;
 use Src\Utility;
+use Monolog\Level;
+use Src\SendEmail;
+use Monolog\Logger;
+use Src\LoggerFactory;
+use Src\Data\EmailData;
+use eftec\bladeone\BladeOne;
 
 // use RuntimeException;
 
@@ -730,4 +731,16 @@ function sendPostRequest(string $url, array $formData, array $options = []): ?ar
         return null;
     }
 }
+
+function checkEmailExist($email): array|int|string
+{
+    $query = Select::formAndMatchQuery(
+        selection: 'SELECT_COUNT_ONE', 
+        table: $_ENV['DB_TABLE_LOGIN'], 
+        identifier1: 'email');
+    $result = Select::selectFn2(query: $query, bind: [$email]);
+
+    return $result ? $result[0] : 0;
+}
+
 
