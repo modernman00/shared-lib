@@ -42,6 +42,30 @@ class SubmitPostData
      *
      * @param array $multipleTablesnData Associative array of table names and their corresponding data payloads
      * @param array $cleanData Sanitized input data including 'token' and CAPTCHA fields
+     * @example example of the $multipleTablesnData  'personal' =>  [
+     *           'firstName' => $cleanPostData['firstName'],
+     *         'lastName' => $cleanPostData['lastName'],
+     *       'famCode' => $cleanPostData['familyCode'],
+     *     'kids' => $cleanPostData['kids'],
+     *           'gender' => $cleanPostData['gender'],
+     *          'siblings' => $cleanPostData['siblings'],
+     *          'day' => $cleanPostData['day'],
+     *           'month' => $cleanPostData['month'],
+     *            'year' => $cleanPostData['year'],
+     *            'id' => $cleanPostData['id'],
+     *        ],
+     *        'work' => [
+     *            'employmentStatus' => $cleanPostData['employmentStatus'],
+     *           'occupation' => $cleanPostData['occupation'],
+     *           'id' => $cleanPostData['id']
+     *       ],
+     *        'contact' => [
+     * 
+     *            'email' => $cleanPostData['email'],
+     *           'country' => $cleanPostData['country'],
+     *          'mobile' => $cleanPostData['mobile'],
+     *           'id' => $cleanPostData['id'],
+     *       ],
      *
      * @throws \Throwable If CAPTCHA fails, token is invalid, or any table insertion fails
      */

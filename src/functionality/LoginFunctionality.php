@@ -6,6 +6,7 @@ namespace Src\functionality;
 
 use Src\{CheckToken, CorsHandler, JwtHandler, Limiter, Recaptcha, Utility};
 use Src\Exceptions\NotFoundException;
+use Src\functionality\middleware\GetRequestData;
 
 /**
  * Handles user login functionality within the application.
@@ -73,7 +74,7 @@ class LoginFunctionality
     public static function login(bool $issueJwt = true): void
     {
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
+            $input = GetRequestData::getRequestData();
             if (!$input) {
                 throw new NotFoundException('There was no post data');
             }

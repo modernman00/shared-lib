@@ -6,6 +6,7 @@ namespace Src\functionality;
 
 use Src\{CheckToken, Limiter, LoginUtility as CheckSanitise, Token, Utility};
 use Src\functionality\middleware\AuthGateMiddleware;
+use Src\functionality\middleware\GetRequestData;
 
 class PwdRecoveryCodeFunctionality
 {
@@ -43,7 +44,10 @@ class PwdRecoveryCodeFunctionality
      */
     public static function process(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = GetRequestData::getRequestData();
+        if (!$input) {
+            Utility::msgException(404, 'There was no post data');
+        }
 
         // Validate session-bound email
         $code = $input['code'] ?? '';

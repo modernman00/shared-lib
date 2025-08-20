@@ -16,6 +16,7 @@ use Src\{
     Utility
 };
 use Src\functionality\middleware\AuthGateMiddleware;
+use Src\functionality\middleware\GetRequestData;
 
 /**
  * Handles secure password change flow via token-based recovery.
@@ -67,7 +68,7 @@ class PasswordResetFunctionality
      */
     public static function process(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = GetRequestData::getRequestData();
         if (!$input) {
             throw new NotFoundException('There was no post data');
         }
