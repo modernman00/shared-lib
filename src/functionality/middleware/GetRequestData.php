@@ -2,6 +2,8 @@
 
 namespace Src\functionality\middleware;
 
+use Src\Exceptions\NotFoundException;
+
 
 class GetRequestData
 {
@@ -33,6 +35,10 @@ class GetRequestData
     else {
         $data = $_POST; // fallback
     }
+
+      if (!$data || empty($data) || !is_array($data)) {
+                throw new NotFoundException('There was no post data', 1);
+            }
 
     return $data;
 }
