@@ -90,6 +90,7 @@ class Select extends Db
             'SELECT_COL_DYNAMICALLY' => "SELECT $implodeColArray FROM $table",
             'SELECT_COL_DYNAMICALLY_ID' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? $orderBy $limit",
             'SELECT_COL_DYNAMICALLY_ID_AND' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? AND $identifier2 = ? $orderBy $limit",
+            'SELECT_COL_DYNAMICALLY_ID_OR' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? OR $identifier2 = ? $orderBy $limit",
             default => null
         };
     }
