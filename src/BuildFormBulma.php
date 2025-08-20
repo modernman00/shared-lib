@@ -417,7 +417,7 @@ class BuildFormBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
                     $name = empty($this->entValue[$i]['attribute'][$y]) ? '' : $this->entValue[$i]['attribute'][$y];
-                    $nestedName = $divID[$name] ?? $name;
+                    $nestedName = $name . "['" . $name . "']";
                     $placeholder = empty($this->entValue[$i]['placeholder'][$y]) ? '' : $this->entValue[$i]['placeholder'][$y];
                     $id = $name . '_id';
                     $error = $name . '_error';
