@@ -166,6 +166,10 @@ class Sanitise
                 $this->cleanData[$key] = filter_var($value, FILTER_SANITIZE_EMAIL);
             } else {
                 $this->cleanData[$key] = htmlspecialchars(trim($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $this->cleanData[$key] = str_replace(["\r", "\n"], '', $this->cleanData[$key]); // Remove newlines
+                $this->cleanData[$key] = preg_replace('/\s+/', ' ', $this->cleanData[$key]); // Replace multiple spaces with a single space
+                // strip tags
+                $this->cleanData[$key] = strip_tags($this->cleanData[$key]);
             }
         }
 
