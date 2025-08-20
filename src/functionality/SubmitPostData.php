@@ -134,6 +134,6 @@ class SubmitPostData
     {
         $fileName = FileUploader::fileUploadMultiple($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
 
-          return Utility::checkInputImage(\str_replace(' ', '', $fileName)); 
+         return $fileName;
     }
 }
