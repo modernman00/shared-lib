@@ -6,6 +6,7 @@ namespace Src\Sanitise;
 
 use RuntimeException;
 use Src\Exceptions\InvalidArgumentException;
+use Src\Exceptions\UnauthorisedException;
 
 /**
  * Sanitise.
@@ -48,7 +49,8 @@ class Sanitise
         }
 
         // Remove non-essential fields
-        unset($formData['submit']);
+        unset($this->formData['submit']);
+
     }
 
     /**
@@ -60,10 +62,21 @@ class Sanitise
      *
      * @throws RuntimeException If CSRF token is invalid or missing
      */
-    public function validateCsrfToken(string $sessionToken): self
+    protected function validateCsrfToken(): self
     {
-        if (!isset($this->formData['token']) || !hash_equals($sessionToken, $this->formData['token'])) {
-            throw new RuntimeException('Invalid or missing CSRF token');
+        $sessionToken = $_SESSION['token'];
+        $postToken = $this->formData['token'];
+        $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'];
+
+        $valid = false;
+        if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
+            $valid = true;
+        } elseif ($sessionToken && hash_equals($sessionToken, $postToken)) {
+            $valid = true;
+        }
+
+        if (!$valid) {
+            throw new UnauthorisedException('We are not familiar with the nature of your activities.');
         }
         unset($this->formData['token']);
 
@@ -75,7 +88,7 @@ class Sanitise
      *
      * @return $this
      */
-    private function validateEmail(): self
+    protected function validateEmail(): self
     {
         if (isset($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
             $this->errors[] = 'Invalid email format';
@@ -89,7 +102,7 @@ class Sanitise
      *
      * @return $this
      */
-    private function validatePassword(): self
+    protected function validatePassword(): self
     {
         if (isset($this->formData['password'], $this->formData['confirm_password']) &&
             $this->formData['password'] !== $this->formData['confirm_password']
@@ -105,7 +118,7 @@ class Sanitise
      *
      * @return $this
      */
-    private function checkEmpty(): self
+    protected function checkEmpty(): self
     {
         // if key is submit  skip it
         if (isset($this->formData['submit'])) {
@@ -126,7 +139,7 @@ class Sanitise
      *
      * @return $this
      */
-    private function checkLength(): self
+    protected function checkLength(): self
     {
         if ($this->dataLength) {
             foreach ($this->dataLength['data'] as $index => $key) {
@@ -155,21 +168,20 @@ class Sanitise
      *
      * @return $this
      */
-    private function sanitizeData(): self
+    protected function sanitizeData(): self
     {
         foreach ($this->formData as $key => $value) {
+               // Normalise keys in case they came from user input
+                $safeKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
             if (!is_string($value)) {
-                $this->cleanData[$key] = $value;
+                $this->cleanData[$safeKey] = $value;
                 continue;
             }
-            if ($key === 'email') {
-                $this->cleanData[$key] = filter_var($value, FILTER_SANITIZE_EMAIL);
+            if ($safeKey === 'email') {
+                $this->cleanData[$safeKey] = \checkInputEmail($value);
             } else {
-                $this->cleanData[$key] = htmlspecialchars(trim($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                $this->cleanData[$key] = str_replace(["\r", "\n"], '', $this->cleanData[$key]); // Remove newlines
-                $this->cleanData[$key] = preg_replace('/\s+/', ' ', $this->cleanData[$key]); // Replace multiple spaces with a single space
-                // strip tags
-                $this->cleanData[$key] = strip_tags($this->cleanData[$key]);
+                 $this->cleanData[$safeKey] = \checkInput($value);
+       
             }
         }
 
@@ -183,12 +195,12 @@ class Sanitise
      *
      * @throws RuntimeException If password hashing fails
      */
-    private function hashPassword(): self
+    protected function hashPassword(): self
     {
-        if (isset($this->cleanData['password'], $this->cleanData['confirm_password'])) {
+        if (isset($this->cleanData['password'])) {
             $hashed = password_hash($this->cleanData['password'], PASSWORD_BCRYPT, ['cost' => 12]);
             if ($hashed === false) {
-                throw new RuntimeException('Password hashing failed');
+                 $this->errors[] = "password problem - admin needs to check";
             }
             $this->cleanData['password'] = $hashed;
             unset($this->cleanData['confirm_password']);
@@ -202,9 +214,10 @@ class Sanitise
      *
      * @return $this
      */
-    private function runValidation(): self
+    protected function runValidation(): self
     {
-        $this->validateEmail()
+        $this->validateCsrfToken()
+            ->validateEmail()
             ->validatePassword()
             ->checkEmpty()
             ->checkLength()
@@ -223,10 +236,12 @@ class Sanitise
      */
     public function getCleanData(): array
     {
+   
         $this->runValidation();
 
         if (!empty($this->errors)) {
-            throw new RuntimeException('Validation failed: ' . implode(', ', $this->errors));
+            // throw new RuntimeException('Validation failed: ' . implode(', ', $this->errors));
+            return [];
         }
 
         return $this->cleanData;

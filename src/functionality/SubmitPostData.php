@@ -86,11 +86,34 @@ class SubmitPostData
 
             $sFile = $input['files'] ?? null;
 
-            if($sFile){
+            if ($sFile) {
                 $getProcessedFileName = SubmitPostData::submitImgDataSingle($imgPath, $fileName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
-                $sanitisedData[$fileName] =  $getProcessedFileName;  
+                $sanitisedData[$fileName] =  $getProcessedFileName;
             }
             SubmitForm::submitForm($table, $sanitisedData);
+
+            Utility::msgSuccess(201, 'Record created successfully');
+        } catch (\Throwable $th) {
+            Transaction::rollback();
+            showError($th);
+        }
+    }
+
+
+    public static function submitToMultipleTable(array $allowedTables, ?array $minMaxData = null): void
+    {
+        CorsHandler::setHeaders();
+
+        try {
+            $input = GetRequestData::getRequestData();
+            Recaptcha::verifyCaptcha($input);
+            $token = $cleanData['token'] ?? '';
+            CheckToken::tokenCheck($token);
+            $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
+
+            self::insertMultipleTables($sanitisedData, $allowedTables);
+
+
 
             Utility::msgSuccess(201, 'Record created successfully');
         } catch (\Throwable $th) {
@@ -106,13 +129,14 @@ class SubmitPostData
      *
      * @throws RuntimeException If any table fails to insert
      */
-    private static function insertMultipleTables(array $getTableData): void
+    private static function insertMultipleTables(array $getTableData, array $allowedTables): void
     {
         // Logic to handle multiple table insertions
         // This could involve iterating over an array of table names or using a specific logic to determine the target table
         $pdo = Db::connect2();
         Transaction::beginTransaction();
         foreach ($getTableData as $tableName => $tableData) {
+            if (!in_array($tableName, $allowedTables, true)) continue;
             if (!SubmitForm::submitForm($tableName, $tableData, $pdo)) {
                 throw new RuntimeException("$tableName didn't submit");
             }
@@ -133,9 +157,7 @@ class SubmitPostData
     public static function submitImgDataSingle($formInputName, $uploadPath, $sFile): string
     {
         $fileName = FileUploader::fileUploadSingle($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
-        return Utility::checkInputImage(\str_replace(' ', '', $fileName)); 
-
-  
+        return Utility::checkInputImage(\str_replace(' ', '', $fileName));
     }
 
     /**
@@ -150,6 +172,6 @@ class SubmitPostData
     {
         $fileName = FileUploader::fileUploadMultiple($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
 
-         return $fileName;
+        return $fileName;
     }
 }
