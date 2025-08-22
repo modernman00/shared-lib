@@ -40,7 +40,8 @@ class Sanitise
 
         // Validate dataLength structure
         if ($dataLength !== null) {
-            if (!isset($dataLength['data'], $dataLength['min'], $dataLength['max']) ||
+            if (
+                !isset($dataLength['data'], $dataLength['min'], $dataLength['max']) ||
                 count($dataLength['data']) !== count($dataLength['min']) ||
                 count($dataLength['data']) !== count($dataLength['max'])
             ) {
@@ -50,7 +51,6 @@ class Sanitise
 
         // Remove non-essential fields
         unset($this->formData['submit']);
-
     }
 
     /**
@@ -104,12 +104,13 @@ class Sanitise
      */
     protected function validatePassword(): self
     {
-        if (isset($this->formData['password'], $this->formData['confirm_password']) &&
+        if (
+            isset($this->formData['password'], $this->formData['confirm_password']) &&
             $this->formData['password'] !== $this->formData['confirm_password']
         ) {
             $this->errors[] = 'Passwords do not match';
         }
-
+        unset($this->cleanData['confirm_password']);
         return $this;
     }
 
@@ -171,8 +172,8 @@ class Sanitise
     protected function sanitizeData(): self
     {
         foreach ($this->formData as $key => $value) {
-               // Normalise keys in case they came from user input
-                $safeKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+            // Normalise keys in case they came from user input
+            $safeKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
             if (!is_string($value)) {
                 $this->cleanData[$safeKey] = $value;
                 continue;
@@ -180,8 +181,7 @@ class Sanitise
             if ($safeKey === 'email') {
                 $this->cleanData[$safeKey] = \checkInputEmail($value);
             } else {
-                 $this->cleanData[$safeKey] = \checkInput($value);
-       
+                $this->cleanData[$safeKey] = \checkInput($value);
             }
         }
 
@@ -200,10 +200,9 @@ class Sanitise
         if (isset($this->cleanData['password'])) {
             $hashed = password_hash($this->cleanData['password'], PASSWORD_BCRYPT, ['cost' => 12]);
             if ($hashed === false) {
-                 $this->errors[] = "password problem - admin needs to check";
+                $this->errors[] = "password problem - admin needs to check";
             }
             $this->cleanData['password'] = $hashed;
-            unset($this->cleanData['confirm_password']);
         }
 
         return $this;
@@ -236,7 +235,7 @@ class Sanitise
      */
     public function getCleanData(): array
     {
-   
+
         $this->runValidation();
 
         if (!empty($this->errors)) {
