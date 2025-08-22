@@ -172,17 +172,14 @@ class Sanitise
     protected function sanitizeData(): self
     {
         foreach ($this->formData as $key => $value) {
-            // Normalise keys in case they came from user input
-            $safeKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
-            if (!is_string($value)) {
-                $this->cleanData[$safeKey] = $value;
-                continue;
-            }
-            if ($safeKey === 'email') {
-                $this->cleanData[$safeKey] = \checkInputEmail($value);
-            } else {
-                $this->cleanData[$safeKey] = \checkInput($value);
-            }
+
+            // if (!is_string($value)) {
+            //     $this->cleanData[$key] = $value;
+            //     continue;
+            // }
+
+                $this->cleanData[$key] = \checkInput($value);
+            
         }
 
         return $this;
@@ -199,9 +196,7 @@ class Sanitise
     {
         if (isset($this->cleanData['password'])) {
             $hashed = password_hash($this->cleanData['password'], PASSWORD_BCRYPT, ['cost' => 12]);
-            if ($hashed === false) {
-                $this->errors[] = "password problem - admin needs to check";
-            }
+
             $this->cleanData['password'] = $hashed;
         }
 
@@ -237,11 +232,6 @@ class Sanitise
     {
 
         $this->runValidation();
-
-        if (!empty($this->errors)) {
-            // throw new RuntimeException('Validation failed: ' . implode(', ', $this->errors));
-            return [];
-        }
 
         return $this->cleanData;
     }

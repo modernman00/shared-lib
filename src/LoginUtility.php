@@ -162,7 +162,7 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function getSanitisedInputData(array $inputData, $minMaxData = null)
+    public static function setSanitisedData(array $inputData, $minMaxData = null)
     {
         $sanitise = new Sanitise($inputData, $minMaxData);
         $sanitisedData = $sanitise->getCleanData();
@@ -174,6 +174,32 @@ class LoginUtility
 
         return $sanitisedData;
     }
+
+    public static function getSanitisedInputData(array $data, ?array $limitData = null): array
+{
+    $clean = [];
+
+    foreach ($data as $key => $value) {
+        // Clean the key
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', $key);
+
+        if (is_array($value)) {
+         
+            // Dive deeper into nested arrays
+            $clean[$safeKey] = self::getSanitisedInputData($value, $limitData);
+
+        } else {
+            // Clean the value
+            $safeValue = preg_replace('/[^a-zA-Z0-9_.]/', '', $value);
+
+            $result = self::setSanitisedData([$safeKey => $safeValue], $limitData);
+            $clean[$safeKey] = $result[$safeKey] ?? null;
+        }
+    }
+
+    return $clean;
+}
+
 
     /**
      * find a user on the database  .
