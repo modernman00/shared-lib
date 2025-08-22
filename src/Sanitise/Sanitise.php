@@ -62,23 +62,28 @@ class Sanitise
      *
      * @throws RuntimeException If CSRF token is invalid or missing
      */
-    protected function validateCsrfToken(): self
+     protected function validateCsrfToken(): self
     {
-        $sessionToken = $_SESSION['token'];
-        $postToken = $this->formData['token'];
-        $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'];
+        if (isset($this->formData['token'])) {
 
-        $valid = false;
-        if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
-            $valid = true;
-        } elseif ($sessionToken && hash_equals($sessionToken, $postToken)) {
-            $valid = true;
+            $sessionToken = $_SESSION['token'];
+            $postToken = $this->formData['token'];
+            $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'];
+
+            $valid = false;
+            if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
+                $valid = true;
+            } elseif ($sessionToken && hash_equals($sessionToken, $postToken)) {
+                $valid = true;
+            }
+
+            if (!$valid) {
+                throw new UnauthorisedException('We are not familiar with the nature of your activities.');
+            }
+            unset($this->formData['token']);
+              unset($this->cleanData['token']);
         }
 
-        if (!$valid) {
-            throw new UnauthorisedException('We are not familiar with the nature of your activities.');
-        }
-        unset($this->formData['token']);
 
         return $this;
     }
@@ -110,7 +115,7 @@ class Sanitise
         ) {
             $this->errors[] = 'Passwords do not match';
         }
-        unset($this->cleanData['confirm_password']);
+
         return $this;
     }
 
@@ -202,6 +207,7 @@ class Sanitise
 
         return $this;
     }
+
 
     /**
      * Runs all validation and sanitization steps.

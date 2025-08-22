@@ -190,7 +190,7 @@ class LoginUtility
 
         } else {
             // Clean the value
-            $safeValue = preg_replace('/[^a-zA-Z0-9_.]/', '', $value);
+            $safeValue = preg_replace('/[^a-zA-Z0-9@._+-]/', '', $value);
 
             $result = self::setSanitisedData([$safeKey => $safeValue], $limitData);
             $clean[$safeKey] = $result[$safeKey] ?? null;
