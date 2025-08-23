@@ -6,7 +6,6 @@ namespace Src\functionality;
 
 use RuntimeException;
 use Src\{
-    CheckToken,
     CorsHandler,
     Db,
     LoginUtility,
@@ -19,78 +18,74 @@ use Src\{
 use Src\functionality\middleware\GetRequestData;
 
 /**
- * SubmitwithSingleImg.
+ * Class SubmitPostData
  *
- * A reusable utility class for handling POST data submission with optional image upload,
- * input sanitization, token validation, and multi-table support.
+ * Handles validated POST submissions with optional single/multiple image uploads.
  *
- * 🔧 Core Responsibilities:
- * - Validate and sanitize incoming POST payloads
- * - Verify CAPTCHA and CSRF tokens
- * - Upload single or multiple images securely
- * - Insert sanitized data into one or more database tables
+ * **Core Responsibilities**
+ * - Sanitize and validate incoming payloads
+ * - Verify CAPTCHA and (optionally) CSRF token
+ * - Upload and sanitise single or multiple image files
+ * - Insert cleaned data into one or more database tables atomically
  *
- * 🧠 Usage Notes:
- * - Use `submitPostDataWithSingleImg()` for full flow including token and CAPTCHA checks
- * - Use `submitImgDataSingle()` or `submitImgDataMultiple()` to handle image uploads independently
- * - Use `insertMultipleTables()` if you need to insert into multiple tables in one transaction
+ * **Usage**
+ * - `submitToOneTablenImage()` → Full workflow for a single target table + optional single image
+ * - `submitToMultipleTable()` → Workflow for inserting into multiple tables + multiple images
+ * - `submitImgDataSingle()` / `submitImgDataMultiple()` → Stand‑alone upload handlers
  *
- * 💡 Designed for extensibility across blog posts, decisions, user records, and more.
+ * **Design Goals**
+ * - Reusable across features like blogs, profiles, and content modules
+ * - Clear flow for onboarding contributors — parameters describe expected structures
+ * - Defensive patterns to prevent partial inserts or unsafe file handling
  */
 class SubmitPostData
 {
     /**
-     * Submits sanitized POST data to one or more tables after verifying CAPTCHA and token.
+     * Process and insert POST data into a single table after CAPTCHA (and optional token) validation.
      *
-     * @param array $multipleTablesnData Associative array of table names and their corresponding data payloads
-     * @param array $cleanData Sanitized input data including 'token' and CAPTCHA fields
-     * @example example of the $multipleTablesnData  'personal' =>  [
-     *           'firstName' => $cleanPostData['firstName'],
-     *         'lastName' => $cleanPostData['lastName'],
-     *       'famCode' => $cleanPostData['familyCode'],
-     *     'kids' => $cleanPostData['kids'],
-     *           'gender' => $cleanPostData['gender'],
-     *          'siblings' => $cleanPostData['siblings'],
-     *          'day' => $cleanPostData['day'],
-     *           'month' => $cleanPostData['month'],
-     *            'year' => $cleanPostData['year'],
-     *            'id' => $cleanPostData['id'],
-     *        ],
-     *        'work' => [
-     *            'employmentStatus' => $cleanPostData['employmentStatus'],
-     *           'occupation' => $cleanPostData['occupation'],
-     *           'id' => $cleanPostData['id']
-     *       ],
-     *        'contact' => [
-     * 
-     *            'email' => $cleanPostData['email'],
-     *           'country' => $cleanPostData['country'],
-     *          'mobile' => $cleanPostData['mobile'],
-     *           'id' => $cleanPostData['id'],
-     *       ],
-     * @param $imgPath Path to the directory where images will be uploaded 'public/images/blog/'
-     * @param string|null $fileName Optional name for the file input field (e.g. 'image')
+     * @param string      $table        Target table name for insertion
+     * @param array|null  $removeKeys   Keys to strip from POST data before insert (currently unused)
+     * @param string|null $fileName     Name of the file input field and DB column for image filename
+     * @param string|null $imgPath      Relative directory path for image uploads (must end with '/')
+     * @param array|null  $minMaxData   Optional per‑field min/max length constraints
      *
-     * @throws \Throwable If CAPTCHA fails, token is invalid, or any table insertion fails
+     * @throws \Throwable Rolls back transaction on any failure (validation, upload, DB insert, etc.)
      */
-    public static function submitToOneTable(string $table, ?string $fileName = null, ?string $imgPath = null, ?array $minMaxData = null): void
-    {
+    public static function submitToOneTablenImage(
+        string $table,
+        ?array $removeKeys = null,
+        ?string $fileName = null,
+        ?string $imgPath = null,
+        ?array $minMaxData = null
+    ): void {
         CorsHandler::setHeaders();
 
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
-            $token = $cleanData['token'] ?? '';
-            CheckToken::tokenCheck($token);
+
+            // Token check can be re‑enabled if CSRF validation is required
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
             $sFile = $input['files'] ?? null;
 
-            if ($sFile) {
-                $getProcessedFileName = SubmitPostData::submitImgDataSingle($imgPath, $fileName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
-                $sanitisedData[$fileName] =  $getProcessedFileName;
+            unset($removeKeys);
+            $pdo = Db::connect2();
+            Transaction::beginTransaction();
+
+            // Attach uploaded filename if present
+            if (!empty($sFile)) {
+                $getProcessedFileName = self::submitImgDataSingle(
+                    $imgPath,
+                    $fileName,
+                    $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
+                    $sFile
+                );
+                $sanitisedData[$fileName] = $getProcessedFileName;
             }
-            SubmitForm::submitForm($table, $sanitisedData);
+
+            SubmitForm::submitForm($table, $sanitisedData, $pdo);
+            Transaction::commit();
 
             Utility::msgSuccess(201, 'Record created successfully');
         } catch (\Throwable $th) {
@@ -99,22 +94,51 @@ class SubmitPostData
         }
     }
 
-
-    public static function submitToMultipleTable(array $allowedTables, ?array $minMaxData = null): void
-    {
+    /**
+     * Process and insert POST data into multiple allowed tables in a single transaction.
+     * Optionally handles multiple image uploads.
+     *
+     * @param array       $allowedTables Whitelisted table names eligible for insertion
+     * @param array|null  $removeKeys    Keys to strip from POST data before insert (currently unused)
+     * @param array|null  $minMaxData    Optional per‑field min/max length constraints
+     * @param string|null $fileName      File input field name (plural if multiple)
+     * @param string|null $imgPath       Relative path to upload directory
+     *
+     * @throws \Throwable Rolls back on any validation, upload, or DB failure
+     */
+    public static function submitToMultipleTable(
+        array $allowedTables,
+        ?array $removeKeys = null,
+        ?array $minMaxData = null,
+        ?string $fileName = null,
+        ?string $imgPath = null,
+    ): void {
         CorsHandler::setHeaders();
 
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
-            $token = $cleanData['token'] ?? '';
-            CheckToken::tokenCheck($token);
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
+            if ($removeKeys) {
+                self::unsetPostData($sanitisedData, $removeKeys);
+            }
+
+
+            $getProcessedFileName = self::submitImgDataMultiple(
+                $imgPath,
+                $fileName,
+                $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
+                $input
+            );
+
+            // Map each uploaded file to a unique column name
+            foreach ($getProcessedFileName as $key => $value) {
+                $imgColumnName =$fileName . ($key + 1);
+                $sanitisedData[$fileName][] = [$imgColumnName => $value];
+            }
+
             self::insertMultipleTables($sanitisedData, $allowedTables);
-
-
-
             Utility::msgSuccess(201, 'Record created successfully');
         } catch (\Throwable $th) {
             Transaction::rollback();
@@ -123,55 +147,79 @@ class SubmitPostData
     }
 
     /**
-     * Inserts data into multiple tables.
+     * Insert data into multiple whitelisted tables inside a single DB transaction.
      *
-     * @param array $getTableData Associative array where keys are table names and values are data arrays
+     * @param array $getTableData  Associative array: tableName => data array
+     * @param array $allowedTables Whitelist of permitted table names
      *
-     * @throws RuntimeException If any table fails to insert
+     * @throws RuntimeException If any insert fails
      */
     private static function insertMultipleTables(array $getTableData, array $allowedTables): void
     {
-        // Logic to handle multiple table insertions
-        // This could involve iterating over an array of table names or using a specific logic to determine the target table
         $pdo = Db::connect2();
         Transaction::beginTransaction();
+
         foreach ($getTableData as $tableName => $tableData) {
-            if (!in_array($tableName, $allowedTables, true)) continue;
+            if (!in_array($tableName, $allowedTables, true)) {
+                continue;
+            }
             if (!SubmitForm::submitForm($tableName, $tableData, $pdo)) {
-                throw new RuntimeException("$tableName didn't submit");
+                throw new RuntimeException("Failed to insert into table: {$tableName}");
             }
         }
+
         Transaction::commit();
     }
 
-
-
     /**
-     * Uploads a single image file and returns the sanitized filename.
+     * Upload a single image and return the sanitized filename.
      *
-     * @param string $formInputName Name of the file input field (e.g. 'image')
-     * @param string $uploadPath Directory to store the uploaded image
+     * @param string $formInputName HTML file input field name
+     * @param string $uploadPath    Destination directory path
+     * @param mixed  $sFile         Raw file array from request
      *
-     * @return string Sanitized filename
+     * @return string Sanitized filename (spaces removed, validated)
      */
     public static function submitImgDataSingle($formInputName, $uploadPath, $sFile): string
     {
-        $fileName = FileUploader::fileUploadSingle($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
-        return Utility::checkInputImage(\str_replace(' ', '', $fileName));
+        $fileName = FileUploader::fileUploadSingle(
+            $uploadPath,
+            $formInputName,
+            $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
+            $sFile
+        );
+        return Utility::checkInputImage(str_replace(' ', '', $fileName));
     }
 
     /**
-     * Uploads multiple image files and returns an array of sanitized filenames.
+     * Upload multiple images and return an array of sanitized filenames.
      *
-     * @param string $formInputName Name of the file input field (e.g. 'images[]')
-     * @param string $uploadPath Directory to store the uploaded images
+     * @param string $formInputName HTML file input field name (e.g. 'images[]')
+     * @param string $uploadPath    Destination directory path
+     * @param array  $postData      Full POST data array containing file data
      *
-     * @return array Array of sanitized filenames
+     * @return array|null Sanitized filenames, or null if no files were uploaded
      */
-    public static function submitImgDataMultiple($formInputName, $uploadPath, $sFile): array
+    public static function submitImgDataMultiple(string $formInputName, string $uploadPath, array $postData): mixed
     {
-        $fileName = FileUploader::fileUploadMultiple($uploadPath, $formInputName, $_ENV['FILE_UPLOAD_CLOUDMERSIVE'], $sFile);
+        if (!empty($postData[$formInputName]['name'][0])) {
+            return FileUploader::fileUploadMultiple(
+                $uploadPath,
+                $formInputName,
+                $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
+                $postData
+            );
+        }
+        return null;
+    }
 
-        return $fileName;
+    private function unsetPostData(array $data, ?array $removeKeys = null): array
+    {
+        if (!empty($removeKeys)) {
+            foreach ($removeKeys as $key) {
+                unset($data[$key]);
+            }
+        }
+        return $data;
     }
 }

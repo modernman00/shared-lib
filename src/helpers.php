@@ -742,3 +742,46 @@ function checkEmailExist($email): array|int|string
 
     return $result ? $result[0] : 0;
 }
+
+/**
+ * Normalise PHP's $_FILES into a simple, predictable array.
+ *
+ * @param array $files The $_FILES superglobal (or subset of it)
+ * @return array[] Each element is an associative array for a single file
+ */
+function normalize_files(array $files): array
+{
+    $normalized = [];
+
+    foreach ($files as $fieldName => $fileData) {
+        // Single file (string name) vs multiple (array name)
+        if (!is_array($fileData['name'])) {
+            // Wrap in a consistent shape
+            $normalized[] = [
+                'field'    => $fieldName,
+                'name'     => $fileData['name'],
+                'type'     => $fileData['type'],
+                'tmp_name' => $fileData['tmp_name'],
+                'error'    => $fileData['error'],
+                'size'     => $fileData['size'],
+            ];
+            continue;
+        }
+
+        // Multiple files for the same field
+        foreach ($fileData['name'] as $i => $name) {
+            $normalized[] = [
+                'field'    => $fieldName,
+                'name'     => $name,
+                'type'     => $fileData['type'][$i],
+                'tmp_name' => $fileData['tmp_name'][$i],
+                'error'    => $fileData['error'][$i],
+                'size'     => $fileData['size'][$i],
+            ];
+        }
+    }
+
+    // Optional: Filter out "no file" entries for cleaner downstream handling
+    return array_filter($normalized, fn($f) => $f['error'] !== UPLOAD_ERR_NO_FILE);
+}
+

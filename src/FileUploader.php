@@ -55,6 +55,11 @@ class FileUploader
             $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
             $fileError = $sFile[$formInputName]['error'][$i];
 
+             // If a virus scan API key is provided, initialize the virus scan
+        if ($apiKeyVirusScan) {
+            new ScanVirus($fileTemp,$apiKeyVirusScan);
+        }
+
             // Validate file
             $picError = [];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
@@ -84,8 +89,8 @@ class FileUploader
 
             // Move uploaded file
             if (!move_uploaded_file($fileTemp, $pathToImage)) {
-                $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
-                throw new ValidationException('Error Processing Request - post images - Image was not successfully uploaded');
+                $_SESSION['imageUploadOutcome']= "Image $fileName was not successfully uploaded";
+                throw new ValidationException("Error Processing Request - post images - Image $fileName was not successfully uploaded");
                 continue; // Skip optimization if upload failed
             }
 
