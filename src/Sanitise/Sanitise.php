@@ -68,7 +68,7 @@ class Sanitise
 
             $sessionToken = $_SESSION['token'];
             $postToken = $this->formData['token'];
-            $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'];
+              $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? $_COOKIE['XSRF-TOKEN'] ?? null;
 
             $valid = false;
             if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
@@ -80,8 +80,7 @@ class Sanitise
             if (!$valid) {
                 throw new UnauthorisedException('We are not familiar with the nature of your activities.');
             }
-            unset($this->formData['token']);
-              unset($this->cleanData['token']);
+     
         }
 
 

@@ -46,9 +46,9 @@ class GetRequestData
             $data = $_POST;
 
    
-            if (!empty($_FILES)) {
-                $data['files'] = $_FILES; // 🔍 
-            }
+            // if (!empty($_FILES)) {
+            //     $data['files'] = $_FILES; // 🔍 
+            // }
         }
         else {
             // Fallback for application/x-www-form-urlencoded or unknown content types

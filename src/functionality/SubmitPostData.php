@@ -37,6 +37,24 @@ use Src\functionality\middleware\GetRequestData;
  * - Reusable across features like blogs, profiles, and content modules
  * - Clear flow for onboarding contributors — parameters describe expected structures
  * - Defensive patterns to prevent partial inserts or unsafe file handling
+ * 
+ * ENVIRONMENT VARIABLES:
+ * - FILE_UPLOAD_CLOUDMERSIVE: Optional API key for virus scanning uploaded files
+ * 
+ * USAGE EXAMPLE:
+ * ```php
+ * $uploadDir = __DIR__ . '/../../public/images/uploads/';
+ * SubmitPostData::submitToOneTablenImage(
+ *     table: 'users',
+ *     minMaxData: [
+ *         'data' => ['email', 'password', 'username'],
+ *         'min'  => [5, 8, 3],
+ *         'max'  => [255, 64, 30]
+ *     ],
+ *     fileName: 'profile_image',
+ *     imgPath: $uploadDir
+ * );
+ * ```
  */
 class SubmitPostData
 {
@@ -47,16 +65,17 @@ class SubmitPostData
      * @param array|null  $removeKeys   Keys to strip from POST data before insert (currently unused)
      * @param string|null $fileName     Name of the file input field and DB column for image filename
      * @param string|null $imgPath      Relative directory path for image uploads (must end with '/')
-     * @param array|null  $minMaxData   Optional per‑field min/max length constraints
+     * @param array|null  $minMaxData   Optional per‑field min/max length constraints [data=> ['email', 'password'], min => [3, 8], max => [255, 20]]
      *
      * @throws \Throwable Rolls back transaction on any failure (validation, upload, DB insert, etc.)
      */
     public static function submitToOneTablenImage(
         string $table,
+        ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
-        ?string $imgPath = null,
-        ?array $minMaxData = null
+        ?string $imgPath = null
+
     ): void {
         CorsHandler::setHeaders();
 
@@ -67,19 +86,20 @@ class SubmitPostData
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
-            $sFile = $input['files'] ?? null;
+            if ($removeKeys) {
+                self::unsetPostData($sanitisedData, $removeKeys);
+            }
 
-            unset($removeKeys);
+
             $pdo = Db::connect2();
             Transaction::beginTransaction();
 
             // Attach uploaded filename if present
             if (!empty($sFile)) {
                 $getProcessedFileName = self::submitImgDataSingle(
-                    $imgPath,
+
                     $fileName,
-                    $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
-                    $sFile
+                    $imgPath
                 );
                 $sanitisedData[$fileName] = $getProcessedFileName;
             }
@@ -108,10 +128,10 @@ class SubmitPostData
      */
     public static function submitToMultipleTable(
         array $allowedTables,
-        ?array $removeKeys = null,
         ?array $minMaxData = null,
+        ?array $removeKeys = null,
         ?string $fileName = null,
-        ?string $imgPath = null,
+        ?string $imgPath = null
     ): void {
         CorsHandler::setHeaders();
 
@@ -124,19 +144,20 @@ class SubmitPostData
                 self::unsetPostData($sanitisedData, $removeKeys);
             }
 
+            if (!empty($_FILES)) {
+                $getProcessedFileName = self::submitImgDataMultiple(
+                    $fileName,
+                    $imgPath
+                );
 
-            $getProcessedFileName = self::submitImgDataMultiple(
-                $imgPath,
-                $fileName,
-                $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
-                $input
-            );
-
-            // Map each uploaded file to a unique column name
-            foreach ($getProcessedFileName as $key => $value) {
-                $imgColumnName =$fileName . ($key + 1);
-                $sanitisedData[$fileName][] = [$imgColumnName => $value];
+                $fileArr = [];
+                // Map each uploaded file to a unique column name
+                foreach ($getProcessedFileName as $key => $value) {
+                    $imgColumnName = $fileName . ($key + 1);
+                    $fileArr[$imgColumnName] = $value;
+                }
             }
+            $sanitisedData[$fileName] =  $fileArr ?? null;
 
             self::insertMultipleTables($sanitisedData, $allowedTables);
             Utility::msgSuccess(201, 'Record created successfully');
@@ -180,13 +201,11 @@ class SubmitPostData
      *
      * @return string Sanitized filename (spaces removed, validated)
      */
-    public static function submitImgDataSingle($formInputName, $uploadPath, $sFile): string
+    public static function submitImgDataSingle($formInputName, $uploadPath): string
     {
         $fileName = FileUploader::fileUploadSingle(
             $uploadPath,
-            $formInputName,
-            $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
-            $sFile
+            $formInputName
         );
         return Utility::checkInputImage(str_replace(' ', '', $fileName));
     }
@@ -200,17 +219,12 @@ class SubmitPostData
      *
      * @return array|null Sanitized filenames, or null if no files were uploaded
      */
-    public static function submitImgDataMultiple(string $formInputName, string $uploadPath, array $postData): mixed
+    public static function submitImgDataMultiple(string $formInputName, string $uploadPath): mixed
     {
-        if (!empty($postData[$formInputName]['name'][0])) {
-            return FileUploader::fileUploadMultiple(
-                $uploadPath,
-                $formInputName,
-                $_ENV['FILE_UPLOAD_CLOUDMERSIVE'],
-                $postData
-            );
-        }
-        return null;
+        return FileUploader::fileUploadMultiple(
+            $uploadPath,
+            $formInputName
+        );
     }
 
     private function unsetPostData(array $data, ?array $removeKeys = null): array

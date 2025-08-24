@@ -352,6 +352,7 @@ class BuildFormBStrap
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
+                    $nestedName = $divID . "['" . $name . "']";
                     $value = $this->entValue[$i]['value'][$y] ?? '';
                     $placeholder = $this->entValue[$i]['placeholder'][$y] ?? null;
                     $id = $name . '_id';
@@ -369,7 +370,7 @@ class BuildFormBStrap
                                     <label for="$id" class="form-label"><b>$cleanLabel</b></label>
                                     <div class="input-group mb-3">
                                         
-                                        <select class="form-control form-control-lg" id="$id" name="$name">                                                           
+                                        <select class="form-control form-control-lg" id="$id" name="$nestedName">                                                           
                             HTML;
 
                         if ($this->entValue[$i]['options'][$y]) {
@@ -403,7 +404,7 @@ class BuildFormBStrap
                                 <div class="form-group $name" id="{$name}_div">
                                 <div class="input-group mb-3">
                                     
-                                    <input type="text" class="form-control is-medium" id="{$name}_id" name="$name" placeholder="$cleanLabel">
+                                    <input type="text" class="form-control is-medium" id="{$name}_id" name="$nestedName" placeholder="$cleanLabel">
                                 </div>
                                 <small id="{$name}_help" class="form-text text-muted"></small>
                                 <button class="btn btn-success btn-lg btn-block" id="{$name}_button">Search</button>
@@ -428,7 +429,7 @@ class BuildFormBStrap
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                        <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$name">
+                                        <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$nestedName">
                                             <option value='$value'> 
                                                 <span class="option_text">Choose </span>
                                                 </option>
@@ -458,13 +459,35 @@ class BuildFormBStrap
                                             </div>
                                             </div>
                             HTML;
+                    } elseif ($labelType === 'file') {
+
+                        if (strpos($name, '[]') !== false) {
+                            $attribute = str_replace(['[', ']'], '', $name);
+                            $multiple = "multiple";
+                        }
+
+
+
+
+                        echo <<<HTML
+                            <div class="field $attribute" id="{$attribute}_div">
+                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}_id"
+                                    placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$attribute}_help"></p>
+                                    <p class="help error" id="{$attribute}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
                     } else {
                         echo <<<HTML
                             <div class="form-group $name" id="{$name}_div">
                             <label for="$id" class="form-label"><b>$cleanLabel</b></label>
                             <div class="input-group mb-3">
                                
-                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
                             </div>
                             <small id="{$name}_help" class="form-text text-muted"></small>
                             <small id="{$name}_error" class="form-text text-danger"></small>

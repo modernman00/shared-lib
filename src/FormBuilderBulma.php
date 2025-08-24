@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Src;
 
+use InvalidArgumentException;
+
 class FormBuilderBulma
 {
     /**
@@ -38,7 +40,19 @@ class FormBuilderBulma
      */
     public function __construct(public array $question)
     {
-        $this->token = urlencode(base64_encode((random_bytes(32))));
+                $this->token = urlencode(base64_encode((random_bytes(32))));
+        setcookie('XSRF-TOKEN', $this->token, [
+            'expires' => time() + 3600,
+            'path' => '/',
+            'samesite' => 'Lax',
+            'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
+            'httponly' => false,
+        ]);
+
+        $this->entKey = array_keys($this->question);
+           $this->entValue = array_values($this->question);
+        $this->entCount = count($this->entValue);
+        $_SESSION['token'] = $this->token;
     }
 
     /**
@@ -54,64 +68,48 @@ class FormBuilderBulma
         return $this->entValue;
     }
 
-    /**
-     * to create the year of birth
-     * set the years and create an array.
+
+
+ /**
+     * Generates an array of days.
+     *
+     * @return array ['days' => array, 'selected' => int|null]
+     * @throws InvalidArgumentException If day range is invalid
      */
-    private function createYear(int $startVar, int $dayOrYear): array
+    private function createDay(): array
     {
-        $setYear = [];
-        for ($i = $startVar; $i <= $dayOrYear; ++$i) {
-            $setYear[] = $i;
-        }
-
-        return $setYear;
-    }
-
-    private function createDay(int $startVar, int $dayOrYear): array
-    {
-        $setDay = [];
-        for ($i = $startVar; $i < $dayOrYear; ++$i) {
-            $setDay[] = $i;
-        }
-
-        return $setDay;
-    }
-
-    public function getYear(): void
-    {
-        $yearLimit = (int) date('Y');
-        $this->setYear = $this->createYear(1930, $yearLimit);
-
-        foreach ($this->setYear as $no) {
-            echo "<option value=\"$no\">$no</option>";
-        }
-    }
-
-    private function getDay(): void
-    {
-        $this->setDay = $this->createDay(0o1, 32);
-        foreach ($this->setDay as $no) {
-            echo "<option value=\"$no\">$no</option>";
-        }
+        return range(1, 31);
     }
 
     /**
-     * function to set the key of the form. Keys are the names of questions and the names of the database.
+     * Generates an array of months.
+     *
+     * @return array ['months' => array, 'selected' => string|null]
      */
-    public function setEntKey(): array
+    private function createMonth(): array
     {
-        $this->entKey = array_keys($this->question);
-
-        return $this->entKey;
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     }
 
-    public function setSessionToken(): string
-    {
-        $_SESSION['token'] = $this->token;
+    /**
+     * Generates an array of years.
+     *
+     * @param int $startYear Starting year (default: 1930)
+     * @param int|null $endYear Ending year (default: current year)
+     * @return array ['years' => array, 'selected' => int|null]
+     * @throws InvalidArgumentException If year range is invalid
+     */
 
-        return $_SESSION['token'];
+    private function createYear(int $startYear = 1930, ?int $endYear = null): array
+    {
+        $endYear = $endYear ?? (int) date('Y');
+        if ($startYear > $endYear) {
+            throw new InvalidArgumentException('Start year must be less than or equal to end year');
+        }
+        return range($startYear, $endYear);
     }
+
+
 
     /**
      * important ones are mixed, select-many, setError
@@ -129,9 +127,7 @@ class FormBuilderBulma
      */
     public function genForm(): void
     {
-        $this->setEntValue();
-        $this->setEntKey();
-        $this->setSessionToken();
+
 
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';
@@ -295,7 +291,7 @@ class FormBuilderBulma
                         </div>
 
                     HTML;
-            } elseif ($this->entValue[$i] === 'birthday') {
+            }  elseif ($this->entValue[$i] === 'birthday') {
                 $divID = $this->entValue[$i];
                 echo <<<HTML
                     <div class="form-group" id="$divID">
@@ -308,7 +304,9 @@ class FormBuilderBulma
                                         <option selected value="select">Day</option>
 
                     HTML;
-                echo $this->getDay();
+                foreach ($this->createDay() as $day) {
+                    echo "<option value=\"$day\">$day</option>";
+                }
                 echo <<<HTML
                                         </select>
                                     </div>
@@ -317,22 +315,15 @@ class FormBuilderBulma
                                   <p class="help" id="day_help"></p>
                             </div>
                             <div class="form-group">
-                        <div class="form-group">
-                            <label for="month" class="form-label">Month</label>
-                            <select class="form-control form-control-lg" name="month" id="month">
-                                <option selected value="select">Month</option>
-                                <option value="Jan">Jan</option>
-                                <option value="Feb">Feb</option>
-                                <option value="Mar">Mar</option>
-                                <option value="Apr">Apr</option>
-                                <option value="May">May</option>
-                                <option value="Jun">Jun</option>
-                                <option value="Jul">Jul</option>
-                                <option value="Aug">Aug</option>
-                                <option value="Sep">Sep</option>
-                                <option value="Oct">Oct</option>
-                                <option value="Nov">Nov</option>
-                                <option value="Dec">Dec</option>
+                                <div class="form-group">
+                                    <label for="month" class="form-label">Month</label>
+                                    <select class="form-control form-control-lg" name="month" id="month">
+                                        <option selected value="select">Month</option>
+                    HTML;
+                foreach ($this->createMonth() as $month) {
+                    echo "<option value=\"$month\">$month</option>";
+                }
+                echo <<<HTML
                             </select>
                             <small id="month_error" class="form-text text-danger"></small>
                             <small id="month_help" class="form-text text-muted"></small>
@@ -345,7 +336,9 @@ class FormBuilderBulma
                                 <option selected value="select">Year</option>
 
                     HTML;
-                echo $this->getYear();
+                 foreach ($this->createYear() as $year) {
+                    echo "<option value=\"$year\">$year</option>";
+                }
                 echo <<<HTML
                                         </select>
                                     </div>
@@ -397,6 +390,7 @@ class FormBuilderBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
+                     $nestedName = $divID . "['" . $name . "']";
                     $value = $this->entValue[$i]['value'][$y] ?? '';
                     $placeholder = $this->entValue[$i]['placeholder'][$y] ?? null;
                     $id = $name . '_id';
@@ -516,13 +510,34 @@ class FormBuilderBulma
                                             </div>
                                             </div>
                             HTML;
+                    } elseif ($labelType === 'file') {
+
+                        if (strpos($name, '[]') !== false) {
+                            $attribute = str_replace(['[', ']'], '', $name);
+                            $multiple = "multiple";
+                        }
+
+
+
+
+                        echo <<<HTML
+                            <div class="field $attribute" id="{$attribute}_div">
+                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}_id" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$attribute}_help"></p>
+                                    <p class="help error" id="{$attribute}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
                     } else {
                         echo <<<HTML
                             <div class="form-group $name" id="{$name}_div">
                             <label for="$id" class="form-label"><b>$cleanLabel</b></label>
                             <div class="input-group mb-3">
                                
-                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
                             </div>
                             <small id="{$name}_help" class="form-text text-muted"></small>
                             <small id="{$name}_error" class="form-text text-danger"></small>

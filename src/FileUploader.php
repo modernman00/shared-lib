@@ -12,31 +12,20 @@ use Src\VirusScan as ScanVirus;
 
 class FileUploader
 {
-    public static function fileUploadMultiple(string $fileLocation, string $formInputName, ?string $apiKeyVirusScan = null, $sFile): array
+    public static function fileUploadMultiple(string $fileLocation, string $formInputName): array
     {
-        // Validate the file input
-        if (!isset($sFile[$formInputName]) || empty($sFile[$formInputName]['name'])) {
+         // Validate the file input
+        if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'])) {
             Utility::throwError(400, 'No files were uploaded');
         }
 
-        // Validate each file
-        foreach ($sFile[$formInputName]['name'] as $file) {
-            self::ValidateFile($file, $sFile);
-        }
-
-        // If a virus scan API key is provided, initialize the virus scan
-        if ($apiKeyVirusScan) {
-            new ScanVirus(tempFileLocation: $sFile[$formInputName]['tmp_name'][0], apiKey: $apiKeyVirusScan);
-        }
-
-        // scanFileForVirus($sFile[$formInputName]);
-        // Count total files
+          // Count total files
         $saveFiles = [];
-        $countFiles = count($sFile[$formInputName]['name']);
+        $countFiles = count($_FILES[$formInputName]['name']);
 
-        // Looping all files
+      // Looping all files
         for ($i = 0; $i < $countFiles; ++$i) {
-            $fileName = basename($sFile[$formInputName]['name'][$i]);
+            $fileName = basename($_FILES[$formInputName]['name'][$i]);
             // trim out the space in the file name
             $fileName = str_replace(' ', '', $fileName);
             $fileName = str_replace(',', '', $fileName);
@@ -50,14 +39,14 @@ class FileUploader
             // Remove any extra underscores that might result from consecutive replacements
             $baseName = preg_replace('/_+/', '_', $baseName); // Replace multiple underscores with a single one
             $fileName = time() . '_' . $baseName . '.' . $extension; // e.g., "WhatsAppImage2021-01-24at12_00_04_1.jpeg"
-            $fileTemp = $sFile[$formInputName]['tmp_name'][$i];
-            $fileSize = $sFile[$formInputName]['size'][$i];
+            $fileTemp = $_FILES[$formInputName]['tmp_name'][$i];
+            $fileSize = $_FILES[$formInputName]['size'][$i];
             $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
-            $fileError = $sFile[$formInputName]['error'][$i];
+            $fileError = $_FILES[$formInputName]['error'][$i];
 
              // If a virus scan API key is provided, initialize the virus scan
-        if ($apiKeyVirusScan) {
-            new ScanVirus($fileTemp,$apiKeyVirusScan);
+        if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
+            new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
         }
 
             // Validate file
@@ -105,9 +94,10 @@ class FileUploader
         return $saveFiles;
     }
 
-    private static function ValidateFile(string $formInputName, $sFile): void
+    private static function ValidateFile(string $formInputName): void
     {
-        $file = $sFile[$formInputName];
+         $file = $_FILES[$formInputName];
+
         if (!isset($file) || empty($file)) {
             throw new ValidationException('No file uploaded');
         }
@@ -157,31 +147,33 @@ class FileUploader
         return  $optimizerChain->optimize($pathToImage);
     }
 
-    public static function fileUploadSingle(string $fileLocation, string $formInputName, ?string $apiKeyVirusScan = null, $sFile): string
+    public static function fileUploadSingle(string $fileLocation, string $formInputName): string
     {
-        // Check if file is uploaded
-        if (!isset($sFile[$formInputName]) || $sFile[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
+         // Check if file is uploaded
+        if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
             Utility::throwError(400, 'No file was uploaded');
         }
 
-        $fileName = basename($sFile[$formInputName]['name']);
+        
+        $fileName = basename($_FILES[$formInputName]['name']);
         $fileName = str_replace([' ', ','], '', $fileName);
         $fileInfo = pathinfo($fileName);
         $baseName = preg_replace('/_+/', '_', preg_replace('/[().]/', '_', $fileInfo['filename']));
         $extension = strtolower($fileInfo['extension']);
         $fileName = time() . '_' . $baseName . '.' . $extension;
-        $fileTemp = $sFile[$formInputName]['tmp_name'];
-        $fileSize = $sFile[$formInputName]['size'];
-        $fileError = $sFile[$formInputName]['error'];
+        $fileTemp = $_FILES[$formInputName]['tmp_name'];
+        $fileSize = $_FILES[$formInputName]['size'];
+        $fileError = $_FILES[$formInputName]['error'];
         $pathToImage = "$fileLocation$fileName";
 
         // Handle upload errors
-        self::ValidateFile($formInputName, $sFile);
+        self::ValidateFile($formInputName);
 
         // If a virus scan API key is provided, initialize the virus scan
-        if ($apiKeyVirusScan) {
-            new ScanVirus(tempFileLocation: $sFile[$formInputName]['tmp_name'], apiKey: $apiKeyVirusScan);
+        if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
+            new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
         }
+
 
         // Validate file
         $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];

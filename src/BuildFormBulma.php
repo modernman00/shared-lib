@@ -536,6 +536,27 @@ class BuildFormBulma
                                             </div>
                                             </div>
                             HTML;
+                    } elseif ($labelType === 'file') {
+
+                        if (strpos($name, '[]') !== false) {
+                            $attribute = str_replace(['[', ']'], '', $name);
+                            $multiple = "multiple";
+                        }
+
+
+
+
+                        echo <<<HTML
+                            <div class="field $attribute" id="{$attribute}_div">
+                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}_id" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$attribute}_help"></p>
+                                    <p class="help error" id="{$attribute}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
                     } else {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
