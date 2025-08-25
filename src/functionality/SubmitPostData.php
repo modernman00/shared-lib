@@ -119,7 +119,7 @@ class SubmitPostData
      * Optionally handles multiple image uploads.
      *
      * @param array       $allowedTables Whitelisted table names eligible for insertion
-     * @param array|null  $removeKeys    Keys to strip from POST data before insert (currently unused)
+         * @param array|null  $removeKeys    Keys to strip from POST data before insert (currently unused). if the key is nested use dot notation e.g 'account2.confirm_password', g.recaptcha.response
      * @param array|null  $minMaxData    Optional per‑field min/max length constraints
      * @param string|null $fileName      File input field name (plural if multiple)
      * @param string|null $imgPath       Relative path to upload directory
@@ -158,8 +158,10 @@ class SubmitPostData
                 }
             }
             $sanitisedData[$fileName] =  $fileArr ?? null;
-
-            self::insertMultipleTables($sanitisedData, $allowedTables);
+            $pdo = Db::connect2();
+            Transaction::beginTransaction();
+            self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
+            Transaction::commit();
             Utility::msgSuccess(201, 'Record created successfully');
         } catch (\Throwable $th) {
             Transaction::rollback();
@@ -172,12 +174,12 @@ class SubmitPostData
      *
      * @param array $getTableData  Associative array: tableName => data array
      * @param array $allowedTables Whitelist of permitted table names
+     * @param \PDO $pdo PDO connection object
      *
      * @throws RuntimeException If any insert fails
      */
-    private static function insertMultipleTables(array $getTableData, array $allowedTables): void
+    private static function insertMultipleTables(array $getTableData, array $allowedTables, \PDO $pdo): void
     {
-        $pdo = Db::connect2();
         Transaction::beginTransaction();
 
         foreach ($getTableData as $tableName => $tableData) {
@@ -201,7 +203,7 @@ class SubmitPostData
      *
      * @return string Sanitized filename (spaces removed, validated)
      */
-    public static function submitImgDataSingle($formInputName, $uploadPath): string
+    private static function submitImgDataSingle($formInputName, $uploadPath): string
     {
         $fileName = FileUploader::fileUploadSingle(
             $uploadPath,
@@ -219,7 +221,7 @@ class SubmitPostData
      *
      * @return array|null Sanitized filenames, or null if no files were uploaded
      */
-    public static function submitImgDataMultiple(string $formInputName, string $uploadPath): mixed
+    private static function submitImgDataMultiple(string $formInputName, string $uploadPath): mixed
     {
         return FileUploader::fileUploadMultiple(
             $uploadPath,
@@ -227,13 +229,35 @@ class SubmitPostData
         );
     }
 
-    private function unsetPostData(array $data, ?array $removeKeys = null): array
+      private static function unsetPostData(array $data, ?array $removeKeys = null): array
     {
         if (!empty($removeKeys)) {
             foreach ($removeKeys as $key) {
-                unset($data[$key]);
+                // Split the key into parts if it uses dot notation
+                $parts = explode('.', $key);
+
+                if (count($parts) > 1) {
+                    // Traverse into the nested array by reference
+                    $ref = &$data;
+                    $lastPart = array_pop($parts);
+
+                    foreach ($parts as $part) {
+                        if (isset($ref[$part]) && is_array($ref[$part])) {
+                            $ref = &$ref[$part];
+                        } else {
+                            // Path doesn't exist; skip unsetting
+                            continue 2;
+                        }
+                    }
+
+                    unset($ref[$lastPart]);
+                } else {
+                    // Simple top-level key
+                    unset($data[$key]);
+                }
             }
         }
+
         return $data;
     }
 }
