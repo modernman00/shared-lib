@@ -180,7 +180,7 @@ class SubmitPostData
      */
     private static function insertMultipleTables(array $getTableData, array $allowedTables, \PDO $pdo): void
     {
-        Transaction::beginTransaction();
+   
 
         foreach ($getTableData as $tableName => $tableData) {
             if (!in_array($tableName, $allowedTables, true)) {
@@ -191,7 +191,6 @@ class SubmitPostData
             }
         }
 
-        Transaction::commit();
     }
 
     /**
