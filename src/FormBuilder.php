@@ -2,6 +2,8 @@
 
 namespace Src;
 
+use InvalidArgumentException;
+
 class FormBuilder
 {
     private array $entKey;
@@ -270,7 +272,7 @@ class FormBuilder
 
     private function renderTextarea(string $nameKey, string $var, string $value, array $data): void
     {
-設定
+
 
         $config = $this->config;
         $label = $data[1] ?? $var;
@@ -325,20 +327,23 @@ class FormBuilder
     }
 
     private function renderCheckbox(string $nameKey, string $var, string $value, array $data): void
-    {
-        $config = $this->config;
-        echo <<<HTML
-            <div class="{$config['group_class']}">
-                <div class="{$config['input_group_class']}">
-                    <label class="{$config['checkbox_label_class']}">
-                        <input type="checkbox" class="{$config['checkbox_class']}" name="$nameKey" id="$nameKey" checked>
-                        {$data ?: $var}
-                    </label>
-                </div>
-                <p class="{$config['error_class']}" id="{$nameKey}_error"></p>
+{
+    $config = $this->config;
+    $labelText = !empty($data) ? (string) $data : $var;
+
+    echo <<<HTML
+        <div class="{$config['group_class']}">
+            <div class="{$config['input_group_class']}">
+                <label class="{$config['checkbox_label_class']}">
+                    <input type="checkbox" class="{$config['checkbox_class']}" name="$nameKey" id="$nameKey" checked>
+                    $labelText
+                </label>
             </div>
-        HTML;
-    }
+            <p class="{$config['error_class']}" id="{$nameKey}_error"></p>
+        </div>
+    HTML;
+}
+
 
     private function renderButton(string $nameKey, string $var, string $value, array $data): void
     {
@@ -626,7 +631,7 @@ class FormBuilder
             foreach ($options as $option) {
                 echo "<option value=\"$option\">$option</option>";
             }
- Robles            echo <<<HTML
+         echo <<<HTML
                             </select>
                         </div>
                         <span class="icon is-small is-left">$icon</span>
