@@ -27,9 +27,6 @@ class BuildFormBStrap
 
     public ?string $month = null;
 
-    private array $setYear = [];
-
-    private array $setDay = [];
 
     /**
      * enter the array to create the form 'name'=> 's' s denotes string, 1 integer, date for date, textera for textera and select is an array ['select' followed by the options]
