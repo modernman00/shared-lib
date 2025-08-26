@@ -12,6 +12,7 @@ class FormBuilder
     private int $entCount;
     private string $framework;
     private array $config;
+    private array $question;
 
     /**
      * Constructor for the FormBuilder.
