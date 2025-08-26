@@ -144,10 +144,13 @@ class FormBuilder
             $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]));
             $nameKey = $this->entKey[$i];
 
+            // Handle string values for types like checkbox
             $type = is_array($this->entValue[$i]) ? $this->entValue[$i][0] : $this->entValue[$i];
+            $data = is_array($this->entValue[$i]) ? $this->entValue[$i] : ['label' => $this->entValue[$i]];
+
             $method = 'render' . ucfirst($type);
             if (method_exists($this, $method)) {
-                $this->$method($nameKey, $var, $value, is_array($this->entValue[$i]) ? $this->entValue[$i] : []);
+                $this->$method($nameKey, $var, $value, $data);
             } else {
                 echo "Invalid form element type: {$type}";
             }
@@ -328,22 +331,21 @@ class FormBuilder
     }
 
     private function renderCheckbox(string $nameKey, string $var, string $value, array $data): void
-{
-    $config = $this->config;
-    $labelText = !empty($data) ? (string) $data : $var;
-
-    echo <<<HTML
-        <div class="{$config['group_class']}">
-            <div class="{$config['input_group_class']}">
-                <label class="{$config['checkbox_label_class']}">
-                    <input type="checkbox" class="{$config['checkbox_class']}" name="$nameKey" id="$nameKey" checked>
-                    $labelText
-                </label>
+    {
+        $config = $this->config;
+        $label = $data['label'] ?? $var;
+        echo <<<HTML
+            <div class="{$config['group_class']}">
+                <div class="{$config['input_group_class']}">
+                    <label class="{$config['checkbox_label_class']}">
+                        <input type="checkbox" class="{$config['checkbox_class']}" name="$nameKey" id="$nameKey">
+                        $label
+                    </label>
+                </div>
+                <p class="{$config['error_class']}" id="{$nameKey}_error"></p>
             </div>
-            <p class="{$config['error_class']}" id="{$nameKey}_error"></p>
-        </div>
-    HTML;
-}
+        HTML;
+    }
 
 
     private function renderButton(string $nameKey, string $var, string $value, array $data): void
@@ -738,8 +740,12 @@ class FormBuilder
     {
         $config = $this->config;
         $style = $this->framework === 'bulma' ? 'style="display: none;"' : 'noDisplay';
-        echo "<div id=\"setLoader\" tabindex=\"-1\" class=\"loader $style\"></div>
-              <div class=\"{$config['error_container_class']} $style\" id=\"$nameKey\"><p id=\"error\"></p></div>";
+        echo <<<HTML
+            <div id="setLoader" tabindex="-1" class="loader $style"></div>
+            <div class="{$config['error_container_class']} $style" id="$nameKey">
+                <p id="error"></p>
+            </div>
+        HTML;
     }
 
     private function renderCaptcha(string $nameKey, string $var, string $value, array $data): void
@@ -751,10 +757,12 @@ class FormBuilder
     {
         $config = $this->config;
         echo <<<HTML
-            <label class="{$config['checkbox_label_class']}">
-                <input type="checkbox" id="showPassword">
-                Show Password
-            </label><br>
+            <div class="{$config['group_class']}">
+                <label class="{$config['checkbox_label_class']}">
+                    <input type="checkbox" id="showPassword">
+                    Show Password
+                </label>
+            </div><br>
         HTML;
     }
 
