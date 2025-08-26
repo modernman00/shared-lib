@@ -189,7 +189,6 @@ class Utility
         array $data = [],
         string $realPathView = '/../../../../resources/views',
         string $realPathCache = '/../../../../bootstrap/cache',
-        string $mode = BladeOne::MODE_DEBUG
     ) {
         try {
             $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
@@ -198,7 +197,7 @@ class Utility
             // echo $viewFile;
             static $blade = null;
             if (!$blade) {
-                $blade = new BladeOne($view, $cache, $mode);
+                $blade = new BladeOne($view, $cache);
 
                 $blade->pipeEnable = true;
                 $blade->setBaseUrl($_ENV['APP_URL']);
