@@ -1,5 +1,7 @@
 <?php
 
+namespace Src;
+
 class FormBuilder
 {
     private array $entKey;
@@ -215,7 +217,7 @@ class FormBuilder
     private function renderSelect(string $nameKey, string $var, string $value, array $options): void
     {
         $config = $this->config;
-        $selectWrapper = $this->framework === 'bulma' ? "<div class=\"{$config['select_classlistening class="select is-medium">": '';
+        $selectWrapper = $this->framework === 'bulma' ? "<div class=\"{$config['select_class']}\">" : '';
         $selectWrapperEnd = $this->framework === 'bulma' ? '</div>' : '';
         echo <<<HTML
             <div class="{$config['group_class']}">
