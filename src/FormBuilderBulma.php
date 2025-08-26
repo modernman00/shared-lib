@@ -390,7 +390,7 @@ class FormBuilderBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
-                     $nestedName = $divID . "['" . $name . "']";
+                    $nestedName = $divID . "['" . $name . "']";
                     $value = $this->entValue[$i]['value'][$y] ?? '';
                     $placeholder = $this->entValue[$i]['placeholder'][$y] ?? null;
                     $id = $name . '';

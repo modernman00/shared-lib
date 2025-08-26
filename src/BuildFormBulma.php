@@ -40,14 +40,14 @@ class BuildFormBulma
         ]);
 
         $this->entKey = array_keys($this->question);
-           $this->entValue = array_values($this->question);
+        $this->entValue = array_values($this->question);
         $this->entCount = count($this->entValue);
         $_SESSION['token'] = $this->token;
     }
 
 
 
-        /**
+    /**
      * Generates an array of days.
      *
      * @return array ['days' => array, 'selected' => int|null]
@@ -56,10 +56,9 @@ class BuildFormBulma
     private function createDay(): array
     {
         return range(1, 31);
-
     }
 
-      /**
+    /**
      * Generates an array of months.
      *
      * @return array ['months' => array, 'selected' => string|null]
@@ -67,10 +66,9 @@ class BuildFormBulma
     private function createMonth(): array
     {
         return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-     
     }
 
-       /**
+    /**
      * Generates an array of years.
      *
      * @param int $startYear Starting year (default: 1930)
@@ -79,14 +77,13 @@ class BuildFormBulma
      * @throws InvalidArgumentException If year range is invalid
      */
 
-      private function createYear(int $startYear = 1930, ?int $endYear = null): array
+    private function createYear(int $startYear = 1930, ?int $endYear = null): array
     {
         $endYear = $endYear ?? (int) date('Y');
         if ($startYear > $endYear) {
             throw new InvalidArgumentException('Start year must be less than or equal to end year');
         }
         return range($startYear, $endYear);
-          
     }
 
 
@@ -583,7 +580,7 @@ class BuildFormBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
                     $name = empty($this->entValue[$i]['attribute'][$y]) ? '' : $this->entValue[$i]['attribute'][$y];
-                    $name = $divID . "['" . $name . "']";
+                    $nestedName = $divID . "['" . $name . "']";
                     $placeholder = empty($this->entValue[$i]['placeholder'][$y]) ? '' : $this->entValue[$i]['placeholder'][$y];
                     $id = $name;
                     $error = $name . '_error';
