@@ -124,8 +124,8 @@ class BuildFormBStrap
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                             <div class='mb-3 $nameKey ' id='{$nameKey}_div'>
-                                <label for='{$nameKey}_id' class='form-label'><b>$var</b></label>
-                                <input type='text' class='form-control' autocomplete='new-$nameKey' placeholder='PLEASE ENTER YOUR $var' name='$nameKey' id='{$nameKey}_id' value='$value' required>
+                                <label for='{$nameKey}' class='form-label'><b>$var</b></label>
+                                <input type='text' class='form-control' autocomplete='new-$nameKey' placeholder='PLEASE ENTER YOUR $var' name='$nameKey' id='{$nameKey}' value='$value' required>
                                 <small id='{$nameKey}_help' class='form-text text-muted'></small>
                                 <small id='{$nameKey}_error' class='form-text text-danger'></small>
                             </div>
@@ -135,14 +135,14 @@ class BuildFormBStrap
                 $fontAwesome = $this->entValue[$i][1];
                 echo <<<HTML
                                     <div class="form-group">
-                        <label for="{$nameKey}_id" class="form-label"><b>$var</b></label>
+                        <label for="{$nameKey}" class="form-label"><b>$var</b></label>
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <span class="input-group-text">
                                     $fontAwesome
                                 </span>
                             </div>
-                            <input type="text" class="form-control" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey" id="{$nameKey}_id" value="$value">
+                            <input type="text" class="form-control" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey" id="{$nameKey}" value="$value">
                             <div class="input-group-append">
                                 <span class="input-group-text">
                                     <i class="fas fa-check fa-xs"></i>
@@ -158,8 +158,8 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i] === 'date') {
                 echo <<<HTML
                         <div class="mb-3 $nameKey" id="{$nameKey}_div">
-                             <label for="{$nameKey}_id" class="form-label">$var</label>
-                        <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}_id" value="$value">
+                             <label for="{$nameKey}" class="form-label">$var</label>
+                        <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}" value="$value">
 
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>
@@ -188,8 +188,8 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i][0] === 'textarea') {
                 echo <<<HTML
                         <div class="mb-3" id="{$nameKey}_div">
-                            <label for="{$nameKey}_id" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
-                            <textarea class="form-control" autocomplete="new-$nameKey" placeholder="{$this->entValue[$i][1]}" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}_id">$value</textarea>
+                            <label for="{$nameKey}" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
+                            <textarea class="form-control" autocomplete="new-$nameKey" placeholder="{$this->entValue[$i][1]}" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}">$value</textarea>
                             <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
                             <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
                         </div>
@@ -199,8 +199,8 @@ class BuildFormBStrap
                 echo <<<HTML
 
                          <div class="mb-3">
-                            <label for="{$nameKey}_id" class="form-label">Email address</label>
-                            <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}_id" value="$value">
+                            <label for="{$nameKey}" class="form-label">Email address</label>
+                            <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}" value="$value">
                             <div id="emailHelp" class="form-text"></div>
                         </div>
 
@@ -209,8 +209,8 @@ class BuildFormBStrap
                 echo <<<HTML
 
                     <div class="mb-3 form-check">
-                        <label for="{$nameKey}_id" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="{$nameKey}_id" name="$nameKey" placeholder="Enter your password" autocomplete="new-password" value="$value">
+                        <label for="{$nameKey}" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="{$nameKey}" name="$nameKey" placeholder="Enter your password" autocomplete="new-password" value="$value">
                         <small id="{$nameKey}_help" class="form-text text-muted">Please enter a strong password.</small>
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                     </div>
@@ -352,10 +352,166 @@ class BuildFormBStrap
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
+                    $value = $this->entValue[$i]['value'][$y] ?? '';
+                    $placeholder = $this->entValue[$i]['placeholder'][$y] ?? null;
+                    $id = $name;
+                    $error = $name . '_error';
+                    $help = $name . '_help';
+                    $cleanLabel = strtoupper($label);
+                    $labelType = $this->entValue[$i]['inputType'][$y] ? $this->entValue[$i]['inputType'][$y] : '';
+                    $icon = $this->entValue[$i]['icon'][$y] ?? '';
+                    $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
+                    $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+
+                    if ($labelType === 'select') {
+                        echo <<<HTML
+                                <div class="form-group $name" id="{$name}_div">
+                                    <label for="$id" class="form-label"><b>$cleanLabel</b></label>
+                                    <div class="input-group mb-3">
+                                        
+                                        <select class="form-control form-control-lg" id="$id" name="$name">                                                           
+                            HTML;
+
+                        if ($this->entValue[$i]['options'][$y]) {
+                            $decide = $this->entValue[$i]['options'][$y];
+
+                            foreach ($decide as $value) {
+                                echo "<option value='$value'> $value </option>";
+                            }
+                        }
+                        // for ($yii = 0; $yii < count($this->entValue[$i]['options'][$yii]); $yii++) {
+                        //     echo "<option>" . $this->entValue[$i]['options'][$yii] . "</option>";
+                        // }
+                        echo <<<HTML
+                                        </select>
+                                      
+                                        <!-- <div class="input-group-append">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-angle-down fasCol"></i>
+                                            </span>
+                                        </div> -->
+                                        </div>
+                                        <small id="$help" class="form-text text-muted"></small>
+                                        <small id="$error" class="form-text text-danger"></small>
+                                        </div>
+                                        </div>
+
+                            HTML;
+                    } elseif ($labelType === 'inputButton') {
+                        echo <<<HTML
+                            
+                                <div class="form-group $name" id="{$name}_div">
+                                <div class="input-group mb-3">
+                                    
+                                    <input type="text" class="form-control is-medium" id="{$name}" name="$name" placeholder="$cleanLabel">
+                                </div>
+                                <small id="{$name}_help" class="form-text text-muted"></small>
+                                <button class="btn btn-success btn-lg btn-block" id="{$name}_button">Search</button>
+                                <small id="{$name}_help" class="form-text text-muted"></small>
+                                <small id="{$name}_error" class="form-text text-danger"></small>
+                            </div>
+
+                            HTML;
+                    } elseif ($labelType === 'cardSelect') {
+                        echo <<<HTML
+                                                <div class="$name col m-1" id="{$name}_div">
+                                                    <div class="card h-100 hidden">
+                                                <img src="$hasImg" class="card-img-top" alt="...">
+                                               
+                                                    <div class="card-body">
+
+                                                        <h5 class="card-title">$cleanLabel</h5>
+
+                                                    
+                                        
+                                                    
+                            HTML;
+                        if ($this->entValue[$i]['options'][$y]) {
+                            echo <<<HTML
+                                        <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$name">
+                                            <option value='$value'> 
+                                                <span class="option_text">Choose </span>
+                                                </option>
+                                HTML;
+                            $decide = $this->entValue[$i]['options'][$y];
+
+                            foreach ($decide as $value => $option) {
+                                echo "<option value='$value'>
+                                <span class='option_text'> $option 
+                                </span> </option>";
+                            }
+                            echo <<<HTML
+                                    </select>
+                                HTML;
+                        } else {
+                            echo <<<HTML
+                                    <input type="text" class="form-control" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                HTML;
+                        }
+                        echo <<<HTML
+                                                   
+                                                 
+                                               
+                                               <small id="$help" class="form-text text-muted"></small>
+                                                <small id="$error" class="form-text text-danger"></small> 
+                                                </div>
+                                            </div>
+                                            </div>
+                            HTML;
+                    } elseif ($labelType === 'file') {
+
+                        if (strpos($name, '[]') !== false) {
+                            $attribute = str_replace(['[', ']'], '', $name);
+                            $multiple = "multiple";
+                        }
+
+
+
+
+                        echo <<<HTML
+                            <div class="field $attribute" id="{$attribute}_div">
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}"
+                                    placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$attribute}_help"></p>
+                                    <p class="help error" id="{$attribute}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
+                    } else {
+                        echo <<<HTML
+                            <div class="form-group $name" id="{$name}_div">
+                            <label for="$id" class="form-label"><b>$cleanLabel</b></label>
+                            <div class="input-group mb-3">
+                               
+                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                            </div>
+                            <small id="{$name}_help" class="form-text text-muted"></small>
+                            <small id="{$name}_error" class="form-text text-danger"></small>
+                            </div>
+
+                            HTML;
+                    }
+                }
+                echo <<<HTML
+                        
+                        </div>
+                    HTML;
+            } elseif ($this->entValue[$i][0] === 'mixed_nested') {
+                $divID = $this->entKey[$i];
+                echo <<<HTML
+                              
+                                      <div class="row gx-4 " id="$divID">
+                    HTML;
+                for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
+                    $label = $this->entValue[$i]['label'][$y];
+                    $name = $this->entValue[$i]['attribute'][$y];
                     $nestedName = $divID . "['" . $name . "']";
                     $value = $this->entValue[$i]['value'][$y] ?? '';
                     $placeholder = $this->entValue[$i]['placeholder'][$y] ?? null;
-                    $id = $name . '_id';
+                    $id = $name;
                     $error = $name . '_error';
                     $help = $name . '_help';
                     $cleanLabel = strtoupper($label);
@@ -404,7 +560,7 @@ class BuildFormBStrap
                                 <div class="form-group $name" id="{$name}_div">
                                 <div class="input-group mb-3">
                                     
-                                    <input type="text" class="form-control is-medium" id="{$name}_id" name="$nestedName" placeholder="$cleanLabel">
+                                    <input type="text" class="form-control is-medium" id="{$name}" name="$nestedName" placeholder="$cleanLabel">
                                 </div>
                                 <small id="{$name}_help" class="form-text text-muted"></small>
                                 <button class="btn btn-success btn-lg btn-block" id="{$name}_button">Search</button>
@@ -473,7 +629,7 @@ class BuildFormBStrap
                             <div class="field $attribute" id="{$attribute}_div">
                                 <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}_id"
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}"
                                     placeholder="$placeholder" autocomplete="$attribute" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$attribute}_help"></p>
@@ -500,7 +656,7 @@ class BuildFormBStrap
                         
                         </div>
                     HTML;
-            } elseif ($this->entValue[$i][0] === 'select-many') {
+            }elseif ($this->entValue[$i][0] === 'select-many') {
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                     <div class="form-group" id="$divID">
@@ -510,7 +666,7 @@ class BuildFormBStrap
                     $options = $this->entValue[$i]['options'][$y];
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
-                    $id = $name . '_id';
+                    $id = $name;
                     $error = $name . '_error';
                     $help = $name . '_help';
                     $cleanLabel = strtoupper($label);
@@ -614,7 +770,7 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i] == 'showPassword') {
                 echo <<<HTML
                        <label class="checkbox">
-                        <input type="checkbox" id="showPassword_id">
+                        <input type="checkbox" id="showPassword">
                             Show Password
                         </label><br>
                     HTML;

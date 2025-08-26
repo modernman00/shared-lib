@@ -87,8 +87,10 @@ class SubmitPostData
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
             if ($removeKeys) {
-                self::unsetPostData($sanitisedData, $removeKeys);
+               $sanitisedData = self::unsetPostData($sanitisedData, $removeKeys);
             }
+
+            
 
 
             $pdo = Db::connect2();

@@ -119,7 +119,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" id="$nameKey"><b>$var</b></label>
                         <div class="control">
-                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" value="$value"  id="{$nameKey}_id" required>
+                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" value="$value"  id="{$nameKey}" required>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -224,7 +224,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" id="$nameKey"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="email" id="{$nameKey}_id" placeholder="alex@gmail.com" class="input $nameKey is-medium" autocomplete="username" name="$nameKey" value="$value">
+                            <input type="email" id="{$nameKey}" placeholder="alex@gmail.com" class="input $nameKey is-medium" autocomplete="username" name="$nameKey" value="$value">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-envelope"></i>
                             </span>
@@ -241,7 +241,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" id="$nameKey"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="password" id="{$nameKey}_id" placeholder="password" autocomplete="new-password" class="input $nameKey is-medium" name="$nameKey">
+                            <input type="password" id="{$nameKey}" placeholder="password" autocomplete="new-password" class="input $nameKey is-medium" name="$nameKey">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-lock"></i>
                             </span>
@@ -417,9 +417,8 @@ class BuildFormBulma
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
                     $name = empty($this->entValue[$i]['attribute'][$y]) ? '' : $this->entValue[$i]['attribute'][$y];
-                    $nestedName = $divID . "['" . $name . "']";
                     $placeholder = empty($this->entValue[$i]['placeholder'][$y]) ? '' : $this->entValue[$i]['placeholder'][$y];
-                    $id = $name . '_id';
+                    $id = $name;
                     $error = $name . '_error';
                     $help = $name . '_help';
                     $cleanLabel = strtoupper($label);
@@ -437,7 +436,7 @@ class BuildFormBulma
                                 <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
-                                        <select class="input is-medium" id="$id" name="$nestedName">
+                                        <select class="input is-medium" id="$id" name="$name">
                                         
                             HTML;
 
@@ -467,7 +466,7 @@ class BuildFormBulma
                                 
 
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" id="{$name}_id" type="text" placeholder="$cleanLabel" name="$nestedName">
+                                    <input class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" name="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                 </div>
@@ -504,7 +503,7 @@ class BuildFormBulma
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$nestedName">
+                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name">
                                                         
                                                         <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
                                 HTML;
@@ -520,7 +519,7 @@ class BuildFormBulma
                                 HTML;
                         } else {
                             echo <<<HTML
-                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
                                 HTML;
                         }
                         echo <<<HTML
@@ -548,9 +547,9 @@ class BuildFormBulma
 
                         echo <<<HTML
                             <div class="field $attribute" id="{$attribute}_div">
-                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}_id" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}" placeholder="$placeholder" autocomplete="$attribute" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$attribute}_help"></p>
                                     <p class="help error" id="{$attribute}_error"></p>
@@ -560,7 +559,174 @@ class BuildFormBulma
                     } else {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$name}_help"></p>
+                                    <p class="help error" id="{$name}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
+                    }
+                }
+                echo <<<HTML
+                    </div>
+                    </div>
+                    HTML;
+            } elseif ($this->entValue[$i][0] === 'mixed_nested') {
+                $divID = $this->entKey[$i];
+                echo <<<HTML
+                    <div class="field" id="$divID">
+                        <div class="columns">
+                    HTML;
+                for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
+                    $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
+                    $name = empty($this->entValue[$i]['attribute'][$y]) ? '' : $this->entValue[$i]['attribute'][$y];
+                    $name = $divID . "['" . $name . "']";
+                    $placeholder = empty($this->entValue[$i]['placeholder'][$y]) ? '' : $this->entValue[$i]['placeholder'][$y];
+                    $id = $name;
+                    $error = $name . '_error';
+                    $help = $name . '_help';
+                    $cleanLabel = strtoupper($label);
+                    $value = empty($this->entValue[$i]['value'][$y]) ? '' : $this->entValue[$i]['value'][$y];
+
+                    $labelType = $this->entValue[$i]['inputType'][$y] ? $this->entValue[$i]['inputType'][$y] : '';
+                    $icon = $this->entValue[$i]['icon'][$y] ?? '';
+
+                    $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icons-left' : '');
+                    $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+
+                    if ($labelType === 'select') {
+                        echo <<<HTML
+                            <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
+                                <div class="control has-icons-left has-icons-right">
+                                    <div class="select is-fullwidth is-medium">
+                                        <select class="input is-medium" id="$id" name="$name">
+                                        
+                            HTML;
+
+                        if ($this->entValue[$i]['options'][$y]) {
+                            $decide = $this->entValue[$i]['options'][$y];
+
+                            foreach ($decide as $value) {
+                                echo "<option> $value </option>";
+                            }
+                        }
+                        echo <<<HTML
+                                        </select>
+                                        <span class="icon is-small is-left">$icon</span>
+                                        <!-- <span class="icon is-small is-right">
+                                            <i class="fas fa-angle-down fasCol"></i>
+                                        </span> -->
+                                    </div>
+                                    <p class="help" id="$help"></p>
+                                    <p class="help error" id="$error"></p>
+                                </div>
+                            </div>
+                            HTML;
+                    } elseif ($labelType === 'inputButton') {
+                        echo <<<HTML
+                                                    
+                            <div class="field $name has-addons has-addons-left" id="{$name}_div">
+                                
+
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" name="$name">
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$name}_help"></p>
+                                </div>
+                                <div class="control">
+                                    <button class="button is-success is-medium" id="{$name}_button">Search</button>
+                                </div>
+
+                            </div>
+                            HTML;
+                    } elseif ($labelType === 'cardSelect') {
+                        echo <<<HTML
+                                    <div class="$name column" id="{$name}_div">
+                                        <div class="card h-100 hidden">
+                                            <div class="card-image">
+                                                <figure class="image is-4by3">
+                                                <img src="$hasImg"
+                                                    alt="Placeholder image"
+                                                />
+                                                </figure>
+                                            </div>
+
+                                             <header class="card-header">
+                                                <p class="card-header-title">>$cleanLabel</p>
+                                             
+                                            </header>
+                                   
+                                        <div class="card-content">
+
+                                            <div class="content">
+
+                                        
+                                    
+                                        
+                            HTML;
+                        if ($this->entValue[$i]['options'][$y]) {
+                            echo <<<HTML
+                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name">
+                                                        
+                                                        <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
+                                HTML;
+                            $decide = $this->entValue[$i]['options'][$y];
+
+                            foreach ($decide as $value => $option) {
+                                echo "<option value='$value'>
+                                            <span style='font-size: 20px;'> $option 
+                                            </span> </option>";
+                            }
+                            echo <<<HTML
+                                                    </select>
+                                HTML;
+                        } else {
+                            echo <<<HTML
+                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                HTML;
+                        }
+                        echo <<<HTML
+                                                   
+                                                 
+                                               
+                                                <!-- <small id="$help" class="form-text text-muted"></small>
+                                                <small id="$error" class="form-text text-danger"></small> -->
+                                            </div>
+                                            </div>
+                                            </div>
+                                             </div>
+                                            </div>
+                                            </div>
+                            HTML;
+                    } elseif ($labelType === 'file') {
+
+                        if (strpos($name, '[]') !== false) {
+                            $attribute = str_replace(['[', ']'], '', $name);
+                            $multiple = "multiple";
+                        }
+
+
+
+
+                        echo <<<HTML
+                            <div class="field $attribute" id="{$attribute}_div">
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
+                                <div class="control is-expanded $hasIconLeft">
+                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <span class="icon is-small is-left">$icon</span>
+                                    <p class="help" id="{$attribute}_help"></p>
+                                    <p class="help error" id="{$attribute}_error"></p>
+                                </div>
+                            </div>
+                            HTML;
+                    } else {
+                        echo <<<HTML
+                            <div class="field $name" id="{$name}_div">
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
                                     <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
                                     <span class="icon is-small is-left">$icon</span>
@@ -585,14 +751,14 @@ class BuildFormBulma
                     $options = $this->entValue[$i]['options'][$y];
                     $label = $this->entValue[$i]['label'][$y];
                     $name = $this->entValue[$i]['attribute'][$y];
-                    $id = $name . '_id';
+                    $id = $name;
                     $error = $name . '_error';
                     $help = $name . '_help';
                     $cleanLabel = strtoupper($label);
                     $icon = $this->entValue[$i]['icon'][$y];
                     echo <<<HTML
                         <div class="field" id="{$name}_div">
-                            <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
+                            <label class="label is-medium"><b>$cleanLabel</b></label>
                             <div class="control has-icons-left has-icons-right">
                                 <select class="input is-medium" id="$id" name="$name">
                         HTML;
@@ -656,7 +822,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] == 'showPassword') {
                 echo <<<HTML
                        <label class="checkbox">
-                        <input type="checkbox" id="showPassword_id">
+                        <input type="checkbox" id="showPassword">
                             Show Password
                         </label><br>
                     HTML;
