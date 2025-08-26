@@ -114,7 +114,7 @@ class BuildFormBulma
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control">
                             <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" value="$value"  id="{$nameKey}" required>
                             <p class="help" id="{$nameKey}_help"></p>
@@ -126,7 +126,7 @@ class BuildFormBulma
                 $fontAwesome = $this->entValue[$i][1];
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
                             <input type="text" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
                             <span class="icon is-small is-left">
@@ -143,7 +143,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] === 'integer') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control">
                             <input type="number" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
                             <p class="help" id="{$nameKey}_help"></p>
@@ -154,7 +154,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] === 'date') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label" ><b>$var</b></label>
                         <div class="control">
                             <input type="date" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
                             <p class="help" id="{$nameKey}_help"></p>
@@ -166,7 +166,7 @@ class BuildFormBulma
                 $options = $this->entValue[$i];
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control">
                             <div class="select">
                                 <select name="$nameKey">
@@ -186,7 +186,7 @@ class BuildFormBulma
                 $fontAwesome = $this->entValue[$i][1];
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control has-icons-left">
                             <div class="select">
                                 <select name="$nameKey">
@@ -208,7 +208,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] === 'textarea') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label" ><b>$var</b></label>
                         <div class="control">
                             <textarea class="textarea" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey">$value</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
@@ -219,7 +219,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] === 'email') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label" ><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
                             <input type="email" id="{$nameKey}" placeholder="alex@gmail.com" class="input $nameKey is-medium" autocomplete="username" name="$nameKey" value="$value">
                             <span class="icon is-small is-left">
@@ -236,7 +236,7 @@ class BuildFormBulma
             } elseif ($this->entValue[$i] === 'password') {
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
                             <input type="password" id="{$nameKey}" placeholder="password" autocomplete="new-password" class="input $nameKey is-medium" name="$nameKey">
                             <span class="icon is-small is-left">
@@ -313,7 +313,7 @@ class BuildFormBulma
                     $namePlaceholder = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $name));
                     echo <<<HTML
                         <div class="field">
-                            <label class="label" id="$label"><b>$label</b></label>
+                            <label class="label"><b>$label</b></label>
                             <div class="field-body">
                                 <p class="control is-expanded has-icons-left">
                                     <input class="input" type="text" name="$name" placeholder="$namePlaceholder">
@@ -329,7 +329,7 @@ class BuildFormBulma
                 $divID = $this->entValue[$i];
                 echo <<<HTML
                             <div class="field" id="$divID">
-                                <label class="label is-medium" id="$nameKey"><b>$var</b></label>
+                                <label class="label is-medium"><b>$var</b></label>
                                 <p class="help error" id="{$nameKey}_error"></p>
                                 <div class="field-body">
                                     <div class="field">
@@ -386,7 +386,7 @@ class BuildFormBulma
                 $inputId = $this->entValue[$i][3];
                 echo <<<HTML
                     <div class="field">
-                        <label class="label" id="$nameKey"><b>$var</b></label>
+                        <label class="label" ><b>$var</b></label>
                         <div class="field-body">
                             <div class="field">
                                 <div id="$sliderId"></div>
@@ -430,7 +430,7 @@ class BuildFormBulma
                     if ($labelType === 'select') {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
-                                <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
+                                <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
                                         <select class="input is-medium" id="$id" name="$name">
@@ -597,7 +597,7 @@ class BuildFormBulma
                     if ($labelType === 'select') {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
-                                <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
+                                <label class="label is-medium" ><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
                                         <select class="input is-medium" id="$id" name="$name">

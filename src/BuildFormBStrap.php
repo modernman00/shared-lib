@@ -295,7 +295,7 @@ class BuildFormBStrap
                                 <option selected value="select">Year</option>
 
                     HTML;
-                 foreach ($this->createYear() as $year) {
+                foreach ($this->createYear() as $year) {
                     echo "<option value=\"$year\">$year</option>";
                 }
                 echo <<<HTML
@@ -653,7 +653,7 @@ class BuildFormBStrap
                         
                         </div>
                     HTML;
-            }elseif ($this->entValue[$i][0] === 'select-many') {
+            } elseif ($this->entValue[$i][0] === 'select-many') {
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                     <div class="form-group" id="$divID">
