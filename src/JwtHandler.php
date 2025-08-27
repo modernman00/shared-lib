@@ -74,6 +74,8 @@ class JwtHandler
             'max'  => [30, 100],
         ]);
 
+        
+
         $user = CheckSanitise::useEmailToFindData($sanitised);
 
         CheckSanitise::checkPassword($sanitised, $user);

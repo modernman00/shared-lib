@@ -96,8 +96,7 @@ class PasswordRecoveryService
                 'max'  => [30],
             ]);
 
-            CheckToken::tokenCheck($token); // Revalidate token integrity
-
+       
             // Attempt to locate user record
             $user = CheckSanitise::useEmailToFindData($sanitised);
 

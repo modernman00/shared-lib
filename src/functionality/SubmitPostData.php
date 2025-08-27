@@ -86,6 +86,11 @@ class SubmitPostData
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
+            // check if isset password and hash it
+            if (isset($sanitisedData['password'])) {
+                $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
+            }    
+
             if ($removeKeys) {
                $sanitisedData = self::unsetPostData($sanitisedData, $removeKeys);
             }

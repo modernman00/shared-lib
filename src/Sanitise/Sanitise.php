@@ -189,24 +189,6 @@ class Sanitise
         return $this;
     }
 
-    /**
-     * Hashes password if present.
-     *
-     * @return $this
-     *
-     * @throws RuntimeException If password hashing fails
-     */
-    protected function hashPassword(): self
-    {
-        if (isset($this->cleanData['password'])) {
-            $hashed = password_hash($this->cleanData['password'], PASSWORD_BCRYPT, ['cost' => 12]);
-
-            $this->cleanData['password'] = $hashed;
-        }
-
-        return $this;
-    }
-
 
     /**
      * Runs all validation and sanitization steps.
@@ -220,8 +202,7 @@ class Sanitise
             ->validatePassword()
             ->checkEmpty()
             ->checkLength()
-            ->sanitizeData()
-            ->hashPassword();
+            ->sanitizeData();
 
         return $this;
     }

@@ -51,7 +51,6 @@ class PwdRecoveryCodeFunctionality
 
         // Validate session-bound email
         $code = $input['code'] ?? '';
-        $csrfToken = $input['token'] ?? '';
 
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
           'data' => ['code'],
@@ -68,8 +67,6 @@ class PwdRecoveryCodeFunctionality
 
         Limiter::limit($code);
 
-        // Token integrity validation
-        CheckToken::tokenCheck($csrfToken);
 
         // now check if the code is valid
         $data = Token::verifyToken($code);

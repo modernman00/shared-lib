@@ -40,9 +40,7 @@ class LoginUtility
 
         if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
             // If so, create a new hash, and replace the old one
-            $newHash = password_hash($textPassword, PASSWORD_DEFAULT, $options);
-
-            $data = ['password' => $newHash, 'id' => $id];
+            $newHash = hashPassword($textPassword);
             $table = $_ENV['DB_TABLE_LOGIN'];
             // Update the password in the database
             $update = new Update($table);

@@ -85,8 +85,6 @@ class LoginFunctionality
             CorsHandler::setHeaders();
             Recaptcha::verifyCaptcha($input);
             Limiter::limit($email);
-            $token = $input['token'] ?? '';
-            CheckToken::tokenCheck($token);
 
             // Authenticate user, send code and generate JWT tokens if requested
 

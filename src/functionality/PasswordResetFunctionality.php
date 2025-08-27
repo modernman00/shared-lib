@@ -78,9 +78,7 @@ class PasswordResetFunctionality
             'min'  => [6, 6],
             'max'  => [30, 30],
         ]);
-        $token = $input['token'] ?? '';
-        // Token integrity validation
-        CheckToken::tokenCheck($token);
+
 
         // get the users information using jwt decode
         $user = JwtHandler::jwtDecodeData('auth_forgot');
@@ -90,15 +88,13 @@ class PasswordResetFunctionality
         }
 
         $userEmail = $user->data->email ?? $user->email;
-
         Limiter::limit($userEmail);
 
         // Step 6: Hash new password
-        $hashedPassword = password_hash($cleanData['password'], PASSWORD_DEFAULT, ['cost' => 12]);
+        $hashedPassword = \hashPassword($cleanData['password']);
 
         // Update password
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
-
         $update->updateTable('password', $hashedPassword, 'email', $userEmail);
         $pathToPwdChangeNotification = $_ENV['PATH_TO_PASSWORD_CHANGE_NOTIFICATION'];
 
