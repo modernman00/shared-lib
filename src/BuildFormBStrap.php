@@ -359,6 +359,7 @@ class BuildFormBStrap
                     $icon = $this->entValue[$i]['icon'][$y] ?? '';
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+                     $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML
@@ -516,6 +517,7 @@ class BuildFormBStrap
                     $icon = $this->entValue[$i]['icon'][$y] ?? '';
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+                     $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML

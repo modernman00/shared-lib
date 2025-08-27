@@ -426,6 +426,7 @@ class BuildFormBulma
 
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icons-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+                    $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML
@@ -593,6 +594,7 @@ class BuildFormBulma
 
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icons-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
+                    $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML
