@@ -790,7 +790,24 @@ class BuildFormBStrap
                         </button>
                     </div>
                     HTML;
-            } else {
+            } elseif ($this->entValue[$i] === 'file') {
+                if (strpos($nameKey, '[]') !== false) {
+                    $nameKey = str_replace(['[', ']'], '', $nameKey);
+                    $multiple = "multiple";
+                } else {
+                    $multiple = '';
+                }
+                echo <<<HTML
+                    <div class="mb-3" id="{$nameKey}_div">
+                        <label for="$nameKey" class="form-label"><b>$var</b></label>
+                        <input class="form-control" type="file" id="$nameKey" name="{$this->entKey[$i]}" $multiple>
+                        <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                        <small id="{$nameKey}_error" class="form-text text-danger"></small>
+                    </div>
+                    HTML;
+            }
+            
+            else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }

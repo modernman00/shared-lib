@@ -110,6 +110,7 @@ class BuildFormBulma
             $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]));
             $nameKey = $this->entKey[$i];
             $value ??= '';
+            $multiple = ''; // multiple for file input
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
@@ -825,7 +826,28 @@ class BuildFormBulma
                             Show Password
                         </label><br>
                     HTML;
-            } else {
+            } elseif ($this->entValue[$i] === 'file') {
+            $fileName = "";
+                if (strpos($nameKey, '[]') !== false) {
+                    $fileName = str_replace(['[', ']'], '', $nameKey);
+                    $multiple = "multiple";
+                } else {
+                    $multiple = '';
+                }
+                echo <<<HTML
+                    <div class="field">
+                        <label for="$fileName" class="label" ><b>$var</b></label>
+                        <div class="control">
+                            <input class="input" type="file" id="$fileName" name="$nameKey" $multiple>
+                            <p class="help" id="{$fileName}_help"></p>
+                            <p class="help error" id="{$fileName}_error"></p>
+                        </div>
+                    </div>
+                    HTML;
+                
+            }
+            
+             else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
