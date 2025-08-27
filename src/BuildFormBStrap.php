@@ -186,9 +186,9 @@ class BuildFormBStrap
                 echo <<<HTML
                         <div class="mb-3" id="{$nameKey}_div">
                             <label for="{$nameKey}" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
-                            <textarea class="form-control" autocomplete="new-$nameKey" placeholder="{$this->entValue[$i][1]}" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}">$value</textarea>
-                            <small id="{$this->entKey[$i]}_help" class="form-text text-muted"></small>
-                            <small id="{$this->entKey[$i]}_error" class="form-text text-danger"></small>
+                            <textarea class="form-control" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                            <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         </div>
 
                     HTML;
