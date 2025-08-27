@@ -513,7 +513,7 @@ class FormBuilderBulma
                     } elseif ($labelType === 'file') {
 
                         if (strpos($name, '[]') !== false) {
-                            $attribute = str_replace(['[', ']'], '', $name);
+                            $name = str_replace(['[', ']'], '', $name);
                             $multiple = "multiple";
                         }
 
@@ -521,13 +521,13 @@ class FormBuilderBulma
 
 
                         echo <<<HTML
-                            <div class="field $attribute" id="{$attribute}_div">
-                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                            <div class="field $name" id="{$name}_div">
+                                <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
-                                    <p class="help" id="{$attribute}_help"></p>
-                                    <p class="help error" id="{$attribute}_error"></p>
+                                    <p class="help" id="{$name}_help"></p>
+                                    <p class="help error" id="{$name}_error"></p>
                                 </div>
                             </div>
                             HTML;
@@ -681,7 +681,7 @@ class FormBuilderBulma
                     } elseif ($labelType === 'file') {
 
                         if (strpos($name, '[]') !== false) {
-                            $attribute = str_replace(['[', ']'], '', $name);
+                            $name = str_replace(['[', ']'], '', $name);
                             $multiple = "multiple";
                         }
 
@@ -689,13 +689,13 @@ class FormBuilderBulma
 
 
                         echo <<<HTML
-                            <div class="field $attribute" id="{$attribute}_div">
-                                <label class="label is-medium" id="$attribute"><b>$cleanLabel</b></label>
+                            <div class="field $name" id="{$name}_div">
+                                <label class="label is-medium" id="$name"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $attribute input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$attribute}" placeholder="$placeholder" autocomplete="$attribute" $multiple>
+                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
-                                    <p class="help" id="{$attribute}_help"></p>
-                                    <p class="help error" id="{$attribute}_error"></p>
+                                    <p class="help" id="{$name}_help"></p>
+                                    <p class="help error" id="{$name}_error"></p>
                                 </div>
                             </div>
                             HTML;
