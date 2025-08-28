@@ -57,7 +57,7 @@ class GetRequestData
 
         // Fail fast if $data is empty, invalid, or not an array
         if (!$data || empty($data) || !is_array($data)) {
-            throw new NotFoundException('There was no post data', 1);
+            throw new NotFoundException('There was no post data');
         }
 
         return $data;

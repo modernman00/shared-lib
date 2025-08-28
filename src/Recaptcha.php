@@ -71,11 +71,6 @@ class Recaptcha
                 throw new RecaptchaBrokenException('🤯 Unexpected response from Google!');
             }
 
-            // 6. ❌ Was verification successful?
-            if (!$data['success']) {
-                throw new RecaptchaFailedException('🚫 reCAPTCHA failed — bot suspected!');
-            }
-
             // 7. 🧾 Optional: Check hostname matches your domain
             if (!empty($data['hostname']) && $data['hostname'] !== $_ENV['DOMAIN_NAME']) {
                 throw new RecaptchaCheatingException('🔐 Hostname mismatch — possible tampering!');

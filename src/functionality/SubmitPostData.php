@@ -82,20 +82,21 @@ class SubmitPostData
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
+                if ($removeKeys) {
+               $sanitisedData = self::unsetPostData($input, $removeKeys);
+            }
 
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
+
+              // REMOVE TOKEN AS IT NOT NO LONGER NEEDED
+
+            $sanitisedData = self::unsetPostData($sanitisedData, ['token']);
 
             // check if isset password and hash it
             if (isset($sanitisedData['password'])) {
                 $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
             }    
-
-            if ($removeKeys) {
-               $sanitisedData = self::unsetPostData($sanitisedData, $removeKeys);
-            }
-
-            
 
 
             $pdo = Db::connect2();
@@ -235,35 +236,19 @@ class SubmitPostData
         );
     }
 
-      private static function unsetPostData(array $data, ?array $removeKeys = null): array
-    {
-        if (!empty($removeKeys)) {
-            foreach ($removeKeys as $key) {
-                // Split the key into parts if it uses dot notation
-                $parts = explode('.', $key);
-
-                if (count($parts) > 1) {
-                    // Traverse into the nested array by reference
-                    $ref = &$data;
-                    $lastPart = array_pop($parts);
-
-                    foreach ($parts as $part) {
-                        if (isset($ref[$part]) && is_array($ref[$part])) {
-                            $ref = &$ref[$part];
-                        } else {
-                            // Path doesn't exist; skip unsetting
-                            continue 2;
-                        }
-                    }
-
-                    unset($ref[$lastPart]);
-                } else {
-                    // Simple top-level key
-                    unset($data[$key]);
-                }
-            }
+       private static function unsetPostData(array $data, array $keysToRemove): array {
+    foreach ($data as $key => $value) {
+        // Remove key if it matches
+        if (in_array($key, $keysToRemove, true)) {
+            unset($data[$key]);
+            continue;
         }
 
-        return $data;
+        // If value is an array, recurse
+        if (is_array($value)) {
+            $data[$key] = self::unsetPostData($value, $keysToRemove);
+        }
     }
+    return $data;
+}
 }
