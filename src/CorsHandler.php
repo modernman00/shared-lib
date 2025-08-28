@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src;
 
-class CorsHeaders
+class CorsHandler
 {
     /**
      * Apply full CORS and security headers.
