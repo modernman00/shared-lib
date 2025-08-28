@@ -25,8 +25,7 @@ class CorsHandler
      * @param array $allowedHeaders list of permitted custom headers for cross-origin
      */
     public static function setHeaders(
-        string $contentType = 'application/json; charset=UTF-8',
-        string $allowedMethods = 'POST, GET, OPTIONS',
+        string $allowedMethods = 'POST, GET, OPTIONS, PUT, DELETE',
         int $maxAge = 3600,
         array $allowedHeaders = [
             'Content-Type',
@@ -45,7 +44,7 @@ class CorsHandler
         // CORS headers – crucial for secure API exposure
         header('Access-Control-Allow-Origin: ' . $allowedOrigin);
         header('Access-Control-Allow-Credentials: true'); // Enables cookie/session sharing
-        header('Content-Type: ' . $contentType);
+        header('Content-Type: ' . self::getNormalizedContentType());
         header('Access-Control-Allow-Methods: ' . $allowedMethods);
         header('Access-Control-Max-Age: ' . $maxAge);
         header('Access-Control-Allow-Headers: ' . implode(', ', $allowedHeaders));
@@ -128,6 +127,24 @@ class CorsHandler
                 'Origin',
             ]
         );
+    }
+
+    public static function getNormalizedContentType(): string {
+        $raw = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (stripos($raw, 'application/json') !== false) {
+            return 'application/json; charset=UTF-8';
+        }
+
+        if (stripos($raw, 'multipart/form-data') !== false) {
+            return 'multipart/form-data';
+        }
+
+        if (stripos($raw, 'application/x-www-form-urlencoded') !== false) {
+            return 'application/x-www-form-urlencoded';
+        }
+
+        return 'text/plain; charset=UTF-8';
     }
 
     /**
