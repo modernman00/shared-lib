@@ -185,7 +185,8 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i][0] === 'textarea') {
                 echo <<<HTML
                         <div class="mb-3" id="{$nameKey}_div">
-                            <label for="{$nameKey}" class="form-label"><b>{$this->entValue[$i][1]}</b></label>
+                            <label for="{$nameKey}" class="form-label">
+                                <b>{$this->entValue[$i][1]}</b></label>
                             <textarea class="form-control" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>

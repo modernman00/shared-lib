@@ -212,7 +212,7 @@ class BuildFormBulma
                     <div class="field">
                         <label for="$nameKey" class="label" ><b>{$this->entValue[$i][1]}</b></label>
                         <div class="control">
-                            <textarea class="textarea" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey">$value</textarea>
+                            <textarea class="textarea" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey">$value</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
