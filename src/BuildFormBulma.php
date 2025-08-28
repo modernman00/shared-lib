@@ -111,6 +111,7 @@ class BuildFormBulma
             $nameKey = $this->entKey[$i];
             $value ??= '';
             $multiple = ''; // multiple for file input
+            $fileName = "";
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
@@ -827,12 +828,13 @@ class BuildFormBulma
                         </label><br>
                     HTML;
             } elseif ($this->entValue[$i] === 'file') {
-            $fileName = "";
+           
                 if (strpos($nameKey, '[]') !== false) {
                     $fileName = str_replace(['[', ']'], '', $nameKey);
                     $multiple = "multiple";
                 } else {
                     $multiple = '';
+                    $fileName = $nameKey;
                 }
                 echo <<<HTML
                     <div class="field">

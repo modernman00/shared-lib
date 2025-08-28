@@ -796,6 +796,7 @@ class BuildFormBStrap
                     $multiple = "multiple";
                 } else {
                     $multiple = '';
+                     $fileName = $nameKey;
                 }
                 echo <<<HTML
                     <div class="mb-3" id="{$nameKey}_div">
