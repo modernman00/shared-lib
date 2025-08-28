@@ -33,14 +33,14 @@ class CorsHandler
     $resolvedOrigin = self::resolveOrigin($origin);
 
     // Dynamically infer response type if not provided
-    $responseType = $responseType ?? self::inferResponseType();
+    $type = $responseType ?? self::inferResponseType();
 
     header("Access-Control-Allow-Origin: {$resolvedOrigin}");
     header("Access-Control-Allow-Credentials: true");
     header("Access-Control-Allow-Methods: {$allowedMethods}");
     header("Access-Control-Allow-Headers: " . implode(', ', $allowedHeaders));
     header("Access-Control-Max-Age: {$maxAge}");
-    header("Content-Type: {$responseType}");
+    header("Content-Type: {$type}");
 
     self::applySecurityHeaders();
 
@@ -55,25 +55,21 @@ private static function inferResponseType(): string
     $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
-    // Prioritize Accept header (what client wants)
-    if (stripos($accept, 'application/json') !== false) {
-        return 'application/json; charset=UTF-8';
-    }
-
-    // Fallback to request Content-Type
+    // Explicit JSON request (e.g. Axios, fetch)
     if (stripos($contentType, 'application/json') !== false) {
         return 'application/json; charset=UTF-8';
     }
 
-    if (stripos($contentType, 'multipart/form-data') !== false) {
-        return 'text/html; charset=UTF-8'; // File uploads usually expect HTML
+    // Accept header prefers JSON and not HTML (e.g. API client)
+    if (
+        stripos($accept, 'application/json') !== false &&
+        stripos($accept, 'text/html') === false
+    ) {
+        return 'application/json; charset=UTF-8';
     }
 
-    if (stripos($contentType, 'application/x-www-form-urlencoded') !== false) {
-        return 'application/x-www-form-urlencoded; charset=UTF-8';
-    }
-
-    return 'text/plain; charset=UTF-8'; // Safe fallback
+    // Default to HTML for form submissions or browser requests
+    return 'text/html; charset=UTF-8';
 }
 
 
