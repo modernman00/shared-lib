@@ -4,104 +4,110 @@ declare(strict_types=1);
 
 namespace Src;
 
-class CorsHandler
+class CorsHeaders
 {
-    // Whitelisted origins for development/testing.
-    // You should strictly validate these in production.
-    private const ALLOWED_ORIGINS = [
-        'http://localhost:8080',
-        'http://127.0.0.1:8080',
-        'http://idecide.test',
-        'http://idecide.test:80',
-    ];
-
     /**
-     * Core CORS header setter.
-     * Applies essential access controls, security headers, and preflight handling.
+     * Apply full CORS and security headers.
+     * Dynamically sets response Content-Type and handles preflight OPTIONS requests.
      *
-     * @param string $contentType desired content-type response header
-     * @param string $allowedMethods allowed HTTP verbs
-     * @param int $maxAge duration (in seconds) browsers cache preflight results
-     * @param array $allowedHeaders list of permitted custom headers for cross-origin
+     * @param string $responseType Desired response Content-Type (e.g. 'application/json')
+     * @param string $allowedMethods Comma-separated HTTP verbs
+     * @param array $allowedHeaders List of permitted custom headers
+     * @param int $maxAge Seconds browsers cache preflight results
      */
     public static function setHeaders(
-        string $allowedMethods = 'POST, GET, OPTIONS, PUT, DELETE',
-        int $maxAge = 3600,
-        array $allowedHeaders = [
-            'Content-Type',
-            'Access-Control-Allow-Headers',
-            'Authorization',
-            'X-Requested-With',
-            'X-XSRF-TOKEN',
-            'X-CSRF-TOKEN',
-        ]
-    ): void {
-        $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    ?string $responseType = null,
+    string $allowedMethods = 'GET, POST, PUT, DELETE, OPTIONS',
+    array $allowedHeaders = [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN',
+        'Accept',
+        'Origin',
+    ],
+    int $maxAge = 3600
+): void {
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $resolvedOrigin = self::resolveOrigin($origin);
 
-        // Dynamically resolve allowed origin based on environment
-        $allowedOrigin = self::getAllowedOrigin($requestOrigin);
+    // Dynamically infer response type if not provided
+    $responseType = $responseType ?? self::inferResponseType();
 
-        // CORS headers – crucial for secure API exposure
-        header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-        header('Access-Control-Allow-Credentials: true'); // Enables cookie/session sharing
-        header('Content-Type: ' . self::getNormalizedContentType());
-        header('Access-Control-Allow-Methods: ' . $allowedMethods);
-        header('Access-Control-Max-Age: ' . $maxAge);
-        header('Access-Control-Allow-Headers: ' . implode(', ', $allowedHeaders));
+    header("Access-Control-Allow-Origin: {$resolvedOrigin}");
+    header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Allow-Methods: {$allowedMethods}");
+    header("Access-Control-Allow-Headers: " . implode(', ', $allowedHeaders));
+    header("Access-Control-Max-Age: {$maxAge}");
+    header("Content-Type: {$responseType}");
 
-        // Extra security headers (prevent attacks via MIME sniffing, framing, XSS, referrer leakage)
+    self::applySecurityHeaders();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit();
+    }
+}
+
+private static function inferResponseType(): string
+{
+    $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+    // Prioritize Accept header (what client wants)
+    if (stripos($accept, 'application/json') !== false) {
+        return 'application/json; charset=UTF-8';
+    }
+
+    // Fallback to request Content-Type
+    if (stripos($contentType, 'application/json') !== false) {
+        return 'application/json; charset=UTF-8';
+    }
+
+    if (stripos($contentType, 'multipart/form-data') !== false) {
+        return 'text/html; charset=UTF-8'; // File uploads usually expect HTML
+    }
+
+    if (stripos($contentType, 'application/x-www-form-urlencoded') !== false) {
+        return 'application/x-www-form-urlencoded; charset=UTF-8';
+    }
+
+    return 'text/plain; charset=UTF-8'; // Safe fallback
+}
+
+
+
+    /**
+     * Apply security headers to prevent common web vulnerabilities.
+     */
+    private static function applySecurityHeaders(): void
+    {
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('X-XSS-Protection: 1; mode=block');
         header('Referrer-Policy: strict-origin-when-cross-origin');
-
-        // Handle preflight OPTIONS requests separately
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(200);
-            exit();
-        }
     }
 
     /**
-     * Dynamically determine the allowed origin.
-     * Allows flexibility based on dev/test/production environments.
+     * Determine allowed origin based on environment and request.
      */
-    private static function getAllowedOrigin(string $requestOrigin): string
-    {
-        if (self::isDevelopment()) {
-            // Permit from whitelist or fallback to APP_URL
-            if (in_array($requestOrigin, self::ALLOWED_ORIGINS, true)) {
-                return $requestOrigin;
-            }
-
-            return getenv('APP_URL') ?: 'http://localhost:8080';
-        }
-
-        // Production: match only known app URL or fall back to local domain
-        $appUrl = getenv('APP_URL');
-
-        if ($appUrl && $requestOrigin === $appUrl) {
-            return $appUrl;
-        }
-
-        return self::getCurrentDomain(); // Fallback: same-origin enforcement
-    }
-
-    /**
-     * Environment check for adaptive CORS behavior.
-     * Prevents exposing dev-level permissions in production.
-     */
-    private static function isDevelopment(): bool
+    private static function resolveOrigin(string $origin): string
     {
         $env = getenv('APP_ENV') ?: 'production';
+        $appUrl = getenv('APP_URL') ?: self::inferDomain();
 
-        return in_array($env, ['development', 'dev', 'local', 'testing'], true);
+        if (in_array($env, ['development', 'local', 'testing'], true)) {
+            return in_array($origin, self::allowedOrigins(), true) ? $origin : $appUrl;
+        }
+
+        return $origin === $appUrl ? $appUrl : self::inferDomain();
     }
 
     /**
-     * Helper to infer origin from request context when no APP_URL is available.
+     * Infer current domain from server context.
      */
-    private static function getCurrentDomain(): string
+    private static function inferDomain(): string
     {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
@@ -110,82 +116,33 @@ class CorsHandler
     }
 
     /**
-     * Set CORS headers tailored for API responses.
-     * Grants access to common RESTful verbs and authentication headers.
+     * Whitelisted origins for development environments.
      */
-    public static function setApiHeaders(): void
+    private static function allowedOrigins(): array
     {
-        self::setHeaders(
-            contentType: 'application/json; charset=UTF-8',
-            allowedMethods: 'POST, GET, PUT, DELETE, OPTIONS',
-            allowedHeaders: [
-                'Content-Type',
-                'Authorization',
-                'X-Requested-With',
-                'X-CSRF-TOKEN',
-                'Accept',
-                'Origin',
-            ]
-        );
-    }
-
-    public static function getNormalizedContentType(): string {
-        $raw = $_SERVER['CONTENT_TYPE'] ?? '';
-
-        if (stripos($raw, 'application/json') !== false) {
-            return 'application/json; charset=UTF-8';
-        }
-
-        if (stripos($raw, 'multipart/form-data') !== false) {
-            return 'multipart/form-data';
-        }
-
-        if (stripos($raw, 'application/x-www-form-urlencoded') !== false) {
-            return 'application/x-www-form-urlencoded';
-        }
-
-        return 'text/plain; charset=UTF-8';
+        return [
+            'http://localhost:3000',
+            'http://localhost:8080',
+            'http://127.0.0.1:3000',
+            // Add more as needed
+        ];
     }
 
     /**
-     * Apply CORS headers suitable for form submissions.
-     */
-    public static function setFormHeaders(): void
-    {
-        self::setHeaders(
-            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-            allowedMethods: 'POST, OPTIONS',
-            allowedHeaders: [
-                'Content-Type',
-                'X-Requested-With',
-                'X-CSRF-TOKEN',
-            ]
-        );
-    }
-
-    /**
-     * Validate current request's origin against expected rules.
-     * Useful for pre-checking before responding or allowing session cookies.
+     * Validate request origin before proceeding.
      */
     public static function validateOrigin(): bool
     {
-        $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $appUrl = getenv('APP_URL') ?: self::inferDomain();
 
-        if (self::isDevelopment()) {
-            return in_array($requestOrigin, self::ALLOWED_ORIGINS, true)
-                || $requestOrigin === getenv('APP_URL');
-        }
-
-        $appUrl = getenv('APP_URL');
-
-        return $requestOrigin === $appUrl || $requestOrigin === self::getCurrentDomain();
+        return in_array($origin, self::allowedOrigins(), true) || $origin === $appUrl;
     }
 
     /**
-     * Reject request if origin fails validation.
-     * Always returns structured JSON error message.
+     * Reject invalid origin with structured JSON error.
      */
-    public static function enforceOrigin(): void
+    public static function rejectInvalidOrigin(): void
     {
         if (!self::validateOrigin()) {
             http_response_code(403);
@@ -195,3 +152,4 @@ class CorsHandler
         }
     }
 }
+
