@@ -558,7 +558,7 @@ class BuildFormBulma
                                         </span>
                                         <span class="file-label"> Choose a file… </span>
                                         </span>
-                                        <span class="file-name"></span>
+                                        <span class="file-name">No file uploaded </span>
                                     </label>
                                     </div>
                                     <p class="help" id="{$name}_help"></p>
