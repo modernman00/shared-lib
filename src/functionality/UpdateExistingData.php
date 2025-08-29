@@ -4,15 +4,11 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use RuntimeException;
 use Src\{
     CorsHandler,
-    Db,
     LoginUtility,
     FileUploader,
     Recaptcha,
-    SubmitForm,
-    Transaction,
     Utility, Update
 };
 use Src\functionality\middleware\GetRequestData;
@@ -72,6 +68,7 @@ class UpdateExistingData
     public static function updateData(
         string $table,
         string $identifier = 'id',
+        mixed $identifierValue,
         ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
@@ -107,6 +104,11 @@ class UpdateExistingData
                     $imgPath
                 );
                 $sanitisedData[$fileName] = $getProcessedFileName;
+            }
+
+            // if id is null set it to $identiferValue
+            if (empty($sanitisedData[$identifier])) {
+                $sanitisedData[$identifier] = $identifierValue;
             }
 
              // Update the blog next
