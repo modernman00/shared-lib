@@ -14,16 +14,16 @@ class FileUploader
 {
     public static function fileUploadMultiple(string $fileLocation, string $formInputName): array
     {
-         // Validate the file input
+        // Validate the file input
         if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'])) {
             Utility::throwError(400, 'No files were uploaded');
         }
 
-          // Count total files
+        // Count total files
         $saveFiles = [];
         $countFiles = count($_FILES[$formInputName]['name']);
 
-      // Looping all files
+        // Looping all files
         for ($i = 0; $i < $countFiles; ++$i) {
             $fileName = basename($_FILES[$formInputName]['name'][$i]);
             // trim out the space in the file name
@@ -44,10 +44,10 @@ class FileUploader
             $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
             $fileError = $_FILES[$formInputName]['error'][$i];
 
-             // If a virus scan API key is provided, initialize the virus scan
-        if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
-            new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
-        }
+            // If a virus scan API key is provided, initialize the virus scan
+            if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
+                new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+            }
 
             // Validate file
             $picError = [];
@@ -55,12 +55,12 @@ class FileUploader
             $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
 
             if (!in_array($fileExtension, $allowedFormats)) {
-                $picError['format']= 'Format must be PNG, JPG, GIF, HEIC or JPEG. ';
+                $picError['format'] = 'Format must be PNG, JPG, GIF, HEIC or JPEG. ';
                 throw new ValidationException("IMAGE FORMAT - $picError");
             }
 
             if ($fileSize > 10485760) { // 10 MB
-                $picError['size']= 'File size must not exceed 10MB';
+                $picError['size'] = 'File size must not exceed 10MB';
                 throw new ValidationException("Error Processing Request - post images - $picError");
             }
             // if (file_exists($pathToImage)) {
@@ -78,7 +78,7 @@ class FileUploader
 
             // Move uploaded file
             if (!move_uploaded_file($fileTemp, $pathToImage)) {
-                $_SESSION['imageUploadOutcome']= "Image $fileName was not successfully uploaded";
+                $_SESSION['imageUploadOutcome'] = "Image $fileName was not successfully uploaded";
                 throw new ValidationException("Error Processing Request - post images - Image $fileName was not successfully uploaded");
                 continue; // Skip optimization if upload failed
             }
@@ -96,21 +96,20 @@ class FileUploader
 
     private static function ValidateFile(string $formInputName): void
     {
-         $file = $_FILES[$formInputName];
-
+        $file = $_FILES[$formInputName];
         if (!isset($file) || empty($file)) {
             throw new ValidationException('No file uploaded');
         }
 
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $errorMessages = [
-              UPLOAD_ERR_INI_SIZE => 'File size exceeds the maximum allowed size (upload_max_filesize)',
-              UPLOAD_ERR_FORM_SIZE => 'File size exceeds the maximum allowed size (form limit)',
-              UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-              UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-              UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-              UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-              UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+                UPLOAD_ERR_INI_SIZE => 'File size exceeds the maximum allowed size (upload_max_filesize)',
+                UPLOAD_ERR_FORM_SIZE => 'File size exceeds the maximum allowed size (form limit)',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
             ];
             $errorMsg = $errorMessages[$file['error']] ?? 'Unknown upload error';
             throw new ValidationException($errorMsg);
@@ -141,20 +140,17 @@ class FileUploader
     {
         // Optimise the image
         $optimizerChain = ImgOptimizer::create();
-
         $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
-
         return  $optimizerChain->optimize($pathToImage);
     }
 
     public static function fileUploadSingle(string $fileLocation, string $formInputName): string
     {
-         // Check if file is uploaded
+        // Check if file is uploaded
         if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
             Utility::throwError(400, 'No file was uploaded');
         }
 
-        
         $fileName = basename($_FILES[$formInputName]['name']);
         $fileName = str_replace([' ', ','], '', $fileName);
         $fileInfo = pathinfo($fileName);
