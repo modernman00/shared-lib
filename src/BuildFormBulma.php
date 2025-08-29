@@ -849,11 +849,22 @@ class BuildFormBulma
                 echo <<<HTML
                     <div class="field">
                         <label for="$fileName" class="label" ><b>$var</b></label>
-                        <div class="control">
-                            <input class="input" type="file" id="$fileName" name="$nameKey" $multiple>
+                        <!-- <div class="control"> -->
+                            <div class="file has-name is-boxed">
+                                <label class="file-label">
+                                    <input class="file-input" type="file" name="$nameKey" id="$fileName" $multiple />
+                                    <span class="file-cta">
+                                    <span class="file-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </span>
+                                    <span class="file-label"> Choose a file… </span>
+                                    </span>
+                                    <span class="file-name"> No file chosen </span>
+                                </label>
+                                </div>
                             <p class="help" id="{$fileName}_help"></p>
                             <p class="help error" id="{$fileName}_error"></p>
-                        </div>
+                        <!-- </div> -->
                     </div>
                     HTML;
             } else {
