@@ -212,7 +212,7 @@ class BuildFormBulma
                     <div class="field">
                         <label for="$nameKey" class="label" ><b>{$this->entValue[$i][1]}</b></label>
                         <div class="control">
-                            <textarea class="textarea" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey">$value</textarea>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$value</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -548,9 +548,19 @@ class BuildFormBulma
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
-                                <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
+                                <div class="file has-name">
+                                    <label class="file-label">
+                                    <input class="file-input $name is-medium" type="file" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
+                                     <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="fas fa-upload"></i>
+                                        </span>
+                                        <span class="file-label"> Choose a file… </span>
+                                        </span>
+                                        <span class="file-name"></span>
+                                    </label>
+                                    </div>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>
                                 </div>
@@ -828,7 +838,7 @@ class BuildFormBulma
                         </label><br>
                     HTML;
             } elseif ($this->entValue[$i] === 'file') {
-           
+
                 if (strpos($nameKey, '[]') !== false) {
                     $fileName = str_replace(['[', ']'], '', $nameKey);
                     $multiple = "multiple";
@@ -846,10 +856,7 @@ class BuildFormBulma
                         </div>
                     </div>
                     HTML;
-                
-            }
-            
-             else {
+            } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
