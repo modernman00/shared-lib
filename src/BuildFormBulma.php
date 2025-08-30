@@ -541,14 +541,11 @@ class BuildFormBulma
                             $name = str_replace(['[', ']'], '', $name);
                             $multiple = "multiple";
                         }
-
-
-
-
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
-                                <div class="file has-name">
+                                 <div class="control">
+                                <div class="file has-name {$name}_div">
                                     <label class="file-label">
                                     <input class="file-input $name is-medium" type="file" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
@@ -564,8 +561,20 @@ class BuildFormBulma
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>
                                 </div>
+                                </div>
                             </div>
                             HTML;
+                    } elseif ($labelType === 'textarea') {
+                        echo <<<HTML
+                    <div class="field" id="{$nameKey}_div">
+                        <label for="$nameKey" class="label is-medium" ><b>$cleanLabel</b></label>
+                        <div class="control is-expanded">
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$placeholder</textarea>
+                            <p class="help" id="{$nameKey}_help"></p>
+                            <p class="help" id="{$nameKey}_error"></p>
+                        </div>
+                    </div>
+                    HTML;
                     } else {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
@@ -719,21 +728,40 @@ class BuildFormBulma
                             $name = str_replace(['[', ']'], '', $name);
                             $multiple = "multiple";
                         }
-
-
-
-
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
-                                <div class="control is-expanded $hasIconLeft">
-                                    <input for="{$name}" class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
+                                 <div class="control">
+                                <div class="file has-name {$name}_div">
+                                    <label class="file-label">
+                                    <input class="file-input $name is-medium" type="file" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
+                                     <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="fas fa-upload"></i>
+                                        </span>
+                                        <span class="file-label"> Choose a file… </span>
+                                        </span>
+                                        <span class="file-name">No file uploaded </span>
+                                    </label>
+                                    </div>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>
                                 </div>
+                                </div>
                             </div>
                             HTML;
+                    } elseif ($labelType === 'textarea') {
+                        echo <<<HTML
+                    <div class="field" id="{$nameKey}_div">
+                        <label for="$nameKey" class="label is-medium" ><b>$cleanLabel</b></label>
+                        <div class="control is-expanded">
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$placeholder</textarea>
+                            <p class="help" id="{$nameKey}_help"></p>
+                            <p class="help" id="{$nameKey}_error"></p>
+                        </div>
+                    </div>
+                    HTML;
                     } else {
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
@@ -828,8 +856,16 @@ class BuildFormBulma
                             <p id="error"></p>
                         </div>
                     HTML;
-            } elseif ($this->entValue[$i] === 'captcha') {
-                echo sprintf('<div class="g-recaptcha" data-sitekey="%s"></div>', getenv('RECAPTCHA_KEY'));
+            } elseif ($this->entValue[$i] === 'recaptcha') {
+                $recaptcha = getenv('RECAPTCHA_KEY');
+
+                echo <<<HTML
+                    <div class="field">
+                        <div class="g-recaptcha" data-sitekey="$recaptcha" data-theme="dark"></div>
+                        </div>
+
+                HTML;
+
             } elseif ($this->entValue[$i] == 'showPassword') {
                 echo <<<HTML
                        <label class="checkbox">
