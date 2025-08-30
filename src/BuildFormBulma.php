@@ -768,7 +768,7 @@ class BuildFormBulma
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
                                     <input for="{$name}" class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
-                                    <span class="icon is-small is-left">$icon</span>
+                                    <span class="icon is-small is-left"><i class=$icon></i></span>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>
                                 </div>
@@ -827,7 +827,7 @@ class BuildFormBulma
                     HTML;
             } elseif ($this->entValue[$i] === 'subtitle') {
                 echo <<<HTML
-                    <p class="subtitle has-text-centered is-primary" id="{$nameKey}">$var</p>
+                    <p class="subtitle has-text-centered is-primary" id="{$nameKey}"><i>$nameKey</i></p>
                     HTML;
             } elseif ($this->entValue[$i][0] === 'radio') {
                 echo <<<HTML
