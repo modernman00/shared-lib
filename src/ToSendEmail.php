@@ -34,7 +34,7 @@ class ToSendEmail
     {
         try {
             if (!defined('PASS')) {
-                EmailData::defineConstants($recipient, $_ENV);
+                EmailData::defineConstants($recipient);
                 // if it is still not set, then throw an error
                 if (!defined('PASS')) {
                     throw new NotFoundException('Email credentials (constant) not set');

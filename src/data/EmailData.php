@@ -14,25 +14,25 @@ class EmailData
      *
      * @return array
      */
-    public static function getEmailConfig(string $sender, array $config): array
+    public static function getEmailConfig(string $sender): array
     {
         $prefix = strtoupper($sender); // 'MEMBER' or 'ADMIN'
 
         return [
-            'username'    => $config["{$prefix}_USERNAME"] ?? null,
-            'password'    => $config["{$prefix}_PASSWORD"] ?? null,
-            'senderName'  => $config["{$prefix}_SENDER"] ?? null,
-            'senderEmail' => $config["{$prefix}_EMAIL"] ?? null,
-            'testEmail'   => $config['TEST_EMAIL'] ?? null,
+            'username'    => $_ENV["{$prefix}_USERNAME"] ?? null,
+            'password'    => $_ENV["{$prefix}_PASSWORD"] ?? null,
+            'senderName'  => $_ENV["{$prefix}_SENDER"] ?? null,
+            'senderEmail' => $_ENV["{$prefix}_EMAIL"] ?? null,
+            'testEmail'   => $_ENV['TEST_EMAIL'] ?? null,
         ];
     }
 
     /**
      * Define constants (optional; not recommended in modern code).
      */
-    public static function defineConstants(string $sender, array $config): void
+    public static function defineConstants(string $sender): void
     {
-        $data = self::getEmailConfig($sender, $config);
+        $data = self::getEmailConfig($sender);
 
         define('USER_APP', $data['username']);
         define('PASS', $data['password']);
