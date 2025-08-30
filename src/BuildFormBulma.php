@@ -569,7 +569,7 @@ class BuildFormBulma
                     <div class="field" id="{$nameKey}_div">
                         <label for="$nameKey" class="label is-medium" ><b>$cleanLabel</b></label>
                         <div class="control is-expanded">
-                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$placeholder</textarea>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$value</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
