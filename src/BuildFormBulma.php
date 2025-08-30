@@ -411,7 +411,7 @@ class BuildFormBulma
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                     <div class="field" id="$divID">
-                        <div class="columns">
+                        <div class="field-body">
                     HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
