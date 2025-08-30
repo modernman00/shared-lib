@@ -98,10 +98,10 @@ class UpdateExistingData
           
 
             // Token check can be re‑enabled if CSRF validation is required
-            $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
               if ($removeKeys) {
-                $sanitisedData = self::unsetPostData($input, $removeKeys);
+                $sanitisedData = self::unsetPostData($sanitisedDataRaw, $removeKeys);
             }
 
             // REMOVE TOKEN AS IT NOT NO LONGER NEEDED
