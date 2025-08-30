@@ -360,7 +360,7 @@ class BuildFormBStrap
                     $icon = $this->entValue[$i]['icon'][$y] ?? '';
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
-                     $multiple = ''; // multiple for file input
+                    $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML
@@ -469,7 +469,7 @@ class BuildFormBStrap
 
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
-                                <label class="label is-medium"><b>$cleanLabel</b></label>
+                                <label for="{$name}" class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
                                     <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}"
                                     placeholder="$placeholder" autocomplete="$name" $multiple>
@@ -479,6 +479,17 @@ class BuildFormBStrap
                                 </div>
                             </div>
                             HTML;
+                    } elseif ($labelType === 'textarea') {
+                        echo <<<HTML
+                        <div class="mb-3" id="{$nameKey}_div">
+                            <label for="{$nameKey}" class="form-label">
+                                <b>$cleanLabel</b></label>
+                            <textarea class="form-control-lg" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                            <small id="{$nameKey}_error" class="form-text text-danger"></small>
+                        </div>
+
+                    HTML;
                     } else {
                         echo <<<HTML
                             <div class="form-group $name" id="{$name}_div">
@@ -518,7 +529,7 @@ class BuildFormBStrap
                     $icon = $this->entValue[$i]['icon'][$y] ?? '';
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
                     $hasImg = ($this->entValue[$i]['img'][$y] ?? '');
-                     $multiple = ''; // multiple for file input
+                    $multiple = ''; // multiple for file input
 
                     if ($labelType === 'select') {
                         echo <<<HTML
@@ -637,6 +648,17 @@ class BuildFormBStrap
                                 </div>
                             </div>
                             HTML;
+                    } elseif ($labelType === 'textarea') {
+                        echo <<<HTML
+                        <div class="mb-3" id="{$nameKey}_div">
+                            <label for="{$nameKey}" class="form-label">
+                                <b>$cleanLabel</b></label>
+                            <textarea class="form-control-lg" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                            <small id="{$nameKey}_error" class="form-text text-danger"></small>
+                        </div>
+
+                    HTML;
                     } else {
                         echo <<<HTML
                             <div class="form-group $name" id="{$name}_div">
@@ -797,7 +819,7 @@ class BuildFormBStrap
                     $multiple = "multiple";
                 } else {
                     $multiple = '';
-                     $fileName = $nameKey;
+                    $fileName = $nameKey;
                 }
                 echo <<<HTML
                     <div class="mb-3" id="{$nameKey}_div">
@@ -807,9 +829,17 @@ class BuildFormBStrap
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                     </div>
                     HTML;
-            }
-            
-            else {
+            }elseif ($this->entValue[$i] === 'recaptcha') {
+                $recaptcha = $_ENV['RECAPTCHA_KEY'];
+
+                echo <<<HTML
+                 
+                        <div class="g-recaptcha" data-sitekey="$recaptcha" data-theme="dark"></div>
+                     
+
+                HTML;
+
+            } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
         }
