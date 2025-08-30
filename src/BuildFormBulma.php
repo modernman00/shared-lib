@@ -857,7 +857,7 @@ class BuildFormBulma
                         </div>
                     HTML;
             } elseif ($this->entValue[$i] === 'recaptcha') {
-                $recaptcha = $_ENV('RECAPTCHA_KEY');
+                $recaptcha = $_ENV['RECAPTCHA_KEY'];
 
                 echo <<<HTML
                     <div class="field">
