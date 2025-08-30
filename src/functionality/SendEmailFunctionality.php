@@ -4,7 +4,7 @@ namespace Src\functionality;
 
 use Src\ToSendEmail;
 
-class SendEmail extends ToSendEmail {
+class SendEmailFunctionality extends ToSendEmail {
 
  /**
  * Sends a templated email to a specified recipient type using dynamic view data.
@@ -46,7 +46,7 @@ class SendEmail extends ToSendEmail {
  */
 
 
-  public static function emailFn(string $viewPath, string $subject, array $emailViewDataWithEmail, string $recipient) {
+  public static function email(string $viewPath, string $subject, array $emailViewDataWithEmail, string $recipient) {
 
         $preparedEmailForSending = self::genEmailArray($viewPath, $emailViewDataWithEmail, $subject);
         self::sendEmailGeneral($preparedEmailForSending, $recipient);
