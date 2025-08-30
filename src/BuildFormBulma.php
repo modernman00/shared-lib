@@ -566,12 +566,12 @@ class BuildFormBulma
                             HTML;
                     } elseif ($labelType === 'textarea') {
                         echo <<<HTML
-                    <div class="field" id="{$nameKey}_div">
-                        <label for="$nameKey" class="label is-medium" ><b>$cleanLabel</b></label>
+                    <div class="field" id="{$name}_div">
+                        <label for="$name" class="label is-medium" ><b>$cleanLabel</b></label>
                         <div class="control is-expanded">
-                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$value</textarea>
-                            <p class="help" id="{$nameKey}_help"></p>
-                            <p class="help" id="{$nameKey}_error"></p>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$name}" required name="$name" row="10">$value</textarea>
+                            <p class="help" id="{$name}_help"></p>
+                            <p class="help" id="{$name}_error"></p>
                         </div>
                     </div>
                     HTML;
@@ -597,7 +597,7 @@ class BuildFormBulma
                 $divID = $this->entKey[$i];
                 echo <<<HTML
                     <div class="field" id="$divID">
-                        <div class="columns">
+                            <div class="field-body">
                     HTML;
                 for ($y = 0; $y < count($this->entValue[$i]['label']); ++$y) {
                     $label = empty($this->entValue[$i]['label'][$y]) ? '' : $this->entValue[$i]['label'][$y];
