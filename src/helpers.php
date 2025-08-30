@@ -747,4 +747,45 @@ function hashPassword($password, $cost = 12) {
   return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
 }
 
+// unset post data 
+function unsetPostData($data, $keysToRemove) {
+
+        if ($keysToRemove) {
+            foreach ($data as $key => $value) {
+                // Remove key if it matches
+                if (in_array($key, $keysToRemove, true)) {
+                    unset($data[$key]);
+                    continue;
+                }
+
+                // If value is an array, recurse
+                if (is_array($value)) {
+                    $data[$key] = unsetPostData($value, $keysToRemove);
+                }
+            }
+            return $data;
+        } else {
+            return $data;
+        }
+
+}
+
+function hashPasswordsInArray(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            // If the key matches and the value is a string, hash it
+            if (in_array($key, ['password'], true) && is_string($value)) {
+                $data[$key] = \hashPassword($value); // Replace with your actual hash function
+                continue;
+            }
+
+            // If value is an array, recurse
+            if (is_array($value)) {
+                $data[$key] = hashPasswordsInArray($value);
+            }
+        }
+
+        return $data;
+    }
+
 

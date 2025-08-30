@@ -543,7 +543,7 @@ class BuildFormBulma
                         }
                         echo <<<HTML
                             <div class="field $name" id="{$name}_div">
-                                <label class="label is-medium"><b>$cleanLabel</b></label>
+                                <label for="$name" class="label is-medium"><b>$cleanLabel</b></label>
                                  <div class="control">
                                 <div class="file has-name {$name}_div">
                                     <label class="file-label">
@@ -723,6 +723,7 @@ class BuildFormBulma
                                             </div>
                             HTML;
                     } elseif ($labelType === 'file') {
+                          $fileInputName = $name;
 
                         if (strpos($name, '[]') !== false) {
                             $name = str_replace(['[', ']'], '', $name);
@@ -734,7 +735,7 @@ class BuildFormBulma
                                  <div class="control">
                                 <div class="file has-name {$name}_div">
                                     <label class="file-label">
-                                    <input class="file-input $name is-medium" type="file" name="$name" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
+                                    <input class="file-input $name is-medium" type="file" name="$fileInputName" id="{$name}" placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
                                      <span class="file-cta">
                                         <span class="file-icon">

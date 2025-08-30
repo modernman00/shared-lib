@@ -12,6 +12,7 @@ use Src\{
     Utility,
     Update
 };
+use Src\functionality\middleware\FileUploadProcess;
 use Src\functionality\middleware\GetRequestData;
 
 /**
@@ -51,7 +52,7 @@ use Src\functionality\middleware\GetRequestData;
  * );
  * ```
  */
-class UpdateExistingData
+class UpdateExistingData extends FileUploadProcess
 {
     /**
      *  * - `updateData()` → Handles validated updates to a single table, including optional image upload and password hashing
@@ -87,7 +88,8 @@ class UpdateExistingData
         ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
-        ?string $imgPath = null
+        ?string $imgPath = null,
+        ?string $fileTable = null
 
     ): void {
         CorsHandler::setHeaders();
@@ -100,13 +102,9 @@ class UpdateExistingData
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
 
-              if ($removeKeys) {
-                $sanitisedData = self::unsetPostData($sanitisedDataRaw, $removeKeys);
-            }
-
-            // REMOVE TOKEN AS IT NOT NO LONGER NEEDED
-
-            $sanitisedData = self::unsetPostData($sanitisedData, ['token']);
+           
+            $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
+         
 
             // check if isset password and hash it
             if (isset($sanitisedData['password'])) {
@@ -115,12 +113,26 @@ class UpdateExistingData
 
 
             // Attach uploaded filename if present
-            if (!empty($_FILES)) {
-                $getProcessedFileName = self::submitImgDataSingle(
-                    $fileName,
-                    $imgPath
-                );
-                $sanitisedData[$fileName] = $getProcessedFileName;
+                if (!empty($_FILES)) {
+
+                // check if $_FILES[fileName]['name'] is an array 
+                $isArray = is_array($_FILES[$fileName]['name']);
+                if ($isArray) {
+                    $getProcessedFileName = self::submitImgDataMultiple(
+                        $fileName,
+                        $imgPath
+                    );
+
+                    // Map each uploaded file to a unique column name
+                    foreach ($getProcessedFileName as $key => $value) {
+                        $imgColumnName = $fileName . ($key + 1);
+                        $sanitisedData[$fileTable][$imgColumnName] = $value;
+                    }
+                } else {
+
+                    $name = self::submitImgDataSingle($fileName, $imgPath);
+                    $sanitisedData[$fileTable][$fileName] = $name;
+                }
             }
 
             // if id is null set it to $identiferValue
@@ -140,24 +152,6 @@ class UpdateExistingData
     }
 
 
-
-    /**
-     * Upload a single image and return the sanitized filename.
-     *
-     * @param string $formInputName HTML file input field name
-     * @param string $uploadPath    Destination directory path
-     * @param mixed  $sFile         Raw file array from request
-     *
-     * @return string Sanitized filename (spaces removed, validated)
-     */
-    private static function submitImgDataSingle($formInputName, $uploadPath): string
-    {
-        $fileName = FileUploader::fileUploadSingle(
-            $uploadPath,
-            $formInputName
-        );
-        return Utility::checkInputImage(str_replace(' ', '', $fileName));
-    }
 
     private static function unsetPostData(array $data, array $keysToRemove): array
     {

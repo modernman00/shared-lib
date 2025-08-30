@@ -9,12 +9,12 @@ use Src\{
     CorsHandler,
     Db,
     LoginUtility,
-    FileUploader,
     Recaptcha,
     SubmitForm,
     Transaction,
     Utility
 };
+use Src\functionality\middleware\FileUploadProcess;
 use Src\functionality\middleware\GetRequestData;
 
 /**
@@ -56,7 +56,7 @@ use Src\functionality\middleware\GetRequestData;
  * );
  * ```
  */
-class SubmitPostData
+class SubmitPostData extends FileUploadProcess
 {
     /**
      * Process and insert POST data into a single table after CAPTCHA (and optional token) validation.
@@ -74,7 +74,8 @@ class SubmitPostData
         ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
-        ?string $imgPath = null
+        ?string $imgPath = null,
+        ?string $fileTable = null
 
     ): void {
         CorsHandler::setHeaders();
@@ -82,36 +83,23 @@ class SubmitPostData
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
-       
+
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
-
-                     if ($removeKeys) {
-               $sanitisedData = self::unsetPostData($sanitisedDataRaw, $removeKeys);
-            }
-
-
-              // REMOVE TOKEN AS IT NOT NO LONGER NEEDED
-
-            $sanitisedData = self::unsetPostData($sanitisedData, ['token']);
-
+            $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
             // check if isset password and hash it
             if (isset($sanitisedData['password'])) {
                 $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
-            }    
+            }
 
 
             $pdo = Db::connect2();
             Transaction::beginTransaction();
 
             // Attach uploaded filename if present
-            if (!empty($_FILES)) {
-                $getProcessedFileName = self::submitImgDataSingle(
+              if (!empty($_FILES)) {
 
-                    $fileName,
-                    $imgPath
-                );
-                $sanitisedData[$fileName] = $getProcessedFileName;
+               $sanitisedData = self::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
 
             SubmitForm::submitForm($table, $sanitisedData, $pdo);
@@ -129,10 +117,11 @@ class SubmitPostData
      * Optionally handles multiple image uploads.
      *
      * @param array       $allowedTables Whitelisted table names eligible for insertion
-         * @param array|null  $removeKeys    Keys to strip from POST data before insert (currently unused). if the key is nested use dot notation e.g 'account2.confirm_password', g.recaptcha.response
+     * @param array|null  $removeKeys    Keys to strip from POST data before insert (currently unused)
      * @param array|null  $minMaxData    Optional per‑field min/max length constraints
-     * @param string|null $fileName      File input field name (plural if multiple)
+     * @param string|null $fileName      File input field name (plural if multiple) 
      * @param string|null $imgPath       Relative path to upload directory
+     * @param string|null $fileTable     Table name for image filenames
      *
      * @throws \Throwable Rolls back on any validation, upload, or DB failure
      */
@@ -141,33 +130,21 @@ class SubmitPostData
         ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
-        ?string $imgPath = null
+        ?string $imgPath = null,
+        ?string $fileTable = null
     ): void {
         CorsHandler::setHeaders();
 
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
-            $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
-
-            if ($removeKeys) {
-                self::unsetPostData($sanitisedData, $removeKeys);
-            }
-
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
+            $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
+            $sanitisedData = hashPasswordsInArray($sanitisedData);
             if (!empty($_FILES)) {
-                $getProcessedFileName = self::submitImgDataMultiple(
-                    $fileName,
-                    $imgPath
-                );
 
-                $fileArr = [];
-                // Map each uploaded file to a unique column name
-                foreach ($getProcessedFileName as $key => $value) {
-                    $imgColumnName = $fileName . ($key + 1);
-                    $fileArr[$imgColumnName] = $value;
-                }
+               $sanitisedData = self::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
-            $sanitisedData[$fileName] =  $fileArr ?? null;
             $pdo = Db::connect2();
             Transaction::beginTransaction();
             self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
@@ -190,7 +167,7 @@ class SubmitPostData
      */
     private static function insertMultipleTables(array $getTableData, array $allowedTables, \PDO $pdo): void
     {
-   
+
 
         foreach ($getTableData as $tableName => $tableData) {
             if (!in_array($tableName, $allowedTables, true)) {
@@ -200,57 +177,8 @@ class SubmitPostData
                 throw new RuntimeException("Failed to insert into table: {$tableName}");
             }
         }
-
     }
 
-    /**
-     * Upload a single image and return the sanitized filename.
-     *
-     * @param string $formInputName HTML file input field name
-     * @param string $uploadPath    Destination directory path
-     * @param mixed  $sFile         Raw file array from request
-     *
-     * @return string Sanitized filename (spaces removed, validated)
-     */
-    private static function submitImgDataSingle($formInputName, $uploadPath): string
-    {
-        $fileName = FileUploader::fileUploadSingle(
-            $uploadPath,
-            $formInputName
-        );
-        return Utility::checkInputImage(str_replace(' ', '', $fileName));
-    }
+   
 
-    /**
-     * Upload multiple images and return an array of sanitized filenames.
-     *
-     * @param string $formInputName HTML file input field name (e.g. 'images[]')
-     * @param string $uploadPath    Destination directory path
-     * @param array  $postData      Full POST data array containing file data
-     *
-     * @return array|null Sanitized filenames, or null if no files were uploaded
-     */
-    private static function submitImgDataMultiple(string $formInputName, string $uploadPath): mixed
-    {
-        return FileUploader::fileUploadMultiple(
-            $uploadPath,
-            $formInputName
-        );
-    }
-
-       private static function unsetPostData(array $data, array $keysToRemove): array {
-    foreach ($data as $key => $value) {
-        // Remove key if it matches
-        if (in_array($key, $keysToRemove, true)) {
-            unset($data[$key]);
-            continue;
-        }
-
-        // If value is an array, recurse
-        if (is_array($value)) {
-            $data[$key] = self::unsetPostData($value, $keysToRemove);
-        }
-    }
-    return $data;
-}
 }

@@ -23,6 +23,11 @@ class FileUploader
         $saveFiles = [];
         $countFiles = count($_FILES[$formInputName]['name']);
 
+          if ($countFiles > 5) {
+            throw new ValidationException('You can only upload up to 5 images.');
+            exit;
+        }
+
         // Looping all files
         for ($i = 0; $i < $countFiles; ++$i) {
             $fileName = basename($_FILES[$formInputName]['name'][$i]);
