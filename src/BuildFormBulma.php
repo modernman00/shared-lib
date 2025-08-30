@@ -824,11 +824,10 @@ class BuildFormBulma
                 echo <<<HTML
                     <hr><br>
                     <p id="{$nameKey}1" class="title is-3 is-spaced has-text-centered has-text-link is-primary the-title">$var</p><br>
-                    <p class="subtitle is-6 has-text-centered" id="{$nameKey}_help"></p>
                     HTML;
             } elseif ($this->entValue[$i] === 'subtitle') {
                 echo <<<HTML
-                    <h2 class="subtitle has-text-centered is-primary">$var</h2>
+                    <p class="subtitle has-text-centered is-primary" id="{$nameKey}">$var</p>
                     HTML;
             } elseif ($this->entValue[$i][0] === 'radio') {
                 echo <<<HTML
