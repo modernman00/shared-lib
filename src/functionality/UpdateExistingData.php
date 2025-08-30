@@ -94,13 +94,15 @@ class UpdateExistingData
 
         try {
             $input = GetRequestData::getRequestData();
-            // Recaptcha::verifyCaptcha($input);
-            if ($removeKeys) {
-                $sanitisedData = self::unsetPostData($input, $removeKeys);
-            }
+            Recaptcha::verifyCaptcha($input);
+          
 
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedData = LoginUtility::getSanitisedInputData($input, $minMaxData);
+
+              if ($removeKeys) {
+                $sanitisedData = self::unsetPostData($input, $removeKeys);
+            }
 
             // REMOVE TOKEN AS IT NOT NO LONGER NEEDED
 
