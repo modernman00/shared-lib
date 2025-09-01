@@ -334,6 +334,8 @@ function showError2(\Throwable $th, Logger $logger): ?string
         : 'An unexpected error occurred.');
 
     // 6. Return or display the JSON error message
+    // Your API response
+    header('Content-Type: application/json');
     $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
     return $response;
