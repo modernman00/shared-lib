@@ -71,7 +71,7 @@ class LoginFunctionality
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login(bool $issueJwt = true): void
+    public static function login(bool $issueJwt = true, string $returnType = 'json')
     {
         try {
             $input = GetRequestData::getRequestData();
@@ -96,45 +96,30 @@ class LoginFunctionality
             $token = $userD['token'];
             $userId = $userD['userId'];
 
-            self::onSuccessfulLogin($userId, $token, $issueJwt);
+            // Prevent brute-force abuse by clearing rate limits
+            Limiter::$argLimiter->reset();
+            Limiter::$ipLimiter->reset();
+
+            // Clear CSRF token and regenerate session ID
+            unset($_SESSION['token']);
+            session_regenerate_id(true);
+
+            $msg = 'Verification code sent to your email successfully';
+
+            // Handle response format
+            if ($returnType === 'json') {
+                return $issueJwt
+                    ? \msgSuccess(200, $msg, $token)
+                    : \msgSuccess(200, $msg);
+            }
+
+            // Classic web login: store session and return structured array
+            $_SESSION['ID'] = $userId;
+            return ['message' => $msg, 'code' => $token, 'id' => $userId];
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
             showError($th);
         }
     }
 
-    /**
-     * Finalizes login by resetting limits and returning success response.
-     *
-     * Internal Logic:
-     * - Resets rate limit counters.
-     * - Performs post-auth token integrity check.
-     * - Regenerates session ID to prevent fixation attacks.
-     * - Responds with JWT tokens if applicable, or binds session ID.
-     *
-     * @param array $user - Authenticated user payload
-     * @param array $token - JWT token set (access, refresh, etc)
-     * @param bool $issueJwt - Whether to return JWT or session-based response
-     */
-    private static function onSuccessfulLogin(string | int $userId, string $token, bool $issueJwt = true): void
-    {
-        // Prevent brute-force abuse by clearing rate limits
-        Limiter::$argLimiter->reset();
-        Limiter::$ipLimiter->reset();
-
-        // After successful login unset the CSRF token to prevent reuse
-        unset($_SESSION['token']);
-
-        // Mitigate session fixation vulnerabilities
-        session_regenerate_id(true);
-
-        if ($issueJwt) {
-            // Return JWT token to client (e.g. SPA or mobile client)
-            \msgSuccess(200, 'Verification code sent to your email successfully', $token);
-        } else {
-            // Store user ID in session for classic web login
-            $_SESSION['ID'] = $userId;
-            \msgSuccess(200, 'Verification code sent to your email successfully');
-        }
-    }
 }

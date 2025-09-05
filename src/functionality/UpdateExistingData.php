@@ -100,17 +100,13 @@ class UpdateExistingData extends FileUploadProcess
           
 
             // Token check can be re‑enabled if CSRF validation is required
-            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
-
-           
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);           
             $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
          
-
             // check if isset password and hash it
             if (isset($sanitisedData['password'])) {
                 $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
             }
-
 
             // Attach uploaded filename if present
                 if (!empty($_FILES)) {

@@ -61,6 +61,10 @@ final class SignIn
             // 🔒 Auth + Role enforcement
             $data = $roleGate->handle();
 
+            $url = getenv("APP_URL");
+            $url = $url;
+            loggedDetection($url, $data['email']);
+
             return $data;
         } catch (UnauthorisedException $e) {
             // Graceful failure: log error & return empty response

@@ -66,6 +66,7 @@ class SubmitPostData extends FileUploadProcess
      * @param string|null $fileName     Name of the file input field and DB column for image filename
      * @param string|null $imgPath      Relative directory path for image uploads (must end with '/')
      * @param array|null  $minMaxData   Optional per‑field min/max length constraints [data=> ['email', 'password'], min => [3, 8], max => [255, 20]]
+     * @param array|null  $newInput     Optional new input data to be inserted to the $input - example ['id' => 1, 'name' => 'John Doe']
      *
      * @throws \Throwable Rolls back transaction on any failure (validation, upload, DB insert, etc.)
      */
@@ -75,7 +76,8 @@ class SubmitPostData extends FileUploadProcess
         ?array $removeKeys = null,
         ?string $fileName = null,
         ?string $imgPath = null,
-        ?string $fileTable = null
+        ?string $fileTable = null,
+        ?array $newInput = null
 
     ): void {
         CorsHandler::setHeaders();
@@ -83,6 +85,10 @@ class SubmitPostData extends FileUploadProcess
         try {
             $input = GetRequestData::getRequestData();
             Recaptcha::verifyCaptcha($input);
+
+            if(!empty($newInput)) {
+                $input = array_merge($input, $newInput);
+            }
 
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
