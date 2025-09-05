@@ -80,7 +80,7 @@ class SubmitPostData extends FileUploadProcess
         ?array $newInput = null
 
     ): void {
-        CorsHandler::setHeaders();
+        CorsHandler::setHeaders(); // set the header
 
         try {
             $input = GetRequestData::getRequestData();
