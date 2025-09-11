@@ -43,7 +43,7 @@ final class RoleMiddleware
      *
      * @throws UnauthorisedException if token or role are invalid
      */
-    public function handle(): array
+    public function handle(): mixed
     {
         $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
         $token = $_COOKIE[$tokenName] ?? '';
@@ -65,7 +65,11 @@ final class RoleMiddleware
             }
 
             // Ensure user exists in DB (optional integrity check)
-            $this->fetchUser($decoded->data->id ?? $decoded->id);
+           $result = $this->fetchUser($decoded->data->id ?? $decoded->id);
+
+           if ($result === null) {
+            throw new UnauthorisedException("User not found");
+           }
 
             return [
                 'id' => $decoded->data->id ?? $decoded->id,
@@ -74,9 +78,9 @@ final class RoleMiddleware
             ];
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload
-            showError($e);
+            return showError($e);
 
-            return [];
+    
         }
     }
 

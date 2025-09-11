@@ -226,7 +226,7 @@ class LoginUtility
     /**
      * Log login attempts (success or failure).
      */
-    public static function logAudit(?int $userId, string $email, string $status, string $ip, string $userAgent): void
+    public static function logAudit(string $userId, string $email, string $status, string $ip, string $userAgent): void
     {
         $data = [
             'user_id'    => $userId,
