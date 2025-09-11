@@ -239,11 +239,20 @@ class LoginUtility
         SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'], $data);
     }
 
+    /**
+     * Monitor and alert on suspicious login activity.
+     *
+     * The function works by counting the number of failed login attempts within a 10 minute window.
+     * If the count exceeds 5, an email alert is sent to the admin with the email, number of attempts and IP address.
+     *
+     * @param string $email the email address of the user
+     * @param string $ip the IP address of the user
+     */
     public static function checkSuspiciousActivity(string $email, string $ip): void
     {
         $stmt = Db::connect2()->prepare("
             SELECT COUNT(*) as attempts FROM audit_logs
-            WHERE email = :email AND status = 'failure' AND timestamp > (NOW() - INTERVAL 10 MINUTE)
+            WHERE email = :email AND status = 'failure' AND created_at > (NOW() - INTERVAL 10 MINUTE)
         ");
         $stmt->execute([':email' => $email]);
         $count = (int) $stmt->fetchColumn();
