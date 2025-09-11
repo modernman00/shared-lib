@@ -71,7 +71,7 @@ class LoginFunctionality
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login(bool $issueJwt = true, string $returnType = 'json')
+    public static function login(bool $issueJwt = true, string $returnType = 'json'):mixed
     {
         try {
             $input = GetRequestData::getRequestData();
@@ -118,7 +118,7 @@ class LoginFunctionality
             return ['message' => $msg, 'code' => $token, 'id' => $userId];
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
-            showError($th);
+            return showError($th);
         }
     }
 

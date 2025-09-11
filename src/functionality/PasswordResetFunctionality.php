@@ -66,9 +66,11 @@ class PasswordResetFunctionality
      *
      * @throws NotFoundException if user data is missing or invalid
      */
-    public static function process(): void
+    public static function process(): mixed
     {
-        $input = GetRequestData::getRequestData();
+
+        try {
+            $input = GetRequestData::getRequestData();
         if (!$input) {
             throw new NotFoundException('There was no post data');
         }
@@ -118,5 +120,10 @@ class PasswordResetFunctionality
         \destroyCookie();
 
         Utility::msgSuccess(200, 'Password was successfully changed');
+        return true;
+        } catch (\Throwable $th) {
+            return showError($th);
+        }
+        
     }
 }

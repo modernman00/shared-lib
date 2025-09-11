@@ -72,7 +72,7 @@ class PasswordRecoveryService
      *
      * @throws NotFoundException if input is missing or user cannot be found
      */
-    public static function process(bool $issueJwt = true): void
+    public static function process(bool $issueJwt = true): mixed
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -112,8 +112,9 @@ class PasswordRecoveryService
             Token::generateSendTokenEmail($user, $pathToSentCodeNotification);
 
             self::finaliseRecovery($token, $issueJwt);
+            return true;
         } catch (\Throwable $error) {
-            showError($error);
+            return showError($error);
         }
     }
 

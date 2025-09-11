@@ -42,9 +42,10 @@ class PwdRecoveryCodeFunctionality
      *
      * @throws \Exception if token is expired or invalid
      */
-    public static function process(): void
+    public static function process(): mixed
     {
-        $input = GetRequestData::getRequestData();
+        try {
+             $input = GetRequestData::getRequestData();
         if (!$input) {
             Utility::msgException(404, 'There was no post data');
         }
@@ -86,6 +87,12 @@ class PwdRecoveryCodeFunctionality
             // Session renewal and cleanup post-password reset
             session_regenerate_id(true);
             Utility::msgSuccess(200, 'Code verified successfully');
+           
         }
+        return true;
+        } catch (\Throwable $th) {
+            return showError($th);
+        }
+       
     }
 }

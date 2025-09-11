@@ -79,7 +79,7 @@ class SubmitPostData extends FileUploadProcess
         ?string $fileTable = null,
         ?array $newInput = null
 
-    ): void {
+    ): mixed {
         CorsHandler::setHeaders(); // set the header
 
         try {
@@ -112,9 +112,10 @@ class SubmitPostData extends FileUploadProcess
             Transaction::commit();
 
             Utility::msgSuccess(201, 'Record created successfully');
+            return true;
         } catch (\Throwable $th) {
             Transaction::rollback();
-            showError($th);
+            return showError($th);
         }
     }
 
@@ -138,7 +139,7 @@ class SubmitPostData extends FileUploadProcess
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null
-    ): void {
+    ): mixed {
         CorsHandler::setHeaders();
 
         try {
@@ -156,9 +157,10 @@ class SubmitPostData extends FileUploadProcess
             self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
             Transaction::commit();
             Utility::msgSuccess(201, 'Record created successfully');
+            return true;
         } catch (\Throwable $th) {
             Transaction::rollback();
-            showError($th);
+            return showError($th);
         }
     }
 

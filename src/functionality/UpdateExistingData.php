@@ -91,7 +91,7 @@ class UpdateExistingData extends FileUploadProcess
         ?string $imgPath = null,
         ?string $fileTable = null
 
-    ): void {
+    ): mixed {
         CorsHandler::setHeaders();
 
         try {
@@ -141,9 +141,10 @@ class UpdateExistingData extends FileUploadProcess
             $update->updateMultiplePOST($sanitisedData, $identifier);
 
             Utility::msgSuccess(200, 'Update was successful');
+            return true;
         } catch (\Throwable $th) {
 
-            showError($th);
+            return showError($th);
         }
     }
 
