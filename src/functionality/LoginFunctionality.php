@@ -106,16 +106,13 @@ class LoginFunctionality
 
             $msg = 'Verification code sent to your email successfully';
 
-            // Handle response format
+             // Handle response format
             if ($returnType === 'json') {
-                return $issueJwt
-                    ? \msgSuccess(200, $msg, $token)
-                    : \msgSuccess(200, $msg);
+                return msgSuccess(200, $msg, $token);
+   
+            } else{
+                  return ['message' => $msg, 'code' => $token, 'id' => $userId];
             }
-
-            // Classic web login: store session and return structured array
-            $_SESSION['ID'] = $userId;
-            return ['message' => $msg, 'code' => $token, 'id' => $userId];
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
             return showError($th);

@@ -94,7 +94,7 @@ final class RoleMiddleware
      *
      * @return string|null - 'SUCCESSFUL' if user exists, null otherwise
      */
-    protected function fetchUser(int $user_id): ?string
+    protected function fetchUser(int|string $user_id): ?string
     {
         try {
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';

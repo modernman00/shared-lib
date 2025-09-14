@@ -118,6 +118,7 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
         if (!$blade) {
             // 1. Get validated paths
             $viewsPath = realpath(__DIR__ . '/../../../../resources/views');
+            
             $cachePath = realpath(__DIR__ . '/../../../../bootstrap/cache');
             $mode = $_ENV['APP_ENV'] === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
             $blade = new BladeOne($viewsPath, $cachePath, $mode);
@@ -347,6 +348,7 @@ function showError($th): void
     if ($error) {
         echo $error;
     }
+    exit();
 }
 // FUNCTION TO SEND TEXT TO PHONE
 
