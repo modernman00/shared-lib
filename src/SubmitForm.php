@@ -67,4 +67,48 @@ class SubmitForm extends Db
             throw new HttpException('Unexpected error occurred');
         }
     }
+
+      public static function submitFormDynamic($table, $field)
+    {
+
+        try {
+            $DYNAMIC = strtoupper($table);
+
+            // EXTRACT THE KEY FOR THE COL NAME
+            $key = array_keys($field);
+            $col = implode(', ', $key);
+            $placeholder = implode(', :', $key);
+
+            // prep statement using placeholder :name
+            $stmt = "INSERT INTO $table ($col) VALUES (:$placeholder)";
+
+            $query = parent::connect2()->prepare($stmt);
+            if (!$query) {
+                throw new \Exception("Not able to insert data", 1);
+            }
+            foreach ($field as $keys => $values) {
+                $query->bindValue(":$keys", $values);
+            }
+            $outcome = $query->execute();
+            if (!$outcome) {
+                throw new \Exception("Unable to execute the query.", 1);
+            }
+
+            $lastId = parent::connect2()->lastInsertId();
+
+            if(!$lastId) {
+                throw new \Exception("Unable to connect to the database", 1);
+            }
+
+            $_SESSION["LAST_INSERT_ID_$DYNAMIC"] = $lastId;
+
+            msgSuccess(200, $lastId);
+
+            return $outcome;
+        } catch (\PDOException $e) {
+            showError($e);
+        } catch (\Throwable $e) {
+            showError($e);
+        }
+    }
 }
