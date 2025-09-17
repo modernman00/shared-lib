@@ -33,6 +33,13 @@ class SelectFn extends Select
     return parent::selectFn2(query: $query);
   }
 
+  // select all from table by identifier
+  public static function selectAllRowsById(string $table, string $identifier, string $identifierAnswer): array
+  {
+    $query = parent::formAndMatchQuery(selection: "SELECT_ONE", table: $table, identifier1: $identifier);
+    return parent::selectFn2(query: $query, bind: [$identifierAnswer]);
+  }
+
 
   /**
    * Selects rows where both identifiers match their respective values (AND condition).

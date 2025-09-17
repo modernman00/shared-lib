@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{CheckToken, CorsHandler, JwtHandler, Limiter, Recaptcha, Utility};
+use Src\{CorsHandler, JwtHandler, Limiter, Recaptcha, Utility};
 use Src\Exceptions\NotFoundException;
 use Src\functionality\middleware\GetRequestData;
 
