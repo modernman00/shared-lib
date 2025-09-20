@@ -167,4 +167,13 @@ class Update extends Db
             throw new DatabaseException('Could not execute query');
         }
     }
+
+    public function updateWhereRaw(string $setColumn, $setValue, string $where, array $params)
+{
+    $sql = "UPDATE {$this->table} SET {$setColumn} = ? {$where}";
+    $stmt = parent::connect2()->prepare($sql);
+    $stmt->execute(array_merge([$setValue], $params));
+    return $stmt;
+}
+
 }
