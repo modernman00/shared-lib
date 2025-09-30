@@ -56,7 +56,7 @@ use Src\functionality\middleware\GetRequestData;
  * );
  * ```
  */
-class SubmitPostData extends FileUploadProcess
+class SubmitPostData
 {
     /**
      * Process and insert POST data into a single table after CAPTCHA (and optional token) validation.
@@ -105,7 +105,7 @@ class SubmitPostData extends FileUploadProcess
             // Attach uploaded filename if present
               if (!empty($_FILES)) {
 
-               $sanitisedData = self::process($sanitisedData, $fileTable, $fileName, $imgPath);
+               $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
 
             SubmitForm::submitForm($table, $sanitisedData, $pdo);
@@ -156,7 +156,7 @@ class SubmitPostData extends FileUploadProcess
             $sanitisedData = hashPasswordsInArray($sanitisedData);
             if (!empty($_FILES)) {
 
-               $sanitisedData = self::process($sanitisedData, $fileTable, $fileName, $imgPath);
+               $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
             $pdo = Db::connect2();
             Transaction::beginTransaction();

@@ -10,7 +10,8 @@ use Src\{
     FileUploader,
     Recaptcha,
     Utility,
-    Update
+    Update,
+    UpdateFn
 };
 use Src\functionality\middleware\FileUploadProcess;
 use Src\functionality\middleware\GetRequestData;
@@ -132,13 +133,86 @@ class UpdateExistingData extends FileUploadProcess
             }
 
             // if id is null set it to $identiferValue
-            if (empty($sanitisedData[$identifier])) {
+            if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null) {
                 $sanitisedData[$identifier] = $identifierValue;
             }
 
             // Update the blog next
             $update = new Update($table);
             $update->updateMultiplePOST($sanitisedData, $identifier);
+
+            Utility::msgSuccess(200, 'Update was successful');
+            return true;
+        } catch (\Throwable $th) {
+
+            return showError($th);
+        }
+    }
+
+
+   public static function updateMultipleTables(
+        ?array $postData = null,
+        ?array $allowedTables = null,
+         mixed $identifierValue,
+        string $identifier = 'id',
+        ?array $minMaxData = null,
+        ?array $removeKeys = null,
+        ?string $fileName = null,
+        ?string $imgPath = null,
+        ?string $fileTable = null,
+
+    ): mixed {
+        CorsHandler::setHeaders();
+
+        try {
+               if($postData !== null){
+                $input = $postData;
+            }else{
+                $input = GetRequestData::getRequestData();
+            }
+            Recaptcha::verifyCaptcha($input);
+          
+
+            // Token check can be re‑enabled if CSRF validation is required
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);           
+            $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
+         
+            // check if isset password and hash it
+            if (isset($sanitisedData['password'])) {
+                $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
+            }
+
+            // Attach uploaded filename if present
+                if (!empty($_FILES)) {
+
+                // check if $_FILES[fileName]['name'] is an array 
+                $isArray = is_array($_FILES[$fileName]['name']);
+                if ($isArray) {
+                    $getProcessedFileName = self::submitImgDataMultiple(
+                        $fileName,
+                        $imgPath
+                    );
+
+                    // Map each uploaded file to a unique column name
+                    foreach ($getProcessedFileName as $key => $value) {
+                        $imgColumnName = $fileName . ($key + 1);
+                        $sanitisedData[$fileTable][$imgColumnName] = $value;
+                    }
+                } else {
+
+                    $name = self::submitImgDataSingle($fileName, $imgPath);
+                    $sanitisedData[$fileTable][$fileName] = $name;
+                }
+            }
+
+            // if id is null set it to $identiferValue
+            if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null ) {
+                $sanitisedData[$identifier] = $identifierValue;
+            }
+
+            // Update the blog next
+            UpdateFn::updateMultipleTables($sanitisedData, $allowedTables, $identifier, $identifierValue);
+        
 
             Utility::msgSuccess(200, 'Update was successful');
             return true;
