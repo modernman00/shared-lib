@@ -129,6 +129,7 @@ class SubmitPostData extends FileUploadProcess
      * @param string|null $fileName      File input field name (plural if multiple) 
      * @param string|null $imgPath       Relative path to upload directory
      * @param string|null $fileTable     Table name for image filenames
+     * @param array|null $postData       Optional POST data to be inserted to the $input - example ['tableName' => ['id' => 1, 'name' => 'John Doe']]
      *
      * @throws \Throwable Rolls back on any validation, upload, or DB failure
      */
@@ -138,12 +139,17 @@ class SubmitPostData extends FileUploadProcess
         ?array $removeKeys = null,
         ?string $fileName = null,
         ?string $imgPath = null,
-        ?string $fileTable = null
+        ?string $fileTable = null,
+        ?array $postData = null
     ): mixed {
         CorsHandler::setHeaders();
 
         try {
-            $input = GetRequestData::getRequestData();
+            if($postData !== null){
+                $input = $postData;
+            }else{
+                $input = GetRequestData::getRequestData();
+            }
             Recaptcha::verifyCaptcha($input);
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
             $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
