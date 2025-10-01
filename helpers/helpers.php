@@ -574,76 +574,11 @@ function old(string $key, $default = ''): mixed
     return $_POST[$key] ?? $default;
 }
 
-/**
- * Generate or retrieve a CSRF token from the session.
- */
-function csrfToken(): string
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-    if (!isset($_SESSION['_csrf_token'])) {
-        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
-    }
 
-    return $_SESSION['_csrf_token'];
-}
 
 /**
- * Return a hidden input field for CSRF protection.
- */
-function csrfField(): string
-{
-    return '<input type="hidden" name="_token" value="' . csrfToken() . '">';
-}
 
-/**
- * Retrieve a value from the session.
- */
-function sessionGet(string $key, $default = null): mixed
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
 
-    return $_SESSION[$key] ?? $default;
-}
-
-/**
- * Flash a value to the session (store temporarily).
- */
-function sessionFlash(string $key, $value): void
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-    $_SESSION['_flash'][$key] = $value;
-}
-
-/**
- * Check if a session key exists.
- */
-function sessionHas(string $key): bool
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-
-    return isset($_SESSION[$key]);
-}
-
-/**
- * Remove a session key.
- */
-function sessionForget(string $key): void
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-    unset($_SESSION[$key]);
-}
-
-/**
  * Redirect the user to a given path and stop execution.
  */
 function redirect(string $path): void
@@ -791,5 +726,30 @@ function hashPasswordsInArray(array $data): array
 
         return $data;
     }
+
+
+/**
+ * Convert an integer to its English word representation.
+ *
+ * @param int $number
+ * @return string
+ */
+function number2word(int $number): string
+{
+    if ($number === 0) return 'zero';
+
+    $f = new NumberFormatter('en', NumberFormatter::SPELLOUT);
+
+    // Handle negative numbers
+    if ($number < 0) {
+        return 'minus ' . $f->format(abs($number));
+    }
+
+    return $f->format($number);
+}
+
+
+
+
 
 

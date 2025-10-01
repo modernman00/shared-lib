@@ -53,7 +53,7 @@ use Src\functionality\middleware\GetRequestData;
  * );
  * ```
  */
-class UpdateExistingData extends FileUploadProcess
+class UpdateExistingData
 {
     /**
      *  * - `updateData()` → Handles validated updates to a single table, including optional image upload and password hashing
@@ -110,27 +110,7 @@ class UpdateExistingData extends FileUploadProcess
             }
 
             // Attach uploaded filename if present
-                if (!empty($_FILES)) {
-
-                // check if $_FILES[fileName]['name'] is an array 
-                $isArray = is_array($_FILES[$fileName]['name']);
-                if ($isArray) {
-                    $getProcessedFileName = self::submitImgDataMultiple(
-                        $fileName,
-                        $imgPath
-                    );
-
-                    // Map each uploaded file to a unique column name
-                    foreach ($getProcessedFileName as $key => $value) {
-                        $imgColumnName = $fileName . ($key + 1);
-                        $sanitisedData[$fileTable][$imgColumnName] = $value;
-                    }
-                } else {
-
-                    $name = self::submitImgDataSingle($fileName, $imgPath);
-                    $sanitisedData[$fileTable][$fileName] = $name;
-                }
-            }
+              $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
 
             // if id is null set it to $identiferValue
             if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null) {
@@ -151,10 +131,10 @@ class UpdateExistingData extends FileUploadProcess
 
 
    public static function updateMultipleTables(
+             mixed $identifierValue,
+        string $identifier = 'id',
         ?array $postData = null,
         ?array $allowedTables = null,
-         mixed $identifierValue,
-        string $identifier = 'id',
         ?array $minMaxData = null,
         ?array $removeKeys = null,
         ?string $fileName = null,
@@ -183,32 +163,12 @@ class UpdateExistingData extends FileUploadProcess
             }
 
             // Attach uploaded filename if present
-                if (!empty($_FILES)) {
+            $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
 
-                // check if $_FILES[fileName]['name'] is an array 
-                $isArray = is_array($_FILES[$fileName]['name']);
-                if ($isArray) {
-                    $getProcessedFileName = self::submitImgDataMultiple(
-                        $fileName,
-                        $imgPath
-                    );
-
-                    // Map each uploaded file to a unique column name
-                    foreach ($getProcessedFileName as $key => $value) {
-                        $imgColumnName = $fileName . ($key + 1);
-                        $sanitisedData[$fileTable][$imgColumnName] = $value;
-                    }
-                } else {
-
-                    $name = self::submitImgDataSingle($fileName, $imgPath);
-                    $sanitisedData[$fileTable][$fileName] = $name;
-                }
-            }
-
-            // if id is null set it to $identiferValue
-            if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null ) {
-                $sanitisedData[$identifier] = $identifierValue;
-            }
+            // // if id is null set it to $identiferValue
+            // if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null ) {
+            //     $sanitisedData[$identifier] = $identifierValue;
+            // }
 
             // Update the blog next
             UpdateFn::updateMultipleTables($sanitisedData, $allowedTables, $identifier, $identifierValue);

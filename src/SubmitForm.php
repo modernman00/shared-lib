@@ -57,7 +57,10 @@ class SubmitForm extends Db
                 throw new HttpException('Insert execution failed');
             }
 
-            return true;
+            $lastId = $connection->lastInsertId();
+            $_SESSION["LAST_INSERT_ID_$table"] = $lastId;
+
+            return $lastId;
         } catch (\PDOException $pdoEx) {
             // Log this internally, but avoid leaking stack traces
             Utility::showError($pdoEx);

@@ -108,10 +108,10 @@ class SubmitPostData
                $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
 
-            SubmitForm::submitForm($table, $sanitisedData, $pdo);
+            $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
             Transaction::commit();
 
-            Utility::msgSuccess(201, 'Record created successfully');
+            Utility::msgSuccess(201, 'Record created successfully', $lastId);
             return true;
         } catch (\Throwable $th) {
             Transaction::rollback();

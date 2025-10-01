@@ -9,7 +9,10 @@
       "Tests\\": "tests/"
     },
     "files": [
-      "src/helpers.php"
+      "helpers/helpers.php",
+      "helpers/dates.php",
+      "helpers/csrf.php",
+      "helpers/session.php"
   
     ]
   },
