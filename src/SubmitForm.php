@@ -27,7 +27,7 @@ class SubmitForm extends Db
      *
      * @return bool True on success
      */
-    public static function submitForm(string $table, array $fields, ?PDO $pdo = null): bool
+    public static function submitForm(string $table, array $fields, ?PDO $pdo = null): string
     {
         if (empty($table) || empty($fields)) {
             throw new NotFoundException();
@@ -57,8 +57,9 @@ class SubmitForm extends Db
                 throw new HttpException('Insert execution failed');
             }
 
-            $lastId = $connection->lastInsertId();
-            $_SESSION["LAST_INSERT_ID_$table"] = $lastId;
+            $lastId = $connection->lastInsertId('no');
+            $UPPER_TABLE = strtoupper($table);
+            $_SESSION["LAST_INSERT_ID_$UPPER_TABLE"] = $lastId;
 
             return $lastId;
         } catch (\PDOException $pdoEx) {
@@ -71,7 +72,7 @@ class SubmitForm extends Db
         }
     }
 
-      public static function submitFormDynamic($table, $field)
+    public static function submitFormDynamic($table, $field)
     {
 
         try {
@@ -99,7 +100,7 @@ class SubmitForm extends Db
 
             $lastId = parent::connect2()->lastInsertId();
 
-            if(!$lastId) {
+            if (!$lastId) {
                 throw new \Exception("Unable to connect to the database", 1);
             }
 
@@ -112,6 +113,54 @@ class SubmitForm extends Db
             showError($e);
         } catch (\Throwable $e) {
             showError($e);
+        }
+    }
+
+        /**
+     * 
+     * @param mixed $table - database table
+     * @param mixed $field - post array
+     * @param mixed $lastIdCol the column you want to return the last id - e.g id, no, eventNo 
+     * @return mixed 
+     */
+
+    public static function submitFormDynamicLastId($table, $field, $lastIdCol)
+    {
+        try {
+            // Prepare the SQL statement
+            $columns = implode(', ', array_keys($field));
+            $placeholders = ':' . implode(', :', array_keys($field));
+            $query = "INSERT INTO $table ($columns) VALUES ($placeholders)";
+
+            $connection = parent::connect2();
+            
+            $stmt = $connection->prepare($query);
+
+
+            foreach ($field as $key => $value) {
+                $stmt->bindValue(":$key", $value);
+            }
+
+            $outcome = $stmt->execute();
+
+            if (!$outcome) {
+                msgException(406, "Unable to execute the query.");
+            }
+
+            $lastInsertedId = $connection->lastInsertId($lastIdCol);
+
+            $dynamicTable = strtoupper($table);
+            $_SESSION["LAST_INSERT_ID_$dynamicTable"] = $lastInsertedId;
+
+            // msgSuccess(200, $lastInsertedId);
+
+            return $lastInsertedId;
+        } catch (\PDOException $e) {
+            showError($e);
+            return $e;
+        } catch (\Throwable $e) {
+            showError($e);
+            return $e;
         }
     }
 }

@@ -1,6 +1,5 @@
 <?php
- * Retrieve a value from the session.
- */
+
 function sessionGet(string $key, $default = null): mixed
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {

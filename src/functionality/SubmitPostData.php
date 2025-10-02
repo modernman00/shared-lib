@@ -67,24 +67,28 @@ class SubmitPostData
      * @param string|null $imgPath      Relative directory path for image uploads (must end with '/')
      * @param array|null  $minMaxData   Optional per‑field min/max length constraints [data=> ['email', 'password'], min => [3, 8], max => [255, 20]]
      * @param array|null  $newInput     Optional new input data to be inserted to the $input - example ['id' => 1, 'name' => 'John Doe']
+     * @param bool $isCaptcha whether to verify captcha - if no, enter null
      *
      * @throws \Throwable Rolls back transaction on any failure (validation, upload, DB insert, etc.)
      */
     public static function submitToOneTablenImage(
         string $table,
         ?array $minMaxData = null,
-        ?array $removeKeys = null,
+        ?array $removeKeys = ['submit', 'button', 'token',  'g-recaptcha-response'],
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
-        ?array $newInput = null
+        ?array $newInput = null,
+        ?bool $isCaptcha = true
 
     ): mixed {
         CorsHandler::setHeaders(); // set the header
 
         try {
             $input = GetRequestData::getRequestData();
-            Recaptcha::verifyCaptcha($input);
+            if($isCaptcha) {
+                Recaptcha::verifyCaptcha($input);
+            }
 
             if(!empty($newInput)) {
                 $input = array_merge($input, $newInput);
@@ -103,9 +107,9 @@ class SubmitPostData
             Transaction::beginTransaction();
 
             // Attach uploaded filename if present
-              if (!empty($_FILES)) {
+               if ($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0) {
 
-               $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
+                  $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, false);
             }
 
             $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
@@ -140,7 +144,8 @@ class SubmitPostData
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
-        ?array $postData = null
+        ?array $postData = null,
+        ?bool $isCaptcha = true
     ): mixed {
         CorsHandler::setHeaders();
 
@@ -150,11 +155,13 @@ class SubmitPostData
             }else{
                 $input = GetRequestData::getRequestData();
             }
-            Recaptcha::verifyCaptcha($input);
+            if($isCaptcha) {
+                Recaptcha::verifyCaptcha($input);
+            }
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
             $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
             $sanitisedData = hashPasswordsInArray($sanitisedData);
-            if (!empty($_FILES)) {
+            if (!empty($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0)) {
 
                $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
