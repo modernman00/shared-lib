@@ -96,6 +96,17 @@ class SelectFn extends Select
     return parent::selectFn2(query: $query, bind: [$identifierAnswer]);
   }
 
+
+   /**
+   * Selects distinct values from two columns.
+   */
+  public static function selectDistinctColumnsById(string $table, string $column1, string $identifier, string $identifierAnswer, ?string $orderBy = null, ?string $limit = null): ?array
+  {
+    $query = parent::formAndMatchQuery(selection: 'SELECT_DISTINCT', table: $table, identifier1: $identifier, column: $column1, orderBy: $orderBy, limit: $limit);
+    return parent::selectFn2(query: $query, bind: [$identifierAnswer]);
+  }
+
+
   /**
    * Selects two columns where identifier matches, with optional ordering and limit.
    */
