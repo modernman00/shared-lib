@@ -1,12 +1,12 @@
 <?php
 
-function sessionGet(string $key, $default = null): mixed
+function sessGet(string $key, $default = null): mixed
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
 
-    return $_SESSION[$key] ?? $default;
+   return cleanSession($_SESSION[$key]) ?? $default;
 }
 
 /**
@@ -42,3 +42,46 @@ function sessionForget(string $key): void
     }
     unset($_SESSION[$key]);
 }
+
+/**
+ * Remove a session key.
+ */
+function sessForget(string $key): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+    unset($_SESSION[$key]);
+}
+
+// remove some session keys
+function unsetSess(array $keys): void
+{
+
+    foreach ($keys as $key) {
+        unset($_SESSION[$key]);
+    }
+}
+
+// print all session keys and values
+function sess(): void
+{
+
+    echo '<pre>';
+    print_r($_SESSION);
+    echo '</pre>';
+}
+
+// create sessions 
+function sessSet(string $key, $value): void
+{
+    $_SESSION[$key] = $value;
+}
+
+// set sessions array 
+function sessSetMany(array $data): void
+{
+    $_SESSION = array_merge($_SESSION, $data);
+}
+
+

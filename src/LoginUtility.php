@@ -28,7 +28,7 @@ class LoginUtility
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
-            LoginUtility::logAudit(null, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+            LoginUtility::logAudit($id, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
             LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
 
@@ -65,12 +65,12 @@ class LoginUtility
     public static function useEmailToFindData($inputData)
     {
         $email = $inputData['email'];
-
+        $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no'];
         $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: 'account', identifier1: 'email');
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-            LoginUtility::logAudit(null, $email, 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+            LoginUtility::logAudit($id, $email, 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
             LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR']);
 

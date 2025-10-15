@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{CheckToken, Limiter, LoginUtility as CheckSanitise, Token, Utility};
-use Src\functionality\middleware\AuthGateMiddleware;
+use Src\Exceptions\UnauthorisedException;
 use Src\functionality\middleware\GetRequestData;
+use Src\functionality\middleware\AuthGateMiddleware;
+use Src\{CheckToken, Limiter, LoginUtility as CheckSanitise, Token, Utility};
 
 class PwdRecoveryCodeFunctionality
 {
@@ -45,54 +46,63 @@ class PwdRecoveryCodeFunctionality
     public static function process(): mixed
     {
         try {
-             $input = GetRequestData::getRequestData();
-        if (!$input) {
-            Utility::msgException(404, 'There was no post data');
-        }
+            $input = GetRequestData::getRequestData();
+            if (!$input) {
+                Utility::msgException(404, 'There was no post data');
+            }
 
-        // Validate session-bound email
-        $code = $input['code'] ?? '';
+            // Validate session-bound email
+            $code = $input['code'] ?? '';
 
-        $sanitised = CheckSanitise::getSanitisedInputData($input, [
-          'data' => ['code'],
-          'min'  => [6],
-          'max'  => [15],
-        ]);
+            $sanitised = CheckSanitise::getSanitisedInputData($input, [
+                'data' => ['code'],
+                'min'  => [6],
+                'max'  => [15],
+            ]);
 
-        $code = $sanitised['code'] ?? '';
+            $code = $sanitised['code'] ?? '';
 
-        if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1000) {
-            $diff = time() - $_SESSION['auth']['2FA_token_ts'];
-            Utility::msgException(401, "Invalid or expired Token $diff");
-        }
+            if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1000) {
+                $diff = time() - $_SESSION['auth']['2FA_token_ts'];
+                Utility::msgException(401, "Invalid or expired Token $diff");
+            }
 
-        Limiter::limit($code);
+            if (isset($input['dToken'])) {
+                if (!empty($input['dToken'])) {
+                    if ($input['dToken'] != $_SESSION['dToken']) {
+                        throw new UnauthorisedException('Unauthorised Device');
+                    } else{
+                        sessForget('dToken');
+                    }
+                }
+            }
 
 
-        // now check if the code is valid
-        $data = Token::verifyToken($code);
+            Limiter::limit($code);
 
-        // if code is valid, update password take me to the password reset page
-        if ($data) {
-            unset($_SESSION['token']);
-            // unset the time session
-            unset($_SESSION['auth']['2FA_token_ts']);
 
-            // Prevent brute-force abuse by clearing rate limits
-            Limiter::$argLimiter->reset();
-            Limiter::$ipLimiter->reset();
+            // now check if the code is valid
+            $data = Token::verifyToken($code);
 
-            // create the codeVerifiedSession
-            $_SESSION['auth']['codeVerified'] = true;
-            // Session renewal and cleanup post-password reset
-            session_regenerate_id(true);
-            Utility::msgSuccess(200, 'Code verified successfully');
-           
-        }
-        return true;
+            // if code is valid, update password take me to the password reset page
+            if ($data) {
+                unset($_SESSION['token']);
+                // unset the time session
+                unset($_SESSION['auth']['2FA_token_ts']);
+
+                // Prevent brute-force abuse by clearing rate limits
+                Limiter::$argLimiter->reset();
+                Limiter::$ipLimiter->reset();
+
+                // create the codeVerifiedSession
+                $_SESSION['auth']['codeVerified'] = true;
+                // Session renewal and cleanup post-password reset
+                session_regenerate_id(true);
+                Utility::msgSuccess(200, 'Code verified successfully');
+            }
+            return true;
         } catch (\Throwable $th) {
             return showError($th);
         }
-       
     }
 }

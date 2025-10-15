@@ -176,27 +176,30 @@ class SelectFn extends Select
   /**
    * Selects dynamic columns from a table.
    */
-  public static function selectDynamicColumns(string $table, string $implodeColArray): ?array
+  public static function selectDynamicColumns(string $table, array $implodeColArray): ?array
   {
-    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_DYNAMICALLY', table: $table, column: $implodeColArray);
+    $query = parent::formAndMatchQuery(
+      selection: 'SELECT_COL_DYNAMICALLY', 
+      table: $table, 
+      colArray: $implodeColArray);
     return parent::selectFn2(query: $query);
   }
 
   /**
-   * Selects dynamic columns where identifier matches.
+   * Selects dynamic colArrays where identifier matches.
    */
-  public static function selectDynamicColumnsById(string $table, string $implodeColArray, string $identifier, string $value, string $orderBy = '', string $limit = ''): ?array
+  public static function selectDynamicColumnsById(string $table, array $implodeColArray, string $identifier, string $value, string $orderBy = '', string $limit = ''): ?array
   {
-    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_DYNAMICALLY_ID', table: $table, column: $implodeColArray, identifier1: $identifier, orderBy: $orderBy, limit: $limit);
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_DYNAMICALLY_ID', table: $table, colArray: $implodeColArray, identifier1: $identifier, orderBy: $orderBy, limit: $limit);
     return parent::selectFn2(query: $query, bind: [$value]);
   }
 
   /**
    * Selects dynamic columns where both identifiers match.
    */
-  public static function selectDynamicColumnsByTwoIds(string $table, string $implodeColArray, string $identifier1, string $identifier2, string $value1, string $value2, string $orderBy = '', string $limit = ''): ?array
+  public static function selectDynamicColumnsByTwoIds(string $table, array $implodeColArray, string $identifier1, string $identifier2, string $value1, string $value2, string $orderBy = '', string $limit = ''): ?array
   {
-    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_DYNAMICALLY_ID_AND', table: $table, column: $implodeColArray, identifier1: $identifier1, identifier2: $identifier2, orderBy: $orderBy, limit: $limit);
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_DYNAMICALLY_ID_AND', table: $table, colArray: $implodeColArray, identifier1: $identifier1, identifier2: $identifier2, orderBy: $orderBy, limit: $limit);
     return parent::selectFn2(query: $query, bind: [$value1, $value2]);
   }
 
@@ -228,7 +231,7 @@ class SelectFn extends Select
     $query = parent::formAndMatchQuery(
       selection: 'SELECT_COL_DYNAMICALLY_ID_OR',
       table: $table,
-      column: $implodeColArray,
+      colArray: $implodeColArray,
       identifier1: $identifier1,
       identifier2: $identifier2,
       orderBy: $orderBy,

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{CorsHandler, JwtHandler, Limiter, Recaptcha, Utility};
+
+use InvalidArgumentException;
 use Src\Exceptions\NotFoundException;
 use Src\functionality\middleware\GetRequestData;
+use Src\{CorsHandler, JwtHandler, Limiter, Recaptcha, Utility};
+use Src\functionality\middleware\Validator;
 
 /**
  * Handles user login functionality within the application.
@@ -71,7 +74,7 @@ class LoginFunctionality
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login(bool $issueJwt = true, string $returnType = 'json'):mixed
+    public static function login(bool $issueJwt = true, string $returnType = 'json'): mixed
     {
         try {
             $input = GetRequestData::getRequestData();
@@ -82,17 +85,25 @@ class LoginFunctionality
             // Allow flexibility between 'email' and 'username' login styles
             $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
+            if (empty($input['email']) && empty($input['username'])) {
+                throw new InvalidArgumentException('Email or username is required');
+            }
+
+
             CorsHandler::setHeaders();
             Recaptcha::verifyCaptcha($input);
             Limiter::limit($email);
 
             // Authenticate user, send code and generate JWT tokens if requested
 
+            Validator::requireKeys($input, ['email', 'password']);
+
             $userD = JwtHandler::authenticate($input);
 
             if (!is_array($userD) || !isset($userD['token'], $userD['userId'])) {
                 throw new \UnexpectedValueException('Malformed authentication result');
             }
+
             $token = $userD['token'];
             $userId = $userD['userId'];
 
@@ -106,17 +117,15 @@ class LoginFunctionality
 
             $msg = 'Verification code sent to your email successfully';
 
-             // Handle response format
+            // Handle response format
             if ($returnType === 'json') {
                 return msgSuccess(200, $msg, $token);
-   
-            } else{
-                  return ['message' => $msg, 'code' => $token, 'id' => $userId];
+            } else {
+                return ['message' => $msg, 'code' => $token, 'id' => $userId];
             }
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
             return showError($th);
         }
     }
-
 }

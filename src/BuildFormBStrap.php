@@ -14,6 +14,7 @@ class BuildFormBStrap
      * When there is a need for new entries, use the newEnt array.
      */
     private array $entKey;
+    private string $dToken;
 
     private string $token;
 
@@ -50,6 +51,10 @@ class BuildFormBStrap
         $this->entValue = array_values($this->question);
         $this->entCount = count($this->entValue);
         $_SESSION['token'] = $this->token;
+
+        $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+        $_SEESION['deviceHash'] = $this->dToken;
+
     }
 
 
@@ -839,6 +844,10 @@ class BuildFormBStrap
 
                 HTML;
 
+            }elseif($this->entValue[$i] === 'dToken') {
+                echo <<<HTML
+                <input type="hidden" name="dToken" value= "{$this->dToken}">
+                HTML;
             } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }
