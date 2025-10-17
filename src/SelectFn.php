@@ -183,13 +183,29 @@ class SelectFn extends Select
   }
 
    /**
-   * Selects the sum of a column across all rows.
+   * Selects the sum of a column by id.
    */
   public static function selectSumById(string $table, string $column, string $identifier, string $value): ?array
   {
     $query = parent::formAndMatchQuery(selection: 'SELECT_SUM', table: $table, column: $column, identifier1: $identifier);
     return parent::selectFn2(query: $query, bind: [$value]);
   }
+
+  // select the count of a column by id
+  public static function selectCountById(string $table, string $identifier, string $value): ?array
+  {
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COUNT_ONE', table: $table, identifier1: $identifier);
+    return parent::selectFn2(query: $query, bind: [$value]);
+  }
+
+  // select the count of a column by two ids
+  public static function selectCountByTwoIds(string $table, string $identifier1, string $identifier2, string $value1, string $value2): ?array
+  {
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COUNT_TWO', table: $table, identifier1: $identifier1, identifier2: $identifier2);
+    return parent::selectFn2(query: $query, bind: [$value1, $value2]);
+  }
+
+
 
   // USING ARRAY TO GENERATE COLUMN NAMES
 
