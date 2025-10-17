@@ -182,6 +182,15 @@ class SelectFn extends Select
     return parent::selectFn2(query: $query);
   }
 
+   /**
+   * Selects the sum of a column across all rows.
+   */
+  public static function selectSumById(string $table, string $column, string $identifier, string $value): ?array
+  {
+    $query = parent::formAndMatchQuery(selection: 'SELECT_SUM', table: $table, column: $column, identifier1: $identifier);
+    return parent::selectFn2(query: $query, bind: [$value]);
+  }
+
   // USING ARRAY TO GENERATE COLUMN NAMES
 
   /**

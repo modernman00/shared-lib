@@ -26,8 +26,24 @@ class FileUploadProcess
           $imgColumnName = $fileName . ($key + 1);
           if ($multiple) {
             $sanitisedData[$fileTable][$imgColumnName] = $value;
+            // also add the image to the image table by default 
+            $data = [
+              'img' => $value,
+              'where_from' => $fileTable,
+              'id' => checkInput($_SESSION['id'])
+            ];
+
+            // submit the file to the database to the default images table 
+            SubmitForm::submitForm('images', $data);
           } else {
             $sanitisedData[$imgColumnName] = $value;
+            $data = [
+              'img' => $value,
+              'where_from' => $fileTable,
+              'id' => checkInput($_SESSION['id'])
+            ];
+            // submit the file to the database to the default images table 
+            SubmitForm::submitForm('images', $data);
           }
         }
       } else {
@@ -35,6 +51,14 @@ class FileUploadProcess
         $name = self::submitImgDataSingle($fileName, $imgPath);
         if ($multiple) {
           $sanitisedData[$fileTable][$fileName] = $name;
+          $data = [
+            'img' => $name,
+            'where_from' => $fileTable,
+            'id' => checkInput($_SESSION['id'])
+          ];
+
+          // submit the file to the database to the default images table 
+          SubmitForm::submitForm('images', $data);
         } else {
           $sanitisedData[$fileName] = $name;
         }
@@ -43,6 +67,7 @@ class FileUploadProcess
 
     return $sanitisedData;
   }
+
 
 
   /**

@@ -87,6 +87,7 @@ class Select extends Db
             'SELECT_AVERAGE' => "SELECT AVG($column) FROM $table WHERE $identifier1 = ?",
             'SELECT_AVERAGE_ALL' => "SELECT AVG($column) as total FROM $table",
             'SELECT_SUM_ALL' => "SELECT SUM($column) as total FROM $table",
+            'SELECT_SUM' => "SELECT SUM($column) as total FROM $table WHERE $identifier1 = ?",
             'SELECT_COL_DYNAMICALLY' => "SELECT $implodeColArray FROM $table",
             'SELECT_COL_DYNAMICALLY_ID' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? $orderBy $limit",
             'SELECT_COL_DYNAMICALLY_ID_AND' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? AND $identifier2 = ? $orderBy $limit",
