@@ -194,17 +194,23 @@ class SelectFn extends Select
   // select the count of a column by id
   public static function selectCountById(string $table, string $identifier, string $value): ?array
   {
-    $query = parent::formAndMatchQuery(selection: 'SELECT_COUNT_ONE', table: $table, identifier1: $identifier);
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COUNT_ID', table: $table, identifier1: $identifier);
     return parent::selectFn2(query: $query, bind: [$value]);
   }
 
-  // select the count of a column by two ids
-  public static function selectCountByTwoIds(string $table, string $identifier1, string $identifier2, string $value1, string $value2): ?array
+  // select the count of a column by id and group by column
+  public static function selectColCountByIdGroup(string $table, string $column, string $identifier, string $value): ?array
   {
-    $query = parent::formAndMatchQuery(selection: 'SELECT_COUNT_TWO', table: $table, identifier1: $identifier1, identifier2: $identifier2);
-    return parent::selectFn2(query: $query, bind: [$value1, $value2]);
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_COUNT_ID_GROUP', table: $table, column: $column, identifier1: $identifier);
+    return parent::selectFn2(query: $query, bind: [$value]);
   }
 
+  // select the count of a column by two ids and group by column
+  public static function selectColCountByTwoIdsGroup(string $table, string $column, string $identifier1, string $identifier2, string $value1, string $value2): ?array
+  {
+    $query = parent::formAndMatchQuery(selection: 'SELECT_COL_COUNT_2ID_GROUP', table: $table, column: $column, identifier1: $identifier1, identifier2: $identifier2);
+    return parent::selectFn2(query: $query, bind: [$value1, $value2]);
+  }
 
 
   // USING ARRAY TO GENERATE COLUMN NAMES
