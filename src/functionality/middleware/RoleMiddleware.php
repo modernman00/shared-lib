@@ -65,22 +65,30 @@ final class RoleMiddleware
             }
 
             // Ensure user exists in DB (optional integrity check)
-           $result = $this->fetchUser($decoded->data->id ?? $decoded->id);
+            $result = $this->fetchUser($decoded->data->id ?? $decoded->id);
 
-           if ($result === null) {
-            throw new UnauthorisedException("User not found");
-           }
+            if ($result === null) {
+                throw new UnauthorisedException("User not found");
+            }
+
+            // GET THE FAMCODE 
+            $id = $decoded->data->id ?? $decoded->id;
+            $email = $decoded->data->email ?? $decoded->email;
+
+            $query = "SELECT famCode FROM personal WHERE id = ?";
+            $stmt = Db::connect2()->prepare($query);
+            $result = $stmt->execute([$id]);
+            $famCode = $stmt->fetchColumn();
 
             return [
-                'id' => $decoded->data->id ?? $decoded->id,
-                'email' => $decoded->data->email ?? $decoded->email,
+                'id' => $id,
+                'email' => $email,
                 'role' => $role,
+                'famCode' => $famCode
             ];
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload
             return showError($e);
-
-    
         }
     }
 
@@ -98,11 +106,9 @@ final class RoleMiddleware
     {
         try {
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
-
             $query = "SELECT email FROM $dbTable WHERE id = ?";
             $stmt = Db::connect2()->prepare($query);
             $stmt->execute([$user_id]);
-
             return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
         } catch (\PDOException $e) {
             Utility::showError($e);

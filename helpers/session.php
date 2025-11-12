@@ -6,7 +6,7 @@ function sessGet(string $key, $default = null): mixed
         session_start();
     }
 
-   return cleanSession($_SESSION[$key]) ?? $default;
+    return cleanSession($_SESSION[$key]) ?? $default;
 }
 
 /**
@@ -83,5 +83,3 @@ function sessSetMany(array $data): void
 {
     $_SESSION = array_merge($_SESSION, $data);
 }
-
-

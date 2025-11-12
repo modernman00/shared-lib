@@ -111,6 +111,71 @@ class Update extends Db
         }
     }
 
+            /**
+         * Makes an UPDATE query with the given data and identifiers.
+         *
+         * $data must contain the columns to update and their new values.
+         * $identifiers must contain the columns to identify the rows to update.
+         * The identifiers are combined using the given $logic operator (default: 'AND').
+         *
+         * @throws NotFoundException if any identifier does not exist in $data.
+         * @throws BadRequestException if $data is empty after removing the identifiers.
+         * @return bool True if the update was successful, false otherwise.
+         */
+    public function makeUpdate(array $data, $identifiers, string $logic = 'AND'): bool
+    {
+        try {
+            if (isset($data['submit'])) {
+                unset($data['submit']);
+            }
+
+            // Normalise logic operator
+            $logic = strtoupper($logic) === 'OR' ? 'OR' : 'AND';
+
+            // Ensure identifiers is an array
+            $identifiers = is_array($identifiers) ? $identifiers : [$identifiers];
+
+            // Ensure all identifiers exist in data
+            foreach ($identifiers as $id) {
+                if (!isset($data[$id])) {
+                    throw new NotFoundException("Identifier '$id' does not exist in data.");
+                }
+            }
+
+            // Extract and remove identifier values from data
+            $idValues = [];
+            foreach ($identifiers as $id) {
+                $idValues[$id] = $data[$id];
+                unset($data[$id]);
+            }
+
+            if (empty($data)) {
+                throw new BadRequestException('No data to update.');
+            }
+
+            // Build SET clause
+            $setClause = implode(' = ?, ', array_keys($data)) . ' = ?';
+
+            // Build WHERE clause (supporting AND/OR)
+            $whereParts = array_map(fn($id) => "$id = ?", $identifiers);
+            $whereClause = implode(" $logic ", $whereParts);
+
+            // Combine full SQL
+            $sql = "UPDATE {$this->table} SET $setClause WHERE $whereClause";
+
+            // Prepare statement
+            $stmt = $this->connect()->prepare($sql);
+
+            // Merge update + identifier values for binding
+            $values = array_merge(array_values($data), array_values($idValues));
+
+            return $stmt->execute($values);
+        } catch (PDOException $e) {
+            Utility::showError($e);
+            return false;
+        }
+    }
+
     public function updateMultiplePOST(array $data, string $identifier): bool
     {
         try {

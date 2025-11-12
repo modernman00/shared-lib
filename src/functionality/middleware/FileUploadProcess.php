@@ -3,8 +3,7 @@
 
 namespace Src\functionality\middleware;
 
-use Src\Utility;
-use Src\FileUploader;
+use Src\{Utility, SubmitForm, FileUploader};
 
 
 class FileUploadProcess

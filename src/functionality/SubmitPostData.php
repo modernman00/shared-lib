@@ -16,6 +16,7 @@ use Src\{
 };
 use Src\functionality\middleware\FileUploadProcess;
 use Src\functionality\middleware\GetRequestData;
+use Src\functionality\SendEmailFunctionality;
 
 /**
  * Class SubmitPostData
@@ -86,11 +87,11 @@ class SubmitPostData
 
         try {
             $input = GetRequestData::getRequestData();
-            if($isCaptcha) {
+            if ($isCaptcha) {
                 Recaptcha::verifyCaptcha($input);
             }
 
-            if(!empty($newInput)) {
+            if (!empty($newInput)) {
                 $input = array_merge($input, $newInput);
             }
 
@@ -107,9 +108,9 @@ class SubmitPostData
             Transaction::beginTransaction();
 
             // Attach uploaded filename if present
-               if ($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0) {
+            if ($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0) {
 
-                  $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, false);
+                $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, false);
             }
 
             $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
@@ -150,12 +151,12 @@ class SubmitPostData
         CorsHandler::setHeaders();
 
         try {
-            if($postData !== null){
+            if ($postData !== null) {
                 $input = $postData;
-            }else{
+            } else {
                 $input = GetRequestData::getRequestData();
             }
-            if($isCaptcha) {
+            if ($isCaptcha) {
                 Recaptcha::verifyCaptcha($input);
             }
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
@@ -163,7 +164,7 @@ class SubmitPostData
             $sanitisedData = hashPasswordsInArray($sanitisedData);
             if (!empty($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0)) {
 
-               $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
+                $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
             }
             $pdo = Db::connect2();
             Transaction::beginTransaction();
@@ -200,6 +201,65 @@ class SubmitPostData
         }
     }
 
-   
+    public static function submitDataFileAndEmail(
+        string $table,
+        ?array $minMaxData = null,
+        ?array $removeKeys = ['submit', 'button', 'token',  'g-recaptcha-response'],
+        ?string $fileName = null,
+        ?string $imgPath = null,
+        ?string $fileTable = null,
+        ?array $newInput = null,
+        ?bool $isCaptcha = true     
+    )
+    {
+        CorsHandler::setHeaders(); // set the header
 
+        try {
+            $input = GetRequestData::getRequestData();
+            if ($isCaptcha) {
+                Recaptcha::verifyCaptcha($input);
+            }
+
+            if (!empty($newInput)) {
+                $input = array_merge($input, $newInput);
+            }
+
+            // Token check can be re‑enabled if CSRF validation is required
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
+            $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
+            // check if isset password and hash it
+            if (isset($sanitisedData['password'])) {
+                $sanitisedData['password'] = \hashPassword($sanitisedData['password']);
+            }
+
+
+            // $pdo = Db::connect2();
+            // Transaction::beginTransaction();
+
+            // Attach uploaded filename if present
+            if ($_FILES[$fileName]['error'][0] !== 4 || $_FILES[$fileName]['size'][0] !== 0) {
+
+                $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, false);
+            }
+
+            $lastId = SubmitForm::submitForm($table, $sanitisedData);
+            // Transaction::commit();
+
+            SendEmailFunctionality::email(
+                $newInput['viewPath'],
+                $newInput['subject'],
+                $newInput['emailViewDataWithEmail'],
+                $newInput['recipient'],
+                $sanitisedData[$fileName],
+                $fileName
+            );
+
+            Utility::msgSuccess(201, 'Record created successfully', $lastId);
+            return true;
+        } catch (\Throwable $th) {
+            // Transaction::rollback();
+            return showError($th);
+        }
+        
+    }
 }
