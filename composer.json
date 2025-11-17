@@ -12,7 +12,8 @@
       "helpers/helpers.php",
       "helpers/dates.php",
       "helpers/csrf.php",
-      "helpers/session.php"
+      "helpers/session.php",
+      "helpers/numbers.php"
 
     ]
   },
