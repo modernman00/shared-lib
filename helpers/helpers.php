@@ -479,7 +479,7 @@ function checkInput($data): mixed
         $data = stripslashes($data);
         $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
         $data = strip_tags($data);
-        // $data = preg_replace('/[^0-9A-Za-z.@\s-]/', '', $data);
+        $data = preg_replace('/[^0-9A-Za-z.@\s_-]/', '', $data);
 
         return $data;
     } else {
