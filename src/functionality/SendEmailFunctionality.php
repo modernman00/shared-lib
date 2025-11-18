@@ -47,6 +47,7 @@ class SendEmailFunctionality extends ToSendEmail
        */
 
 
+
       public static function email(string $viewPath, string $subject, array $emailViewDataWithEmail, string $recipient, $file = null, $fileName = null)
       {
 

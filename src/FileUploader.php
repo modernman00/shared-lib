@@ -57,12 +57,13 @@ class FileUploader
             // Validate file
             $picError = [];
             $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
+            $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic', 'docx', 'pdf', 'doc', 'mpeg'];
 
             if (!in_array($fileExtension, $allowedFormats)) {
-                $picError['format'] = 'Format must be PNG, JPG, GIF, HEIC or JPEG. ';
+                $picError['format'] = 'Format must be PNG, JPG, GIF, DOC, PDF, HEIC, MPEG or JPEG.';
                 throw new ValidationException("IMAGE FORMAT - $picError");
             }
+
 
             if ($fileSize > 10485760) { // 10 MB
                 $picError['size'] = 'File size must not exceed 10MB';
@@ -93,7 +94,8 @@ class FileUploader
             // Optimize the image
             self::optimiseImg($pathToImage);
 
-            $saveFiles[] = $fileName;
+            $saveFiles['fileName'] = $fileName;
+            $saveFiles['filePath'] = $pathToImage;
         }
 
         return $saveFiles;
@@ -149,7 +151,7 @@ class FileUploader
         return  $optimizerChain->optimize($pathToImage);
     }
 
-    public static function fileUploadSingle(string $fileLocation, string $formInputName): string
+    public static function fileUploadSingle(string $fileLocation, string $formInputName): array
     {
         // Check if file is uploaded
         if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
@@ -177,9 +179,10 @@ class FileUploader
 
 
         // Validate file
-        $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
+        // Validate file
+        $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'doc', 'pdf', 'docx', 'heic', 'mpeg'];
         if (!in_array($extension, $allowedFormats)) {
-            throw new ValidationException('IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC or JPEG.');
+            throw new ValidationException('IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC, DOC, PDF, MPEG or JPEG.');
         }
 
         if ($fileSize > 10485760) { // 10MB
@@ -193,10 +196,19 @@ class FileUploader
 
         // Resize and crop
 
-        self::processImageWithImagick($pathToImage);
+        // Resize and crop .. ONLY DO THIS IF THE EXTENSION IS NOT DOC OR PDF 
 
-        self::optimiseImg($pathToImage);
+        if (in_array($extension, ['png', 'jpg', 'gif', 'jpeg', 'heic'])) {
 
-        return $fileName;
+            self::processImageWithImagick($pathToImage);
+
+            self::optimiseImg($pathToImage);
+        }
+
+
+        $saveFiles['fileName'] = $fileName;
+        $saveFiles['filePath'] = $pathToImage;
+
+        return $saveFiles;
     }
 }

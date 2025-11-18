@@ -8,22 +8,29 @@ use Src\{Utility, SubmitForm, FileUploader};
 
 class FileUploadProcess
 {
-  public static function process(array $sanitisedData, $fileTable, $fileName, $imgPath, $multiple = 'true'): array
+
+  // define a property call pathlocation 
+  private static string $filePath;
+
+  public static function process(array $sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, $nested = 'true'): array
   {
+
     if (!empty($_FILES)) {
 
       // check if $_FILES[fileName]['name'] is an array 
       $isArray = is_array($_FILES[$fileName]['name']);
       if ($isArray) {
-        $getProcessedFileName = self::submitImgDataMultiple(
+        $result = self::submitImgDataMultiple(
           $fileName,
           $imgPath
         );
+        $getProcessedFileName = $result['fileName'];
+        self::$filePath = $result['filePath'];
 
         // Map each uploaded file to a unique column name
         foreach ($getProcessedFileName as $key => $value) {
           $imgColumnName = $fileName . ($key + 1);
-          if ($multiple) {
+          if ($nested) { // if the array is nested 
             $sanitisedData[$fileTable][$imgColumnName] = $value;
             // also add the image to the image table by default 
             $data = [
@@ -33,7 +40,7 @@ class FileUploadProcess
             ];
 
             // submit the file to the database to the default images table 
-            SubmitForm::submitForm('images', $data);
+            SubmitForm::submitForm($generalFileTable, $data);
           } else {
             $sanitisedData[$imgColumnName] = $value;
             $data = [
@@ -42,13 +49,17 @@ class FileUploadProcess
               'id' => checkInput($_SESSION['id'])
             ];
             // submit the file to the database to the default images table 
-            SubmitForm::submitForm('images', $data);
+            SubmitForm::submitForm($generalFileTable, $data);
           }
         }
       } else {
 
-        $name = self::submitImgDataSingle($fileName, $imgPath);
-        if ($multiple) {
+        $result = self::submitImgDataSingle($fileName, $imgPath);
+
+        $name = $result['fileName'];
+        self::$filePath = $result['filePath'];
+
+        if ($nested) {
           $sanitisedData[$fileTable][$fileName] = $name;
           $data = [
             'img' => $name,
@@ -57,14 +68,14 @@ class FileUploadProcess
           ];
 
           // submit the file to the database to the default images table 
-          SubmitForm::submitForm('images', $data);
+          SubmitForm::submitForm($generalFileTable, $data);
         } else {
           $sanitisedData[$fileName] = $name;
         }
       }
     }
 
-    return $sanitisedData;
+    return ['sanitisedData' => $sanitisedData, 'filePath' => self::$filePath];
   }
 
 
@@ -76,15 +87,14 @@ class FileUploadProcess
    * @param string $uploadPath    Destination directory path
    * @param mixed  $sFile         Raw file array from request
    *
-   * @return string Sanitized filename (spaces removed, validated)
+   * @return array Sanitized filename (spaces removed, validated) and fileLocation
    */
-  public static function submitImgDataSingle($formInputName, $uploadPath): string
+  private static function submitImgDataSingle($formInputName, $uploadPath): array
   {
-    $fileName = FileUploader::fileUploadSingle(
+    return FileUploader::fileUploadSingle(
       $uploadPath,
       $formInputName
     );
-    return Utility::checkInputImage(str_replace(' ', '', $fileName));
   }
 
 
@@ -97,7 +107,7 @@ class FileUploadProcess
    *
    * @return array|null Sanitized filenames, or null if no files were uploaded
    */
-  public static function submitImgDataMultiple(string $formInputName, string $uploadPath): mixed
+  private static function submitImgDataMultiple(string $formInputName, string $uploadPath): array
   {
     return FileUploader::fileUploadMultiple(
       $uploadPath,

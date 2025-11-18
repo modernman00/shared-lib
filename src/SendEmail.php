@@ -14,6 +14,24 @@ class SendEmail
     public const TYPE = 'application/pdf';
     public const BODY_TEXT = 'This is the body in plain text for non-HTML mail clients.';
 
+    private static function getMimeTypeFromFilename(string $filename): string
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'pdf'   => 'application/pdf',
+            'doc'   => 'application/msword',
+            'docx'  => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'png'   => 'image/png',
+            'jpg'   => 'image/jpeg',
+            'gif' => 'image/gif',
+            'heic' => 'image/heic',
+            'jpeg' => 'image/jpeg',
+            'mpeg'  => 'video/mpeg', // or 'audio/mpeg' if it's an audio file
+            default => 'application/octet-stream', // Fallback for unknown types
+        };
+    }
+
     /**
      * Sends an email using PHPMailer.
      *
@@ -46,12 +64,18 @@ class SendEmail
                     'allow_self_signed' => true,
                 ],
             ];
+
+
             //Recipients
             $mail->setFrom(APP_EMAIL, APP_NAME);
             $mail->addAddress($email, $name);
             $mail->addBCC(TEST_EMAIL);
-            if ($file) {
-                $mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
+            if ($file && $filename) {
+                // 💡 Determine MIME type dynamically here
+                $mimeType = self::getMimeTypeFromFilename($file);
+
+                // Use the dynamically determined type
+                $mail->AddStringAttachment($file, $filename, self::ENCODING, $mimeType);
             }
             //Content
             $mail->isHTML(true);                                  // Set email format to HTML
@@ -92,8 +116,12 @@ class SendEmail
                 $mail->addBCC($email);
             }
 
-            if ($file) {
-                $mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
+            if ($file && $filename) {
+                // 💡 Determine MIME type dynamically here
+                $mimeType = self::getMimeTypeFromFilename($file);
+
+                // Use the dynamically determined type
+                $mail->AddStringAttachment($file, $filename, self::ENCODING, $mimeType);
             }
             //Content
             $mail->isHTML(true);                                  // Set email format to HTML
