@@ -5414,16 +5414,16 @@
         },
         {
             "name": "php-mock/php-mock-phpunit",
-            "version": "2.13.1",
+            "version": "2.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-mock/php-mock-phpunit.git",
-                "reference": "29f90fe44a04105959d6ae835b10c9e0da2fcaa7"
+                "reference": "c074f7a260cb80bdc7cf0823dc23174bc49064e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-mock/php-mock-phpunit/zipball/29f90fe44a04105959d6ae835b10c9e0da2fcaa7",
-                "reference": "29f90fe44a04105959d6ae835b10c9e0da2fcaa7",
+                "url": "https://api.github.com/repos/php-mock/php-mock-phpunit/zipball/c074f7a260cb80bdc7cf0823dc23174bc49064e1",
+                "reference": "c074f7a260cb80bdc7cf0823dc23174bc49064e1",
                 "shasum": ""
             },
             "require": {
@@ -5470,7 +5470,7 @@
             ],
             "support": {
                 "issues": "https://github.com/php-mock/php-mock-phpunit/issues",
-                "source": "https://github.com/php-mock/php-mock-phpunit/tree/2.13.1"
+                "source": "https://github.com/php-mock/php-mock-phpunit/tree/2.14.0"
             },
             "funding": [
                 {
@@ -5478,7 +5478,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-23T06:00:08+00:00"
+            "time": "2025-11-19T21:07:31+00:00"
         },
         {
             "name": "phpstan/phpstan",
