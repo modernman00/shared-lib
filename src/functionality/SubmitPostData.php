@@ -103,6 +103,7 @@ class SubmitPostData
         bool $isCaptcha = true,
         string $generalFileTable = 'images'
     ): mixed {
+        try {
         CorsHandler::setHeaders();
 
         $input = GetRequestData::getRequestData();
@@ -130,6 +131,8 @@ class SubmitPostData
             }
         }
 
+        $sanitisedData = $sanitisedData['sanitisedData'];
+
         return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedData) {
             $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
 
@@ -137,6 +140,10 @@ class SubmitPostData
             // Utility::msgSuccess(201, 'Record created successfully', $lastId);
             return $lastId; // This return is technically unreachable if msgSuccess exits.
         });
+    } catch (\Throwable $th) {
+        showError($th);
+        return false;
+    }        
     }
 
     /**
@@ -163,6 +170,8 @@ class SubmitPostData
         bool $isCaptcha = true,
         string $generalFileTable = 'images'
     ): mixed {
+
+        try {
         CorsHandler::setHeaders();
 
         $input = $postData ?? GetRequestData::getRequestData();
@@ -183,13 +192,17 @@ class SubmitPostData
                 $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable);
             }
         }
-
+$sanitisedData = $sanitisedData['sanitisedData'];
         return self::handleTransaction(function (PDO $pdo) use ($sanitisedData, $allowedTables) {
             self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
             // Utility::msgSuccess MUST call exit() or die()
             Utility::msgSuccess(201, 'Record created successfully');
             return true; // Unreachable if msgSuccess exits.
         });
+    } catch (\Throwable $th) {
+         showError($th);
+         return false;
+    }
     }
     /**
      * Submits validated form data with optional file upload and email notification.

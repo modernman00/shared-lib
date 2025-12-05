@@ -90,7 +90,8 @@ class UpdateExistingData
         ?array $removeKeys = null,
         ?string $fileName = null,
         ?string $imgPath = null,
-        ?string $fileTable = null
+        ?string $fileTable = null,
+        string $generalFileTable = 'images'
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -110,7 +111,7 @@ class UpdateExistingData
             }
 
             // Attach uploaded filename if present
-              $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
+              $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, false);
 
             // if id is null set it to $identiferValue
             if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null) {
@@ -126,6 +127,7 @@ class UpdateExistingData
         } catch (\Throwable $th) {
 
             return showError($th);
+            return false;
         }
     }
 
@@ -140,6 +142,7 @@ class UpdateExistingData
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
+        string $generalFileTable = 'images'
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -163,7 +166,7 @@ class UpdateExistingData
             }
 
             // Attach uploaded filename if present
-            $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath);
+            $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable);
 
             // // if id is null set it to $identiferValue
             // if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null ) {

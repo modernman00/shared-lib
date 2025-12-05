@@ -14,87 +14,92 @@ class FileUploader
 {
     public static function fileUploadMultiple(string $fileLocation, string $formInputName): array
     {
+        // 1. Initialize the specific return structure you requested
+        $saveFiles = [
+            'fileName' => [],
+            'filePath' => null
+        ];
+
         // Validate the file input
-        if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'])) {
+        if (!isset($_FILES[$formInputName]) || empty($_FILES[$formInputName]['name'][0])) {
             Utility::throwError(400, 'No files were uploaded');
         }
 
-        // Count total files
-        $saveFiles = [];
         $countFiles = count($_FILES[$formInputName]['name']);
 
-          if ($countFiles > 5) {
+        // 3. Limit Check
+        if ($countFiles > 5) {
             throw new ValidationException('You can only upload up to 5 images.');
-            exit;
         }
 
         // Looping all files
         for ($i = 0; $i < $countFiles; ++$i) {
-            $fileName = basename($_FILES[$formInputName]['name'][$i]);
-            // trim out the space in the file name
-            $fileName = str_replace(' ', '', $fileName);
-            $fileName = str_replace(',', '', $fileName);
-            $fileInfo = pathinfo($fileName);
-            $baseName = $fileInfo['filename']; // e.g., "WhatsAppImage2021-01-24at12.00.04(1)"
-            $extension = strtolower($fileInfo['extension']); // e.g., "jpeg"
-            // Sanitize base name: replace dots and parentheses
-            $baseName = preg_replace('/\./', '_', $baseName); // Replace dots with underscores
-            $baseName = preg_replace('/[()]/', '', $baseName); // Replace parentheses with underscores
 
-            // Remove any extra underscores that might result from consecutive replacements
-            $baseName = preg_replace('/_+/', '_', $baseName); // Replace multiple underscores with a single one
-            $fileName = time() . '_' . $baseName . '.' . $extension; // e.g., "WhatsAppImage2021-01-24at12_00_04_1.jpeg"
-            $fileTemp = $_FILES[$formInputName]['tmp_name'][$i];
-            $fileSize = $_FILES[$formInputName]['size'][$i];
-            $pathToImage = "$fileLocation$fileName"; // e.g., "1652634567_WhatsAppImage2021-01-24at12_00_04_1.jpeg"
-            $fileError = $_FILES[$formInputName]['error'][$i];
-
-            // If a virus scan API key is provided, initialize the virus scan
-            if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
-                new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+            // 4. Check for PHP Upload Errors first
+            if ($_FILES[$formInputName]['error'][$i] !== UPLOAD_ERR_OK) {
+                // Log error or skip. 
+                continue;
             }
 
-            // Validate file
-            $picError = [];
-            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $rawName = basename($_FILES[$formInputName]['name'][$i]);
+            $fileInfo = pathinfo($rawName);
+            $extension = strtolower($fileInfo['extension'] ?? '');
+
+            // Sanitize Filename
+            $baseName = $fileInfo['filename'];
+            $baseName = preg_replace('/[^\w-]/', '_', $baseName); // Replace non-alphanumeric chars with _
+            $baseName = preg_replace('/_+/', '_', $baseName);     // No double underscores
+
+            // 4. Prevent collisions using uniqid
+            $fileName = uniqid() . '_' . time() . '_' . $baseName . '.' . $extension;
+
+            $fileTemp = $_FILES[$formInputName]['tmp_name'][$i];
+            $fileSize = $_FILES[$formInputName]['size'][$i];
+            $pathToImage = $fileLocation . $fileName;
+
+            // Virus Scan
+            if (isset($_ENV['FILE_UPLOAD_CLOUDMERSIVE'])) {
+                // Assuming this throws an exception on virus found
+                try {
+                    new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+                } catch (\Exception $e) {
+                    // Virus found, skip this file
+                    continue;
+                }
+            }
+
+            // 5. Validation
             $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'heic', 'docx', 'pdf', 'doc', 'mpeg'];
 
-            if (!in_array($fileExtension, $allowedFormats)) {
-                $picError['format'] = 'Format must be PNG, JPG, GIF, DOC, PDF, HEIC, MPEG or JPEG.';
-                throw new ValidationException("IMAGE FORMAT - $picError");
+            if (!in_array($extension, $allowedFormats)) {
+                throw new ValidationException("IMAGE FORMAT - Format must be PNG, JPG, GIF, DOC, PDF, HEIC, MPEG or JPEG.");
             }
 
 
             if ($fileSize > 10485760) { // 10 MB
-                $picError['size'] = 'File size must not exceed 10MB';
-                throw new ValidationException("Error Processing Request - post images - $picError");
+                throw new ValidationException("Error Processing Request - post images - File size must not exceed 10MB");
             }
-            // if (file_exists($pathToImage)) {
-            //     $picError .= "File $fileName already uploaded";
-            //     throwError(401, "Error Processing Request - post images - $picError");
-            // }
-            if ($picError) {
-                $errorSize = $picError['size'] ?? '';
-                $errorFormat = $picError['format'] ?? '';
-                $picError = $errorSize . $errorFormat;
-                $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
-                throw new ValidationException("Error $picError");
-                continue; // skip this file upload
-            }
+
 
             // Move uploaded file
             if (!move_uploaded_file($fileTemp, $pathToImage)) {
-                $_SESSION['imageUploadOutcome'] = "Image $fileName was not successfully uploaded";
-                throw new ValidationException("Error Processing Request - post images - Image $fileName was not successfully uploaded");
-                continue; // Skip optimization if upload failed
+                $_SESSION['imageUploadOutcome'] = "File $fileName failed to save";
+                throw new ValidationException("Error Processing Request - post images - File $fileName failed to save");
             }
 
-            // Resize and crop image
-            self::processImageWithImagick($pathToImage);
-            // Optimize the image
-            self::optimiseImg($pathToImage);
+            // 7. Image Processing (Only for images)
+            $imageExtensions = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
+            if (\in_array($extension, $imageExtensions)) {
+                try {
+                    self::processImageWithImagick($pathToImage);
+                    self::optimiseImg($pathToImage);
+                } catch (Exception $e) {
+                    // Handle image processing error (optional)
+                }
+            }
 
-            $saveFiles['fileName'] = $fileName;
+            // We push the values into their respective keys independently
+            $saveFiles['fileName'][] = $fileName;
             $saveFiles['filePath'] = $pathToImage;
         }
 
@@ -153,34 +158,42 @@ class FileUploader
 
     public static function fileUploadSingle(string $fileLocation, string $formInputName): array
     {
-        // Check if file is uploaded
+        // Initialize return array
+        $saveFiles = [];
+
+        // 1. Check if file is uploaded
         if (!isset($_FILES[$formInputName]) || $_FILES[$formInputName]['error'] === UPLOAD_ERR_NO_FILE) {
             Utility::throwError(400, 'No file was uploaded');
         }
 
-        $fileName = basename($_FILES[$formInputName]['name']);
-        $fileName = str_replace([' ', ','], '', $fileName);
-        $fileInfo = pathinfo($fileName);
-        $baseName = preg_replace('/_+/', '_', preg_replace('/[().]/', '_', $fileInfo['filename']));
-        $extension = strtolower($fileInfo['extension']);
-        $fileName = time() . '_' . $baseName . '.' . $extension;
-        $fileTemp = $_FILES[$formInputName]['tmp_name'];
-        $fileSize = $_FILES[$formInputName]['size'];
-        $fileError = $_FILES[$formInputName]['error'];
-        $pathToImage = "$fileLocation$fileName";
-
         // Handle upload errors
         self::ValidateFile($formInputName);
 
-        // If a virus scan API key is provided, initialize the virus scan
-        if ($_ENV['FILE_UPLOAD_CLOUDMERSIVE']) {
+        // 3. Sanitize Name
+        $rawName = basename($_FILES[$formInputName]['name']);
+        $fileInfo = pathinfo($rawName);
+        $extension = strtolower($fileInfo['extension'] ?? '');
+
+        // Clean the filename (standardized regex)
+        $baseName = $fileInfo['filename'];
+        $baseName = preg_replace('/[^\w-]/', '_', $baseName);
+        $baseName = preg_replace('/_+/', '_', $baseName);
+
+        // Add uniqid for safety
+        $fileName = uniqid() . '_' . time() . '_' . $baseName . '.' . $extension;
+
+        $fileTemp = $_FILES[$formInputName]['tmp_name'];
+        $fileSize = $_FILES[$formInputName]['size'];
+        $pathToImage = $fileLocation . $fileName;
+
+        // 4. Virus Scan
+        if (isset($_ENV['FILE_UPLOAD_CLOUDMERSIVE'])) {
             new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
         }
 
-
-        // Validate file
-        // Validate file
+        // 5. Validation
         $allowedFormats = ['png', 'jpg', 'gif', 'jpeg', 'doc', 'pdf', 'docx', 'heic', 'mpeg'];
+
         if (!in_array($extension, $allowedFormats)) {
             throw new ValidationException('IMAGE FORMAT - Format must be PNG, JPG, GIF, HEIC, DOC, PDF, MPEG or JPEG.');
         }
@@ -189,23 +202,25 @@ class FileUploader
             throw new ValidationException('Error Processing Request - File size must not exceed 10MB');
         }
 
+        // 6. Move File
         if (!move_uploaded_file($fileTemp, $pathToImage)) {
             $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
             throw new ValidationException('Error Processing Request - Image was not successfully uploaded');
         }
 
-        // Resize and crop
-
-        // Resize and crop .. ONLY DO THIS IF THE EXTENSION IS NOT DOC OR PDF 
-
-        if (in_array($extension, ['png', 'jpg', 'gif', 'jpeg', 'heic'])) {
-
-            self::processImageWithImagick($pathToImage);
-
-            self::optimiseImg($pathToImage);
+        // 7. Image Processing (ONLY for images)
+        // Good job on this check - this is critical!
+        $imageExtensions = ['png', 'jpg', 'gif', 'jpeg', 'heic'];
+        if (in_array($extension, $imageExtensions)) {
+            try {
+                self::processImageWithImagick($pathToImage);
+                self::optimiseImg($pathToImage);
+            } catch (\Exception $e) {
+                // Optional: Log error, but file is already saved, so we can proceed
+            }
         }
 
-
+        // 8. Return formatted array
         $saveFiles['fileName'] = $fileName;
         $saveFiles['filePath'] = $pathToImage;
 

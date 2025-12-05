@@ -476,16 +476,13 @@ function checkInput($data): mixed
 {
     if ($data !== null) {
         $data = trim($data);
-        $data = stripslashes($data);
-        $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
         $data = strip_tags($data);
-        $data = preg_replace('/[^0-9A-Za-z.@\s_-]/', '', $data);
+        $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+        $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}]/u', '', $data);
 
         return $data;
     } else {
         return msgException(406, 'problem with your entry');
-
-        return null;
     }
 }
 

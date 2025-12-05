@@ -1,25 +1,34 @@
 <?php 
-
-
 /**
  * Convert an integer to its English word representation.
  *
  * @param int $number
  * @return string
  */
-function number2word(int $number): string
-{
-    if ($number === 0) return 'zero';
 
-    $f = new NumberFormatter('en', NumberFormatter::SPELLOUT);
+function number2word(int $num) {
+    $words = [
+        0 => 'zero', 1 => 'one', 2 => 'two', 3 => 'three', 4 => 'four',
+        5 => 'five', 6 => 'six', 7 => 'seven', 8 => 'eight', 9 => 'nine',
+        10 => 'ten', 11 => 'eleven', 12 => 'twelve', 13 => 'thirteen',
+        14 => 'fourteen', 15 => 'fifteen', 16 => 'sixteen',
+        17 => 'seventeen', 18 => 'eighteen', 19 => 'nineteen',
+        20 => 'twenty', 30 => 'thirty', 40 => 'forty', 50 => 'fifty',
+        60 => 'sixty', 70 => 'seventy', 80 => 'eighty', 90 => 'ninety'
+    ];
 
-    // Handle negative numbers
-    if ($number < 0) {
-        return 'minus ' . $f->format(abs($number));
-    }
+    if ($num < 20) return $words[$num];
+    if ($num < 100) return $words[10 * floor($num / 10)] . ($num % 10 ? ' ' . $words[$num % 10] : '');
+    if ($num < 1000) return $words[floor($num / 100)] . ' hundred ' . ($num % 100 ? number2word($num % 100) : '');
+    if ($num < 1000000) return number2word(floor($num / 1000)) . ' thousand ' . ($num % 1000 ? number2word($num % 1000) : '');
+    if ($num < 1000000000) return number2word(floor($num / 1000000)) . ' million ' . ($num % 1000000 ? number2word($num % 1000000) : '');
 
-    return $f->format($number);
+    return number2word(floor($num / 1000000000)) . ' billion ' . ($num % 1000000000 ? number2word($num % 1000000000) : '');
 }
+
+
+
+
 
 /**
  * Convert an integer to its ordinal English word representation.
