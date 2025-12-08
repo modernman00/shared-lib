@@ -116,7 +116,7 @@ class SubmitPostData
 
         // **File Handling Refactor:** Check if file key exists and has an uploaded file.
         // We assume a single file input OR a multiple input but only checking the first slot [0].
-        if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
+        if (isset($_FILES[$fileName]) && \is_array($_FILES[$fileName])&& !empty($_FILES[$fileName]['name'][0]) ) {
             $fileData = $_FILES[$fileName];
 
             // Check if it's a multiple-file array structure OR a single file structure
@@ -129,9 +129,11 @@ class SubmitPostData
                 // Assuming process handles single/multi file upload structure
                 $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
             }
+
+            $sanitisedData = $sanitisedData['sanitisedData'];
         }
 
-        $sanitisedData = $sanitisedData['sanitisedData'];
+   
 
         return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedData) {
             $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);

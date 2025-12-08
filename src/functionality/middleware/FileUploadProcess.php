@@ -10,7 +10,7 @@ class FileUploadProcess
 {
 
   // define a property call pathlocation 
-  private static string $filePath;
+  private static string $filePath = '';
 
   public static function process(array $sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, $nested = 'true'): array
   {
