@@ -82,7 +82,6 @@ class Select extends Db
             'SELECT_GREATER_EQUAL' => "SELECT * FROM $table WHERE $identifier1 > ? OR $identifier2 = ? $orderBy $limit",
             'SELECT_COUNT_TWO' => "SELECT * FROM $table WHERE $identifier1 = ? AND $identifier2 = ?",
             'SELECT_COUNT_ONE' => "SELECT * FROM $table WHERE $identifier1 = ?",
-            'SELECT_COUNT_ALL' => "SELECT * FROM $table",
             'SELECT_DISTINCT' => "SELECT DISTINCT $identifier1, $identifier2 FROM $table $orderBy $limit",
             'SELECT_AVERAGE' => "SELECT AVG($column) FROM $table WHERE $identifier1 = ?",
             'SELECT_AVERAGE_ALL' => "SELECT AVG($column) as total FROM $table",
