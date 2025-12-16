@@ -44,5 +44,10 @@
     "mockery/mockery": "^1.6",
     "php-mock/php-mock": "^2.6",
     "php-mock/php-mock-phpunit": "^2.13"
-  }
+  },
+    "config": {
+        "platform": {
+            "php": "8.4.0"
+        }
+    }
 }

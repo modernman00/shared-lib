@@ -580,7 +580,7 @@ class BuildFormBulma
                             <div class="field $name" id="{$name}_div">
                                 <label for="{$name}" class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                    <input class="input $name input is-medium" type="$labelType" data-original="$value" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>
