@@ -144,7 +144,7 @@ class BuildFormBStrap
                                     $fontAwesome
                                 </span>
                             </div>
-                            <input type="text" class="form-control" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey" id="{$nameKey}" value="$value">
+                            <input type="text" class="form-control" autocomplete="new-$nameKey" placeholder="$var" required name="$nameKey" id="{$nameKey}" data-original="$value" value="$value">
                             <div class="input-group-append">
                                 <span class="input-group-text">
                                     <i class="fas fa-check fa-xs"></i>
@@ -161,7 +161,7 @@ class BuildFormBStrap
                 echo <<<HTML
                         <div class="mb-3 $nameKey" id="{$nameKey}_div">
                              <label for="{$nameKey}" class="form-label">$var</label>
-                        <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" id="{$nameKey}" value="$value">
+                        <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" data-original="$value" id="{$nameKey}" value="$value">
 
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>
@@ -172,7 +172,7 @@ class BuildFormBStrap
                 echo <<<HTML
                     <div class="form-group">
                         <label for="{$nameKey}" class="form-label"><b>$var</b></label>
-                        <select class="form-select form-select-lg mb-3" name="$nameKey" id="{$nameKey}">
+                        <select class="form-select form-select-lg mb-3" name="$nameKey" data-original="$value" value="$value" id="{$nameKey}">
                             <option value="" disabled selected>Select an option</option>
                     HTML;
                 foreach ($options as $option) {
@@ -192,7 +192,7 @@ class BuildFormBStrap
                         <div class="mb-3" id="{$nameKey}_div">
                             <label for="{$nameKey}" class="form-label">
                                 <b>{$this->entValue[$i][1]}</b></label>
-                            <textarea class="form-control" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <textarea class="form-control" autocomplete="new-$nameKey" data-original="$value" name="{$nameKey}" id="{$nameKey}">$value</textarea>
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         </div>
@@ -203,7 +203,7 @@ class BuildFormBStrap
 
                          <div class="mb-3">
                             <label for="{$nameKey}" class="form-label">Email address</label>
-                            <input type="email" class="form-control $nameKey" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}" value="$value">
+                            <input type="email" class="form-control $nameKey" data-original="$value" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}" value="$value">
                             <div id="emailHelp" class="form-text"></div>
                         </div>
 
@@ -265,7 +265,7 @@ class BuildFormBStrap
                         <div class="row">
                             <div class="col">
                                 <div class="form-group">
-                                    <select class="form-control form-control-lg" name="day" id="day">
+                                    <select class="form-control form-control-lg" data-original="$value" name="day" id="day">
                                         <option selected value="select">Day</option>
 
                     HTML;
@@ -297,7 +297,7 @@ class BuildFormBStrap
                     <div class="form-group">
                         <div class="form-group">
                             <label for="year" class="form-label">Year</label>
-                            <select class="form-control form-control-lg" name="year" id="year">
+                            <select class="form-control form-control-lg" data-original="$value" name="year" id="year">
                                 <option selected value="select">Year</option>
 
                     HTML;
@@ -476,7 +476,7 @@ class BuildFormBStrap
                             <div class="field $name" id="{$name}_div">
                                 <label for="{$name}" class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$name" id="{$name}"
+                                    <input class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" data-original="$value" value="$value" minlength="1" name="$name" id="{$name}"
                                     placeholder="$placeholder" autocomplete="$name" $multiple>
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
@@ -489,7 +489,7 @@ class BuildFormBStrap
                         <div class="mb-3" id="{$nameKey}_div">
                             <label for="{$nameKey}" class="form-label">
                                 <b>$cleanLabel</b></label>
-                            <textarea class="form-control-lg" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <textarea class="form-control-lg" autocomplete="new-$nameKey" data-original="$value" name="{$nameKey}" id="{$nameKey}">$value</textarea>
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         </div>
@@ -501,7 +501,7 @@ class BuildFormBStrap
                             <label for="$id" class="form-label"><b>$cleanLabel</b></label>
                             <div class="input-group mb-3">
                                
-                                <input type="$labelType" class="form-control is-medium" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                <input type="$labelType" class="form-control is-medium" data-original="$value" value="$value" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
                             </div>
                             <small id="{$name}_help" class="form-text text-muted"></small>
                             <small id="{$name}_error" class="form-text text-danger"></small>
@@ -542,7 +542,7 @@ class BuildFormBStrap
                                     <label for="$id" class="form-label"><b>$cleanLabel</b></label>
                                     <div class="input-group mb-3">
                                         
-                                        <select class="form-control form-control-lg" id="$id" name="$nestedName">                                                           
+                                        <select class="form-control form-control-lg" id="$id" name="$nestedName" data-original="$value">                                                           
                             HTML;
 
                         if ($this->entValue[$i]['options'][$y]) {
@@ -576,7 +576,7 @@ class BuildFormBStrap
                                 <div class="form-group $name" id="{$name}_div">
                                 <div class="input-group mb-3">
                                     
-                                    <input type="text" class="form-control is-medium" id="{$name}" name="$nestedName" placeholder="$cleanLabel">
+                                    <input type="text" class="form-control is-medium" data-original="$value" value="$value" id="{$name}" name="$nestedName" placeholder="$cleanLabel">
                                 </div>
                                 <small id="{$name}_help" class="form-text text-muted"></small>
                                 <button class="btn btn-success btn-lg btn-block" id="{$name}_button">Search</button>
@@ -601,7 +601,7 @@ class BuildFormBStrap
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                        <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" name="$nestedName">
+                                        <select class="form-select form-select-lg mb-3" arial-label='Default' id="$id" data-original="$value" name="$nestedName">
                                             <option value='$value'> 
                                                 <span class="option_text">Choose </span>
                                                 </option>
@@ -658,7 +658,7 @@ class BuildFormBStrap
                         <div class="mb-3" id="{$nameKey}_div">
                             <label for="{$nameKey}" class="form-label">
                                 <b>$cleanLabel</b></label>
-                            <textarea class="form-control-lg" autocomplete="new-$nameKey"  name="{$nameKey}" id="{$nameKey}">$value</textarea>
+                            <textarea class="form-control-lg" autocomplete="new-$nameKey" data-original="$value" name="{$nameKey}" id="{$nameKey}">$value</textarea>
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
                             <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         </div>

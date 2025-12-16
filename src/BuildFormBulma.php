@@ -118,7 +118,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control">
-                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" value="$value"  id="{$nameKey}" required>
+                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" data-original="$value" value="$value"  id="{$nameKey}" required>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -130,7 +130,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
+                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
                             <span class="icon is-small is-left">
                                 $fontAwesome
                             </span>
@@ -147,7 +147,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control">
-                            <input type="number" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
+                            <input type="number" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -158,7 +158,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey" ><b>$var</b></label>
                         <div class="control">
-                            <input type="date" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" value="$value">
+                            <input type="date" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -171,7 +171,7 @@ class BuildFormBulma
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control">
                             <div class="select">
-                                <select name="$nameKey">
+                                <select name="$nameKey" data-original="$value">
                     HTML;
                 foreach ($options as $option) {
                     echo "<option value=\"$option\">$option</option>";
@@ -191,7 +191,7 @@ class BuildFormBulma
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control has-icons-left">
                             <div class="select">
-                                <select name="$nameKey">
+                                <select name="$nameKey" data-original="$value">
                     HTML;
                 for ($y = 1; $y < count($this->entValue[$i]); ++$y) {
                     echo '<option>' . $this->entValue[$i][$y] . '</option>';
@@ -212,7 +212,7 @@ class BuildFormBulma
                     <div class="field">
                         <label for="$nameKey" class="label" ><b>{$this->entValue[$i][1]}</b></label>
                         <div class="control">
-                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$value</textarea>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" data-original="$value" row="10">$value</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -223,7 +223,7 @@ class BuildFormBulma
                     <div class="field">
                         <label for="email" class="label" ><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="email" id="{$nameKey}" placeholder="alex@gmail.com" class="input $nameKey is-medium" autocomplete="username" name="$nameKey" value="$value">
+                            <input type="email" id="{$nameKey}" placeholder="alex@gmail.com" class="input $nameKey is-medium" autocomplete="username" data-original="$value" name="$nameKey" value="$value">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-envelope"></i>
                             </span>
@@ -240,7 +240,7 @@ class BuildFormBulma
                     <div class="field">
                         <label for class="label"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="password" id="{$nameKey}" placeholder="password" autocomplete="new-password" class="input $nameKey is-medium" name="$nameKey">
+                            <input type="password" id="{$nameKey}" placeholder="password" autocomplete="new-password" class="input $nameKey is-medium"  name="$nameKey">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-lock"></i>
                             </span>
@@ -338,7 +338,7 @@ class BuildFormBulma
                                         <div class="control">
                                             <div class="select is-fullwidth is-medium">
                                                 <select name="day" id="day">
-                                                    <option selected value="select">Day</option>
+                                                    <option selected value="select" data-original="$value">Day</option>
                     HTML;
                 foreach ($this->createDay() as $day) {
                     echo "<option value=\"$day\">$day</option>";
@@ -436,7 +436,7 @@ class BuildFormBulma
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
-                                        <select class="input is-medium" id="$id" name="$name">
+                                        <select class="input is-medium" id="$id" name="$name" data-original="$value">
                                         
                             HTML;
 
@@ -466,7 +466,7 @@ class BuildFormBulma
                                 
 
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input for="{$name}" class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" name="$name">
+                                    <input for="{$name}" class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" data-original="$value" name="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                 </div>
@@ -503,7 +503,7 @@ class BuildFormBulma
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name">
+                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name" data-original="$value">
                                                         
                                                         <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
                                 HTML;
@@ -519,7 +519,7 @@ class BuildFormBulma
                                 HTML;
                         } else {
                             echo <<<HTML
-                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                                    <input type="text" class="input is-primary" maxlength="30" minlength="1" data-original="$value" name="$name" id="$id" placeholder="$placeholder" autocomplete="$name">
                                 HTML;
                         }
                         echo <<<HTML
@@ -569,7 +569,7 @@ class BuildFormBulma
                     <div class="field" id="{$name}_div">
                         <label for="$name" class="label is-medium" ><b>$cleanLabel</b></label>
                         <div class="control is-expanded">
-                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$name}" required name="$name" row="10">$value</textarea>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey" data-original="$value"  id="{$name}" required name="$name" row="10">$value</textarea>
                             <p class="help" id="{$name}_help"></p>
                             <p class="help" id="{$name}_error"></p>
                         </div>
@@ -623,7 +623,7 @@ class BuildFormBulma
                                 <label for="{$name}" class="label is-medium" ><b>$cleanLabel</b></label>
                                 <div class="control has-icons-left has-icons-right">
                                     <div class="select is-fullwidth is-medium">
-                                        <select class="input is-medium" id="$id" name="$name">
+                                        <select class="input is-medium" id="$id" data-original="$value" name="$name">
                                         
                             HTML;
 
@@ -653,7 +653,7 @@ class BuildFormBulma
                                 
 
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input for="{$name}" class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" name="$name">
+                                    <input for="{$name}" class="input $name input is-medium" id="{$name}" type="text" placeholder="$cleanLabel" data-original="$value" name="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                 </div>
@@ -690,7 +690,7 @@ class BuildFormBulma
                             HTML;
                         if ($this->entValue[$i]['options'][$y]) {
                             echo <<<HTML
-                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name">
+                                                    <select class="select is-primary" arial-label='Default' id="$id" name="$name" data-original="$value">
                                                         
                                                         <option value='$value'> <span style="font-size: 20px;">Choose </span></option>
                                 HTML;
@@ -757,7 +757,7 @@ class BuildFormBulma
                     <div class="field" id="{$nameKey}_div">
                         <label for="$nameKey" class="label is-medium" ><b>$cleanLabel</b></label>
                         <div class="control is-expanded">
-                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" row="10">$placeholder</textarea>
+                            <textarea class="textarea is-link" autocomplete="new-$nameKey"  id="{$nameKey}" required name="$nameKey" data-original="$value" row="10">$placeholder</textarea>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -768,7 +768,7 @@ class BuildFormBulma
                             <div class="field $name" id="{$name}_div">
                                 <label class="label is-medium"><b>$cleanLabel</b></label>
                                 <div class="control is-expanded $hasIconLeft">
-                                    <input for="{$name}" class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$nestedName" id="$id" placeholder="$placeholder" autocomplete="$name">
+                                    <input for="{$name}" class="input $name input is-medium" type="$labelType" value="$value" maxlength="30" minlength="1" name="$nestedName" data-original="$value" id="$id" placeholder="$placeholder" autocomplete="$name">
                                     <span class="icon is-small is-left">$icon</span>
                                     <p class="help" id="{$name}_help"></p>
                                     <p class="help error" id="{$name}_error"></p>

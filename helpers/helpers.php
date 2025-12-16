@@ -457,6 +457,8 @@ function msgException(int $code, mixed $msg): void
     http_response_code($code);
     echo json_encode([
       'message' => $msg,
+      'status' => 'error',
+      'code' => $code,
     ]);
 }
 
