@@ -120,14 +120,14 @@ class BuildFormBStrap
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';
 
-            $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]));
+            $var = preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]);
             $nameKey = $this->entKey[$i];
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                             <div class='mb-3 $nameKey ' id='{$nameKey}_div'>
                                 <label for='{$nameKey}' class='form-label'><b>$var</b></label>
-                                <input type='text' class='form-control' autocomplete='new-$nameKey' placeholder='PLEASE ENTER YOUR $var' name='$nameKey' id='{$nameKey}' value='$value' required>
+                                <input type='text' class='form-control $nameKey' autocomplete='new-$nameKey' placeholder='Please enter your $var' data-original="$value"  name='$nameKey' id='{$nameKey}' value='$value' required>
                                 <small id='{$nameKey}_help' class='form-text text-muted'></small>
                                 <small id='{$nameKey}_error' class='form-text text-danger'></small>
                             </div>
@@ -201,19 +201,20 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i] === 'email') {
                 echo <<<HTML
 
-                         <div class="mb-3">
+                         <div class="mb-3" id='{$nameKey}_div'>
                             <label for="{$nameKey}" class="form-label">Email address</label>
                             <input type="email" class="form-control $nameKey" data-original="$value" autocomplete="username" placeholder="" name="$nameKey" id="{$nameKey}" value="$value">
-                            <div id="emailHelp" class="form-text"></div>
+                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
+                        <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         </div>
 
                     HTML;
             } elseif ($this->entValue[$i] === 'password') {
                 echo <<<HTML
 
-                    <div class="mb-3 form-check">
+                    <div class="mb-3" id='{$nameKey}_div'>
                         <label for="{$nameKey}" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="{$nameKey}" name="$nameKey" placeholder="Enter your password" autocomplete="new-password" value="$value">
+                        <input type="password" class="form-control $nameKey" data-original="$value" id="{$nameKey}" name="$nameKey" placeholder="Enter your password" autocomplete="new-password" value="$value">
                         <small id="{$nameKey}_help" class="form-text text-muted">Please enter a strong password.</small>
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                     </div>
