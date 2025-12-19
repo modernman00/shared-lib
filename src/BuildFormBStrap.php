@@ -121,12 +121,13 @@ class BuildFormBStrap
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';
 
             $var = preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]);
+            $foroLabel = ucfirst(strtolower($var));
             $nameKey = $this->entKey[$i];
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                             <div class='mb-3 $nameKey ' id='{$nameKey}_div'>
-                                <label for='{$nameKey}' class='form-label'><b>$var</b></label>
+                                <label for='{$nameKey}' class='form-label'>$foroLabel</label>
                                 <input type='text' class='form-control $nameKey' autocomplete='new-$nameKey' placeholder='Please enter your $var' data-original="$value"  name='$nameKey' id='{$nameKey}' value='$value' required>
                                 <small id='{$nameKey}_help' class='form-text text-muted'></small>
                                 <small id='{$nameKey}_error' class='form-text text-danger'></small>
