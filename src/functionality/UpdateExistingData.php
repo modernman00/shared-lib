@@ -91,14 +91,16 @@ class UpdateExistingData
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
-        string $generalFileTable = 'images'
+        string $generalFileTable = 'images',
+        string $isRecaptcha = 'true',
+        ?array $postUpdateData = null
 
     ): mixed {
         CorsHandler::setHeaders();
 
         try {
-            $input = GetRequestData::getRequestData();
-            Recaptcha::verifyCaptcha($input);
+            $input = $postUpdateData ? $postUpdateData : GetRequestData::getRequestData();
+               if($isRecaptcha === 'true') Recaptcha::verifyCaptcha($input);
           
 
             // Token check can be re‑enabled if CSRF validation is required
@@ -118,9 +120,11 @@ class UpdateExistingData
                 $sanitisedData[$identifier] = $identifierValue;
             }
 
+             $sanitisedDataNew = $sanitisedData['sanitisedData'];
+
             // Update the blog next
             $update = new Update($table);
-            $update->updateMultiplePOST($sanitisedData, $identifier);
+            $update->updateMultiplePOST($sanitisedDataNew, $identifier);
 
             Utility::msgSuccess(200, 'Update was successful');
             return true;

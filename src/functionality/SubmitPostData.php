@@ -130,13 +130,13 @@ class SubmitPostData
                 $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
             }
 
-            $sanitisedData = $sanitisedData['sanitisedData'];
+            $sanitisedDataNew = $sanitisedData['sanitisedData'];
         }
 
    
 
-        return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedData) {
-            $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
+        return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedDataNew) {
+            $lastId = SubmitForm::submitForm($table, $sanitisedDataNew, $pdo);
 
             // Utility::msgSuccess MUST call exit() or die()
             // Utility::msgSuccess(201, 'Record created successfully', $lastId);
@@ -194,9 +194,9 @@ class SubmitPostData
                 $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable);
             }
         }
-$sanitisedData = $sanitisedData['sanitisedData'];
-        return self::handleTransaction(function (PDO $pdo) use ($sanitisedData, $allowedTables) {
-            self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
+$sanitisedDataNew = $sanitisedData['sanitisedData'];
+        return self::handleTransaction(function (PDO $pdo) use ($sanitisedDataNew, $allowedTables) {
+            self::insertMultipleTables($sanitisedDataNew, $allowedTables, $pdo);
             // Utility::msgSuccess MUST call exit() or die()
             Utility::msgSuccess(201, 'Record created successfully');
             return true; // Unreachable if msgSuccess exits.
@@ -289,16 +289,16 @@ $sanitisedData = $sanitisedData['sanitisedData'];
                     // This is the simplest check for a single file upload structure
                     $result = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
 
-                    $sanitisedData = $result['sanitisedData'];
+                    $sanitisedDataNew = $result['sanitisedData'];
                     $filePath = $result['filePath'];
                 }
             }
 
-            $lastId = SubmitForm::submitForm($table, $sanitisedData);
+            $lastId = SubmitForm::submitForm($table, $sanitisedDataNew);
 
             // get the file content 
             $fileContent = file_get_contents($filePath);
-            $fileName = $sanitisedData["$fileName"];
+            $fileName = $sanitisedDataNew["$fileName"];
             // Define the displayed name for the recipient (e.g., 'CV.docx')
             $displayFileName = substr($fileName, 11); // Removes the timestamp prefix
 

@@ -50,7 +50,8 @@ class Sanitise
         }
 
         // Remove non-essential fields
-        unset($this->formData['submit']);
+        \unsetPostData  ($this->formData, ['submit', 'button']);
+
     }
 
     /**
