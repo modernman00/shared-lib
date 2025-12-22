@@ -74,13 +74,15 @@ class LoginFunctionality
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login(bool $issueJwt = true, string $returnType = 'json'): mixed
+    public static function login($isCaptcha =false, bool $issueJwt = true, string $returnType = 'json')
     {
         try {
             $input = GetRequestData::getRequestData();
             if (!$input) {
                 throw new NotFoundException('There was no post data');
             }
+
+            p($input);
 
             // Allow flexibility between 'email' and 'username' login styles
             $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
@@ -91,7 +93,9 @@ class LoginFunctionality
 
 
             CorsHandler::setHeaders();
+            if($isCaptcha){
             Recaptcha::verifyCaptcha($input);
+            }
             Limiter::limit($email);
 
             // Authenticate user, send code and generate JWT tokens if requested
@@ -119,13 +123,14 @@ class LoginFunctionality
 
             // Handle response format
             if ($returnType === 'json') {
-                return msgSuccess(200, $msg, $token);
+                msgSuccess(200, $msg, $token);
             } else {
                 return ['message' => $msg, 'code' => $token, 'id' => $userId];
             }
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
-            return showError($th);
+            showError($th);
+            return false;
         }
     }
 }

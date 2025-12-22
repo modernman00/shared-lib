@@ -65,8 +65,8 @@ class LoginUtility
     public static function useEmailToFindData($inputData)
     {
         $email = $inputData['email'];
-        $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no'];
-        $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: 'account', identifier1: 'email');
+        $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no'] ??'not_set';
+        $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: $_ENV['DB_TABLE_LOGIN'], identifier1: 'email');
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
@@ -226,7 +226,7 @@ class LoginUtility
     /**
      * Log login attempts (success or failure).
      */
-    public static function logAudit(string $userId, string $email, string $status, string $ip, string $userAgent): void
+    public static function logAudit(mixed $userId, string $email, string $status, string $ip, string $userAgent): void
     {
         $data = [
             'user_id'    => $userId,

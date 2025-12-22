@@ -121,13 +121,13 @@ class BuildFormBStrap
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';
 
             $var = preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]);
-            $foroLabel = ucfirst(strtolower($var));
+            $forLabel = ucfirst(strtolower($var));
             $nameKey = $this->entKey[$i];
 
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                             <div class='mb-3 $nameKey ' id='{$nameKey}_div'>
-                                <label for='{$nameKey}' class='form-label'>$foroLabel</label>
+                                <label for='{$nameKey}' class='form-label'>$forLabel</label>
                                 <input type='text' class='form-control $nameKey' autocomplete='new-$nameKey' placeholder='Please enter your $var' data-original="$value"  name='$nameKey' id='{$nameKey}' value='$value' required>
                                 <small id='{$nameKey}_help' class='form-text text-muted'></small>
                                 <small id='{$nameKey}_error' class='form-text text-danger'></small>
@@ -161,7 +161,7 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i] === 'date') {
                 echo <<<HTML
                         <div class="mb-3 $nameKey" id="{$nameKey}_div">
-                             <label for="{$nameKey}" class="form-label">$var</label>
+                             <label for="{$nameKey}" class="form-label">$forLabel</label>
                         <input type="date" class="form-control $nameKey" autocomplete="username" placeholder="email" name="$nameKey" data-original="$value" id="{$nameKey}" value="$value">
 
                             <small id="{$nameKey}_help" class="form-text text-muted"></small>
@@ -172,7 +172,7 @@ class BuildFormBStrap
                 $options = $this->entValue[$i];
                 echo <<<HTML
                     <div class="form-group">
-                        <label for="{$nameKey}" class="form-label"><b>$var</b></label>
+                        <label for="{$nameKey}" class="form-label"><b>$forLabel</b></label>
                         <select class="form-select form-select-lg mb-3" name="$nameKey" data-original="$value" value="$value" id="{$nameKey}">
                             <option value="" disabled selected>Select an option</option>
                     HTML;
@@ -262,7 +262,7 @@ class BuildFormBStrap
                 $divID = $this->entValue[$i];
                 echo <<<HTML
                     <div class="form-group" id="$divID">
-                        <label for="$nameKey" class="form-label"><b>$var</b></label>
+                        <label for="$nameKey" class="form-label"><b>$forLabel</b></label>
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                         <div class="row">
                             <div class="col">
@@ -322,7 +322,7 @@ class BuildFormBStrap
                 $inputId = $this->entValue[$i][3];
                 echo <<<HTML
                     <div class="form-group">
-                        <label for="$nameKey" class="form-label"><b>$var</b></label>
+                        <label for="$nameKey" class="form-label"><b>$forLabel</b></label>
                         <div class="row">
                             <div class="col">
                                 <div id="$sliderId"></div>
@@ -362,7 +362,7 @@ class BuildFormBStrap
                     $id = $name;
                     $error = $name . '_error';
                     $help = $name . '_help';
-                    $cleanLabel = strtoupper($label);
+                    $cleanLabel = ucfirst(strtolower($label));
                     $labelType = $this->entValue[$i]['inputType'][$y] ? $this->entValue[$i]['inputType'][$y] : '';
                     $icon = $this->entValue[$i]['icon'][$y] ?? '';
                     $hasIconLeft = (isset($this->entValue[$i]['icon'][$y]) ? 'has-icon-left' : '');
@@ -732,24 +732,24 @@ class BuildFormBStrap
             } elseif ($this->entValue[$i] === 'title') {
                 echo <<<HTML
                     <hr><br>
-                    <h1 id="{$nameKey}1" class="text-uppercase text-center text-primary">$var</h1><br>
+                    <h1 id="{$nameKey}1" class="text-uppercase text-center text-primary">$forLabel</h1><br>
                     HTML;
             } elseif ($this->entValue[$i] === 'subtitle') {
                 echo <<<HTML
-                    <h3 class="text-center text-primary">$var</h3>
+                    <h3 class="text-center text-primary">$forLabel</h3>
                     HTML;
             } elseif ($this->entValue[$i] === 'p') {
                 echo <<<HTML
-                    <p class="text-center text-primary">$var</p>
+                    <p class="text-center text-primary">$forLabel</p>
                     HTML;
             } elseif ($this->entValue[$i][0] === 'radio') {
-                $labelValue = strtoupper($this->entValue[$i][1]);
+                $labelValue = ucfirst(strtolower($this->entValue[$i][1]));
                 echo <<<HTML
                                 <hr>
 
-
+                        <b class="h6"> $labelValue</b>
                             <div class="form-check">
-                                <b class="h6">$labelValue</b>
+                               
                                 <input class="form-check-input" type="radio" name="{$this->entKey[$i]}" value="{$this->entValue[$i][2]}" id="{$this->entKey[$i]}_yes">
                                 <label class="form-check-label" for="{$this->entKey[$i]}_yes">
                                     {$this->entValue[$i][2]}
@@ -830,7 +830,7 @@ class BuildFormBStrap
                 }
                 echo <<<HTML
                     <div class="mb-3" id="{$nameKey}_div">
-                        <label for="$nameKey" class="form-label"><b>$var</b></label>
+                        <label for="$nameKey" class="form-label"><b>$$forLabel</b></label>
                         <input class="form-control" type="file" id="$nameKey" name="{$this->entKey[$i]}" $multiple>
                         <small id="{$nameKey}_help" class="form-text text-muted"></small>
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
