@@ -19,12 +19,12 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData): bool
+    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData, ?string $table = null): bool
     {
         $textPassword = $inputData['password'];
         $dbPassword = $databaseData['password'];
         $id = $databaseData['id'];
-        $table = $_ENV['DB_TABLE_LOGIN'];
+        $tableDB = $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
@@ -41,9 +41,9 @@ class LoginUtility
         if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
             // If so, create a new hash, and replace the old one
             $newHash = hashPassword($textPassword);
-            $table = $_ENV['DB_TABLE_LOGIN'];
+            $tableDB = $_ENV['DB_TABLE_LOGIN'];
             // Update the password in the database
-            $update = new Update($table);
+            $update = new Update($tableDB);
             $result = $update->updateTable('password', $newHash, 'id', $id);
 
 
@@ -62,11 +62,12 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function useEmailToFindData($inputData)
+    public static function useEmailToFindData($inputData, ? string $table = null)
     {
         $email = $inputData['email'];
-        $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no'] ??'not_set';
-        $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: $_ENV['DB_TABLE_LOGIN'], identifier1: 'email');
+        $tableDB =  $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';
+        $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no']?? 'no provided';
+        $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: $tableDB, identifier1: 'email');
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
@@ -87,9 +88,10 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function checkIfEmailExist(string $email): mixed
+    public static function checkIfEmailExist(string $email, ?string $table = null): mixed
     {
-        $query = Select::formAndMatchQuery(selection: 'SELECT_COL_ID', table: 'account', identifier1: 'email', column: 'email');
+         $tableDB =  $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';
+        $query = Select::formAndMatchQuery(selection: 'SELECT_COL_ID', table: $tableDB, identifier1: 'email', column: 'email');
         $data = Select::selectCountFn2(query: $query, bind: [$email]);
 
         if (!$data) {
