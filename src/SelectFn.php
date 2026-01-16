@@ -110,7 +110,7 @@ class SelectFn extends Select
   /**
    * Selects two columns where identifier matches, with optional ordering and limit.
    */
-  public static function selectTwoColumnsById(string $table, string $column1, string $column2, string $identifier, string $identifierAnswer, string $orderBy = '', string $limit = ''): ?array
+  public static function selectTwoColumnsById(string $table, string $column1, string $column2, string $identifier, string $identifierAnswer, ?string $orderBy = null, ?string $limit = null): ?array
   {
     $query = parent::formAndMatchQuery(selection: 'SELECT_TWO_COLS_ID', table: $table, identifier1: $identifier, column: $column1, column2: $column2, orderBy: $orderBy, limit: $limit);
     return parent::selectFn2(query: $query, bind: [$identifierAnswer]);

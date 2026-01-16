@@ -597,6 +597,14 @@ function destroyCookie(): void
     }
 }
 
+/**
+ * Return the full URL to an asset in the /public/build directory.
+ * If in development, points to the Vite dev server.
+ * If not in development, uses the Vite manifest to determine the correct URL.
+ * @param string $path The relative path to the asset.
+ * @return string The full URL to the asset.
+ * @throws RuntimeException If the Vite manifest is not found, or if the given path is not found in the manifest.
+ */
 function viteAsset(string $path): string
 {    // If you're in development, point to the dev server
     $isDev = $_ENV['APP_ENV'] === 'local'; // Or use getenv(), or set a flag
@@ -682,6 +690,14 @@ function checkEmailExist($email): array|int|string
     return $result ? $result[0] : 0;
 }
 
+/**
+ * Hashes a given password using bcrypt with a specified cost.
+ * 
+ * @param string $password The password to hash
+ * @param int $cost The cost of the hash (default is 12)
+ * 
+ * @return string The hashed password
+ */
 function hashPassword($password, $cost = 12) {
   return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
 }
@@ -709,6 +725,15 @@ function unsetPostData($data, $keysToRemove) {
 
 }
 
+/**
+ * Recursively hashes all passwords in an array using the given hash function.
+ * 
+ * This function will hash any string value that has a key of 'password'.
+ * It will also recurse into any sub-arrays that may contain passwords.
+ * 
+ * @param array $data The array to hash passwords in
+ * @return array The array with hashed passwords
+ */
 function hashPasswordsInArray(array $data): array
     {
         foreach ($data as $key => $value) {
@@ -727,6 +752,15 @@ function hashPasswordsInArray(array $data): array
         return $data;
     }
 
+/**
+ * Prevents abuse by limiting the rate at which a user can react to
+ * certain stimuli. If the user reacts too quickly, an exception is thrown.
+ *
+ * This function should be used in conjunction with a try-catch block to
+ * handle the exception that is thrown when abuse is detected.
+ *
+ * @throws ForbiddenException If the user is reacting too quickly.
+ */
 function preventAbuseTogglin()
 {
     $lastReactionTime = $_SESSION['last_reaction_time'] ?? 0;
