@@ -70,19 +70,20 @@ class LoginFunctionality
      *
      * @param array $input login payload, must include 'email' or 'username'
      * @param string $captchaAction action label used for CAPTCHA verification
+     * 
      * @param bool $issueJwt whether to issue a JWT token upon successful login
+     * @param bool $isCaptcha whether to enforce CAPTCHA verification
+     * @param bool $isCaptchaV3 whether to use reCAPTCHA v3 verification
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login($isCaptcha =false, bool $issueJwt = true, string $returnType = 'json')
+    public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN')
     {
         try {
             $input = GetRequestData::getRequestData();
             if (!$input) {
                 throw new NotFoundException('There was no post data');
             }
-
-            p($input);
 
             // Allow flexibility between 'email' and 'username' login styles
             $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
@@ -93,8 +94,13 @@ class LoginFunctionality
 
 
             CorsHandler::setHeaders();
-            if($isCaptcha){
-            Recaptcha::verifyCaptcha($input);
+            // this is reCAPTCHA v3
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
+                Recaptcha::verifyCaptcha($input);
             }
             Limiter::limit($email);
 

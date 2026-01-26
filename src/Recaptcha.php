@@ -82,4 +82,66 @@ class Recaptcha
             Utility::showError($e);
         }
     }
+
+
+    /**
+     * 🚪 MAIN SECURITY GATE — reCAPTCHA Enterprise Assessment
+     *
+     * @throws RecaptchaException
+     */
+    public static function verifyCaptchaV3(string $token, string $expectedAction = 'LOGIN'): bool
+    {
+        if (empty($token)) {
+            throw new RecaptchaFailedException("🚨 Missing reCAPTCHA token — please try again.");
+        }
+
+        $projectId = $_ENV['RECAPTCHA_PROJECT_ID'] ?? '';
+        $apiKey    = $_ENV['RECAPTCHA_API_KEY'] ?? '';
+        $siteKey   = $_ENV['RECAPTCHA_SITE_KEY'] ?? '';
+
+        if (!$projectId || !$apiKey || !$siteKey) {
+            throw new RecaptchaBrokenException("🔐 Missing reCAPTCHA Enterprise configuration.");
+        }
+
+        $url = "https://recaptchaenterprise.googleapis.com/v1/projects/{$projectId}/assessments?key={$apiKey}";
+
+        // Payload for Google
+        $payload = [
+            'event' => [
+                'token'          => $token,
+                'siteKey'        => $siteKey,
+                'expectedAction' => $expectedAction,
+            ]
+        ];
+
+        try {
+            // Your Axios-style request wrapper
+            $response = sendPostRequest($url, $payload);
+
+            if (!isset($response['tokenProperties'])) {
+                throw new RecaptchaBrokenException("🤯 Invalid response from Google.");
+            }
+
+            // 1. Token validity
+            if (!$response['tokenProperties']['valid']) {
+                throw new RecaptchaFailedException("❌ Invalid reCAPTCHA token.");
+            }
+
+            // 2. Action match
+            if ($response['tokenProperties']['action'] !== $expectedAction) {
+                throw new RecaptchaCheatingException("⚠️ Suspicious action mismatch.");
+            }
+
+            // 3. Risk score
+            $score = $response['riskAnalysis']['score'] ?? 0;
+            if ($score < 0.7) {
+                throw new RecaptchaFailedException("🤖 High‑risk activity detected.");
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Utility::showError($e);
+            return false;
+        }
+    }
 }

@@ -69,10 +69,13 @@ class PasswordRecoveryService
      *
      * @param string $pathToSentCodeNotification path to the view file for token notification
      * @param bool $issueJwt whether to issue a JWT token during recovery
+     *   * @param bool $isCaptcha whether to enforce CAPTCHA verification
+     * @param bool $isCaptchaV3 whether to use reCAPTCHA v3 verification
+     * @param string $captchaAction action label used for CAPTCHA verification
      *
      * @throws NotFoundException if input is missing or user cannot be found
      */
-    public static function process(bool $issueJwt = true): mixed
+    public static function process(bool $issueJwt = true, $isCaptchaV3 = false,$isCaptcha = false, string $captchaAction = 'FORGOT'): mixed
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -81,7 +84,14 @@ class PasswordRecoveryService
                 throw new NotFoundException('There was no post data');
             }
 
-            Recaptcha::verifyCaptcha($input);      // Verify CAPTCHA against brute force
+            // this is reCAPTCHA v3
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
+                Recaptcha::verifyCaptcha($input);
+            }
             Limiter::limit($input['email']);         // Rate limit by email address
 
             if (empty($input)) {

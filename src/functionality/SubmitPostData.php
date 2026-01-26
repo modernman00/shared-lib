@@ -101,6 +101,8 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $newInput = null,
         bool $isCaptcha = true,
+        bool $isCaptchaV3 = false, 
+        string $captchaAction = 'SUBMIT',
         string $generalFileTable = 'images'
     ): mixed {
         try {
@@ -108,10 +110,14 @@ class SubmitPostData
 
         $input = GetRequestData::getRequestData();
 
-        if ($isCaptcha) {
-            Recaptcha::verifyCaptcha($input);
-        }
-
+        // this is reCAPTCHA v3
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
+                Recaptcha::verifyCaptcha($input);
+            }
         $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput);
 
         // **File Handling Refactor:** Check if file key exists and has an uploaded file.
@@ -170,6 +176,8 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $postData = null,
         bool $isCaptcha = true,
+            bool $isCaptchaV3 = false, 
+        string $captchaAction = 'SUBMIT',
         string $generalFileTable = 'images'
     ): mixed {
 
@@ -178,10 +186,14 @@ class SubmitPostData
 
         $input = $postData ?? GetRequestData::getRequestData();
 
-        if ($isCaptcha) {
-            Recaptcha::verifyCaptcha($input);
-        }
-
+        // this is reCAPTCHA v3
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
+                Recaptcha::verifyCaptcha($input);
+            }
         $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null);
 
         // File handling for multiple tables / multiple files
@@ -267,6 +279,8 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $newInput = null,
         bool $isCaptcha = true,
+        bool $isCaptchaV3 = false, 
+        string $captchaAction = 'SUBMIT',
         ?array $emailArray = null,
         string $generalFileTable = 'images'
     ): mixed {
@@ -274,8 +288,12 @@ class SubmitPostData
 
         try {
             $input = GetRequestData::getRequestData();
-
-            if ($isCaptcha) {
+ // this is reCAPTCHA v3
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
 
