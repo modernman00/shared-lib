@@ -4,17 +4,11 @@ declare(strict_types=1);
 
 namespace Src\functionality;
 
-use Src\{
-    CheckToken,
-    CorsHandler,
-    Exceptions\NotFoundException,
-    JwtHandler,
-    Limiter,
-    LoginUtility as CheckSanitise,
-    Recaptcha,
-    Token
-};
+use Src\Exceptions\NotFoundException;
 use Src\functionality\middleware\GetRequestData;
+use Src\functionality\middleware\AuthGateMiddleware;
+use Src\{Limiter, LoginUtility as CheckSanitise, Token, CorsHandler, JwtHandler, Recaptcha};
+
 
 /**
  * PasswordRecoveryService.
@@ -32,15 +26,14 @@ use Src\functionality\middleware\GetRequestData;
  */
 class PasswordRecoveryService
 {
-    public static function show($sGet, string $viewPath): void
+       public static function show(string $viewPath, string $identifySession = 'token'): void
     {
-        if (!isset($sGet)) {
-            \redirect($_ENV['401URL']);
-        }
-
-        // Optional: trigger view layer response (depends on app structure)
+        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
+        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
+        AuthGateMiddleware::enforce($certainSessionToCheck);
         view($viewPath);
     }
+
 
     /**
      * Handles a forgot-password recovery request and initiates token-based authentication.

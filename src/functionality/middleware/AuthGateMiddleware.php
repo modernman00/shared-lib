@@ -14,19 +14,24 @@ final class AuthGateMiddleware
      * @param string|null $fallbackView Optional fallback view path
      */
     public static function enforce(string $sessionPath, mixed $expectedValue = null): void
-    {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        $value = self::getSessionValue($sessionPath);
-
-        $isValid = isset($value) && ($expectedValue === null || $value === $expectedValue);
-
-        if (!$isValid) {
-            \redirect($_ENV['401URL']);
-        }
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
     }
+
+    $value = self::getSessionValue($sessionPath);
+
+    // Valid if:
+    // 1. The session key exists (not null)
+    // 2. AND either no expected value was provided OR it matches exactly
+    $isValid = $value !== null && ($expectedValue === null || $value === $expectedValue);
+
+    if (!$isValid) {
+        $fallback = $_ENV['401URL'] ?? '/401';
+        redirect($fallback);
+    }
+}
+
 
     /**
      * Retrieve a nested session value using dot notation.
@@ -35,7 +40,7 @@ final class AuthGateMiddleware
      *
      * @return mixed|null
      */
-    private static function getSessionValue(string $path): mixed
+    public static function getSessionValue(string $path): mixed
     {
         $segments = explode('.', $path);
         $value = $_SESSION;
