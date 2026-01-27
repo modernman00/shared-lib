@@ -33,11 +33,14 @@ class PasswordResetFunctionality
      *
      * @throws UnauthorisedException
      */
-    public static function show(string $viewPath): void
+     public static function show(string $viewPath, string $identifySession = 'token'): void
     {
-        AuthGateMiddleware::enforce('auth.codeVerified');
+        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
+        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
+        AuthGateMiddleware::enforce($certainSessionToCheck);
         view($viewPath);
     }
+
 
     /**
      * Handles a password change request using session-based email and token authentication.

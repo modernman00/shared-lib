@@ -11,9 +11,11 @@ use Src\{CheckToken, Limiter, LoginUtility as CheckSanitise, Token, Utility};
 
 class PwdRecoveryCodeFunctionality
 {
-    public static function show(string $viewPath): void
+      public static function show(string $viewPath, string $identifySession = 'token'): void
     {
-        AuthGateMiddleware::enforce('auth.identifyCust');
+        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
+        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
+        AuthGateMiddleware::enforce($certainSessionToCheck);
         view($viewPath);
     }
 
