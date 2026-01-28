@@ -7,7 +7,6 @@ namespace Src\functionality;
 use Src\{
     CorsHandler,
     LoginUtility,
-    FileUploader,
     Recaptcha,
     Utility,
     Update,
@@ -103,10 +102,9 @@ class UpdateExistingData
         try {
             $input = $postUpdateData ? $postUpdateData : GetRequestData::getRequestData();
                 // this is reCAPTCHA v3
-          if ($isRecaptcha && $isCaptchaV3) {
-                $token = $input['recaptchaTokenV3'];
-                Recaptcha::verifyCaptchaV3($token, $captchaAction);
-            }elseif ($isRecaptcha) {
+           if ($isCaptchaV3) {
+                Recaptcha::verifyCaptchaV3($input, $captchaAction);
+            }elseif ($isRecaptcha === 'true') {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
@@ -168,14 +166,13 @@ class UpdateExistingData
             }else{
                 $input = GetRequestData::getRequestData();
             }
-            Recaptcha::verifyCaptcha($input);
-            if ($isCaptcha && $isCaptchaV3) {
-                $token = $input['recaptchaTokenV3'];
-                Recaptcha::verifyCaptchaV3($token, $captchaAction);
-            }elseif ($isCaptcha) {
+           if ($isCaptchaV3) {
+                Recaptcha::verifyCaptchaV3($input, $captchaAction);
+            }elseif ($isCaptcha === 'true') {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
+
           
 
             // Token check can be re‑enabled if CSRF validation is required

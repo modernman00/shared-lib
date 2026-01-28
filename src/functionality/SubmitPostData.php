@@ -113,7 +113,7 @@ class SubmitPostData
         // this is reCAPTCHA v3
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaV3($input);
+                Recaptcha::verifyCaptchaV3($input, $captchaAction);
             }elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
@@ -289,9 +289,8 @@ class SubmitPostData
         try {
             $input = GetRequestData::getRequestData();
  // this is reCAPTCHA v3
-            if ($isCaptcha && $isCaptchaV3) {
-                $token = $input['recaptchaTokenV3'];
-                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+             if ($isCaptchaV3) {
+                Recaptcha::verifyCaptchaV3($input, $captchaAction);
             }elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
