@@ -19,6 +19,14 @@ class SelectFn extends Select
     return $result[0];
   }
 
+    // a single SQL query that returns the actual row(s) from the database where:column = ?AND either the email or the mobile matches the user’s input
+  public static function selectColumnWithEitherTwoInputs(string $table, string $column, string $identifier1, string $identifier2, string $columnAnswer, string $identifier1Answer, string $identifier2Answer): ?array
+  {
+    $query = "SELECT * FROM $table WHERE $column = ? AND ($identifier1 = ? OR $identifier2 = ?) LIMIT 1";
+    return parent::selectFn2(query: $query, bind: [$columnAnswer, $identifier1Answer, $identifier2Answer]);
+  }
+
+
   /**
    * Retrieves all rows from the specified table.
    *

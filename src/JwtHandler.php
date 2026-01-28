@@ -74,8 +74,8 @@ class JwtHandler
             'max'  => [30, 100],
         ]);
 
-    
-        $user = CheckSanitise::useEmailToFindData($sanitised,$table);
+
+        $user = CheckSanitise::useEmailToFindData($sanitised, $table);
 
         CheckSanitise::checkPassword($sanitised, $user, $table);
         // If user is found and password is verified, check if the user exists in the database
@@ -159,14 +159,14 @@ class JwtHandler
 
     public static function jwtEncodeDataAndSetCookies(array $user, string $cookieName = 'auth_forgot'): string
     {
-        $data = self::jwtEncodeData($user);
-        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? 'auth_forgot';
+        $jwt = self::jwtEncodeData($user);
+        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? $cookieName;
         $secure = (!in_array($_ENV['APP_ENV'], ['local', 'development']) && isset($_SERVER['HTTPS']));
         $httponly = true;
         $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
-        setcookie(
+        $success = setcookie(
             $cookieName,
-            $data,
+            $jwt,
             time() + (int) $_ENV['COOKIE_EXPIRE'],
             '/',
             $domain,
@@ -174,22 +174,37 @@ class JwtHandler
             $httponly
         );
 
-        return $data;
+        if (!$success) {
+            throw new \Exception("Failed to set auth cookie. Domain: {$domain}, Secure: " . ($secure ? 'true' : 'false'));
+        }
+
+        return $jwt;
     }
 
     // decode JWT token
     public static function jwtDecodeData(string $cookieName = 'auth_forgot'): object
     {
-        $token = $_COOKIE[$_ENV['COOKIE_NAME_GENERAL']] ?? $cookieName;
-        if (empty($token)) {
-            throw new UnauthorisedException('Missing authentication cookie 🍪');
+        $cookieName = $_COOKIE[$_ENV['COOKIE_NAME_GENERAL']] ?? $cookieName;
+        if (!isset($_COOKIE[$cookieName])) {
+            throw new UnauthorisedException("Missing authentication cookie '{$cookieName}' 🍪");
         }
+
+        $token = $_COOKIE[$cookieName];
+        // Basic sanity check before decode
+        if (substr_count($token, '.') !== 2) {
+            throw new UnauthorisedException("Invalid JWT format in cookie '{$cookieName}'");
+        }
+
         // Decode and verify JWT using RS256 algorithm
         $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
 
         $userId = $decoded->data->id ?? $decoded->id;
         $userEmail = $decoded->data->email ?? $decoded->email;
         $userParam = $userId ?? $userEmail;
+
+          if (!$userParam) {
+            throw new UnauthorisedException("JWT missing user identifier");
+        }
 
         self::fetchUser($userParam);
 
