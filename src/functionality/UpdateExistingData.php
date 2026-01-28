@@ -103,14 +103,13 @@ class UpdateExistingData
         try {
             $input = $postUpdateData ? $postUpdateData : GetRequestData::getRequestData();
                 // this is reCAPTCHA v3
-            if ($isRecaptcha && $isCaptchaV3) {
+          if ($isRecaptcha && $isCaptchaV3) {
                 $token = $input['recaptchaTokenV3'];
                 Recaptcha::verifyCaptchaV3($token, $captchaAction);
             }elseif ($isRecaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-          
 
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);           
@@ -155,7 +154,10 @@ class UpdateExistingData
         ?string $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
-        string $generalFileTable = 'images'
+        string $generalFileTable = 'images',
+         string $isCaptcha = 'true',
+        bool $isCaptchaV3 = false, 
+        string $captchaAction = 'UPDATE_DATA',
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -167,6 +169,13 @@ class UpdateExistingData
                 $input = GetRequestData::getRequestData();
             }
             Recaptcha::verifyCaptcha($input);
+            if ($isCaptcha && $isCaptchaV3) {
+                $token = $input['recaptchaTokenV3'];
+                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            }elseif ($isCaptcha) {
+                // this is reCAPTCHA v2
+                Recaptcha::verifyCaptcha($input);
+            }
           
 
             // Token check can be re‑enabled if CSRF validation is required

@@ -95,9 +95,8 @@ class LoginFunctionality
 
             CorsHandler::setHeaders();
             // this is reCAPTCHA v3
-            if ($isCaptcha && $isCaptchaV3) {
-                $token = $input['recaptchaTokenV3'];
-                Recaptcha::verifyCaptchaV3($token, $captchaAction);
+            if ($isCaptchaV3) {
+                Recaptcha::verifyCaptchaV3($input, $captchaAction);
             }elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
