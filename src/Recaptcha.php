@@ -89,10 +89,11 @@ class Recaptcha
      *
      * @throws RecaptchaException
      */
-    public static function verifyCaptchaV3(array $input, string $action): bool
+    public static function verifyCaptchaEnterprise(array $input, string $action): bool
     {
+           $expectedAction = $input['action'] ?? $action;
         $token = $input['siteKey'] ?? '';
-        $expectedAction = $input['action'] ?? $action;
+        
 
         if (empty($token)) {
             throw new RecaptchaFailedException("🚨 Missing reCAPTCHA token — please try again.");

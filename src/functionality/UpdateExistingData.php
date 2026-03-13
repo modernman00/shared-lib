@@ -103,7 +103,8 @@ class UpdateExistingData
             $input = $postUpdateData ? $postUpdateData : GetRequestData::getRequestData();
                 // this is reCAPTCHA v3
            if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaV3($input, $captchaAction);
+                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                unset($input['action'], $input['siteKey']);
             }elseif ($isRecaptcha === 'true') {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
@@ -167,7 +168,8 @@ class UpdateExistingData
                 $input = GetRequestData::getRequestData();
             }
            if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaV3($input, $captchaAction);
+                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                unset($input['action'], $input['siteKey']);
             }elseif ($isCaptcha === 'true') {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);

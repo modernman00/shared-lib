@@ -96,7 +96,8 @@ class LoginFunctionality
             CorsHandler::setHeaders();
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaV3($input, $captchaAction);
+                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                unset($input['action'], $input['siteKey']);
             }elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
