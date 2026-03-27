@@ -184,7 +184,7 @@ class JwtHandler
     // decode JWT token
     public static function jwtDecodeData(string $cookieName = 'auth_forgot'): object
     {
-        $cookieName = $_COOKIE[$_ENV['COOKIE_NAME_GENERAL']] ?? $cookieName;
+        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? $cookieName;
         if (!isset($_COOKIE[$cookieName])) {
             throw new UnauthorisedException("Missing authentication cookie '{$cookieName}' 🍪");
         }
