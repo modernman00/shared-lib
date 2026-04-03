@@ -21,7 +21,7 @@ class NotificationLogger
 
   // don’t throw if logging fails; logging must never break the core flow
   try {
-   SubmitPostData::submitToOneTablenImage('notification_logs', false);
+   SubmitPostData::submitToOneTablenImage('notification_logs',newInput: $_POST);
   } catch (\Throwable $e) {
    // swallow
   }

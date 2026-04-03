@@ -120,7 +120,14 @@ class Recaptcha
 
         try {
             // Your Axios-style request wrapper
-            $response = sendPostRequest($url, $payload);
+                    $client = new \GuzzleHttp\Client();
+            $postClient = $client->post($url, [
+                'json' => $payload,
+                'timeout' => 5,
+            ]);
+
+            $body = $postClient->getBody()->getContents();
+            $response = json_decode($body, true);
 
             if (!isset($response['tokenProperties'])) {
                 throw new RecaptchaBrokenException("🤯 Invalid response from Google.");
