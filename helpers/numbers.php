@@ -72,3 +72,31 @@ function generateRandomString(int $length = 16): string
     }
     return $randomString;
 }
+
+function sanitiseMobile(string $input): string
+{
+    // 1. Strip everything that isn't a digit or leading +
+    $number = preg_replace('/[^0-9+]/', '', $input);
+
+    // 2. Ensure only one + and only at the start
+    $number = preg_replace('/\+/', '', $number, -1);
+    if (str_starts_with($input, '+')) {
+        $number = '+' . $number;
+    }
+
+    // 3. Strip to max 15 digits (E.164 international standard — longest number on earth)
+    // + sign doesn't count toward digit length
+    $digits = preg_replace('/[^0-9]/', '', $number);
+    if (strlen($digits) > 15) {
+        $digits = substr($digits, 0, 15);
+    }
+
+    // 4. Re-attach + if it was there
+    $number = str_starts_with($number, '+') ? '+' . $digits : $digits;
+
+    if (empty($digits)) {
+        throw new \InvalidArgumentException("No valid phone number found in: {$input}");
+    }
+
+    return $number;
+}
