@@ -94,7 +94,8 @@ class UpdateExistingData
         string $isRecaptcha = 'true',
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
-        ?array $postUpdateData = null
+        ?array $postUpdateData = null,
+        string $returnType = 'json'
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -133,8 +134,12 @@ class UpdateExistingData
             $update = new Update($table);
             $update->updateMultiplePOST($sanitisedDataNew, $identifier);
 
-            Utility::msgSuccess(200, 'Update was successful');
-            return true;
+            if($returnType === 'json'){
+                Utility::msgSuccess(200, 'Update was successful');
+                return true;
+            }else{
+                return ['message' => 'Update was successful'];
+            }
         } catch (\Throwable $th) {
 
             return showError($th);
@@ -157,6 +162,7 @@ class UpdateExistingData
          string $isCaptcha = 'true',
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
+        string $returnType = 'json'
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -197,9 +203,13 @@ class UpdateExistingData
             // Update the blog next
             UpdateFn::updateMultipleTables($sanitisedData, $allowedTables, $identifier, $identifierValue);
         
-
-            Utility::msgSuccess(200, 'Update was successful');
-            return true;
+            if($returnType === 'json'){
+                Utility::msgSuccess(200, 'Update was successful');
+                return true;
+            }else{
+                return ['message' => 'Update was successful'];
+            }
+ 
         } catch (\Throwable $th) {
 
             return showError($th);

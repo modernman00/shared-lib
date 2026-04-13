@@ -101,58 +101,58 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $newInput = null,
         bool $isCaptcha = true,
-        bool $isCaptchaV3 = false, 
+        bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
         string $generalFileTable = 'images'
     ): mixed {
         try {
-        CorsHandler::setHeaders();
+            CorsHandler::setHeaders();
 
-        $input = GetRequestData::getRequestData();
+            $input = GetRequestData::getRequestData();
 
-        // this is reCAPTCHA v3
+            // this is reCAPTCHA v3
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
-                 unset($input['action'], $input['siteKey']);
-            }elseif ($isCaptcha) {
+                unset($input['action'], $input['siteKey']);
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-        $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput);
+            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput);
 
-        // **File Handling Refactor:** Check if file key exists and has an uploaded file.
-        // We assume a single file input OR a multiple input but only checking the first slot [0].
-        if (isset($_FILES[$fileName]) && \is_array($_FILES[$fileName])&& !empty($_FILES[$fileName]['name'][0]) ) {
-            $fileData = $_FILES[$fileName];
+            // **File Handling Refactor:** Check if file key exists and has an uploaded file.
+            // We assume a single file input OR a multiple input but only checking the first slot [0].
+            if (isset($_FILES[$fileName]) && \is_array($_FILES[$fileName]) && !empty($_FILES[$fileName]['name'][0])) {
+                $fileData = $_FILES[$fileName];
 
-            // Check if it's a multiple-file array structure OR a single file structure
-            $hasUploadedFile = (
-                (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) ||
-                (isset($fileData['error']) && is_int($fileData['error']) && $fileData['error'] !== 4)
-            );
+                // Check if it's a multiple-file array structure OR a single file structure
+                $hasUploadedFile = (
+                    (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) ||
+                    (isset($fileData['error']) && is_int($fileData['error']) && $fileData['error'] !== 4)
+                );
 
-            if ($hasUploadedFile) {
-                // Assuming process handles single/multi file upload structure
-                $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
+                if ($hasUploadedFile) {
+                    // Assuming process handles single/multi file upload structure
+                    $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
+                }
+
+                $sanitisedData = $sanitisedData['sanitisedData'];
             }
 
-            $sanitisedData = $sanitisedData['sanitisedData'];
+
+
+            return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedData) {
+                $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
+
+                // Utility::msgSuccess MUST call exit() or die()
+                // Utility::msgSuccess(201, 'Record created successfully', $lastId);
+                return $lastId; // This return is technically unreachable if msgSuccess exits.
+            });
+        } catch (\Throwable $th) {
+            showError($th);
+            return false;
         }
-
-   
-
-        return self::handleTransaction(function (PDO $pdo) use ($table, $sanitisedData) {
-            $lastId = SubmitForm::submitForm($table, $sanitisedData, $pdo);
-
-            // Utility::msgSuccess MUST call exit() or die()
-            // Utility::msgSuccess(201, 'Record created successfully', $lastId);
-            return $lastId; // This return is technically unreachable if msgSuccess exits.
-        });
-    } catch (\Throwable $th) {
-        showError($th);
-        return false;
-    }        
     }
 
     /**
@@ -177,49 +177,58 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $postData = null,
         bool $isCaptcha = true,
-            bool $isCaptchaV3 = false, 
+        bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
-        string $generalFileTable = 'images'
+        string $generalFileTable = 'images',
+        string $returnType = 'json'
     ): mixed {
 
         try {
-        CorsHandler::setHeaders();
+            CorsHandler::setHeaders();
 
-        $input = $postData ?? GetRequestData::getRequestData();
 
-        // this is reCAPTCHA v3
+            $input = $postData ?? GetRequestData::getRequestData();
+
+            // this is reCAPTCHA v3
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['siteKey']);
-            }elseif ($isCaptcha) {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-        $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null);
+            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null);
 
-        // File handling for multiple tables / multiple files
-        if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
-            $fileData = $_FILES[$fileName];
+            // File handling for multiple tables / multiple files
+            if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
+                $fileData = $_FILES[$fileName];
 
-            // Simplified check: check for any uploaded file at the first index (most common scenario)
-            if (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) {
-                // Assuming process handles the upload and modifies $sanitisedData
-                $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable);
+                // Simplified check: check for any uploaded file at the first index (most common scenario)
+                if (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) {
+                    // Assuming process handles the upload and modifies $sanitisedData
+                    $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable);
+                }
+                $sanitisedData = $sanitisedData['sanitisedData'];
             }
-            $sanitisedData = $sanitisedData['sanitisedData'];
-        }
 
-                return self::handleTransaction(function (PDO $pdo) use ($sanitisedData, $allowedTables) {
-                    self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
-                    // Utility::msgSuccess MUST call exit() or die()
-                    Utility::msgSuccess(201, 'Record created successfully');
-            return true; // Unreachable if msgSuccess exits.
-        });
-    } catch (\Throwable $th) {
-         showError($th);
-         return false;
-    }
+            return self::handleTransaction(function (PDO $pdo) use ($sanitisedData, $allowedTables, $returnType) {
+                self::insertMultipleTables($sanitisedData, $allowedTables, $pdo);
+                // Utility::msgSuccess MUST call exit() or die()
+
+                if ($returnType === 'json') {
+                    Utility::msgSuccess(201, 'Records created successfully');
+                    return true; // Unreachable if msgSuccess exits.
+                  
+                } else {
+                      return ['message' => 'Records created successfully'];
+                }
+      
+            });
+        } catch (\Throwable $th) {
+            showError($th);
+            return false;
+        }
     }
     /**
      * Submits validated form data with optional file upload and email notification.
@@ -281,7 +290,7 @@ class SubmitPostData
         ?string $sourceFileTable = null,
         ?array $newInput = null,
         bool $isCaptcha = true,
-        bool $isCaptchaV3 = false, 
+        bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
         ?array $emailArray = null,
         string $generalFileTable = 'images'
@@ -290,11 +299,11 @@ class SubmitPostData
 
         try {
             $input = GetRequestData::getRequestData();
- // this is reCAPTCHA v3
-             if ($isCaptchaV3) {
+            // this is reCAPTCHA v3
+            if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['siteKey']);
-            }elseif ($isCaptcha) {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
