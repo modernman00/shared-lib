@@ -85,12 +85,14 @@ class LoginFunctionality
                 throw new NotFoundException('There was no post data');
             }
 
-            // Allow flexibility between 'email' and 'username' login styles
-            $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
 
             if (empty($input['email']) && empty($input['username'])) {
                 throw new InvalidArgumentException('Email or username is required');
             }
+
+            // Allow flexibility between 'email' and 'username' login styles
+            $email = Utility::cleanSession($input['email']) ?? Utility::cleanSession($input['username']) ?? '';
+
 
 
             CorsHandler::setHeaders();
@@ -98,7 +100,7 @@ class LoginFunctionality
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['siteKey']);
-            }elseif ($isCaptcha) {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
@@ -135,8 +137,11 @@ class LoginFunctionality
             }
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios
-            showError($th);
-            return false;
+            if ($returnType === 'json') {
+                showError($th); // only output here
+            } else {
+                throw $th; // let the caller handle it
+            }
         }
     }
 }

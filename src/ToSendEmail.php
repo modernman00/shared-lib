@@ -77,11 +77,11 @@ class ToSendEmail
                 $emogrifiedContent
             );
         } catch (ForbiddenException $e) {
-            Utility::showError($e);
+            throw $e;
         } catch (InvalidArgumentException $e) {
-            Utility::showError($e);
+            throw $e;
         } catch (\Exception $e) {
-            Utility::showError($e);
+            throw $e;
         }
     }
 

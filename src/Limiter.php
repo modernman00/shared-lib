@@ -63,7 +63,7 @@ class Limiter extends Db
                 throw new TooManyRequestsException('Too many login attempts. Please try again in ' . ceil($retryAfter / 60) . ' minutes.');
             }
         } catch (\Throwable $e) {
-            Utility::showError($e);
+            throw $e; // Let the exception bubble up to be handled by the caller
         }
     }
 }

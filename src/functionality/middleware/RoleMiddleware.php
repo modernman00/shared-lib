@@ -88,7 +88,7 @@ final class RoleMiddleware
             ];
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload
-            return showError($e);
+            return $e;
         }
     }
 

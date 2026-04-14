@@ -79,7 +79,7 @@ class Recaptcha
             // 8. 🎉 Welcome, human!
             return true;
         } catch (\Throwable $e) {
-            Utility::showError($e);
+            throw $e; // Let our custom exceptions bubble up
         }
     }
 
@@ -151,8 +151,7 @@ class Recaptcha
 
             return true;
         } catch (\Throwable $e) {
-            Utility::showError($e);
-            return false;
+            throw $e;
         }
     }
 }

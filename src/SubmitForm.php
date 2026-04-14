@@ -63,12 +63,10 @@ class SubmitForm extends Db
 
             return $lastId;
         } catch (\PDOException $pdoEx) {
-            // Log this internally, but avoid leaking stack traces
-            Utility::showError($pdoEx);
-            throw new HttpException('Database error occurred');
+
+            throw $pdoEx; // Re-throw PDO exceptions for higher-level handling
         } catch (\Throwable $th) {
-            Utility::showError($th);
-            throw new HttpException('Unexpected error occurred');
+            throw $th; // Re-throw any other exceptions);
         }
     }
 
