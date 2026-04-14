@@ -6,6 +6,7 @@ namespace Src;
 
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
 use Src\Exceptions\NotFoundException;
 
 class SendEmail
@@ -49,7 +50,7 @@ class SendEmail
         $mail = new PHPMailer(true);
         try {
             //Server settings
-            // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            $mail->SMTPDebug = SMTP::DEBUG_SERVER;
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
@@ -85,7 +86,7 @@ class SendEmail
 
             return $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+            throw $e;
         }
     }
 
@@ -131,7 +132,7 @@ class SendEmail
 
             return $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+                 throw $e;
         }
     }
 
@@ -161,7 +162,7 @@ class SendEmail
 
             return $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+                throw $e;
         }
     }
 
@@ -186,7 +187,7 @@ class SendEmail
             $mail->AltBody = self::BODY_TEXT;
             $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+                throw $e;
         }
     }
 
@@ -212,7 +213,7 @@ class SendEmail
             $mail->AltBody = self::BODY_TEXT;
             $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+                 throw $e;
         }
     }
 
@@ -240,7 +241,7 @@ class SendEmail
 
             return $mail->send();
         } catch (Exception $e) {
-            Utility::showError($e);
+                throw $e;
         }
     }
 
@@ -268,7 +269,7 @@ class SendEmail
 
             return $mail->send();
         } catch (\Exception $e) {
-            Utility::showError($e);
+             throw $e;
         }
     }
 }
