@@ -54,7 +54,6 @@ class BuildFormBStrap
 
         $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
         $_SEESION['deviceHash'] = $this->dToken;
-
     }
 
 
@@ -106,6 +105,8 @@ class BuildFormBStrap
      * example select-many  'married_gender' => ['select-many','label' => ['Marital status', 'gender']'attribute' => ['maritalStatus', 'gender'],'options' => [['select', 'Yes', 'No'],['select', 'Male', 'Female']],'icon' => ['<i class="far fa-kiss-wink-heart"></i>','<i class="fas fa-user-friends"></i>',]],
      *
      * radio
+     * 
+     * otp - it generates the otp and send to the email of the user, it also set the session for the otp and its timestamp, you can set the expiry time for the otp in the .env file with the key OTP_EXPIRE
      *
      *
      * example showError  nameKey => showError - the namekey should be the id of the div or form that will release the error. See Login or Register.js for a clear example
@@ -836,7 +837,7 @@ class BuildFormBStrap
                         <small id="{$nameKey}_error" class="form-text text-danger"></small>
                     </div>
                     HTML;
-            }elseif ($this->entValue[$i] === 'recaptcha') {
+            } elseif ($this->entValue[$i] === 'recaptcha') {
                 $recaptcha = $_ENV['RECAPTCHA_KEY'];
 
                 echo <<<HTML
@@ -845,11 +846,30 @@ class BuildFormBStrap
                      
 
                 HTML;
-
-            }elseif($this->entValue[$i] === 'dToken') {
+            } elseif ($this->entValue[$i] === 'dToken') {
                 echo <<<HTML
                 <input type="hidden" name="dToken" value= "{$this->dToken}">
                 HTML;
+            } elseif ($this->entKey[$i] === 'otp') {
+                echo <<<HTML
+    <div class="d-flex justify-content-between gap-2 mb-4" id="otp-container">
+HTML;
+
+                for ($i = 1; $i <= 6; $i++) {
+                    echo <<<HTML
+        <input type="text" 
+               class="form-control form-control-lg text-center otp-input fw-bold fs-4" 
+               maxlength="1" 
+               pattern="\d*" 
+               inputmode="numeric"
+               id="otp{$i}"
+               required>
+HTML;
+                }
+
+                echo <<<HTML
+    </div>
+HTML;
             } else {
                 echo "Invalid form element type: {$this->entValue[$i]}";
             }

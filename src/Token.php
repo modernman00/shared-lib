@@ -60,7 +60,7 @@ class Token extends CheckToken
      */
     public static function generateAuthToken(): string
     {
-        return mb_strtoupper(bin2hex(random_bytes(6)));
+        return mb_strtoupper(bin2hex(random_bytes(3)));
     }
 
     /**
