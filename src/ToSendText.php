@@ -6,6 +6,11 @@ namespace Src;
 
 use Exception;
 
+/**
+ * Class ToSendText
+ * @package Src
+ */
+
 class ToSendText
 {
 

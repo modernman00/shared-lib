@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Src;
 
 use InvalidArgumentException;
-use Mockery\Matcher\Not;
 use Pelago\Emogrifier\CssInliner;
 use Pelago\Emogrifier\HtmlProcessor\CssToAttributeConverter;
 use Pelago\Emogrifier\HtmlProcessor\HtmlPruner;
@@ -13,6 +12,10 @@ use Src\data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use Src\Exceptions\NotFoundException;
 
+/**
+ * Class ToSendEmail
+ * @package Src
+ */     
 class ToSendEmail
 {
     public static function genEmailArray(string $viewPath, array $data, string $subject, $file = null, $fileName = null): array
