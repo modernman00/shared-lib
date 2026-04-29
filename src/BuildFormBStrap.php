@@ -853,6 +853,7 @@ class BuildFormBStrap
             } elseif ($this->entKey[$i] === 'otp') {
                 echo <<<HTML
     <div class="d-flex justify-content-between gap-2 mb-4" id="otp-container">
+          <label for='{$nameKey}' class='form-label'>$forLabel</label>
 HTML;
 
                 for ($i = 1; $i <= 6; $i++) {

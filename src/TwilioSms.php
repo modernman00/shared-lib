@@ -8,6 +8,15 @@ use Exception;
 
 class TwilioSms
 {
+
+  /**
+   *
+   * @param string $to 
+   * @param string $message 
+   * @return bool 
+   * @throws \Exception 
+   * $_ENV[';TWILIO_SID'], $_ENV['TWILIO_TOKEN'], $_ENV['TWILIO_FROM'] must be set in .env
+   */
  public static function send(string $to, string $message): bool
  {
   $sid = $_ENV['TWILIO_SID'] ?? '';
