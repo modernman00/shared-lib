@@ -6,7 +6,7 @@ namespace Src;
 
 use Exception;
 
-class TwillioSms
+class TwilioSms
 {
 
   /**
