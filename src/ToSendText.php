@@ -31,6 +31,8 @@ class ToSendText
      }
      
      if ($provider == 'textlocal') {
+      // remove the + from the phone number if it exists
+      $to = str_replace('+', '', $to);
          $textlocal = new Textlocal($_ENV['TEXTLOCAL_USERNAME'], $_ENV['TEXTLOCAL_HASH'], $_ENV['TEXTLOCAL_APIKEY']);
          return $textlocal->sendSms($to, $message, $sender);
      }
