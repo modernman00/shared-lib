@@ -3,11 +3,10 @@
 declare(strict_types=1);
 
 
-use Helper\classes\Blade;
-use Helper\Middleware\CSPMiddleware;
+use helper\classes\Blade;
+use helper\Middleware\CSPMiddleware;
 use Monolog\Level;
 use Monolog\Logger;
-use Src\Csrf;
 use Src\Data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use Src\LoggerFactory;
@@ -32,41 +31,6 @@ function view2(string $viewFile, array $data = [])
     return viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
 }
 
-/**
- * echo view('checkout', ['cart' => $cartItems], ['enable' => true,
- *    'report_only' => false, // Enforce CSP (not just report)
- *    'extra' => [
- *        "script-src https://js.stripe.com",
- *        "frame-src https://js.stripe.com"
- *    ]
- * ]);.
- *
- * <!-- Script Tag -->
- *  <script nonce="{{ $csp_nonce }}">
- *    window.userData = @json(auth()->user());
- * </script>
-
- * <!-- External Script -->
- * <script
- *    nonce="{{ $csp_nonce }}"
- *    src="https://platform.sharethis.com/loader.js"
- *    defer
- * ></script>
-
- * <!-- Inline Styles -->
- * <style nonce="{{ $csp_nonce }}">
- *    .featured { background: #f0f8ff; }
- * </style>
- *
- * Check browser console for blocked resources. Examine /csp-report-log endpoint.Temporarily add 'unsafe-inline' to diagnose: 'extra' => ["script-src 'unsafe-inline'"]
- *
- * Phase Out unsafe-inline.
- * Move all inline scripts to external files
- * Use nonce-{{ $csp_nonce }} for critical inline code
- *
- * Implement report-to
- * 'extra' => ["report-to csp-endpoint"]
- */
 function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
 {
     try {
