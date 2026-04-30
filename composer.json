@@ -6,7 +6,8 @@
   "autoload": {
     "psr-4": {
       "Src\\": "src/",
-      "Tests\\": "tests/"
+      "Tests\\": "tests/",
+       "helpers\\": "helpers/"
     },
     "files": [
       "helpers/helpers.php",
