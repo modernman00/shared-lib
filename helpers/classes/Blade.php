@@ -1,9 +1,9 @@
 <?php
 
-namespace Helper\classes;
+namespace helper\classes;
 
 use eftec\bladeone\BladeOne;
-use Src\Csrf;
+
 
 class Blade
 {
@@ -26,9 +26,10 @@ class Blade
       $blade->pipeEnable = true;
       $blade->setBaseUrl($_ENV['APP_URL']);
 
+
       // Register directives
       $blade->directive('csrf', function () {
-        return "<?php echo \\Src\\Csrf::input(); ?>";
+        return "<?php echo csrfField(); ?>";
       });
 
       self::$instance = $blade;

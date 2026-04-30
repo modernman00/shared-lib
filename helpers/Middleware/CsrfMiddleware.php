@@ -2,7 +2,6 @@
 
 namespace Helper\Middleware;
 
-use Src\Csrf;
 
 class CsrfMiddleware
 {
@@ -11,7 +10,7 @@ class CsrfMiddleware
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $token = $_POST['token'] ?? null;
 
-            if (!Csrf::validate($token)) {
+            if (!Csrfvalidate($token)) {
                 http_response_code(403);
                 die('Invalid CSRF token');
             }

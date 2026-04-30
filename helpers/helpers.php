@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use eftec\bladeone\BladeOne;
+
 use Helper\classes\Blade;
 use Helper\Middleware\CSPMiddleware;
 use Monolog\Level;
