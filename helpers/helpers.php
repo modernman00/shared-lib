@@ -3,13 +3,16 @@
 declare(strict_types=1);
 
 use eftec\bladeone\BladeOne;
+use Helper\classes\Blade;
+use Helper\Middleware\CSPMiddleware;
 use Monolog\Level;
 use Monolog\Logger;
+use Src\Csrf;
 use Src\Data\EmailData;
+use Src\Exceptions\ForbiddenException;
 use Src\LoggerFactory;
 use Src\Select;
 use Src\SendEmail;
-use Src\Exceptions\ForbiddenException;
 
 // use RuntimeException;
 
@@ -67,77 +70,17 @@ function view2(string $viewFile, array $data = [])
 function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
 {
     try {
-        // ===== 1. CSP SETUP =====
-        $cspEnabled = $cspOptions['enable'] ?? true;
-        $reportOnly = $cspOptions['report_only'] ?? true;
-        $nonce = '';
+        CSPMiddleware::handle($data);
+        $blade = Blade::get();
 
-        if ($cspEnabled) {
-            // Generate cryptographic nonce
-            $nonce = bin2hex(random_bytes(16));
-
-            // Build dynamic CSP header
-            $directives = [
-                "default-src 'self'",
-                // Scripts: Allow scripts with nonce and HTTPS sources, strict-dynamic allows dynamic loading
-                "script-src 'self' 'nonce-$nonce' 'strict-dynamic' https:",
-
-                "script-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://platform.sharethis.com https://buttons-config.sharethis.com https://count-server.sharethis.com ",
-
-                // Styles
-                "style-src 'self' 'nonce-$nonce' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-                "style-src-elem 'self' 'nonce-$nonce' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com",
-
-                // Fonts
-                "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",
-
-                // Images
-                "img-src 'self' data: https://*.sharethis.com https://www.google-analytics.com",
-
-                // Connections
-                "connect-src 'self' https://data.stbuttons.click https://l.sharethis.com https://www.google-analytics.com",
-
-                // Frames
-                "frame-src 'self' https://platform.sharethis.com",
-
-                // Reporting
-                'report-uri ' . ($cspOptions['report_uri'] ?? '/csp-report-log'),
-                'report-to csp-endpoint',
-            ];
-            // Add custom directives if provided
-            if (!empty($cspOptions['extra'])) {
-                $directives = array_merge($directives, $cspOptions['extra']);
-            }
-
-            header(($reportOnly ? 'Content-Security-Policy-Report-Only: ' : 'Content-Security-Policy: ')
-                . implode('; ', $directives));
-        }
-
-        // 2. Initialize Blade
-        static $blade = null;
-        if (!$blade) {
-            // 1. Get validated paths
-            $viewsPath = realpath(__DIR__ . '/../../../../resources/views');
-            
-            $cachePath = realpath(__DIR__ . '/../../../../bootstrap/cache');
-            $mode = $_ENV['APP_ENV'] === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
-            $blade = new BladeOne($viewsPath, $cachePath, $mode);
-            $blade->setIsCompiled(false);
-        }
+        $path = $viewFile;
 
         // 3. Normalize and verify view path
-        $viewFile = str_replace('/', '.', $viewFile);
-        $data['nonce'] = $nonce;
-        // 4. Render with debug
+        $viewFile = str_replace('/', '.', $path);
+
         echo $blade->run($viewFile, $data);
     } catch (\Throwable $e) {
-        error_log('VIEW ERROR: ' . $e->getMessage());
-
-        return "<!-- VIEW ERROR -->\n"
-            . "<h1>Rendering Error</h1>\n"
-            . '<pre>' . htmlspecialchars($e->getMessage()) . "</pre>\n"
-            . '<p>Template: ' . htmlspecialchars($viewFile) . "</p>\n"
-            . '<p>Search Path: ' . htmlspecialchars($viewsPath ?? '') . '</p>';
+        showError($e);
     }
 }
 
@@ -154,21 +97,10 @@ function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOption
 function view($path, array $data = [])
 {
     try {
-        $view = rtrim(__DIR__ . '/../../../../resources/views', '/'); // Remove trailing slash
-        $cache = rtrim(__DIR__ . '/../../../../bootstrap/cache', '/');
-        $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
-        // echo $viewFile;
-        static $blade = null;
-        if (!$blade) {
-            $mode = $_ENV['APP_ENV'] === 'production' ? BladeOne::MODE_AUTO : BladeOne::MODE_DEBUG;
-            $blade = new BladeOne($view, $cache, $mode);
+        $blade = Blade::get();
+        $viewFile = str_replace('/', '.', $path);
+        echo $blade->run($viewFile, $data); // $blade->setAutoescape(true);
 
-            $blade->pipeEnable = true;
-            $blade->setBaseUrl($_ENV['APP_URL']);
-            // $blade->setAutoescape(true);
-        }
-
-        echo $blade->run($viewFile, $data);
     } catch (\Throwable $e) {
         showError($e);
     }
@@ -290,8 +222,8 @@ function showError2(\Throwable $th, Logger $logger): ?string
 
     // Determine HTTP status code
     $statusCode = ($th instanceof \Src\Exceptions\HttpException)
-      ? $th->getStatusCode()
-      : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
+        ? $th->getStatusCode()
+        : ((int) $th->getCode() >= 100 && (int) $th->getCode() <= 599 ? (int) $th->getCode() : 500);
 
     // Set HTTP response code
     if (!headers_sent()) {
@@ -320,19 +252,19 @@ function showError2(\Throwable $th, Logger $logger): ?string
 
     // Log the error with context
     $logger->log($logLevel, '🚨 Application Error', [
-      'message' => $th->getMessage(),
-      'code' => $statusCode,
-      'file' => $th->getFile(),
-      'line' => $th->getLine(),
-      'trace' => $th->getTraceAsString(),
+        'message' => $th->getMessage(),
+        'code' => $statusCode,
+        'file' => $th->getFile(),
+        'line' => $th->getLine(),
+        'trace' => $th->getTraceAsString(),
     ]);
 
     // 5. Prepare a nice message for the user or developer
     $errorMessage = $th instanceof \Src\Exceptions\HttpException
-      ? $th->getMessage()
-      : ($isLocal
-        ? "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
-        : 'An unexpected error occurred.');
+        ? $th->getMessage()
+        : ($isLocal
+            ? "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
+            : 'An unexpected error occurred.');
 
     // 6. Return or display the JSON error message
     // Your API response
@@ -401,13 +333,13 @@ function humanTiming($time)
         $time = time() - $time; // to get the time since that moment
         $time = ($time < 1) ? 1 : $time;
         $tokens = [
-          31536000 => 'year',
-          2592000 => 'month',
-          604800 => 'week',
-          86400 => 'day',
-          3600 => 'hour',
-          60 => 'minute',
-          1 => 'second',
+            31536000 => 'year',
+            2592000 => 'month',
+            604800 => 'week',
+            86400 => 'day',
+            3600 => 'hour',
+            60 => 'minute',
+            1 => 'second',
         ];
 
         foreach ($tokens as $unit => $text) {
@@ -441,9 +373,9 @@ function msgSuccess(int $code, mixed $msg, mixed $token = null): void
 {
     http_response_code($code);
     echo json_encode([
-      'message' => $msg,
-      'token' => $token,
-      'status' => 'success',
+        'message' => $msg,
+        'token' => $token,
+        'status' => 'success',
     ]);
 }
 /**
@@ -456,9 +388,9 @@ function msgException(int $code, mixed $msg): void
 {
     http_response_code($code);
     echo json_encode([
-      'message' => $msg,
-      'status' => 'error',
-      'code' => $code,
+        'message' => $msg,
+        'status' => 'error',
+        'code' => $code,
     ]);
 }
 
@@ -698,31 +630,32 @@ function checkEmailExist($email): array|int|string
  * 
  * @return string The hashed password
  */
-function hashPassword($password, $cost = 12) {
-  return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
+function hashPassword($password, $cost = 12)
+{
+    return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
 }
 
 // unset post data 
-function unsetPostData($data, $keysToRemove) {
+function unsetPostData($data, $keysToRemove)
+{
 
-        if ($keysToRemove) {
-            foreach ($data as $key => $value) {
-                // Remove key if it matches
-                if (in_array($key, $keysToRemove, true)) {
-                    unset($data[$key]);
-                    continue;
-                }
-
-                // If value is an array, recurse
-                if (is_array($value)) {
-                    $data[$key] = unsetPostData($value, $keysToRemove);
-                }
+    if ($keysToRemove) {
+        foreach ($data as $key => $value) {
+            // Remove key if it matches
+            if (in_array($key, $keysToRemove, true)) {
+                unset($data[$key]);
+                continue;
             }
-            return $data;
-        } else {
-            return $data;
-        }
 
+            // If value is an array, recurse
+            if (is_array($value)) {
+                $data[$key] = unsetPostData($value, $keysToRemove);
+            }
+        }
+        return $data;
+    } else {
+        return $data;
+    }
 }
 
 /**
@@ -735,22 +668,22 @@ function unsetPostData($data, $keysToRemove) {
  * @return array The array with hashed passwords
  */
 function hashPasswordsInArray(array $data): array
-    {
-        foreach ($data as $key => $value) {
-            // If the key matches and the value is a string, hash it
-            if (in_array($key, ['password'], true) && is_string($value)) {
-                $data[$key] = \hashPassword($value); // Replace with your actual hash function
-                continue;
-            }
-
-            // If value is an array, recurse
-            if (is_array($value)) {
-                $data[$key] = hashPasswordsInArray($value);
-            }
+{
+    foreach ($data as $key => $value) {
+        // If the key matches and the value is a string, hash it
+        if (in_array($key, ['password'], true) && is_string($value)) {
+            $data[$key] = \hashPassword($value); // Replace with your actual hash function
+            continue;
         }
 
-        return $data;
+        // If value is an array, recurse
+        if (is_array($value)) {
+            $data[$key] = hashPasswordsInArray($value);
+        }
     }
+
+    return $data;
+}
 
 /**
  * Prevents abuse by limiting the rate at which a user can react to
@@ -769,8 +702,3 @@ function preventAbuseTogglin()
     }
     $_SESSION['last_reaction_time'] = time();
 }
-
-
-
-
-

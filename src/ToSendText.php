@@ -27,7 +27,7 @@ class ToSendText
   $sid = $_ENV['TWILIO_SID'] ?? '';
   $token = $_ENV['TWILIO_TOKEN'] ?? '';
   $from = $_ENV['TWILIO_FROM'] ?? '';
-  $to = "+$to";
+
 
   if ($sid === '' || $token === '' || $from === '') {
    throw new Exception('Twilio credentials missing in .env (TWILIO_SID/TWILIO_TOKEN/TWILIO_FROM).');

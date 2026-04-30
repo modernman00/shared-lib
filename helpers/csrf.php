@@ -20,5 +20,5 @@ function csrfToken(): string
  */
 function csrfField(): string
 {
-    return '<input type="hidden" name="_token" value="' . csrfToken() . '">';
+    return '<input type="hidden" name="token" value="' . csrfToken() . '">';
 }
