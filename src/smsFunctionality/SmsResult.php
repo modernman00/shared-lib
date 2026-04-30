@@ -1,6 +1,6 @@
 <?php
 
-namespace Src;
+namespace Src\smsFunctionality;
 
 class SmsResult
 {

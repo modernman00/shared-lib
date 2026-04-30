@@ -235,11 +235,11 @@ function showError($th): void
 }
 // FUNCTION TO SEND TEXT TO PHONE
 
-function sendText($message, $numbers): void
+function sendText($message, $numbers, $sender): void
 {
     $apiKey = urlencode('y9X1o/Ko6M4-MCz6zJfBeGMv9TMOLG54k0c53EfCfo');
     $numbers = [$numbers];
-    $sender = urlencode('Loaneasy Finance');
+    $sender = urlencode($sender);
     $message = rawurlencode($message);
     $numbers = implode(',', $numbers);
     // Prepare data for POST request
@@ -357,7 +357,7 @@ function throwError(int $code, mixed $msg): void
  *
  * @return array|string|null
  */
-function checkInput($data): mixed
+function checkInput($data)
 {
     if ($data !== null) {
         $data = (string)$data;
@@ -368,11 +368,11 @@ function checkInput($data): mixed
 
         return $data;
     } else {
-        return msgException(406, 'problem with your entry');
+        msgException(406, 'problem with your entry');
     }
 }
 
-function checkInputImage($data): string|null
+function checkInputImage($data)
 {
     if ($data !== null) {
         $data = trim($data);
@@ -383,7 +383,7 @@ function checkInputImage($data): string|null
 
         return $data;
     } else {
-        return msgException(406, 'image name not well formed');
+        msgException(406, 'image name not well formed');
 
         return null;
     }
@@ -659,3 +659,6 @@ function preventAbuseTogglin()
     }
     $_SESSION['last_reaction_time'] = time();
 }
+
+// send text to phone using twilio api
+

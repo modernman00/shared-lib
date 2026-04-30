@@ -1,8 +1,8 @@
 <?php 
 
-namespace Src;
+namespace Src\smsFunctionality;
 
-use Src\SmsResult;
+use Src\smsFunctionality\SmsResult;
 
 interface SmsProviderInterface
 {

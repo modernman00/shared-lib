@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Src;
 
-use Exception;
+use Src\smsFunctionality\Textlocal;
 
 /**
  * Class ToSendText
@@ -14,62 +14,30 @@ use Exception;
 class ToSendText
 {
 
-  /**
-   *
-   * @param string $to 
-   * @param string $message 
-   * @return bool 
-   * @throws \Exception 
-   * $_ENV[';TWILIO_SID'], $_ENV['TWILIO_TOKEN'], $_ENV['TWILIO_FROM'] must be set in .env
-   */
- public static function send(string $to, string $message): bool
+/**
+ * 
+ * @param string $to 
+ * @param string $message 
+ * @param string $provider  - API provider - textlocal or twilio or any other provider you want to add
+ * @param string $sender 
+ * @return bool 
+ */
+
+ public static function send(string $to, string $message, string $provider, string $sender)
  {
-  $sid = $_ENV['TWILIO_SID'] ?? '';
-  $token = $_ENV['TWILIO_TOKEN'] ?? '';
-  $from = $_ENV['TWILIO_FROM'] ?? '';
+  try {
+     if ($provider == 'twilio') {
+         // Implement Twilio sending logic here
+     }
+     
+     if ($provider == 'textlocal') {
+         $textlocal = new Textlocal($_ENV['TEXTLOCAL_USERNAME'], $_ENV['TEXTLOCAL_HASH'], $_ENV['TEXTLOCAL_APIKEY']);
+         return $textlocal->sendSms($to, $message, $sender);
+     }
 
-
-  if ($sid === '' || $token === '' || $from === '') {
-   throw new Exception('Twilio credentials missing in .env (TWILIO_SID/TWILIO_TOKEN/TWILIO_FROM).');
+ }catch (\Throwable $th) {
+      // Log the error or handle it as needed
+      \showError($th);
   }
-
-  // Basic normalisation: allow only + and digits
-  $to = preg_replace('/[^\d\+]/', '', $to);
-
-  $url = "https://api.twilio.com/2010-04-01/Accounts/{$sid}/Messages.json";
-
-  $postFields = http_build_query([
-   'From' => $from,
-   'To' => $to,
-   'Body' => $message
-  ]);
-
-  $ch = curl_init($url);
-  curl_setopt_array($ch, [
-   CURLOPT_POST => true,
-   CURLOPT_POSTFIELDS => $postFields,
-   CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_USERPWD => $sid . ':' . $token,
-   CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-   CURLOPT_HTTPHEADER => [
-    'Content-Type: application/x-www-form-urlencoded'
-   ],
-   CURLOPT_TIMEOUT => 20,
-  ]);
-
-  $response = curl_exec($ch);
-  $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  $err = curl_error($ch);
-  curl_close($ch);
-
-  if ($response === false) {
-   throw new Exception("Twilio SMS failed: {$err}");
-  }
-
-  if ($httpCode < 200 || $httpCode >= 300) {
-   throw new Exception("Twilio SMS failed: HTTP {$httpCode} - {$response}");
-  }
-
-  return true;
- }
+}
 }
