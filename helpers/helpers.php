@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 
-use helper\classes\Blade;
-use helper\Middleware\CSPMiddleware;
+use helpers\classes\Blade;
+use helpers\Middleware\CSPMiddleware;
 use Monolog\Level;
 use Monolog\Logger;
 use Src\Data\EmailData;

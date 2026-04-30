@@ -1,6 +1,6 @@
 <?php
 
-namespace helper\classes;
+namespace helpers\classes;
 
 use eftec\bladeone\BladeOne;
 

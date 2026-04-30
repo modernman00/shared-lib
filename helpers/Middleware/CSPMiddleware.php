@@ -1,8 +1,8 @@
 <?php
 
-namespace Helper\Middleware;
+namespace helpers\Middleware;
 
-use Helper\classes\CSP;
+use helpers\classes\CSP;
 
 
 class CSPMiddleware

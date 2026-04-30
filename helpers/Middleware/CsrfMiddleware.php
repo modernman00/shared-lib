@@ -1,6 +1,6 @@
 <?php
 
-namespace helper\Middleware;
+namespace helpers\Middleware;
 
 
 class CsrfMiddleware

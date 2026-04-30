@@ -1,6 +1,6 @@
 <?php
 
-namespace helper\classes;
+namespace helpers\classes;
 
 class CSP
 {
