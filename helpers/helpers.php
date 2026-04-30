@@ -15,58 +15,45 @@ use Src\SendEmail;
 
 // use RuntimeException;
 
-/**
- * @param string $viewFile
- * @param array $data
- * @param array $cspOptions
- *                          - enable: boolean (default: true)
- *                          - report_only: boolean (default: true)
- *                          - extra: array of custom CSP directives
- *
- * @return string
- *                The rendered view with CSP headers enabled
- */
-function view2(string $viewFile, array $data = [])
-{
-    return viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
-}
-
-function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
-{
-    try {
-        CSPMiddleware::handle($data);
-        $blade = Blade::get();
-
-        $path = $viewFile;
-
-        // 3. Normalize and verify view path
-        $viewFile = str_replace('/', '.', $path);
-
-        echo $blade->run($viewFile, $data);
-    } catch (\Throwable $e) {
-        showError($e);
+if (!function_exists('view2')) {
+    /**
+     * Renders a view with CSP middleware enabled.
+     */
+    function view2(string $viewFile, array $data = [])
+    {
+        viewBuilderWithCSP($viewFile, $data, ['enable' => true]);
     }
 }
 
-/**
- * Renders a BladeOne template with the given data.
- *
- * @param string $path The template path (e.g., 'index' or 'msg.customer.token')
- * @param array $data Associative array of data to pass to the template
- *
- * @return string The rendered template output
- *
- * @throws \Throwable If rendering fails
- */
-function view($path, array $data = [])
-{
-    try {
-        $blade = Blade::get();
-        $viewFile = str_replace('/', '.', $path);
-        echo $blade->run($viewFile, $data); // $blade->setAutoescape(true);
+if (!function_exists('viewBuilderWithCSP')) {
+    /**
+     * Internal helper for rendering views with CSP options.
+     */
+    function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
+    {
+        try {
+            CSPMiddleware::handle($data);
+            view($viewFile, $data);
+        } catch (\Throwable $e) {
+            showError($e);
+        }
+    }
+}
 
-    } catch (\Throwable $e) {
-        showError($e);
+if (!function_exists('view')) {
+    /**
+     * Renders a BladeOne template.
+     * Supports both dot notation (msg.user) and path notation (msg/user).
+     */
+    function view(string $path, array $data = [])
+    {
+        try {
+            $blade = Blade::get();
+            $normalizedPath = str_replace(['/', '\\'], '.', $path);
+            echo $blade->run($normalizedPath, $data);
+        } catch (\Throwable $e) {
+            showError($e);
+        }
     }
 }
 
@@ -86,7 +73,7 @@ function p($data): void
 function loggedDetection(string $filename, string $receivingEmail): bool
 {
     //TODO send text to the user with the code
-    EmailData::defineConstants('admin', $_ENV);
+    EmailData::defineConstants('admin');
     $getIp = getUserIpAddr();
     $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " . date('h:i:sa') . "  and with this IP address: $getIp  <br><br>  IT Security Team";
 
@@ -501,32 +488,38 @@ function destroyCookie(): void
  * @return string The full URL to the asset.
  * @throws RuntimeException If the Vite manifest is not found, or if the given path is not found in the manifest.
  */
-function viteAsset(string $path): string
-{    // If you're in development, point to the dev server
-    $isDev = $_ENV['APP_ENV'] === 'local'; // Or use getenv(), or set a flag
+if (!function_exists('viteAsset')) {
+    /**
+     * Resolves Vite assets using the project root.
+     */
+    function viteAsset(string $path): string
+    {
+        $isDev = ($_ENV['APP_ENV'] ?? 'local') === 'local';
 
-    if ($isDev) {
-        return "http://localhost:5173/$path"; // served by Vite dev server
-    }
-
-    static $manifest = null;
-
-    // Cache the manifest only once
-    if ($manifest === null) {
-        $manifestPath = __DIR__ . '/../../../../public/build/manifest.json';
-        if (!file_exists($manifestPath)) {
-            throw new RuntimeException('Vite manifest not found.');
+        if ($isDev) {
+            return "http://localhost:5173/$path";
         }
 
-        $manifestContent = file_get_contents($manifestPath);
-        $manifest = json_decode($manifestContent, true);
-    }
+        static $manifest = null;
 
-    if (!isset($manifest[$path])) {
-        throw new RuntimeException("path {$path} not found in Vite manifest.");
-    }
+        if ($manifest === null) {
+            $root = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 4);
+            $manifestPath = "$root/public/build/manifest.json";
+            
+            if (!file_exists($manifestPath)) {
+                throw new RuntimeException('Vite manifest not found at: ' . $manifestPath);
+            }
 
-    return '/public/build/' . $manifest[$path]['file'];
+            $manifestContent = file_get_contents($manifestPath);
+            $manifest = json_decode($manifestContent, true);
+        }
+
+        if (!isset($manifest[$path])) {
+            throw new RuntimeException("Path {$path} not found in Vite manifest.");
+        }
+
+        return '/public/build/' . $manifest[$path]['file'];
+    }
 }
 
 function logger(): Logger
