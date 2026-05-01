@@ -1,6 +1,7 @@
 <?php
 
 namespace Src\smsFunctionality;
+use Exception;
 
 /**
  * Textlocal API2 Wrapper Class

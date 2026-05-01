@@ -175,7 +175,7 @@ class UpdateExistingData
             }
            if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
-                unset($input['action'], $input['siteKey']);
+                unset($input['action'], $input['token']);
             }elseif ($isCaptcha === 'true') {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);

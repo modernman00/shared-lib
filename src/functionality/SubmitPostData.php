@@ -193,7 +193,7 @@ class SubmitPostData
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
-                unset($input['action'], $input['siteKey']);
+                unset($input['action'], $input['token']);
             } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
@@ -302,7 +302,7 @@ class SubmitPostData
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
-                unset($input['action'], $input['siteKey']);
+                unset($input['action'], $input['token']);
             } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);

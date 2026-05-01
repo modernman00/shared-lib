@@ -68,7 +68,7 @@ class PasswordRecoveryService
      *
      * @throws NotFoundException if input is missing or user cannot be found
      */
-    public static function process(bool $issueJwt = true, $isCaptchaV3 = false,$isCaptcha = false, string $captchaAction = 'FORGOT'): mixed
+    public static function process(bool $issueJwt = true, $isCaptchaV3 = false,$isCaptcha = false, string $captchaAction = 'FORGOT')
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -81,7 +81,7 @@ class PasswordRecoveryService
             if ($isCaptcha && $isCaptchaV3) {
                 $token = $input['recaptchaTokenV3'];
                 Recaptcha::verifyCaptchaEnterprise($token, $captchaAction);
-                unset($input['action'], $input['siteKey']);
+                unset($input['action'], $input['token']);
             }elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
@@ -118,7 +118,7 @@ class PasswordRecoveryService
             self::finaliseRecovery($token, $issueJwt);
             return true;
         } catch (\Throwable $error) {
-            return showError($error);
+            showError($error);
         }
     }
 
