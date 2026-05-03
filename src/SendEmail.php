@@ -53,6 +53,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = USER_APP ?? throw new NotFoundException('email username not available');
             $mail->Password = PASS ?? throw new NotFoundException('email password not available');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
@@ -98,6 +100,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new Exception('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = USER_APP ?? throw new Exception('email username not available');
             $mail->Password = PASS ?? throw new Exception('email password not available');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
@@ -145,6 +149,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = USER_APP;
             $mail->Password = PASS;
             $mail->SMTPSecure = 'ssl';
@@ -172,6 +178,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = USER_APP;
             $mail->Password = PASS;
             $mail->SMTPSecure = 'ssl';
@@ -197,6 +205,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = USER_APP;
             $mail->Password = PASS;
             $mail->SMTPSecure = 'ssl';
@@ -226,6 +236,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = $_ENV['SYSTEM_EMAIL'] ?? throw new NotFoundException('System email not available');
             $mail->Password = $_ENV['APP_PASSWORD'] ?? throw new NotFoundException('App password not available');
             $mail->SMTPSecure = 'ssl';
@@ -254,6 +266,8 @@ class SendEmail
             $mail->isSMTP();
             $mail->Host = $_ENV['SMTP_HOST'] ?? throw new NotFoundException('SMTP host not available');
             $mail->SMTPAuth = true;
+            $mail->CharSet = PHPMailer::CHARSET_UTF8; 
+
             $mail->Username = $_ENV['SYSTEM_EMAIL'] ?? throw new NotFoundException('System email not available');
             $mail->Password = $_ENV['APP_PASSWORD'] ?? throw new NotFoundException('App password not available');
             $mail->SMTPSecure = 'ssl';
