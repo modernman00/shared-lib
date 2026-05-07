@@ -31,7 +31,7 @@ use Src\functionality\SendEmailFunctionality;
 class SubmitPostData
 {
     // Default keys to remove from the payload before database insertion
-    private const DEFAULT_REMOVE_KEYS = ['submit', 'button', 'token', 'g-recaptcha-response', 'grecaptcharesponse'];
+    private const DEFAULT_REMOVE_KEYS = ['submit', 'button', 'token', 'g-recaptcha-response', 'grecaptcharesponse', 'siteKey', 'action'];
 
     /**
      * Centralized transaction wrapper to reduce try/catch repetition.
@@ -47,7 +47,7 @@ class SubmitPostData
         } catch (\Throwable $th) {
             Transaction::rollback();
             // Assuming showError is a global/utility function that handles the error response
-            return \showError($th);
+            showError($th);
         }
     }
 
@@ -123,7 +123,7 @@ class SubmitPostData
 
             // **File Handling Refactor:** Check if file key exists and has an uploaded file.
             // We assume a single file input OR a multiple input but only checking the first slot [0].
-            if (isset($_FILES[$fileName]) && \is_array($_FILES[$fileName]) && !empty($_FILES[$fileName]['name'][0])) {
+            if ($fileName !== null && isset($_FILES[$fileName]) && \is_array($_FILES[$fileName]) && !empty($_FILES[$fileName]['name'][0])) {
                 $fileData = $_FILES[$fileName];
 
                 // Check if it's a multiple-file array structure OR a single file structure
