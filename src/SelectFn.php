@@ -16,7 +16,7 @@ class SelectFn extends Select
   {
     $query = parent::formAndMatchQuery(selection: "SELECT_ONE", table: $table, identifier1: $identifiers);
     $result = parent::selectFn2(query: $query, bind: [$identifierAnswer]);
-    return $result[0];
+    return $result[0] ?? null;
   }
 
     // a single SQL query that returns the actual row(s) from the database where:column = ?AND either the email or the mobile matches the user’s input
