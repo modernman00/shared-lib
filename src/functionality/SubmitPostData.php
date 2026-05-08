@@ -36,7 +36,7 @@ class SubmitPostData
     /**
      * Centralized transaction wrapper to reduce try/catch repetition.
      */
-    private static function handleTransaction(\Closure $callback): mixed
+    private static function handleTransaction(\Closure $callback)
     {
         try {
             $pdo = Db::connect2();
@@ -111,6 +111,8 @@ class SubmitPostData
             CorsHandler::setHeaders();
 
             $input = GetRequestData::getRequestData();
+
+  
 
             // this is reCAPTCHA v3
             // this is reCAPTCHA v3
