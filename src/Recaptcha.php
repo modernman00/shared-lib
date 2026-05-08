@@ -92,11 +92,11 @@ class Recaptcha
     public static function verifyCaptchaEnterprise(array $input, string $action): bool
     {
            $expectedAction = $input['action'] ?? $action;
-        $token = $input['token'] ?? '';
+        $postSiteKey = $input['siteKey'] ?? '';
         
 
-        if (empty($token)) {
-            throw new RecaptchaFailedException("🚨 Missing reCAPTCHA token — please try again.");
+        if (empty($postSiteKey)) {
+            throw new RecaptchaFailedException("🚨 Missing reCAPTCHA SiteKey — please try again.");
         }
 
         $projectId = $_ENV['RECAPTCHA_PROJECT_ID'] ?? '';
@@ -112,7 +112,7 @@ class Recaptcha
         // Payload for Google
         $payload = [
             'event' => [
-                'token'          => $token,
+                'token'          => $postSiteKey,
                 'siteKey'        => $siteKey,
                 'expectedAction' => $expectedAction,
             ]
