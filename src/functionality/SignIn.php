@@ -52,7 +52,7 @@ final class SignIn
      *
      * @return array{id: int, email: string, role: string} Authenticated user data
      */
-    public static function verify($role = 'users'): mixed
+    public static function verify($role = 'users')
     {
         // Prepare role-based gate
         $roleGate = new RoleMiddleware([$role]);
@@ -68,7 +68,7 @@ final class SignIn
             return $data;
         } catch (UnauthorisedException $e) {
             // Graceful failure: log error & return empty response
-            return showError($e);
+            showError($e);
         }
     }
 }

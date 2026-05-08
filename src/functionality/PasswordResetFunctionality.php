@@ -69,7 +69,7 @@ class PasswordResetFunctionality
      *
      * @throws NotFoundException if user data is missing or invalid
      */
-    public static function process(): mixed
+    public static function process()
     {
 
         try {
@@ -125,7 +125,7 @@ class PasswordResetFunctionality
         Utility::msgSuccess(200, 'Password was successfully changed');
         return true;
         } catch (\Throwable $th) {
-            return showError($th);
+            showError($th);
         }
         
     }

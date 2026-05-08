@@ -7,7 +7,7 @@ namespace Src\functionality;
 use Src\Exceptions\UnauthorisedException;
 use Src\functionality\middleware\GetRequestData;
 use Src\functionality\middleware\AuthGateMiddleware;
-use Src\{CheckToken, Limiter, LoginUtility as CheckSanitise, Token, Utility};
+use Src\{Limiter, LoginUtility as CheckSanitise, Token, Utility};
 
 class PwdRecoveryCodeFunctionality
 {
@@ -45,7 +45,7 @@ class PwdRecoveryCodeFunctionality
      *
      * @throws \Exception if token is expired or invalid
      */
-    public static function process(): mixed
+    public static function process()
     {
         try {
             $input = GetRequestData::getRequestData();
@@ -104,7 +104,7 @@ class PwdRecoveryCodeFunctionality
             }
             return true;
         } catch (\Throwable $th) {
-            return showError($th);
+          showError($th);
         }
     }
 }
