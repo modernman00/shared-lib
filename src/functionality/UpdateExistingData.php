@@ -95,7 +95,8 @@ class UpdateExistingData
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
         ?array $postUpdateData = null,
-        string $returnType = 'json'
+        string $returnType = 'json',
+        ?array $optionalFields = null
 
     ): mixed {
         CorsHandler::setHeaders();
@@ -112,7 +113,7 @@ class UpdateExistingData
             }
 
             // Token check can be re‑enabled if CSRF validation is required
-            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);           
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $optionalFields);           
             $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
          
             // check if isset password and hash it
@@ -142,7 +143,7 @@ class UpdateExistingData
             }
         } catch (\Throwable $th) {
 
-            return showError($th);
+          showError($th);
             return false;
         }
     }
@@ -162,9 +163,10 @@ class UpdateExistingData
          string $isCaptcha = 'true',
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
-        string $returnType = 'json'
+        string $returnType = 'json',
+        ?array $optionalFields = null
 
-    ): mixed {
+    ) {
         CorsHandler::setHeaders();
 
         try {
@@ -184,7 +186,7 @@ class UpdateExistingData
           
 
             // Token check can be re‑enabled if CSRF validation is required
-            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);           
+            $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $optionalFields);           
             $sanitisedData = unsetPostData($sanitisedDataRaw, $removeKeys);
          
             // check if isset password and hash it
@@ -212,7 +214,7 @@ class UpdateExistingData
  
         } catch (\Throwable $th) {
 
-            return showError($th);
+           showError($th);
         }
     }
 

@@ -162,9 +162,9 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function setSanitisedData(array $inputData, $minMaxData = null)
+    public static function setSanitisedData(array $inputData, $minMaxData = null, ?array $optionalFields = null)
     {
-        $sanitise = new Sanitise($inputData, $minMaxData);
+        $sanitise = new Sanitise($inputData, $minMaxData, $optionalFields);
         $sanitisedData = $sanitise->getCleanData();
         $error = $sanitise->errors;
         if ($error) {
@@ -175,7 +175,7 @@ class LoginUtility
         return $sanitisedData;
     }
 
-    public static function getSanitisedInputData(array $data, ?array $limitData = null): array
+    public static function getSanitisedInputData(array $data, ?array $limitData = null, ?array $optionalFields = null): array
 {
     $clean = [];
 
@@ -186,11 +186,11 @@ class LoginUtility
         if (is_array($value)) {
          
             // Dive deeper into nested arrays
-            $clean[$safeKey] = self::getSanitisedInputData($value, $limitData);
+            $clean[$safeKey] = self::getSanitisedInputData($value, $limitData, $optionalFields);
 
         } else {
 
-            $result = self::setSanitisedData([$safeKey => $value], $limitData);
+            $result = self::setSanitisedData([$safeKey => $value], $limitData, $optionalFields);
             $clean[$safeKey] = $result[$safeKey] ?? null;
         }
     }

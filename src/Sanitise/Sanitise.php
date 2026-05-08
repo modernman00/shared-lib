@@ -32,7 +32,8 @@ class Sanitise
      */
     public function __construct(
         private array $formData,
-        private ?array $dataLength = null
+        private ?array $dataLength = null,
+        private ?array $optionalFields = null
     ) {
         if (empty($formData)) {
             throw new InvalidArgumentException('Form data cannot be empty');
@@ -124,13 +125,16 @@ class Sanitise
      *
      * @return $this
      */
-    protected function checkEmpty(): self
+        protected function checkEmpty(): self
     {
         // if key is submit  skip it
         if (isset($this->formData['submit'])) {
             unset($this->formData['submit']);
         }
         foreach ($this->formData as $key => $value) {
+            if ($this->optionalFields !== null && in_array($key, $this->optionalFields, true)) {
+                continue;
+            }
             if (is_string($value) && ($value === '' || $value === 'select')) {
                 $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', $key));
                 $this->errors[] = "The $cleanKey field is required";

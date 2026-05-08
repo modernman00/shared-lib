@@ -63,13 +63,14 @@ class SubmitPostData
         array $input,
         ?array $minMaxData,
         ?array $removeKeys,
-        ?array $newInput
+        ?array $newInput,
+        ?array $optionalFields = null
     ): array {
         if (!empty($newInput)) {
             $input = array_merge($input, $newInput);
         }
 
-        $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData);
+        $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $optionalFields);
         // Assuming unsetPostData is a global/utility function
         $sanitisedData = \unsetPostData($sanitisedDataRaw, $removeKeys ?? self::DEFAULT_REMOVE_KEYS);
 
@@ -103,7 +104,8 @@ class SubmitPostData
         bool $isCaptcha = true,
         bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
-        string $generalFileTable = 'images'
+        string $generalFileTable = 'images',
+        ?array $optionalFields = null
     ): mixed {
         try {
             CorsHandler::setHeaders();
@@ -119,7 +121,7 @@ class SubmitPostData
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput);
+            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
 
             // **File Handling Refactor:** Check if file key exists and has an uploaded file.
             // We assume a single file input OR a multiple input but only checking the first slot [0].
@@ -180,7 +182,8 @@ class SubmitPostData
         bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
         string $generalFileTable = 'images',
-        string $returnType = 'json'
+        string $returnType = 'json',
+        ?array $optionalFields = null
     ): mixed {
 
         try {
@@ -198,7 +201,7 @@ class SubmitPostData
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null);
+            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null, $optionalFields);
 
             // File handling for multiple tables / multiple files
             if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
@@ -293,8 +296,9 @@ class SubmitPostData
         bool $isCaptchaV3 = false,
         string $captchaAction = 'SUBMIT',
         ?array $emailArray = null,
-        string $generalFileTable = 'images'
-    ): mixed {
+        string $generalFileTable = 'images',
+        ?array $optionalFields = null
+    ) {
         CorsHandler::setHeaders();
 
         try {
@@ -308,7 +312,7 @@ class SubmitPostData
                 Recaptcha::verifyCaptcha($input);
             }
 
-            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput);
+            $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
 
             // **File Handling Refactor:** Guard against array offset on int error
             if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
@@ -347,7 +351,7 @@ class SubmitPostData
             return $lastId;
         } catch (\Throwable $th) {
             // Note: No transaction rollback here, as none was started.
-            return \showError($th);
+            showError($th);
         }
     }
 
