@@ -363,7 +363,6 @@ function checkInput($data)
         $data = (string)$data;
         $data = trim($data);
         $data = strip_tags($data);
-        $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
         $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}]/u', '', $data);
 
         return $data;
@@ -377,7 +376,6 @@ function checkInputImage($data)
     if ($data !== null) {
         $data = trim($data);
         $data = stripslashes($data);
-        $data = htmlspecialchars($data);
         $data = strip_tags($data);
         $data = preg_replace('/[^a-zA-Z0-9\-\_\.\s]/', '', $data);
 
@@ -394,7 +392,6 @@ function checkInputEmail(string $data): string
     if ($data) {
         $data = trim($data);
         $data = stripslashes($data);
-        $data = htmlspecialchars($data);
         $data = strip_tags($data);
         $data = filter_var($data, FILTER_SANITIZE_EMAIL);
     }

@@ -8,13 +8,14 @@ use Src\functionality\SubmitPostData;
 
 class NotificationLogger
 {
- public static function log(mixed $eventId, mixed $inviteeId, string $channel, string $status, ?string $message = null, ?string $providerResponse = null): void
+ public static function log(mixed $eventId, mixed $inviteeId, string $channel, string $status, ?string $message = null, ?string $providerResponse = null, string $category = 'general'): void
  {
   $_POST = [
    'event_id' => $eventId,
    'invitee_id' => $inviteeId,
    'channel' => $channel,
    'status' => $status,
+   'category' => $category,
    'message' => $message,
    'provider_response' => $providerResponse
   ];
