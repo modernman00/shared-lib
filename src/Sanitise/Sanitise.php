@@ -70,7 +70,7 @@ class Sanitise
 
             $sessionToken = $_SESSION['token'];
             $postToken = $this->formData['token'];
-              $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? $_COOKIE['XSRF-TOKEN'] ?? null;
+               $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? null;
 
             $valid = false;
             if ($sessionToken && hash_equals($sessionToken, $headerToken)) {

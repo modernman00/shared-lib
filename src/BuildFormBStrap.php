@@ -53,7 +53,7 @@ class BuildFormBStrap
         $_SESSION['token'] = $this->token;
 
         $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
-        $_SEESION['deviceHash'] = $this->dToken;
+        $_SESSION['deviceHash'] = $this->dToken;
     }
 
 
