@@ -75,16 +75,12 @@ final class RoleMiddleware
             $id = $decoded->data->id ?? $decoded->id;
             $email = $decoded->data->email ?? $decoded->email;
 
-            $query = "SELECT famCode FROM personal WHERE id = ?";
-            $stmt = Db::connect2()->prepare($query);
-            $result = $stmt->execute([$id]);
-            $famCode = $stmt->fetchColumn();
 
             return [
                 'id' => $id,
                 'email' => $email,
-                'role' => $role,
-                'famCode' => $famCode
+                'role' => $role
+             
             ];
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload

@@ -22,7 +22,7 @@ class Token extends CheckToken
      */
     public static function generateSendTokenEmail($data, $viewPath)
     {
-        $id = $data['id'];
+        $id = $data['id'] ?? $data['no'] ?? $data['user_id'] ?? $data['userId'] ?? null;
         // 1. check if email exists
         $email = Utility::checkInputEmail($data['email']);
 
