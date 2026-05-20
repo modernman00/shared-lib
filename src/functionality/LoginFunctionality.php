@@ -131,9 +131,9 @@ class LoginFunctionality
 
             // Handle response format
             if ($returnType === 'json') {
-                msgSuccess(200, $msg, $token);
+                msgSuccess(200, $msg, "xxxx");
             } else {
-                return ['message' => $msg, 'code' => $token, 'id' => $userId];
+                return ['message' => $msg, 'code' => "xxxx", 'id' => $userId];
             }
         } catch (\Throwable $th) {
             // Allow calling code to handle specific failure scenarios

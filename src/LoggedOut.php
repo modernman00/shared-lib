@@ -74,7 +74,7 @@ class LoggedOut implements RedirectInterface
      * Placeholder method to get the authenticated user's ID.
      * This method would interact with your actual authentication system (e.g., session, security context).
      */
-    private function getAuthenticatedUserId(): ?int
+    private function getAuthenticatedUserId()
     {
         // Example: Retrieve from session if that's where your user ID is stored
         return $_SESSION['user_id'] ?? $_SESSION['ID'] ?? $_SESSION['auth']['ID'] ?? $_SESSION['auth']['id'] ?? $_SESSION['auth']['user_id'] ?? $_SESSION['id'] ?? null;
