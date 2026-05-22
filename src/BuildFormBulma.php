@@ -36,7 +36,7 @@ class BuildFormBulma
         $this->entKey = array_keys($this->question);
         $this->entValue = array_values($this->question);
         $this->entCount = count($this->entValue);
-        $_SESSION['token'] = $this->token;
+
     }
 
 
