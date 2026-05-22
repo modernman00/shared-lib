@@ -13,7 +13,7 @@ final class AuthGateMiddleware
      * @param mixed $expectedValue Optional value to match (e.g. true, 'admin')
      * @param string|null $fallbackView Optional fallback view path
      */
-    public static function enforce(string $sessionPath, mixed $expectedValue = null): void
+    public static function enforce(string $sessionPath, mixed $expectedValue): void
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();

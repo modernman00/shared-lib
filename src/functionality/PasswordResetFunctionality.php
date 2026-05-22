@@ -28,19 +28,36 @@ class PasswordResetFunctionality
 {
     /**
      * Validate reset eligibility (e.g. session token present).
+     * 
      *
      * @param array $session Current session state
      *
      * @throws UnauthorisedException
      */
-     public static function show(string $viewPath, string $identifySession = 'token'): void
+          public static function show(string $viewPath, string $identifySession = 'token'): void
     {
-        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
-        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
-        AuthGateMiddleware::enforce($certainSessionToCheck);
+
+            // check if auth.identifyCust is set
+        if (!isset($_SESSION['auth']['identifyCust']) && !isset($_SESSION['auth']['2FA_token_ts'])) {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+
+        if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1500) {
+            $diff = time() - $_SESSION['auth']['2FA_token_ts'];
+                        $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+        
+        $value = $_SESSION['auth']['identifyCust'];
+        if($value !== null){
+            AuthGateMiddleware::enforce('auth.identifyCust', $value);
+        } else {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
         view($viewPath);
     }
-
 
     /**
      * Handles a password change request using session-based email and token authentication.

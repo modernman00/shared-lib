@@ -74,6 +74,9 @@ final class RoleMiddleware
             // GET THE FAMCODE 
             $id = $decoded->data->id ?? $decoded->id;
             $email = $decoded->data->email ?? $decoded->email;
+  if($email){
+                $_SESSION['auth']['email'] = $email;
+            }
 
 
             return [
@@ -82,6 +85,9 @@ final class RoleMiddleware
                 'role' => $role
              
             ];
+
+          
+
         } catch (\Throwable $e) {
             // Soft fail: log error and return empty payload
             return $e;
@@ -102,9 +108,10 @@ final class RoleMiddleware
     {
         try {
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
+            $id = checkInput($user_id);
             $query = "SELECT email FROM $dbTable WHERE id = ?";
             $stmt = Db::connect2()->prepare($query);
-            $stmt->execute([$user_id]);
+            $stmt->execute([$id]);
             return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
         } catch (\PDOException $e) {
             Utility::showError($e);

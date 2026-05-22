@@ -64,7 +64,7 @@ final class SignIn
             // $url = getenv("APP_URL");
             // $url = $url;
             // loggedDetection($url, $data['email']);
-
+             session_regenerate_id(true);  
             return $data;
         } catch (UnauthorisedException $e) {
             // Graceful failure: log error & return empty response

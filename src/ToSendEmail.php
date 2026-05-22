@@ -57,7 +57,7 @@ class ToSendEmail
 
             // 3) Render HTML from Blade
             $html = Utility::viewTemplateEmail($viewPath, ['data' => $data]);
-            if ($html === '') {
+            if ($html === \null) {
                 throw new ForbiddenException('Failed to render email content.');
             }
 

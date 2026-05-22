@@ -24,7 +24,7 @@ class LoginFunctionality
     public static function show(string $viewPath): void
     {
         // Optional: trigger view layer response (depends on app structure)
-
+        $_SESSION['auth']['showLogin'] = true; // Example session flag for view logic meant for forgot password flow
         view2($viewPath);
     }
 

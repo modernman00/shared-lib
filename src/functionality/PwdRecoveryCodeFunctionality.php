@@ -11,13 +11,31 @@ use Src\{Limiter, LoginUtility as CheckSanitise, Token, Utility};
 
 class PwdRecoveryCodeFunctionality
 {
-      public static function show(string $viewPath, string $identifySession = 'token'): void
+        public static function show(string $viewPath): void
     {
-        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
-        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
-        AuthGateMiddleware::enforce($certainSessionToCheck);
+        // check if auth.identifyCust is set
+        if (!isset($_SESSION['auth']['identifyCust']) && !isset($_SESSION['auth']['2FA_token_ts'])) {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+
+           if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1000) {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+
+        $value = $_SESSION['auth']['identifyCust'];
+
+        if($value !== null){
+            AuthGateMiddleware::enforce('auth.identifyCust', $value);
+        } else {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+        
         view($viewPath);
     }
+
 
     /**
      * Verifies a 2FA code and CSRF token to authorize password reset.
@@ -73,7 +91,7 @@ class PwdRecoveryCodeFunctionality
                 if (!empty($input['dToken'])) {
                     if ($input['dToken'] != $_SESSION['dToken']) {
                         throw new UnauthorisedException('Unauthorised Device');
-                    } else{
+                    } else {
                         sessForget('dToken');
                     }
                 }
@@ -96,15 +114,16 @@ class PwdRecoveryCodeFunctionality
                 Limiter::$argLimiter->reset();
                 Limiter::$ipLimiter->reset();
 
-                // create the codeVerifiedSession
+                // create the codeVerifiedSession and record timestamp for freshness checks
                 $_SESSION['auth']['codeVerified'] = true;
+                $_SESSION['auth']['codeVerified_ts'] = time();
                 // Session renewal and cleanup post-password reset
                 session_regenerate_id(true);
                 Utility::msgSuccess(200, 'Code verified successfully');
             }
             return true;
         } catch (\Throwable $th) {
-          showError($th);
+            showError($th);
         }
     }
 }

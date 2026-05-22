@@ -26,11 +26,20 @@ use Src\{Limiter, LoginUtility as CheckSanitise, Token, CorsHandler, JwtHandler,
  */
 class PasswordRecoveryService
 {
-       public static function show(string $viewPath, string $identifySession = 'token'): void
+    public static function show(string $viewPath): void
     {
-        $value = AuthGateMiddleware::getSessionValue('auth.identifyCust');
-        $certainSessionToCheck = $value !== null ? 'auth.identifyCust' : $identifySession;
-        AuthGateMiddleware::enforce($certainSessionToCheck);
+        unset($_SESSION['auth']['2FA_token_ts']);
+        unset($_SESSION['auth']['identifyCust']);
+        $value = AuthGateMiddleware::getSessionValue('auth.showLogin');
+        if ($value !== null) {
+
+            AuthGateMiddleware::enforce('auth.showLogin', $value);
+        } else {
+            $fallback = $_ENV['401URL'] ?? '/401';
+            redirect($fallback);
+        }
+
+
         view($viewPath);
     }
 
@@ -68,7 +77,7 @@ class PasswordRecoveryService
      *
      * @throws NotFoundException if input is missing or user cannot be found
      */
-    public static function process(bool $issueJwt = true, $isCaptchaV3 = false,$isCaptcha = false, string $captchaAction = 'FORGOT')
+    public static function process(bool $issueJwt = true, $isCaptchaV3 = false, $isCaptcha = false, string $captchaAction = 'FORGOT')
     {
         try {
             CorsHandler::setHeaders();               // Apply CORS headers for API access
@@ -82,7 +91,7 @@ class PasswordRecoveryService
                 $token = $input['recaptchaTokenV3'];
                 Recaptcha::verifyCaptchaEnterprise($token, $captchaAction);
                 unset($input['action'], $input['token']);
-            }elseif ($isCaptcha) {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
@@ -100,7 +109,7 @@ class PasswordRecoveryService
                 'max'  => [30],
             ]);
 
-       
+
             // Attempt to locate user record
             $user = CheckSanitise::useEmailToFindData($sanitised);
 
