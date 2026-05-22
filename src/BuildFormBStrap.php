@@ -39,13 +39,6 @@ class BuildFormBStrap
     public function __construct(public array $question)
     {
         $this->token = urlencode(base64_encode((random_bytes(32))));
-        setcookie('XSRF-TOKEN', $this->token, [
-            'expires' => time() + 3600,
-            'path' => '/',
-            'samesite' => 'Lax',
-            'secure' => ($_ENV['APP_ENV'] ?? 'production') === 'production',
-            'httponly' => false,
-        ]);
 
         $this->entKey = array_keys($this->question);
         $this->entValue = array_values($this->question);
