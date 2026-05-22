@@ -36,7 +36,7 @@ class Token extends CheckToken
         $_SESSION['auth']['2FA_token_ts'] = time(); // Use 'auth' namespace
         $_SESSION['auth']['identifyCust'] = $id ?? 'TEST'; // Use 'auth' namespace
         $_SESSION['auth']['email'] = $email;
-        //TODO send text to the user with the code
+        //TODO send text to the user with the code - xxx
 
         //3. ACCOMPANY EMAIL CONTENT
         $emailData = ['code' => $deriveToken, 'email' => $email];
