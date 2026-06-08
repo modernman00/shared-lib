@@ -38,8 +38,9 @@ class RightJoin extends Db
      * @param string $orderBy The column to order the results by in DESCENDING order.
      * @return mixed Returns an array of fetched records on success, or false on failure.
      */
-    public static function joinAll4(string $firstTable, string $para, array $table, string $orderBy): mixed
+    public static function joinAll4(string $para, array $table, string $orderBy): mixed
     {
+               		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
 
         try {

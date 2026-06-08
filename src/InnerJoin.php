@@ -33,7 +33,6 @@ class InnerJoin extends Db
      * Use Case: Use this when you ONLY want records that match perfectly across all tables, 
      * AND you need fine-grained control over which specific columns to retrieve, how to sort them, and how many to get.
      *
-     * @param string $firstTable The primary table to select from (e.g., 'comments').
      * @param string $para The column used for joining the tables (e.g., 'id').
      * @param string $paraWhere The column used in the WHERE clause on the primary table.
      * @param array $table An array of table names to join with the primary table.
@@ -44,7 +43,7 @@ class InnerJoin extends Db
      * @return array|bool Returns an array of fetched records on success, or false on failure.
      */
     public static function joinParamSelect(
-        string $firstTable,
+      
         string $para,
         string $paraWhere,
         array $table,
@@ -53,6 +52,7 @@ class InnerJoin extends Db
         ?string $orderBy = null,
         ?int $limit = null
     ): array|bool {
+               		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
@@ -90,15 +90,15 @@ class InnerJoin extends Db
      * Use Case: Use this when you want strict matches ONLY (records must exist in all joined tables) 
      * and you are filtering the results based on a specific column value (e.g., where 'status' = 'active').
      *
-     * @param string $firstTable The primary table to select from.
      * @param string $para The column used for joining the tables.
      * @param string $paraWhere The column used in the WHERE clause on the primary table.
      * @param array $table An array of table names to join with the primary table.
      * @param mixed $bind The value to bind to the WHERE clause condition.
      * @return array|bool Returns an array of fetched records on success, or false on failure.
      */
-    public function joinParam(string $firstTable, string $para, string $paraWhere, array $table, mixed $bind): array|bool
+    public function joinParam(string $para, string $paraWhere, array $table, mixed $bind): array|bool
     {
+        		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
@@ -142,8 +142,9 @@ class InnerJoin extends Db
      * @param string $orderBy The column to order the results by in DESCENDING order.
      * @return mixed Returns an array of fetched records on success, or false on failure.
      */
-    public function joinAll(string $firstTable, string $para, array $table, string $orderBy): mixed
+    public function joinAll(string $para, array $table, string $orderBy): mixed
     {
+             		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(
@@ -180,8 +181,9 @@ class InnerJoin extends Db
      * @param string $orderBy The column to order the results by in DESCENDING order.
      * @return mixed Returns an array of fetched records on success, or false on failure.
      */
-    public static function joinAll2(string $firstTable, string $para, array $table, string $orderBy): mixed
+    public static function joinAll2(string $para, array $table, string $orderBy): mixed
     {
+              		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(fn($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
@@ -214,8 +216,9 @@ class InnerJoin extends Db
      * @param string $orderBy The column to order the results by in DESCENDING order.
      * @return void Outputs the JSON string directly.
      */
-    public static function joinAll3(string $firstTable, string $para, array $table, string $orderBy): void
+    public static function joinAll3(string $para, array $table, string $orderBy): void
     {
+        $firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
@@ -244,8 +247,9 @@ class InnerJoin extends Db
      * @param mixed $id The value to bind to both sides of the AND condition in the WHERE clause.
      * @return mixed Returns an array of fetched records on success, or false on failure.
      */
-    public function joinParamAnd(string $firstTable, string $para, array $table, mixed $id): mixed
+    public function joinParamAnd(string $para, array $table, mixed $id): mixed
     {
+        $firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
         try {
             $buildInnerJoinQuery = array_map(fn($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);

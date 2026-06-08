@@ -38,8 +38,9 @@ class LeftJoin extends Db
      * @param mixed $id The value to bind to both sides of the OR condition in the WHERE clause.
      * @return array|bool Returns an array of fetched records on success, or false on failure.
      */
-    public static function joinParamOr(string $firstTable, string $para, array $table, mixed $id): array|bool
+    public static function joinParamOr(string $para, array $table, mixed $id): array|bool
     {
+              		$firstTable = array_shift($table);
         $firstTable = Utility::checkInput(data: $firstTable);
 
         try {
