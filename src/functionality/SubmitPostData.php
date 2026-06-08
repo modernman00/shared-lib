@@ -25,7 +25,7 @@ use Src\functionality\SendEmailFunctionality;
  * Handles validated POST submissions with optional single/multiple image uploads.
  *
  * @method static mixed submitToOneTablenImage(string $table, ?array $minMaxData = null, ?array $removeKeys = null, string|array|null $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $newInput = null, bool $isCaptcha = true)
- * @method static mixed submitToMultipleTable(array $allowedTables, ?array $minMaxData = null, ?array $removeKeys = null, string|array|null $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $postData = null, bool $isCaptcha = true)
+ * @method static mixed submitToMultipleTable(array $allowedTables, ?array $minMaxData = null, ?array $removeKeys = null, string|array|null $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $postData = null, bool $isCaptcha = true) // Note: $postData is for internal use/testing; in production, it defaults to null to use GetRequestData.
  * @method static mixed submitDataFileAndEmail(string $table, ?array $minMaxData = null, ?array $removeKeys = null, ?string $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $newInput = null, bool $isCaptcha = true, ?array $emailArray = null)
  */
 class SubmitPostData
