@@ -24,8 +24,8 @@ use Src\functionality\SendEmailFunctionality;
  *
  * Handles validated POST submissions with optional single/multiple image uploads.
  *
- * @method static mixed submitToOneTablenImage(string $table, ?array $minMaxData = null, ?array $removeKeys = null, ?string $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $newInput = null, bool $isCaptcha = true)
- * @method static mixed submitToMultipleTable(array $allowedTables, ?array $minMaxData = null, ?array $removeKeys = null, ?string $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $postData = null, bool $isCaptcha = true)
+ * @method static mixed submitToOneTablenImage(string $table, ?array $minMaxData = null, ?array $removeKeys = null, string|array|null $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $newInput = null, bool $isCaptcha = true)
+ * @method static mixed submitToMultipleTable(array $allowedTables, ?array $minMaxData = null, ?array $removeKeys = null, string|array|null $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $postData = null, bool $isCaptcha = true)
  * @method static mixed submitDataFileAndEmail(string $table, ?array $minMaxData = null, ?array $removeKeys = null, ?string $fileName = null, ?string $imgPath = null, ?string $fileTable = null, ?array $newInput = null, bool $isCaptcha = true, ?array $emailArray = null)
  */
 class SubmitPostData
@@ -86,7 +86,7 @@ class SubmitPostData
      * @param string $table Target table name.
      * @param ?array $minMaxData Optional per-field min/max length constraints.
      * @param ?array $removeKeys Keys to strip from POST data.
-     * @param ?string $fileName Name of the file input field.
+     * @param string|array|null $fileName Name or names of file input fields.
      * @param ?string $imgPath Relative directory path for image uploads.
      * @param ?string $fileTable Table name for storing image filename data.
      * @param ?array $newInput Optional new input data to be inserted.
@@ -97,7 +97,7 @@ class SubmitPostData
         string $table,
         ?array $minMaxData = null,
         ?array $removeKeys = null,
-        ?string $fileName = null,
+        string|array|null $fileName = null,
         ?string $imgPath = null,
         ?string $sourceFileTable = null,
         ?array $newInput = null,
@@ -112,8 +112,6 @@ class SubmitPostData
 
             $input = GetRequestData::getRequestData();
 
-  
-
             // this is reCAPTCHA v3
             // this is reCAPTCHA v3
             if ($isCaptchaV3) {
@@ -125,23 +123,15 @@ class SubmitPostData
             }
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
 
-            // **File Handling Refactor:** Check if file key exists and has an uploaded file.
-            // We assume a single file input OR a multiple input but only checking the first slot [0].
-            if ($fileName !== null && isset($_FILES[$fileName]) && \is_array($_FILES[$fileName]) && !empty($_FILES[$fileName]['name'][0])) {
-                $fileData = $_FILES[$fileName];
-
-                // Check if it's a multiple-file array structure OR a single file structure
-                $hasUploadedFile = (
-                    (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) ||
-                    (isset($fileData['error']) && is_int($fileData['error']) && $fileData['error'] !== 4)
+            if ($fileName !== null) {
+                $sanitisedData = self::processFileFields(
+                    $sanitisedData,
+                    $fileName,
+                    $imgPath,
+                    $sourceFileTable,
+                    $generalFileTable,
+                    false
                 );
-
-                if ($hasUploadedFile) {
-                    // Assuming process handles single/multi file upload structure
-                    $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
-                }
-
-                $sanitisedData = $sanitisedData['sanitisedData'];
             }
 
 
@@ -165,7 +155,7 @@ class SubmitPostData
      * @param array $allowedTables Whitelisted table names eligible for insertion
      * @param ?array $minMaxData Optional per-field min/max length constraints
      * @param ?array $removeKeys Keys to strip from POST data
-     * @param ?string $fileName File input field name (plural if multiple) 
+     * @param string|array|null $fileName File input field name or array of file input names.
      * @param ?string $imgPath Relative path to upload directory
      * @param ?string $fileTable Table name for image filenames
      * @param ?array $postData Optional POST data to override GetRequestData
@@ -176,7 +166,7 @@ class SubmitPostData
         array $allowedTables,
         ?array $minMaxData = null,
         ?array $removeKeys = null,
-        ?string $fileName = null,
+        string|array|null $fileName = null,
         ?string $imgPath = null,
         ?string $sourceFileTable = null,
         ?array $postData = null,
@@ -205,16 +195,14 @@ class SubmitPostData
             }
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null, $optionalFields);
 
-            // File handling for multiple tables / multiple files
-            if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
-                $fileData = $_FILES[$fileName];
-
-                // Simplified check: check for any uploaded file at the first index (most common scenario)
-                if (isset($fileData['error'][0]) && $fileData['error'][0] !== 4) {
-                    // Assuming process handles the upload and modifies $sanitisedData
-                    $sanitisedData = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable);
-                }
-                $sanitisedData = $sanitisedData['sanitisedData'];
+            if ($fileName !== null) {
+                $sanitisedData = self::processFileFields(
+                    $sanitisedData,
+                    $fileName,
+                    $imgPath,
+                    $sourceFileTable,
+                    $generalFileTable
+                );
             }
 
             return self::handleTransaction(function (PDO $pdo) use ($sanitisedData, $allowedTables, $returnType) {
@@ -224,11 +212,10 @@ class SubmitPostData
                 if ($returnType === 'json') {
                     Utility::msgSuccess(201, 'Records created successfully');
                     return true; // Unreachable if msgSuccess exits.
-                  
+
                 } else {
-                      return ['message' => 'Records created successfully'];
+                    return ['message' => 'Records created successfully'];
                 }
-      
             });
         } catch (\Throwable $th) {
             showError($th);
@@ -243,7 +230,7 @@ class SubmitPostData
      * @param string $table               Target table for main data insertion.
      * @param ?array $minMaxData          Validation rules: ['min' => [...], 'max' => [...], 'data' => [...]].
      * @param ?array $removeKeys          Keys to exclude from submission payload.
-     * @param ?string $fileName           File input field name (e.g., 'cv').
+     * @param string|array|null $fileName  File input field name or array of file field names (e.g., 'cv' or ['cv', 'bank_statements']).
      * @param ?string $imgPath            Upload destination path for file (e.g., 'resources/cv/').
      * @param ?string $fileTable          Table to store file metadata (e.g., filename, path).
      * @param ?array $newInput            Additional data to merge into submission (e.g., email config).
@@ -290,7 +277,7 @@ class SubmitPostData
         string $table,
         ?array $minMaxData = null,
         ?array $removeKeys = null,
-        ?string $fileName = null,
+        string|array|null $fileName = null,
         ?string $imgPath = null,
         ?string $sourceFileTable = null,
         ?array $newInput = null,
@@ -316,36 +303,61 @@ class SubmitPostData
 
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
 
-            // **File Handling Refactor:** Guard against array offset on int error
-            if ($fileName && isset($_FILES[$fileName]) && is_array($_FILES[$fileName])) {
-                $fileData = $_FILES[$fileName];
+            $filePath = null;
+            $processedFileName = null;
 
-                // Check for single-file upload error code (4 = UPLOAD_ERR_NO_FILE)
-                if (isset($fileData['error']) && is_int($fileData['error']) && $fileData['error'] !== 4) {
-                    // This is the simplest check for a single file upload structure
-                    $result = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fileName, $imgPath, $generalFileTable, false);
+            if ($fileName !== null) {
+                foreach ((array) $fileName as $fieldName) {
+                    if (!is_string($fieldName) || $fieldName === '') {
+                        continue;
+                    }
 
-                    $sanitisedData = $result['sanitisedData'];
-                    $filePath = $result['filePath'];
+                    if (!isset($_FILES[$fieldName]) || !is_array($_FILES[$fieldName])) {
+                        continue;
+                    }
+
+                    $fileData = $_FILES[$fieldName];
+                    $hasUploadedFile = false;
+
+                    if (isset($fileData['error'])) {
+                        if (is_int($fileData['error'])) {
+                            $hasUploadedFile = $fileData['error'] !== UPLOAD_ERR_NO_FILE;
+                        } elseif (is_array($fileData['error'])) {
+                            $hasUploadedFile = count(array_filter($fileData['error'], fn($error) => $error !== UPLOAD_ERR_NO_FILE)) > 0;
+                        }
+                    }
+
+                    if (!$hasUploadedFile) {
+                        continue;
+                    }
+
+                    $result = FileUploadProcess::process($sanitisedData, $sourceFileTable, $fieldName, $imgPath, $generalFileTable, false);
+                    $sanitisedData = $result['sanitisedData'] ?? $sanitisedData;
+                    $filePath = $result['filePath'] ?? $filePath;
+
+                    if (isset($sanitisedData[$fieldName])) {
+                        $processedFileName = $sanitisedData[$fieldName];
+                    }
                 }
             }
 
             $lastId = SubmitForm::submitForm($table, $sanitisedData);
 
-            // get the file content 
-            $fileContent = file_get_contents($filePath);
-            $fileName = $sanitisedData["$fileName"];
-            // Define the displayed name for the recipient (e.g., 'CV.docx')
-            $displayFileName = substr($fileName, 11); // Removes the timestamp prefix
+            $fileContent = null;
+            $displayFileName = null;
 
-            // Email Functionality
-            if ($emailArray !== null && $fileName !== null) {
+            if ($filePath !== null && $processedFileName !== null && file_exists($filePath)) {
+                $fileContent = file_get_contents($filePath);
+                $displayFileName = substr((string) $processedFileName, 11);
+            }
+
+            if ($emailArray !== null && $fileContent !== null && $displayFileName !== null) {
                 SendEmailFunctionality::email(
                     $emailArray['viewPath'],
                     $emailArray['subject'],
                     $emailArray['emailViewDataWithEmail'],
                     $emailArray['recipient'],
-                    $fileContent ?? null, // Use null coalesce for safety
+                    $fileContent,
                     $displayFileName
                 );
             }
@@ -366,6 +378,55 @@ class SubmitPostData
      *
      * @throws RuntimeException If any insert fails
      */
+    private static function processFileFields(
+        array $sanitisedData,
+        string|array $fileFields,
+        ?string $imgPath,
+        ?string $sourceFileTable,
+        string $generalFileTable,
+        bool $nested = true
+    ): array {
+        foreach ((array) $fileFields as $fieldName) {
+            if (!is_string($fieldName) || $fieldName === '') {
+                continue;
+            }
+
+            if (!isset($_FILES[$fieldName]) || !is_array($_FILES[$fieldName])) {
+                continue;
+            }
+
+            $fileData = $_FILES[$fieldName];
+            $hasUploadedFile = false;
+
+            if (isset($fileData['error'])) {
+                if (is_int($fileData['error'])) {
+                    $hasUploadedFile = $fileData['error'] !== UPLOAD_ERR_NO_FILE;
+                } elseif (is_array($fileData['error'])) {
+                    $hasUploadedFile = count(array_filter($fileData['error'], fn($error) => $error !== UPLOAD_ERR_NO_FILE)) > 0;
+                }
+            }
+
+            if (!$hasUploadedFile) {
+                continue;
+            }
+
+            $result = FileUploadProcess::process(
+                $sanitisedData,
+                $sourceFileTable,
+                $fieldName,
+                $imgPath,
+                $generalFileTable,
+                $nested
+            );
+
+            if (isset($result['sanitisedData']) && is_array($result['sanitisedData'])) {
+                $sanitisedData = $result['sanitisedData'];
+            }
+        }
+
+        return $sanitisedData;
+    }
+
     private static function insertMultipleTables(array $getTableData, array $allowedTables, PDO $pdo): void
     {
         foreach ($getTableData as $tableName => $tableData) {

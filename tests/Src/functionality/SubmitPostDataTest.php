@@ -261,6 +261,96 @@ class SubmitPostDataTest extends TestCase
     }
 
     /**
+     * Test submitToMultipleTable with a single upload field and a multiple upload field.
+     */
+    public function testSubmitToMultipleTableWithMultipleFileFields(): void
+    {
+        $originalFiles = $_FILES;
+
+        Mockery::mock('alias:Src\CorsHandler')
+            ->shouldReceive('setHeaders')
+            ->once();
+
+        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
+            ->shouldReceive('getRequestData')
+            ->once()
+            ->andReturn([
+                'captcha' => 'valid_token',
+                'table1' => ['data' => 'test1'],
+                'table2' => ['data' => 'test2']
+            ]);
+
+        Mockery::mock('alias:Src\Recaptcha')
+            ->shouldReceive('verifyCaptcha')
+            ->once();
+
+        Mockery::mock('alias:Src\LoginUtility')
+            ->shouldReceive('getSanitisedInputData')
+            ->with(['captcha' => 'valid_token', 'table1' => ['data' => 'test1'], 'table2' => ['data' => 'test2']], null)
+            ->once()
+            ->andReturn([
+                'table1' => ['data' => 'sanitized_test1'],
+                'table2' => ['data' => 'sanitized_test2']
+            ]);
+
+        $_FILES = [
+            'identity_doc' => [
+                'name' => 'invitation letter DADDY.pdf',
+                'type' => 'application/pdf',
+                'tmp_name' => '/tmp/php_identity_doc.tmp',
+                'error' => 0,
+                'size' => 254550,
+            ],
+            'bank_statements' => [
+                'name' => ['Joseph_Isibor.pdf'],
+                'type' => ['application/pdf'],
+                'tmp_name' => ['/tmp/php_bank_statements.tmp'],
+                'error' => [0],
+                'size' => [595939],
+            ],
+        ];
+
+        Mockery::mock('alias:Src\functionality\middleware\FileUploadProcess')
+            ->shouldReceive('process')
+            ->twice()
+            ->andReturnUsing(function ($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, $nested) {
+                $sanitisedData[$fileName] = $fileName . '_saved';
+                return ['sanitisedData' => $sanitisedData, 'filePath' => '/tmp/' . $fileName];
+            });
+
+        Mockery::mock('alias:Src\Db')
+            ->shouldReceive('connect2')
+            ->once()
+            ->andReturn($this->pdoMock);
+
+        $transactionMock = Mockery::mock('alias:Src\Transaction');
+        $transactionMock->shouldReceive('beginTransaction')->once();
+        $transactionMock->shouldReceive('commit')->once();
+        $transactionMock->shouldReceive('rollback')->never();
+
+        Mockery::mock('alias:Src\SubmitForm')
+            ->shouldReceive('submitForm')
+            ->times(2)
+            ->andReturn(true);
+
+        Mockery::mock('alias:Src\Utility')
+            ->shouldReceive('msgSuccess')
+            ->with(201, 'Records created successfully')
+            ->once();
+
+        SubmitPostData::submitToMultipleTable(
+            ['table1', 'table2'],
+            null,
+            null,
+            ['identity_doc', 'bank_statements'],
+            'uploads/',
+            'table1'
+        );
+
+        $_FILES = $originalFiles;
+    }
+
+    /**
      * Test submitImgDataSingle with valid file.
      */
     public function testSubmitImgDataSingle(): void
