@@ -111,7 +111,8 @@ class LoginFunctionality
             Validator::requireKeys($input, ['email', 'password']);
 // add role to the authentication process
             $input['role'] = $role;
-            $userD = JwtHandler::authenticate($input);
+            $userD = JwtHandler::authenticate($input, $role);
+            
 
             if (!is_array($userD) || !isset($userD['token'], $userD['userId'])) {
                 throw new \UnexpectedValueException('Malformed authentication result');

@@ -19,7 +19,7 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData, ?string $table = null): bool
+    public static function checkPassword(#[SensitiveParameter] array $inputData, #[SensitiveParameter] array $databaseData): bool
     {
         $textPassword = $inputData['password'];
         $dbPassword = $databaseData['password'];
@@ -62,7 +62,7 @@ class LoginUtility
      *
      * @throws \Exception
      */
-    public static function useEmailToFindData($inputData, ? string $table = null)
+    public static function useEmailToFindData($inputData)
     {
         $email = $inputData['email'];
         $tableDB =  $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';

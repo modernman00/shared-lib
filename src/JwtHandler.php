@@ -66,7 +66,7 @@ class JwtHandler
      *
      * @throws NotFoundException If user is not found or password is invalid
      */
-    public static function authenticate(array $input, ?string $table = null): array
+    public static function authenticate(array $input, string $role): array
     {
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['email', 'password'],
@@ -75,12 +75,17 @@ class JwtHandler
         ]);
 
 
-        $user = CheckSanitise::useEmailToFindData($sanitised, $table);
+        $user = CheckSanitise::useEmailToFindData($sanitised);
 
-        CheckSanitise::checkPassword($sanitised, $user, $table);
+        CheckSanitise::checkPassword($sanitised, $user);
         // If user is found and password is verified, check if the user exists in the database
 
         $userId = $user['id'];
+        $user['role'] = $role; 
+        
+        if (empty($user)) {
+            throw new NotFoundException('User not found');
+        }
 
         LoginUtility::logAudit($userId, $user['email'], 'success', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
