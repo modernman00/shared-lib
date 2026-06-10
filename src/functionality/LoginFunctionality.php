@@ -77,7 +77,7 @@ class LoginFunctionality
      *
      * @throws NotFoundException if the login payload is missing or malformed
      */
-    public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN')
+    public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN', string $role = 'user')
     {
         try {
             $input = GetRequestData::getRequestData();
@@ -109,7 +109,8 @@ class LoginFunctionality
             // Authenticate user, send code and generate JWT tokens if requested
 
             Validator::requireKeys($input, ['email', 'password']);
-
+// add role to the authentication process
+            $input['role'] = $role;
             $userD = JwtHandler::authenticate($input);
 
             if (!is_array($userD) || !isset($userD['token'], $userD['userId'])) {

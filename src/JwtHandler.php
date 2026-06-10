@@ -151,7 +151,7 @@ class JwtHandler
             'exp' => time() + (int) $_ENV['COOKIE_EXPIRE'],
             'data' => $user,
             'sub' => (string) $user['id'],
-            'role' => $user['role'] ?? 'users',
+            'role' => $user['role'],
         ];
 
         return JWT::encode($token, $_ENV['JWT_KEY'], 'HS256');

@@ -57,7 +57,7 @@ final class RoleMiddleware
             $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
 
             // Fallback: extract role from either `data` or direct payload
-            $role = $decoded->data->role ?? $decoded->role ?? 'users';
+            $role = $decoded->data->role ?? $decoded->role;
 
             // Role enforcement
             if (!in_array($role, $this->allowedRoles, true)) {

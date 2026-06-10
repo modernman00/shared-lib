@@ -61,9 +61,9 @@ final class SignIn
             // 🔒 Auth + Role enforcement
             $data = $roleGate->handle();
 
-            // $url = getenv("APP_URL");
-            // $url = $url;
-            // loggedDetection($url, $data['email']);
+            $url = $_ENV['APP_URL'] ??  getenv("APP_URL");
+            $url = $url;
+            loggedDetection($url, $data['email']);
              session_regenerate_id(true);  
             return $data;
         } catch (UnauthorisedException $e) {
