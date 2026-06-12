@@ -7,7 +7,7 @@ namespace Src;
 use eftec\bladeone\BladeOne;
 use Monolog\Level;
 use Monolog\Logger;
-use Src\Data\EmailData;
+use Src\data\EmailData;
 use Src\Exceptions\HttpException;
 
 class Utility
