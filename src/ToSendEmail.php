@@ -28,6 +28,7 @@ class ToSendEmail
             'fileName' => $fileName,
         ];
     }
+    // This is a more general function that can be used for any email sending, it will handle the rendering of the email and the sending of the email.
 
     /**
      * @param mixed $array 'viewPath' => string $viewPath, 'data' => array $data,'subject' => string $subject, 'file' => $file, 'fileName' => $fileName
