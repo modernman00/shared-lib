@@ -485,37 +485,78 @@ function destroyCookie(): void
  * @return string The full URL to the asset.
  * @throws RuntimeException If the Vite manifest is not found, or if the given path is not found in the manifest.
  */
-if (!function_exists('viteAsset')) {
-    /**
-     * Resolves Vite assets using the project root.
-     */
-    function viteAsset(string $path): string
+if (!function_exists('vite')) {
+
+    function vite(string $entry): string
     {
-        $isDev = ($_ENV['APP_ENV'] ?? 'local') === 'local';
-
-        if ($isDev) {
-            return "http://localhost:5173/$path";
-        }
-
         static $manifest = null;
 
+        $root = defined('BASE_PATH')
+            ? BASE_PATH
+            : dirname(__DIR__, 2); // adjust if needed
+
+        $isDev = (
+            ($_ENV['APP_ENV'] ?? 'production') === 'local'
+            && file_exists($root . '/public/hot')
+        );
+
+        /**
+         * 1. DEV MODE → Vite server
+         */
+        if ($isDev) {
+            $hotContent = file_get_contents($root . '/public/hot');
+            $devServerUrl = $hotContent ? trim($hotContent) : 'http://localhost:5173';
+
+            return "<script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>\n" .
+                   "<script type=\"module\" src=\"{$devServerUrl}/{$entry}\"></script>";
+        }
+
+        /**
+         * 2. LOAD MANIFEST (once only)
+         */
         if ($manifest === null) {
-            $root = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 4);
-            $manifestPath = "$root/public/build/manifest.json";
-            
+
+            $manifestPath = $root . '/public/build/manifest.json';
+
             if (!file_exists($manifestPath)) {
-                throw new RuntimeException('Vite manifest not found at: ' . $manifestPath);
+                throw new RuntimeException("Vite manifest not found at: {$manifestPath}");
             }
 
-            $manifestContent = file_get_contents($manifestPath);
-            $manifest = json_decode($manifestContent, true);
+            $manifest = json_decode(file_get_contents($manifestPath), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new RuntimeException("Invalid Vite manifest JSON.");
+            }
         }
 
-        if (!isset($manifest[$path])) {
-            throw new RuntimeException("Path {$path} not found in Vite manifest.");
+        /**
+         * 3. VALIDATE ENTRY
+         */
+        if (!isset($manifest[$entry])) {
+            throw new RuntimeException("Vite entry not found: {$entry}");
         }
 
-        return '/public/build/' . $manifest[$path]['file'];
+        $asset = $manifest[$entry];
+
+        $html = '';
+
+        /**
+         * 4. CSS (important and often missed)
+         */
+        if (!empty($asset['css'])) {
+            foreach ($asset['css'] as $css) {
+                $cssUrl = asset('build/' . $css);
+                $html .= '<link rel="stylesheet" href="' . $cssUrl . '">' . PHP_EOL;
+            }
+        }
+
+        /**
+         * 5. JS
+         */
+        $jsUrl = asset('build/' . $asset['file']);
+        $html .= '<script type="module" src="' . $jsUrl . '"></script>';
+
+        return $html;
     }
 }
 
