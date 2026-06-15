@@ -495,10 +495,7 @@ if (!function_exists('vite')) {
             ? BASE_PATH
             : dirname(__DIR__, 2); // adjust if needed
 
-        $isDev = (
-            ($_ENV['APP_ENV'] ?? 'production') === 'local'
-            && file_exists($root . '/public/hot')
-        );
+        $isDev = ($_ENV['APP_ENV'] ?? 'production') === 'local';
 
         /**
          * 1. DEV MODE → Vite server
