@@ -40,7 +40,7 @@ class PasswordRecoveryService
         }
 
 
-        view($viewPath);
+        view2($viewPath);
     }
 
 

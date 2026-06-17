@@ -56,7 +56,7 @@ class PasswordResetFunctionality
             $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
         }
-        view($viewPath);
+        view2($viewPath);
     }
 
     /**

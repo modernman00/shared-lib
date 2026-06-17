@@ -33,7 +33,7 @@ class PwdRecoveryCodeFunctionality
             redirect($fallback);
         }
         
-        view($viewPath);
+        view2($viewPath);
     }
 
 

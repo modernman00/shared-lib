@@ -495,13 +495,14 @@ if (!function_exists('vite')) {
             ? BASE_PATH
             : dirname(__DIR__, 2); // adjust if needed
 
-        $isDev = ($_ENV['APP_ENV'] ?? 'production') === 'local';
+        $hotFile = $root . '/public/hot';
+        $isDev = ($_ENV['APP_ENV'] ?? 'production') === 'local' && file_exists($hotFile);
 
         /**
          * 1. DEV MODE → Vite server
          */
         if ($isDev) {
-            $hotContent = file_get_contents($root . '/public/hot');
+            $hotContent = file_get_contents($hotFile);
             $devServerUrl = $hotContent ? trim($hotContent) : 'http://localhost:5173';
 
             return "<script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>\n" .

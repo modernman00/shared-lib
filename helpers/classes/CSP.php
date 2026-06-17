@@ -10,11 +10,13 @@ class CSP
 
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'nonce-$nonce' https:",
-            "style-src 'self' 'nonce-$nonce' https://fonts.googleapis.com",
+            "script-src 'self' 'nonce-$nonce' https: 'unsafe-eval'",
+            "script-src-attr 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data:",
-            "connect-src 'self'",
+            "connect-src 'self' https://www.google.com https://www.gstatic.com",
+            "frame-src 'self' https://www.google.com https://recaptcha.google.com",
         ];
 
         if (!empty($options['extra'])) {
