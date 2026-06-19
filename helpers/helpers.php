@@ -231,6 +231,9 @@ function showError($th): void
     if ($error) {
         echo $error;
     }
+    if (getenv('PHPUNIT_RUNNING')) {
+        return;
+    }
     exit();
 }
 // FUNCTION TO SEND TEXT TO PHONE

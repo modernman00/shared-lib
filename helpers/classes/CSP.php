@@ -12,9 +12,9 @@ class CSP
             "default-src 'self'",
             "script-src 'self' 'nonce-$nonce' https: 'unsafe-eval'",
             "script-src-attr 'unsafe-inline'",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data:",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+            "img-src 'self' data: https:",
             "connect-src 'self' https://www.google.com https://www.gstatic.com",
             "frame-src 'self' https://www.google.com https://recaptcha.google.com",
         ];

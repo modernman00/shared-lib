@@ -74,7 +74,12 @@ final class LoggerFactory
         // Normalize log path
         $logPath = $_ENV['LOGGER_PATH'];
         if (!str_starts_with($logPath, '/')) {
-            $logPath = __DIR__ . '/' . ltrim($logPath, '/');
+            if (strpos(__DIR__, '/Sites/shared-lib/src') !== false && defined('BASE_PATH')) {
+                $cleanPath = preg_replace('/^(\.\.\/|\.\/)+/', '', $logPath);
+                $logPath = BASE_PATH . '/' . $cleanPath;
+            } else {
+                $logPath = __DIR__ . '/' . ltrim($logPath, '/');
+            }
         }
 
         // Write logs to file with rotation ( 7 days)
