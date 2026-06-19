@@ -174,7 +174,7 @@ class Utility
                 $blade = new BladeOne($view, $cache, $mode);
 
                 $blade->pipeEnable = true;
-                $blade->setBaseUrl($_ENV['APP_URL']);
+                $blade->setBaseUrl($_ENV['APP_URL'] ?? getenv('APP_URL') ?? '');
                 // $blade->setAutoescape(true);
             }
 
@@ -200,7 +200,7 @@ class Utility
                 $blade = new BladeOne($view, $cache);
 
                 $blade->pipeEnable = true;
-                $blade->setBaseUrl($_ENV['APP_URL']);
+                $blade->setBaseUrl($_ENV['APP_URL'] ?? getenv('APP_URL') ?? '');
                 // $blade->setAutoescape(true);
             }
 
