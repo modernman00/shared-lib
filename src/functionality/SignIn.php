@@ -57,7 +57,7 @@ final class SignIn
         // Prepare role-based gate
         $roleGate = new RoleMiddleware([$role]);
 
-        try {
+
             // 🔒 Auth + Role enforcement
             $data = $roleGate->handle();
 
@@ -65,9 +65,6 @@ final class SignIn
             loggedDetection($url, $data['email']);
              session_regenerate_id(true);  
             return $data;
-        } catch (\Throwable $e) {
-            // Graceful failure: log error & return empty response
-            showError($e);
-        }
+
     }
 }

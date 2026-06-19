@@ -52,7 +52,6 @@ final class RoleMiddleware
             throw new UnauthorisedException('Missing authentication cookie 🍪');
         }
 
-        try {
             // Decode and verify JWT using RS256 algorithm
             $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
 
@@ -88,10 +87,6 @@ final class RoleMiddleware
 
           
 
-        } catch (\Throwable $e) {
-            // Soft fail: log error and return empty payload
-            return $e;
-        }
     }
 
     /**
@@ -106,17 +101,13 @@ final class RoleMiddleware
      */
     protected function fetchUser(int|string $user_id): ?string
     {
-        try {
+ 
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
             $id = checkInput($user_id);
             $query = "SELECT email FROM $dbTable WHERE id = ?";
             $stmt = Db::connect2()->prepare($query);
             $stmt->execute([$id]);
             return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
-        } catch (\PDOException $e) {
-            Utility::showError($e);
 
-            return null;
-        }
     }
 }
