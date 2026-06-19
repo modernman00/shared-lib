@@ -62,11 +62,10 @@ final class SignIn
             $data = $roleGate->handle();
 
             $url = $_ENV['APP_URL'] ??  getenv("APP_URL");
-            $url = $url;
             loggedDetection($url, $data['email']);
              session_regenerate_id(true);  
             return $data;
-        } catch (UnauthorisedException $e) {
+        } catch (\Throwable $e) {
             // Graceful failure: log error & return empty response
             showError($e);
         }
