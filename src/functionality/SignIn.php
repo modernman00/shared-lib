@@ -52,7 +52,7 @@ final class SignIn
      *
      * @return array{id: int, email: string, role: string} Authenticated user data
      */
-    public static function verify($role = 'user')
+    public static function verify($role = 'users')
     {
         // Prepare role-based gate
         $roleGate = new RoleMiddleware([$role]);
