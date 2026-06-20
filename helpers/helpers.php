@@ -7,7 +7,7 @@ use helpers\classes\Blade;
 use helpers\Middleware\CSPMiddleware;
 use Monolog\Level;
 use Monolog\Logger;
-use Src\Data\EmailData;
+use Src\data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use Src\LoggerFactory;
 use Src\Select;
