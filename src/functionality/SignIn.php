@@ -57,14 +57,20 @@ final class SignIn
         // Prepare role-based gate
         $roleGate = new RoleMiddleware([$role]);
 
+        // 🔒 Auth + Role enforcement
+        $data = $roleGate->handle();
 
-            // 🔒 Auth + Role enforcement
-            $data = $roleGate->handle();
-
-            $url = $_ENV['APP_URL'] ??  getenv("APP_URL");
+        // Only send the "logged-in detected" notification once per session.
+        // verify() is typically called on every protected-route request, so
+        // without this guard a fresh notification email would go out on
+        // every single page load instead of just on a new login.
+        if (empty($_SESSION['__login_notified'])) {
+            $url = $_ENV['APP_URL'] ?? getenv("APP_URL");
             loggedDetection($url, $data['email']);
-             session_regenerate_id(true);  
-            return $data;
+            $_SESSION['__login_notified'] = true;
+        }
 
+        session_regenerate_id(true);
+        return $data;
     }
 }
