@@ -490,8 +490,17 @@ function destroyCookie(): void
  */
 if (!function_exists('vite')) {
 
-    function vite(string $entry): string
+    function vite(string|array $entries): string
     {
+        if (is_array($entries)) {
+            $html = '';
+            foreach ($entries as $entry) {
+                $html .= vite($entry);
+            }
+            return $html;
+        }
+
+        $entry = $entries;
         static $manifest = null;
 
         $root = defined('BASE_PATH')
@@ -508,8 +517,16 @@ if (!function_exists('vite')) {
             $hotContent = file_get_contents($hotFile);
             $devServerUrl = $hotContent ? trim($hotContent) : 'http://localhost:5173';
 
-            return "<script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>\n" .
-                   "<script type=\"module\" src=\"{$devServerUrl}/{$entry}\"></script>";
+            static $injectedClient = false;
+            $html = '';
+            
+            if (!$injectedClient) {
+                $html .= "<script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>\n";
+                $injectedClient = true;
+            }
+            
+            $html .= "<script type=\"module\" src=\"{$devServerUrl}/{$entry}\"></script>";
+            return $html;
         }
 
         /**
