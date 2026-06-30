@@ -57,7 +57,9 @@ class LeftJoin extends Db
 
             $query = "SELECT * FROM $firstTable $innerQueryToString WHERE $firstTable.$para=? OR $table[0].$para = ?";
 
-            $result = self::connect2()->prepare($query);
+            $pdo = self::connect2();
+            $pdo->exec("SET SQL_BIG_SELECTS=1");
+            $result = $pdo->prepare($query);
 
             $result->execute([$id, $id]);
 
