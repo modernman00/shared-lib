@@ -186,8 +186,14 @@ class FileUploader
         $fileSize = $_FILES[$formInputName]['size'];
         $pathToImage = $fileLocation . $fileName;
 
-        // 4. Virus Scan
-        if (isset($_ENV['FILE_UPLOAD_CLOUDMERSIVE'])) {
+        // Image Optimization before Virus Scan if size > 2.5MB
+        if ($fileSize > 2500000 && in_array($extension, ['png', 'jpg', 'jpeg'])) {
+            self::optimizeImage($fileTemp, $extension);
+            $fileSize = filesize($fileTemp);
+        }
+
+        // 4. Virus Scan (Cloudmersive free tier limit is 3MB)
+        if ($fileSize <= 3145728 && isset($_ENV['FILE_UPLOAD_CLOUDMERSIVE'])) {
             new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
         }
 
@@ -225,5 +231,56 @@ class FileUploader
         $saveFiles['filePath'] = $pathToImage;
 
         return $saveFiles;
+    }
+
+    private static function optimizeImage(string $filePath, string $extension): void
+    {
+        $info = @getimagesize($filePath);
+        if (!$info) return;
+        
+        $mime = $info['mime'];
+        $width = $info[0];
+        $height = $info[1];
+
+        $image = null;
+        if ($mime == 'image/jpeg') {
+            $image = @imagecreatefromjpeg($filePath);
+        } elseif ($mime == 'image/png') {
+            $image = @imagecreatefrompng($filePath);
+        }
+        
+        if (!$image) return;
+
+        // Resize if it's too large to fit in a reasonable boundary
+        $maxWidth = 1600;
+        $maxHeight = 1600;
+        
+        if ($width > $maxWidth || $height > $maxHeight) {
+            $ratio = min($maxWidth / $width, $maxHeight / $height);
+            $newWidth = (int)($width * $ratio);
+            $newHeight = (int)($height * $ratio);
+            
+            $newImage = imagecreatetruecolor($newWidth, $newHeight);
+            
+            if ($mime == 'image/png') {
+                imagealphablending($newImage, false);
+                imagesavealpha($newImage, true);
+                $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+                imagefilledrectangle($newImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+            
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $newImage;
+        }
+
+        // Overwrite the temp file with optimized version
+        if ($mime == 'image/jpeg') {
+            imagejpeg($image, $filePath, 75);
+        } elseif ($mime == 'image/png') {
+            // Level 9 is maximum compression for PNG
+            imagepng($image, $filePath, 9);
+        }
+        imagedestroy($image);
     }
 }
