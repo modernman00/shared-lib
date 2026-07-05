@@ -73,7 +73,9 @@ class InnerJoin extends Db
                 $query .= " LIMIT $limit";
             }
 
-            $result = self::connect2()->prepare($query);
+            $pdo = self::connect2();
+            $pdo->exec("SET SQL_BIG_SELECTS=1");
+            $result = $pdo->prepare($query);
             $result->execute([$bind]);
             return $result->fetchAll(PDO::FETCH_ASSOC);
 

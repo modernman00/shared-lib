@@ -121,6 +121,9 @@ function getUserIpAddr(): string
  */
 function addMonthsToDate($months, $date): array
 {
+    if (empty($date)) {
+        return ['fullDate' => 'N/A', 'dateFormat' => 'N/A'];
+    }
     $dt = new \DateTime($date, new \DateTimeZone('Europe/London'));
     $oldDay = $dt->format('d');
     $dt->add(new \DateInterval("P{$months}M"));

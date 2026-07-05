@@ -438,14 +438,15 @@ class Utility
 
     public static function sendText($message, $numbers): void
     {
-        $apiKey = urlencode('y9X1o/Ko6M4-MCz6zJfBeGMv9TMOLG54k0c53EfCfo');
+        $apiKeyStr = $_ENV['TEXTLOCAL_API_KEY'] ?? getenv('TEXTLOCAL_API_KEY') ?? '';
+        $apiKey = urlencode($apiKeyStr);
         $numbers = [$numbers];
         $sender = urlencode('Loaneasy Finance');
         $message = rawurlencode($message);
         $numbers = implode(',', $numbers);
         // Prepare data for POST request
         $data = ['apikey' => $apiKey, 'numbers' => $numbers, 'sender' => $sender, 'message' => $message];
-        $ch = curl_init('http://api.txtlocal.com/send/');
+        $ch = curl_init('https://api.txtlocal.com/send/');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
