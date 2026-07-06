@@ -52,7 +52,7 @@ final class RoleMiddleware
             throw new UnauthorisedException('Missing authentication cookie 🍪');
         }
 
-            // Decode and verify JWT using RS256 algorithm
+            // Decode and verify JWT using HS256 algorithm
             $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
 
             // Fallback: extract role from either `data` or direct payload
@@ -63,11 +63,13 @@ final class RoleMiddleware
                 throw new UnauthorisedException("Access denied for role: {$role}");
             }
 
+            $tokenVersion = $decoded->data->token_version ?? $decoded->token_version ?? 1;
+
             // Ensure user exists in DB (optional integrity check)
-            $result = $this->fetchUser($decoded->data->id ?? $decoded->id);
+            $result = $this->fetchUser($decoded->data->id ?? $decoded->id, $tokenVersion);
 
             if ($result === null) {
-                throw new UnauthorisedException("User not found");
+                throw new UnauthorisedException("User not found or session revoked");
             }
 
             // GET THE FAMCODE 
@@ -99,15 +101,25 @@ final class RoleMiddleware
      *
      * @return string|null - 'SUCCESSFUL' if user exists, null otherwise
      */
-    protected function fetchUser(int|string $user_id): ?string
+    protected function fetchUser(int|string $user_id, int $tokenVersion = 1): ?string
     {
  
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
             $id = checkInput($user_id);
-            $query = "SELECT email FROM $dbTable WHERE id = ?";
+            $query = "SELECT email, token_version FROM $dbTable WHERE id = ?";
             $stmt = Db::connect2()->prepare($query);
             $stmt->execute([$id]);
-            return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
+            
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$user) {
+                return null;
+            }
+
+            if (isset($user['token_version']) && (int) $user['token_version'] !== (int) $tokenVersion) {
+                 return null;
+            }
+
+            return 'SUCCESSFUL';
 
     }
 }

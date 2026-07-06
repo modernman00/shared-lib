@@ -70,7 +70,6 @@ final class SignIn
             $_SESSION['__login_notified'] = true;
         }
 
-        session_regenerate_id(true);
         return $data;
     }
 }

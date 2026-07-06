@@ -7,7 +7,7 @@ use helpers\classes\Blade;
 use helpers\Middleware\CSPMiddleware;
 use Monolog\Level;
 use Monolog\Logger;
-use Src\data\EmailData;
+use Src\Data\EmailData;
 use Src\Exceptions\ForbiddenException;
 use Src\LoggerFactory;
 use Src\Select;
@@ -121,9 +121,6 @@ function getUserIpAddr(): string
  */
 function addMonthsToDate($months, $date): array
 {
-    if (empty($date)) {
-        return ['fullDate' => 'N/A', 'dateFormat' => 'N/A'];
-    }
     $dt = new \DateTime($date, new \DateTimeZone('Europe/London'));
     $oldDay = $dt->format('d');
     $dt->add(new \DateInterval("P{$months}M"));
@@ -220,12 +217,33 @@ function showError2(\Throwable $th, Logger $logger): ?string
             ? "Error on line {$th->getLine()} in {$th->getFile()}: {$th->getMessage()}"
             : 'An unexpected error occurred.');
 
-    // 6. Return or display the JSON error message
-    // Your API response
-    header('Content-Type: application/json');
-    $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    // 6. Return or display the JSON/HTML error message
+    $isApi = false;
+    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+        $isApi = true;
+    } elseif (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+        $isApi = true;
+    } elseif (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') !== false) {
+        $isApi = true;
+    } elseif (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        $isApi = true;
+    }
 
-    return $response;
+    if ($isApi) {
+        header('Content-Type: application/json');
+        $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return $response;
+    } else {
+        // Render the 500 view if it exists, otherwise fallback to plain text
+        try {
+            $blade = \helpers\classes\Blade::get();
+            $html = $blade->run('errors.500', ['message' => $errorMessage]);
+            return $html;
+        } catch (\Throwable $e) {
+            // Fallback if view engine or template fails
+            return "<h1>500 Server Error</h1><p>" . htmlspecialchars($errorMessage) . "</p>";
+        }
+    }
 }
 
 function showError($th): void
@@ -233,9 +251,6 @@ function showError($th): void
     $error = showError2($th, LoggerFactory::getLogger());
     if ($error) {
         echo $error;
-    }
-    if (getenv('PHPUNIT_RUNNING')) {
-        return;
     }
     exit();
 }
@@ -491,93 +506,37 @@ function destroyCookie(): void
  * @return string The full URL to the asset.
  * @throws RuntimeException If the Vite manifest is not found, or if the given path is not found in the manifest.
  */
-if (!function_exists('vite')) {
-
-    function vite(string|array $entries): string
+if (!function_exists('viteAsset')) {
+    /**
+     * Resolves Vite assets using the project root.
+     */
+    function viteAsset(string $path): string
     {
-        if (is_array($entries)) {
-            $html = '';
-            foreach ($entries as $entry) {
-                $html .= vite($entry);
-            }
-            return $html;
+        $isDev = ($_ENV['APP_ENV'] ?? 'local') === 'local';
+
+        if ($isDev) {
+            return "http://localhost:5173/$path";
         }
 
-        $entry = $entries;
         static $manifest = null;
 
-        $root = defined('BASE_PATH')
-            ? BASE_PATH
-            : dirname(__DIR__, 2); // adjust if needed
-
-        $hotFile = $root . '/public/hot';
-        $isDev = ($_ENV['APP_ENV'] ?? 'production') === 'local' && file_exists($hotFile);
-
-        /**
-         * 1. DEV MODE → Vite server
-         */
-        if ($isDev) {
-            $hotContent = file_get_contents($hotFile);
-            $devServerUrl = $hotContent ? trim($hotContent) : 'http://localhost:5173';
-
-            static $injectedClient = false;
-            $html = '';
-            
-            if (!$injectedClient) {
-                $html .= "<script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>\n";
-                $injectedClient = true;
-            }
-            
-            $html .= "<script type=\"module\" src=\"{$devServerUrl}/{$entry}\"></script>";
-            return $html;
-        }
-
-        /**
-         * 2. LOAD MANIFEST (once only)
-         */
         if ($manifest === null) {
-
-            $manifestPath = $root . '/public/build/manifest.json';
-
+            $root = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 4);
+            $manifestPath = "$root/public/build/manifest.json";
+            
             if (!file_exists($manifestPath)) {
-                throw new RuntimeException("Vite manifest not found at: {$manifestPath}");
+                throw new RuntimeException('Vite manifest not found at: ' . $manifestPath);
             }
 
-            $manifest = json_decode(file_get_contents($manifestPath), true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new RuntimeException("Invalid Vite manifest JSON.");
-            }
+            $manifestContent = file_get_contents($manifestPath);
+            $manifest = json_decode($manifestContent, true);
         }
 
-        /**
-         * 3. VALIDATE ENTRY
-         */
-        if (!isset($manifest[$entry])) {
-            throw new RuntimeException("Vite entry not found: {$entry}");
+        if (!isset($manifest[$path])) {
+            throw new RuntimeException("Path {$path} not found in Vite manifest.");
         }
 
-        $asset = $manifest[$entry];
-
-        $html = '';
-
-        /**
-         * 4. CSS (important and often missed)
-         */
-        if (!empty($asset['css'])) {
-            foreach ($asset['css'] as $css) {
-                $cssUrl = asset('build/' . $css);
-                $html .= '<link rel="stylesheet" href="' . $cssUrl . '">' . PHP_EOL;
-            }
-        }
-
-        /**
-         * 5. JS
-         */
-        $jsUrl = asset('build/' . $asset['file']);
-        $html .= '<script type="module" src="' . $jsUrl . '"></script>';
-
-        return $html;
+        return '/public/build/' . $manifest[$path]['file'];
     }
 }
 

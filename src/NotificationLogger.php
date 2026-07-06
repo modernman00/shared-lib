@@ -32,4 +32,17 @@ class NotificationLogger
    \showError($e);
   }
  }
+
+ public static function hasSent(string $eventId, string $inviteeId, string $messageSnippet, string $channel = 'email'): bool
+ {
+    try {
+        $db = \Src\Db::connect2();
+        $stmt = $db->prepare("SELECT 1 FROM notification_logs WHERE event_id = ? AND invitee_id = ? AND channel = ? AND message LIKE ? LIMIT 1");
+        $stmt->execute([$eventId, $inviteeId, $channel, "%$messageSnippet%"]);
+        return $stmt->rowCount() > 0;
+    } catch (\Throwable $e) {
+        \showError($e);
+        return false;
+    }
+ }
 }

@@ -66,7 +66,7 @@ class JwtHandler
      *
      * @throws NotFoundException If user is not found or password is invalid
      */
-    public static function authenticate(array $input, string $role): array
+    public static function authenticate(array $input, ?string $table = null): array
     {
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['email', 'password'],
@@ -75,17 +75,12 @@ class JwtHandler
         ]);
 
 
-        $user = CheckSanitise::useEmailToFindData($sanitised);
+        $user = CheckSanitise::useEmailToFindData($sanitised, $table);
 
-        CheckSanitise::checkPassword($sanitised, $user);
+        CheckSanitise::checkPassword($sanitised, $user, $table);
         // If user is found and password is verified, check if the user exists in the database
 
         $userId = $user['id'];
-        $user['role'] = $role; 
-        
-        if (empty($user)) {
-            throw new NotFoundException('User not found');
-        }
 
         LoginUtility::logAudit($userId, $user['email'], 'success', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
 
@@ -93,7 +88,6 @@ class JwtHandler
         unset($user['password']);
 
         $generatedToken = self::jwtEncodeData($user);
-        $rememberMe = isset($input['rememberMe']) ? 'true' : 'false';
         $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
 
         // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
@@ -113,8 +107,8 @@ class JwtHandler
         $httponly = true;
         $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
 
-        // Set secure cookie only if not already present and rememberMe is checked
-        if (!empty($tokenName) && $rememberMe) {
+        // Set secure persistent cookie
+        if (!empty($tokenName)) {
             setcookie(
                 $tokenName,
                 $generatedToken,
@@ -156,7 +150,8 @@ class JwtHandler
             'exp' => time() + (int) $_ENV['COOKIE_EXPIRE'],
             'data' => $user,
             'sub' => (string) $user['id'],
-            'role' => $user['role'],
+            'role' => $user['role'] ?? 'users',
+            'token_version' => $user['token_version'] ?? 1,
         ];
 
         return JWT::encode($token, $_ENV['JWT_KEY'], 'HS256');
@@ -211,21 +206,36 @@ class JwtHandler
             throw new UnauthorisedException("JWT missing user identifier");
         }
 
-        self::fetchUser($userParam);
+        $tokenVersion = $decoded->data->token_version ?? $decoded->token_version ?? 1;
+        $result = self::fetchUser($userParam, $tokenVersion);
+
+        if ($result === null) {
+            throw new UnauthorisedException("User session invalid or revoked");
+        }
 
         return $decoded;
     }
 
-    public static function fetchUser(int|string $user_id_email): ?string
+    public static function fetchUser(int|string $user_id_email, int $tokenVersion = 1): ?string
     {
         try {
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
 
-            $query = "SELECT email FROM $dbTable WHERE id = ? OR email = ?";
+            $query = "SELECT email, token_version FROM $dbTable WHERE id = ? OR email = ?";
             $stmt = Db::connect2()->prepare($query);
             $stmt->execute([$user_id_email, $user_id_email]);
 
-            return $stmt->rowCount() > 0 ? 'SUCCESSFUL' : null;
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                return null;
+            }
+
+            if (isset($user['token_version']) && (int) $user['token_version'] !== (int) $tokenVersion) {
+                 return null;
+            }
+
+            return 'SUCCESSFUL';
         } catch (\PDOException $e) {
             Utility::showError($e);
 

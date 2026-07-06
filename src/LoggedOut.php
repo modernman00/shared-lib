@@ -54,6 +54,24 @@ class LoggedOut implements RedirectInterface
                 );
             }
 
+            // Invalidate the JWT Auth Cookie
+            $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+            if (isset($_COOKIE[$tokenName])) {
+                $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
+                setcookie($tokenName, '', time() - 3600, '/', $domain);
+            }
+
+            // Revoke all existing sessions by incrementing token_version globally
+            if ($userId) {
+                try {
+                    $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
+                    $stmt = \Src\Db::connect2()->prepare("UPDATE {$dbTable} SET token_version = token_version + 1 WHERE id = ?");
+                    $stmt->execute([$userId]);
+                } catch (\PDOException $e) {
+                    // Silently fail if token_version column hasn't been migrated yet
+                }
+            }
+
             // Finally, destroy the session data on the server
             session_destroy();
 
@@ -76,6 +94,18 @@ class LoggedOut implements RedirectInterface
      */
     private function getAuthenticatedUserId()
     {
+        // Try to get ID from JWT cookie first
+        $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+        if (isset($_COOKIE[$tokenName])) {
+            try {
+                $token = $_COOKIE[$tokenName];
+                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($_ENV['JWT_KEY'], 'HS256'));
+                return $decoded->data->id ?? $decoded->id ?? null;
+            } catch (\Throwable $e) {
+                // Ignore decoding errors
+            }
+        }
+
         // Example: Retrieve from session if that's where your user ID is stored
         return $_SESSION['user_id'] ?? $_SESSION['ID'] ?? $_SESSION['auth']['ID'] ?? $_SESSION['auth']['id'] ?? $_SESSION['auth']['user_id'] ?? $_SESSION['id'] ?? null;
     }

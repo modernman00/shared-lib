@@ -118,6 +118,18 @@ class PasswordResetFunctionality
         // Update password
         $update = new Update($_ENV['DB_TABLE_LOGIN']);
         $update->updateTable('password', $hashedPassword, 'email', $userEmail);
+
+        // Revoke all existing sessions by incrementing token_version
+        $userId = $user->data->id ?? $user->id ?? null;
+        if ($userId) {
+            try {
+                $stmt = \Src\Db::connect2()->prepare("UPDATE {$_ENV['DB_TABLE_LOGIN']} SET token_version = token_version + 1 WHERE id = ?");
+                $stmt->execute([$userId]);
+            } catch (\PDOException $e) {
+                // Silently fail if token_version column hasn't been migrated yet
+            }
+        }
+
         $pathToPwdChangeNotification = $_ENV['PATH_TO_PASSWORD_CHANGE_NOTIFICATION'];
 
         $emailData = ToSendEmail::genEmailArray(
