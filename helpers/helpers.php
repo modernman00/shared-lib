@@ -252,7 +252,15 @@ function showError($th): void
     if ($error) {
         echo $error;
     }
-    exit();
+    
+    // Do not exit if running in a test environment
+    $isPhpUnit = defined('PHPUNIT_COMPOSER_INSTALL') || 
+                 (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'PHPUnit') !== false) ||
+                 (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing');
+                 
+    if (!$isPhpUnit) {
+        exit();
+    }
 }
 // FUNCTION TO SEND TEXT TO PHONE
 
