@@ -142,6 +142,18 @@ class Token extends CheckToken
             throw new UnauthorisedException('Cannot verify token');
         }
 
+        // JwtHandler::authenticate() stashes the password-verified user here instead
+        // of setting the auth cookie right away, so that a password alone can never
+        // grant access. Now that the emailed code has actually been confirmed, this
+        // is the single choke point (used by every 2FA verification flow in the
+        // library) where it's safe to issue the persistent login cookie - callers
+        // don't need to know or do anything extra for this to happen.
+        $pendingUser = $_SESSION['auth']['pendingUser'] ?? null;
+        if ($pendingUser && ($pendingUser['email'] ?? null) === $email) {
+            JwtHandler::issueLoginCookie($pendingUser);
+        }
+        unset($_SESSION['auth']['pendingUser']);
+
         return true;
     }
 }

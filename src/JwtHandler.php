@@ -71,7 +71,7 @@ class JwtHandler
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['email', 'password'],
             'min'  => [5, 5],
-            'max'  => [30, 100],
+            'max'  => [50, 100],
         ]);
 
 
@@ -88,12 +88,40 @@ class JwtHandler
         unset($user['password']);
 
         $generatedToken = self::jwtEncodeData($user);
-        $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+
+        // Stash the password-verified user so the persistent login cookie can be
+        // issued once Token::verifyToken() confirms the emailed code. Password
+        // verification alone must NOT grant access via the auth cookie - doing so
+        // here would let anyone with just the password bypass 2FA entirely.
+        $_SESSION['auth']['pendingUser'] = $user;
 
         // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
         $pathToSentCodeNotification = $_ENV['PATH_TO_SENT_CODE_NOTIFICATION'];
 
         Token::generateSendTokenEmail($user, $pathToSentCodeNotification);
+
+        return [
+            'token' => $generatedToken,
+            'userId' => $userId,
+        ];
+    }
+
+    /**
+     * Issues the persistent JWT login cookie.
+     *
+     * ⚠️ Must only be called after 2FA verification has succeeded (see
+     * Token::verifyToken(), which invokes this automatically once the emailed
+     * code matches). Calling this right after a password check, before the code
+     * is confirmed, reintroduces the 2FA bypass.
+     *
+     * @param array $user Sanitised user payload (no password) to embed in the JWT
+     *
+     * @return string The encoded JWT that was placed in the cookie
+     */
+    public static function issueLoginCookie(array $user): string
+    {
+        $generatedToken = self::jwtEncodeData($user);
+        $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
 
         /**
          * Strictness control:
@@ -120,10 +148,7 @@ class JwtHandler
             );
         }
 
-        return [
-            'token' => $generatedToken,
-            'userId' => $userId,
-        ];
+        return $generatedToken;
     }
 
     /**

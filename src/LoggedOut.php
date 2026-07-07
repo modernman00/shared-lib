@@ -58,7 +58,15 @@ class LoggedOut implements RedirectInterface
             $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
             if (isset($_COOKIE[$tokenName])) {
                 $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
-                setcookie($tokenName, '', time() - 3600, '/', $domain);
+
+                // Must match the secure/httponly flags used when the cookie was set
+                // (see JwtHandler::issueLoginCookie), otherwise browsers will refuse
+                // to overwrite/expire a Secure, HttpOnly cookie and it survives logout.
+                $env = $_ENV['APP_ENV'] ?? 'production';
+                $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+                $secure = !in_array($env, ['local', 'development'], true) && $isHttps;
+
+                setcookie($tokenName, '', time() - 3600, '/', $domain, $secure, true);
             }
 
             // Revoke all existing sessions by incrementing token_version globally
