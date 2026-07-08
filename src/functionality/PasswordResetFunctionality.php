@@ -130,15 +130,22 @@ class PasswordResetFunctionality
             }
         }
 
-        $pathToPwdChangeNotification = $_ENV['PATH_TO_PASSWORD_CHANGE_NOTIFICATION'];
+        $pathToPwdChangeNotification = $_ENV['PATH_TO_PASSWORD_CHANGE_NOTIFICATION'] ?? '';
 
-        $emailData = ToSendEmail::genEmailArray(
-            viewPath: $pathToPwdChangeNotification,
-            data: ['email' => $userEmail],
-            subject: 'PASSWORD CHANGE'
-        );
-
-        ToSendEmail::sendEmailGeneral($emailData, 'member');
+        // Attempt confirmation email — fail gracefully if SMTP is misconfigured
+        if ($pathToPwdChangeNotification) {
+            try {
+                $emailData = ToSendEmail::genEmailArray(
+                    viewPath: $pathToPwdChangeNotification,
+                    data: ['email' => $userEmail],
+                    subject: 'PASSWORD CHANGE'
+                );
+                ToSendEmail::sendEmailGeneral($emailData, 'member');
+            } catch (\Throwable $mailErr) {
+                // Log the SMTP failure but do NOT block the password change from succeeding
+                error_log('[PasswordReset] Confirmation email failed: ' . $mailErr->getMessage());
+            }
+        }
 
         // Prevent brute-force abuse by clearing rate limits
         Limiter::$argLimiter->reset();

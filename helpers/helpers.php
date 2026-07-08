@@ -33,6 +33,17 @@ if (!function_exists('viewBuilderWithCSP')) {
     {
         try {
             CSPMiddleware::handle($data);
+            if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['token'])) {
+                $domain = parse_url($_ENV['APP_URL'] ?? '', PHP_URL_HOST) ?: '';
+                setcookie('XSRF-TOKEN', $_SESSION['token'], [
+                    'expires' => 0,
+                    'path' => '/',
+                    'domain' => $domain,
+                    'secure' => ($_ENV['APP_ENV'] ?? 'local') !== 'local',
+                    'httponly' => false,
+                    'samesite' => 'Lax'
+                ]);
+            }
             view($viewFile, $data);
         } catch (\Throwable $e) {
             showError($e);
