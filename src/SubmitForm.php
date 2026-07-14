@@ -142,7 +142,7 @@ class SubmitForm extends Db
             $outcome = $stmt->execute();
 
             if (!$outcome) {
-                msgException(406, "Unable to execute the query.");
+                Utility::msgException(406, "Unable to execute the query.");
             }
 
             $lastInsertedId = $connection->lastInsertId($lastIdCol);

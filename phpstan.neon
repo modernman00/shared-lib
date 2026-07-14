@@ -16,10 +16,7 @@ parameters:
     checkMissingIterableValueType: false
     checkGenericClassInNonGenericObjectType: false
     
-    # Bootstrap files
-    bootstrapFiles:
-        - src/helpers.php
-    
+
     
     # Exclude patterns
     excludePaths:

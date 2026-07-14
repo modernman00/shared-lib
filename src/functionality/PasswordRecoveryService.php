@@ -127,7 +127,7 @@ class PasswordRecoveryService
             self::finaliseRecovery($token, $issueJwt);
             return true;
         } catch (\Throwable $error) {
-            showError($error);
+            \Src\Utility::showError($error);
         }
     }
 
@@ -146,9 +146,9 @@ class PasswordRecoveryService
 
         if ($issueJwt) {
             // Return JWT token to client (e.g. SPA or mobile client)
-            \msgSuccess(200, 'Recovery token sent to your email successfully', $token);
+            \Src\Utility::msgSuccess(200, 'Recovery token sent to your email successfully', $token);
         } else {
-            \msgSuccess(200, 'Recovery token sent to your email successfully');
+            \Src\Utility::msgSuccess(200, 'Recovery token sent to your email successfully');
         }
     }
 }

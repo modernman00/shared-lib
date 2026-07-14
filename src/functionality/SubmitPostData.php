@@ -47,7 +47,7 @@ class SubmitPostData
         } catch (\Throwable $th) {
             Transaction::rollback();
             // Assuming showError is a global/utility function that handles the error response
-            showError($th);
+            Utility::showError($th);
         }
     }
 

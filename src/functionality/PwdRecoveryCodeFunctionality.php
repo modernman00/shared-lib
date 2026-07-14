@@ -123,7 +123,7 @@ class PwdRecoveryCodeFunctionality
             }
             return true;
         } catch (\Throwable $th) {
-            showError($th);
+            Utility::showError($th);
         }
     }
 }

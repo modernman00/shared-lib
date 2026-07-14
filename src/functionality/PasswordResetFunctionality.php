@@ -161,7 +161,7 @@ class PasswordResetFunctionality
         Utility::msgSuccess(200, 'Password was successfully changed');
         return true;
         } catch (\Throwable $th) {
-            showError($th);
+            Utility::showError($th);
         }
         
     }

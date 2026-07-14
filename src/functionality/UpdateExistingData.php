@@ -142,12 +142,10 @@ class UpdateExistingData
                 return ['message' => 'Update was successful'];
             }
         } catch (\Throwable $th) {
-
-          showError($th);
+            Utility::showError($th);
             return false;
         }
     }
-
 
    public static function updateMultipleTables(
              mixed $identifierValue,
@@ -213,8 +211,7 @@ class UpdateExistingData
             }
  
         } catch (\Throwable $th) {
-
-           showError($th);
+           Utility::showError($th);
         }
     }
 
