@@ -91,7 +91,9 @@ private static function inferResponseType(): string
     private static function resolveOrigin(string $origin): string
     {
         $env = getenv('APP_ENV') ?: 'production';
-        $appUrl = getenv('APP_URL') ?: self::inferDomain();
+        // Trim trailing slash so "https://olaogun.test/" === "https://olaogun.test" works
+        $appUrl = rtrim(getenv('APP_URL') ?: self::inferDomain(), '/');
+        $origin = rtrim($origin, '/');
 
         if (in_array($env, ['development', 'local', 'testing'], true)) {
             return in_array($origin, self::allowedOrigins(), true) ? $origin : $appUrl;
@@ -117,10 +119,30 @@ private static function inferResponseType(): string
     private static function allowedOrigins(): array
     {
         return [
+            // Localhost variants
+            'http://localhost',
             'http://localhost:3000',
+            'http://localhost:8000',
             'http://localhost:8080',
+            'http://127.0.0.1',
             'http://127.0.0.1:3000',
-            // Add more as needed
+            'http://127.0.0.1:8000',
+            // Virtual hosts (local dev) — http
+            'http://familyplatform.test',
+            'http://iaccountapp.test',
+            'http://execmindapp.test',
+            'http://idecideapp.test',
+            'http://lef.test',
+            'http://partyplatform.test',
+            'http://olaogun.test',
+            // Virtual hosts (local dev) — https
+            'https://familyplatform.test',
+            'https://iaccountapp.test',
+            'https://execmindapp.test',
+            'https://idecideapp.test',
+            'https://lef.test',
+            'https://partyplatform.test',
+            'https://olaogun.test',
         ];
     }
 
