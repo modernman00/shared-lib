@@ -107,7 +107,15 @@ class LoggedOut implements RedirectInterface
         if (isset($_COOKIE[$tokenName])) {
             try {
                 $token = $_COOKIE[$tokenName];
-                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($_ENV['JWT_KEY'], 'HS256'));
+                try {
+                    $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($_ENV['JWT_KEY'], 'HS256'));
+                } catch (\Throwable $e) {
+                    if (!empty($_ENV['JWT_KEY_PREVIOUS'])) {
+                        $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($_ENV['JWT_KEY_PREVIOUS'], 'HS256'));
+                    } else {
+                        throw $e;
+                    }
+                }
                 return $decoded->data->id ?? $decoded->id ?? null;
             } catch (\Throwable $e) {
                 // Ignore decoding errors

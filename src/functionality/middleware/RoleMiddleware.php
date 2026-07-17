@@ -53,8 +53,22 @@ final class RoleMiddleware
         }
 
             // Decode and verify JWT using HS256 algorithm
-            $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
-
+            try {
+                $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
+            } catch (\Throwable $e) {
+                if (!empty($_ENV['JWT_KEY_PREVIOUS'])) {
+                    try {
+                        $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY_PREVIOUS'], 'HS256'));
+                        if (isset($decoded->data)) {
+                            \Src\JwtHandler::jwtEncodeDataAndSetCookies((array) $decoded->data, $tokenName);
+                        }
+                    } catch (\Throwable $e2) {
+                        throw new UnauthorisedException('Invalid JWT signature (rotation failed)');
+                    }
+                } else {
+                    throw new UnauthorisedException('Invalid JWT signature');
+                }
+            }
             // Fallback: extract role from either `data` or direct payload
             $role = $decoded->data->role ?? $decoded->role;
 

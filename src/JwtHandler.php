@@ -100,8 +100,10 @@ class JwtHandler
 
         Token::generateSendTokenEmail($user, $pathToSentCodeNotification);
 
+        // 🛑 CRITICAL SECURITY FIX: Never return the raw JWT token to the frontend payload.
+        // Returning the token here before 2FA is completed would allow an attacker to bypass 2FA.
         return [
-            'token' => $generatedToken,
+            'status' => 'pending_2fa',
             'userId' => $userId,
         ];
     }
@@ -135,7 +137,7 @@ class JwtHandler
         $httponly = true;
         $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
 
-        // Set secure persistent cookie
+        // Set secure cookie unconditionally to enforce HttpOnly session security
         if (!empty($tokenName)) {
             setcookie(
                 $tokenName,
@@ -148,7 +150,9 @@ class JwtHandler
             );
         }
 
-        return $generatedToken;
+        // 🛑 CRITICAL SECURITY FIX: Never return the raw JWT token to the frontend payload.
+        // The token is now exclusively managed via the HttpOnly cookie.
+        return 'SUCCESSFUL';
     }
 
     /**
@@ -221,8 +225,25 @@ class JwtHandler
         }
 
         // Decode and verify JWT using RS256 algorithm
-        $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
-
+        try {
+            // Try decoding with the primary active key
+            $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
+        } catch (\Throwable $e) {
+            // Graceful Key Overlapping: Fallback to the previous key if primary fails
+            if (!empty($_ENV['JWT_KEY_PREVIOUS'])) {
+                try {
+                    $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY_PREVIOUS'], 'HS256'));
+                    // If successful, seamlessly re-issue the cookie using the NEW primary key
+                    if (isset($decoded->data)) {
+                        self::jwtEncodeDataAndSetCookies((array) $decoded->data, $cookieName);
+                    }
+                } catch (\Throwable $e2) {
+                    throw new UnauthorisedException("Invalid JWT signature (rotation failed)");
+                }
+            } else {
+                throw new UnauthorisedException("Invalid JWT signature");
+            }
+        }
         $userId = $decoded->data->id ?? $decoded->id;
         $userEmail = $decoded->data->email ?? $decoded->email;
         $userParam = $userId ?? $userEmail;

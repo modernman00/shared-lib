@@ -238,7 +238,11 @@ class LoginUtility
             'user_agent' => $userAgent,
         ];
 
+        // 1. Log to local database for fast UI retrieval
         SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'], $data);
+
+        // 2. Push to Immutable Remote Audit Log (ISO 27001 Compliance)
+        \Src\AuditLogger::log('login_attempt', $data);
     }
 
     /**
