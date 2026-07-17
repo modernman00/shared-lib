@@ -75,7 +75,7 @@ class LoginFunctionality
      * @param bool $isCaptcha whether to enforce CAPTCHA verification
      * @param bool $isCaptchaV3 whether to use reCAPTCHA v3 verification
      *
-     * @throws NotFoundException if the login payload is missing or malformed
+     * @throws NotFoundException if the login payload is missing or malformed.
      */
     public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN', string $role = 'users')
     {
