@@ -114,11 +114,12 @@ class LoginFunctionality
             $userD = JwtHandler::authenticate($input, $role);
             
 
-            if (!is_array($userD) || !isset($userD['token'], $userD['userId'])) {
+            if (!is_array($userD) || (!isset($userD['token']) && !isset($userD['status'])) || !isset($userD['userId'])) {
                 throw new \UnexpectedValueException('Malformed authentication result');
             }
 
-            $token = $userD['token'];
+            // The token is not returned if pending 2FA.
+            $token = $userD['token'] ?? null;
             $userId = $userD['userId'];
 
             // Prevent brute-force abuse by clearing rate limits
