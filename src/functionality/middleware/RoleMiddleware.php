@@ -77,7 +77,7 @@ final class RoleMiddleware
                 throw new UnauthorisedException("Access denied for role: {$role}");
             }
 
-            $tokenVersion = $decoded->data->token_version ?? $decoded->token_version ?? 1;
+            $tokenVersion = (int) ($decoded->data->token_version ?? $decoded->token_version ?? 1);
 
             // Ensure user exists in DB (optional integrity check)
             $result = $this->fetchUser($decoded->data->id ?? $decoded->id, $tokenVersion);
