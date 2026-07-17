@@ -51,7 +51,7 @@ class AuditLogger
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
-            curl_close($ch);
+            // curl_close is deprecated and unnecessary in PHP 8.0+
 
             // If it failed or timed out, gracefully degrade to local fallback
             if ($response === false || $httpCode >= 400) {
