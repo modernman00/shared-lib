@@ -60,4 +60,23 @@ final class SignIn
         // 🔒 Auth + Role enforcement
         return $roleGate->handle();
     }
+
+    /**
+     * Silently checks if a user is currently logged in without throwing an exception.
+     * This is useful for auto-redirecting authenticated users away from login pages.
+     *
+     * @param string $role The required user role (default: 'users')
+     * @return bool True if logged in with a valid token, false otherwise.
+     */
+    public static function isLoggedIn($role = 'users'): bool
+    {
+        try {
+            $user = self::verify($role);
+            return !empty($user);
+        } catch (UnauthorisedException $e) {
+            // Token is missing, expired, or tampered with.
+            // Safely swallow the exception so the app doesn't crash.
+            return false;
+        }
+    }
 }
