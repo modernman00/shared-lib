@@ -80,6 +80,7 @@ class LoginFunctionality
     public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN', string $role = 'users')
     {
         try {
+            \Src\LoginUtility::checkIpBan(\Src\Utility::getUserIpAddr());
             $input = GetRequestData::getRequestData();
             if (!$input) {
                 throw new NotFoundException('There was no post data');

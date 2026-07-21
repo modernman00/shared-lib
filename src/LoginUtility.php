@@ -245,6 +245,22 @@ class LoginUtility
         \Src\AuditLogger::log('login_attempt', $data);
     }
 
+    public static function checkIpBan(string $ip): void
+    {
+        $stmt = Db::connect2()->prepare("
+            SELECT COUNT(*) as attempts 
+            FROM audit_logs 
+            WHERE ip_address = :ip AND status = 'failure' AND created_at > (NOW() - INTERVAL 24 HOUR)
+        ");
+        $stmt->execute([':ip' => $ip]);
+        $count = (int) $stmt->fetchColumn();
+
+        if ($count >= 5) {
+            header('Retry-After: 86400');
+            throw new \Src\Exceptions\TooManyRequestsException('Your IP has been temporarily blocked for 24 hours due to too many failed login attempts.');
+        }
+    }
+
     /**
      * Monitor and alert on suspicious login activity.
      *
