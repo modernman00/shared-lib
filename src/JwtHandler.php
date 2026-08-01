@@ -68,6 +68,8 @@ class JwtHandler
      */
     public static function authenticate(array $input, ?string $table = null): array
     {
+        \Src\LoginUtility::checkIpBan(\Src\Utility::getUserIpAddr());
+
         $sanitised = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['email', 'password'],
             'min'  => [5, 5],
