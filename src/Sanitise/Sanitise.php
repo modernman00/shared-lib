@@ -100,7 +100,7 @@ class Sanitise
      */
     protected function validateEmail(): self
     {
-        if (isset($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
+        if (!empty($this->formData['email']) && !filter_var($this->formData['email'], FILTER_VALIDATE_EMAIL)) {
             $this->errors[] = 'Invalid email format';
         }
 
