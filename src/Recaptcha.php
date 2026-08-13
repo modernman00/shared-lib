@@ -91,7 +91,7 @@ class Recaptcha
      */
     public static function verifyCaptchaEnterprise(array $input, string $action): bool
     {
-           $expectedAction = $input['action'] ?? $action;
+        $expectedAction = $input['action'] ?? $action;
         $postSiteKey = $input['siteKey'] ?? '';
         
 

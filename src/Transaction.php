@@ -8,6 +8,9 @@ class Transaction extends Db
 {
     public static function beginTransaction()
     {
+        if (self::connect2()->inTransaction()) {
+            return true;
+        }
         return self::connect2()->beginTransaction();
     }
 
@@ -18,11 +21,17 @@ class Transaction extends Db
 
     public static function commit()
     {
+        if (!self::connect2()->inTransaction()) {
+            return true;
+        }
         return self::connect2()->commit();
     }
 
     public static function rollback()
     {
+        if (!self::connect2()->inTransaction()) {
+            return true;
+        }
         return self::connect2()->rollBack();
     }
 }

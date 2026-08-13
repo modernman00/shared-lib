@@ -86,21 +86,23 @@ final class LoggerFactory
         $fileHandler = new RotatingFileHandler($logPath, 7, Level::Debug);
         $logger->pushHandler($fileHandler);
 
-        // ✉️ Send email alerts for error or more severe
+        // ✉️ Send email alerts for error or more severe if mail alerts are enabled
+        $alertsEnabled = filter_var($_ENV['LOGGER_EMAIL_ALERTS'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        if ($alertsEnabled && !empty($_ENV['MAILER_DSN'] ?? '')) {
+            $transport = Transport::fromDsn($_ENV['MAILER_DSN']);
+            $mailer = new Mailer($transport);
 
-        $transport = Transport::fromDsn($_ENV['MAILER_DSN']);
-        $mailer = new Mailer($transport);
+            $email = (new Email())
+              ->from($_ENV['USER_EMAIL'])
+              ->to('waledevtest@gmail.com')
+              ->subject('🚨 ' . strtoupper($_ENV['LOGGER_NAME']) . ' Error Alert')
+              ->html('<p>An error happened. Check logs for details.</p>');
 
-        $email = (new Email())
-          ->from($_ENV['USER_EMAIL'])
-          ->to('waledevtest@gmail.com')
-          ->subject('🚨 ' . strtoupper($_ENV['LOGGER_NAME']) . ' Error Alert')
-          ->html('<p>An error happened. Check logs for details.</p>');
+            $emailHandler = new SymfonyMailerHandler($mailer, $email, $level);
+            $emailHandler->setFormatter(new HtmlFormatter());
 
-        $emailHandler = new SymfonyMailerHandler($mailer, $email, $level);
-        $emailHandler->setFormatter(new HtmlFormatter());
-
-        $logger->pushHandler($emailHandler);
+            $logger->pushHandler($emailHandler);
+        }
 
         self::$logger = $logger; // Cache the logger
 

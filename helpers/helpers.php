@@ -263,15 +263,7 @@ function showError($th): void
     if ($error) {
         echo $error;
     }
-    
-    // Do not exit if running in a test environment
-    $isPhpUnit = defined('PHPUNIT_COMPOSER_INSTALL') || 
-                 (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'PHPUnit') !== false) ||
-                 (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'testing');
-                 
-    if (!$isPhpUnit) {
-        exit();
-    }
+    exit();
 }
 // FUNCTION TO SEND TEXT TO PHONE
 
@@ -405,7 +397,7 @@ function checkInput($data)
         $data = (string)$data;
         $data = trim($data);
         $data = strip_tags($data);
-        $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}]/u', '', $data);
+        $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}\p{Sc}]/u', '', $data);
 
         return $data;
     } else {
