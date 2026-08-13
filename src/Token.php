@@ -20,7 +20,7 @@ class Token extends CheckToken
      * @throws \Throwable
      * @throws \InvalidArgumentException
      */
-    public static function generateSendTokenEmail($data, $viewPath)
+    public static function generateSendTokenEmail($data, $viewPath): void
     {
         $id = $data['id'] ?? $data['no'] ?? $data['user_id'] ?? $data['userId'] ?? null;
         // 1. check if email exists
@@ -34,7 +34,7 @@ class Token extends CheckToken
         $deriveToken = self::generateUpdateTableWithToken($email);
 
         $_SESSION['auth']['2FA_token_ts'] = time(); // Use 'auth' namespace
-        $_SESSION['auth']['identifyCust'] = $id ?? 'TEST'; // Use 'auth' namespace
+        $_SESSION['auth']['identifyCust'] = $id; // Use 'auth' namespace
         $_SESSION['auth']['email'] = $email;
         //TODO send text to the user with the code - xxx
 
@@ -66,15 +66,15 @@ class Token extends CheckToken
     /**
      * Helps to generate token, aπnd it updates the login table as well.
      *
-     * @param mixed $customerId
+     * @param string $email
      *                          session
      *                          MUST HAVE DB_TABLE_CODE_MGT in the .env file
      *
-     * @return string|array|null|false
+     * @return string
      *
      * @throws \Exception
      */
-    public static function generateUpdateTableWithToken($email)
+    public static function generateUpdateTableWithToken(string $email): string
     {
         //5. generate code
         $code = self::generateAuthToken();
@@ -98,7 +98,7 @@ class Token extends CheckToken
             table: $table,
             identifier1: 'email'
         );
-        $codeData = Select::selectFn2(query: $query, bind: [$email]);
+        $codeData = Select::selectFn2(query: (string) $query, bind: [$email]);
 
         if (empty($codeData)) {
             // then insert the email into the code_mgt table
@@ -108,9 +108,6 @@ class Token extends CheckToken
             //6.  update login account table with the code
             $updateCodeToCustomer = new Update($table);
             $updateCodeToCustomer->updateTable('code', $code, 'email', $email);
-            if (!$updateCodeToCustomer) {
-                throw new UnauthorisedException('Error : Could not update token');
-            }
         }
 
         return $code;
@@ -134,8 +131,9 @@ class Token extends CheckToken
             identifier2: 'code',
             colArray: ['code', 'email']
         );
+        
         $data = Select::selectCountFn2(
-            query: $query,
+            query: (string) $query,
             bind: [$email, $code]
         );
         
@@ -144,7 +142,7 @@ class Token extends CheckToken
             if ($_SESSION['auth']['otp_attempts'] >= 3) {
                 // Invalidate the token in DB to force requesting a new one
                 $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
-                $updateCode->updateTable('code', 'LOCKED', 'email', $email);
+                $updateCode->updateTable('code', 'LOCKED', 'email', (string) $email);
                 unset($_SESSION['auth']['otp_attempts']);
                 throw new UnauthorisedException('Too many failed attempts. Your verification code has been locked. Please request a new one.');
             }
@@ -156,7 +154,7 @@ class Token extends CheckToken
 
         // Invalidate token in DB to prevent replay attacks
         $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
-        $updateCode->updateTable('code', 'USED', 'email', $email);
+        $updateCode->updateTable('code', 'USED', 'email', (string) $email);
 
         // JwtHandler::authenticate() stashes the password-verified user here instead
         // of setting the auth cookie right away, so that a password alone can never

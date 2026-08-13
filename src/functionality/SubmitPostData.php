@@ -36,7 +36,7 @@ class SubmitPostData
     /**
      * Centralized transaction wrapper to reduce try/catch repetition.
      */
-    private static function handleTransaction(\Closure $callback)
+    private static function handleTransaction(\Closure $callback): mixed
     {
         try {
             $pdo = Db::connect2();
@@ -48,6 +48,7 @@ class SubmitPostData
             Transaction::rollback();
             // Assuming showError is a global/utility function that handles the error response
             Utility::showError($th);
+            throw $th; // Ensure PHPStan knows execution stops here
         }
     }
 
@@ -88,7 +89,7 @@ class SubmitPostData
      * @param ?array $removeKeys Keys to strip from POST data.
      * @param string|array|null $fileName Name or names of file input fields.
      * @param ?string $imgPath Relative directory path for image uploads.
-     * @param ?string $fileTable Table name for storing image filename data.
+     * @param ?string $sourceFileTable Table name for storing image filename data.
      * @param ?array $newInput Optional new input data to be inserted.
      * @param bool $isCaptcha Whether to verify CAPTCHA.
      * @return mixed Returns last insert ID on success, or error response on failure.
@@ -158,7 +159,7 @@ class SubmitPostData
      * @param ?array $removeKeys Keys to strip from POST data
      * @param string|array|null $fileName File input field name or array of file input names.
      * @param ?string $imgPath Relative path to upload directory
-     * @param ?string $fileTable Table name for image filenames
+     * @param ?string $sourceFileTable Table name for image filenames
      * @param ?array $postData Optional POST data to override GetRequestData
      * @param bool $isCaptcha Whether to verify CAPTCHA
      * @return mixed Returns true on success, or error response on failure.
