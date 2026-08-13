@@ -28,9 +28,9 @@ class PasswordResetFunctionality
 {
     /**
      * Validate reset eligibility (e.g. session token present).
-     * 
      *
-     * @param array $session Current session state
+     * @param string $viewPath
+     * @param string $identifySession
      *
      * @throws UnauthorisedException
      */
@@ -38,13 +38,14 @@ class PasswordResetFunctionality
     {
 
             // check if auth.identifyCust is set
-        if (!isset($_SESSION['auth']['identifyCust']) && !isset($_SESSION['auth']['2FA_token_ts'])) {
+        // check if auth.identifyCust is set
+        if (!isset($_SESSION['auth']['identifyCust']) && !isset($_SESSION['auth']['codeVerified_ts'])) {
             $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
         }
 
-        if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1500) {
-            $diff = time() - $_SESSION['auth']['2FA_token_ts'];
+        if (isset($_SESSION['auth']['codeVerified_ts']) && (time() - ($_SESSION['auth']['codeVerified_ts'])) > 1500) {
+            $diff = time() - $_SESSION['auth']['codeVerified_ts'];
                         $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
         }
@@ -85,8 +86,9 @@ class PasswordResetFunctionality
      * - This function clears `$_SESSION['token']` and destroys the session and cookies after execution.
      *
      * @throws NotFoundException if user data is missing or invalid
+     * @return bool
      */
-    public static function process()
+    public static function process(): bool
     {
 
         try {
@@ -105,12 +107,15 @@ class PasswordResetFunctionality
         // get the users information using jwt decode
         $user = JwtHandler::jwtDecodeData('auth_forgot');
 
-        if (!$user) {
+        /** @var object{data?: object{email?: string, id?: int}, email?: string, id?: int} $user */
+
+        $userEmail = $user->data->email ?? $user->email ?? null;
+        
+        if (!$userEmail) {
             throw new NotFoundException('We cannot locate the information');
         }
-
-        $userEmail = $user->data->email ?? $user->email;
-        Limiter::limit($userEmail);
+        
+        Limiter::limit((string)$userEmail);
 
         // Step 6: Hash new password
         $hashedPassword = \hashPassword($cleanData['password']);
@@ -123,8 +128,11 @@ class PasswordResetFunctionality
         $userId = $user->data->id ?? $user->id ?? null;
         if ($userId) {
             try {
-                $stmt = \Src\Db::connect2()->prepare("UPDATE {$_ENV['DB_TABLE_LOGIN']} SET token_version = token_version + 1 WHERE id = ?");
-                $stmt->execute([$userId]);
+                $db = \Src\Db::connect2();
+                if ($db) {
+                    $stmt = $db->prepare("UPDATE {$_ENV['DB_TABLE_LOGIN']} SET token_version = token_version + 1 WHERE id = ?");
+                    $stmt->execute([$userId]);
+                }
             } catch (\PDOException $e) {
                 // Silently fail if token_version column hasn't been migrated yet
             }
@@ -162,6 +170,7 @@ class PasswordResetFunctionality
         return true;
         } catch (\Throwable $th) {
             Utility::showError($th);
+            return false;
         }
         
     }
