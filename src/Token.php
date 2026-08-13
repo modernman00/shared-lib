@@ -138,9 +138,25 @@ class Token extends CheckToken
             query: $query,
             bind: [$email, $code]
         );
+        
         if (!$data) {
-            throw new UnauthorisedException('Cannot verify token');
+            $_SESSION['auth']['otp_attempts'] = ($_SESSION['auth']['otp_attempts'] ?? 0) + 1;
+            if ($_SESSION['auth']['otp_attempts'] >= 3) {
+                // Invalidate the token in DB to force requesting a new one
+                $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
+                $updateCode->updateTable('code', 'LOCKED', 'email', $email);
+                unset($_SESSION['auth']['otp_attempts']);
+                throw new UnauthorisedException('Too many failed attempts. Your verification code has been locked. Please request a new one.');
+            }
+            throw new UnauthorisedException('Cannot verify token. Invalid code provided.');
         }
+
+        // Reset attempts on success
+        unset($_SESSION['auth']['otp_attempts']);
+
+        // Invalidate token in DB to prevent replay attacks
+        $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
+        $updateCode->updateTable('code', 'USED', 'email', $email);
 
         // JwtHandler::authenticate() stashes the password-verified user here instead
         // of setting the auth cookie right away, so that a password alone can never

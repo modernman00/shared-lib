@@ -121,6 +121,7 @@ class SubmitPostData
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
+            \Src\Limiter::limit($table);
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
 
             if ($fileName !== null) {
