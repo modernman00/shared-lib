@@ -39,8 +39,6 @@ final class RoleMiddleware
      * - Role must be included in JWT payload
      * - DB table lookup is optional but ensures user existence
      *
-     * @return array{id: int, role: string}
-     *
      * @throws UnauthorisedException if token or role are invalid
      */
     public function handle(): mixed
