@@ -140,7 +140,7 @@ class Sanitise
                 continue;
             }
             if (is_string($value) && ($value === '' || $value === 'select')) {
-                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', $key));
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', (string) $key));
                 $this->errors[] = "The $cleanKey field is required";
             }
         }
@@ -165,7 +165,7 @@ class Sanitise
                     $this->errors[] = "Field $key must be a string";
                     continue;
                 }
-                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', $key));
+                $cleanKey = strtoupper(preg_replace('/[^A-Za-z0-9]/', ' ', (string) $key));
                 if (strlen($value) < $this->dataLength['min'][$index]) {
                     $this->errors[] = "Field $cleanKey is below minimum length";
                 } elseif (strlen($value) > $this->dataLength['max'][$index]) {

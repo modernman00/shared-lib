@@ -101,7 +101,7 @@ class BuildFormBulma
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['submit']) ? $_POST[$this->entKey[$i]] : '';
 
-            $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]));
+            $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', (string) $this->entKey[$i]));
             $nameKey = $this->entKey[$i];
             $value ??= '';
             $multiple = ''; // multiple for file input
@@ -306,7 +306,7 @@ class BuildFormBulma
                 for ($y = 1; $y < count($this->entKey[$i]); ++$y) {
                     $name = $this->entValue['type'][$y];
                     $label = $this->entValue['label'][$y];
-                    $namePlaceholder = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $name));
+                    $namePlaceholder = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', (string) $name));
                     echo <<<HTML
                         <div class="field">
                             <label class="label"><b>$label</b></label>

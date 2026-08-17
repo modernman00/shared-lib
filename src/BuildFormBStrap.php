@@ -115,7 +115,7 @@ class BuildFormBStrap
               $idNameAttribute = $this->entKey[$i];
             $value = isset($_POST['button']) ? $_POST[$idNameAttribute] : '';
 
-            $var = preg_replace('/[^0-9A-Za-z@.]/', ' ', $idNameAttribute);
+            $var = preg_replace('/[^0-9A-Za-z@.]/', ' ', (string) $idNameAttribute);
             $forLabel = ucfirst(strtolower($var));
             $nameKey = str_replace(' ', '', $idNameAttribute);
 

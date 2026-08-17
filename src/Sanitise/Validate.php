@@ -39,7 +39,7 @@ class Validate
                 // Check for missing POST values and trim whitespace
                 if (!isset($_POST[$fieldName]) || trim($_POST[$fieldName]) === '') {
                     // Clean field name for display (e.g. 'user_name' => 'USER NAME')
-                    $cleanNameKey = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $fieldName));
+                    $cleanNameKey = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', (string) $fieldName));
 
                     $error .= htmlspecialchars("$cleanNameKey is required") . '<br>';
                 }

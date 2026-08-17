@@ -132,7 +132,7 @@ class FormBuilderBulma
         for ($i = 0; $i < $this->entCount; ++$i) {
             $value = isset($_POST['button']) ? $_POST[$this->entKey[$i]] : '';
 
-            $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', $this->entKey[$i]));
+            $var = strtoupper(preg_replace('/[^0-9A-Za-z@.]/', ' ', (string) $this->entKey[$i]));
             $nameKey = $this->entKey[$i];
 
             if ($this->entValue[$i] === 'text') {
