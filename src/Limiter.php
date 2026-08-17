@@ -9,45 +9,57 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 class Limiter extends Db
 {
-    private const int MAX_ATTEMPTS = 5;
-    private const int TIME_WINDOW = 15 * 60;
-
     public static $argLimiter;
-
     public static $ipLimiter;
 
-    /*************  ✨ Windsurf Command ⭐  *************/
+    private const PROFILES = [
+        'login' => ['attempts' => 5, 'window' => 15 * 60, 'message' => 'Too many login attempts. Please try again in {minutes} minutes.'],
+        'post' => ['attempts' => 30, 'window' => 5 * 60, 'message' => 'You are posting too rapidly. Please take a breather for {minutes} minutes.'],
+        'comment_reactions' => ['attempts' => 60, 'window' => 5 * 60, 'message' => 'You are reacting too rapidly. Please wait {minutes} minutes.'],
+        'default' => ['attempts' => 30, 'window' => 5 * 60, 'message' => 'Too many requests. Please try again in {minutes} minutes.'],
+    ];
+
     /**
      * Applies rate limiting to a given argument and the user's IP address.
-     * Utilizes a fixed window policy to track the number of attempts within a specified time window.
-     * If the limit is exceeded, sets a 'Retry-After' header indicating when the next attempt is allowed.
      *
-     * @param string $arg the argument to be rate-limited, typically an email address in this format $email
+     * @param string $arg the argument to be rate-limited, typically an email address or table name
+     * @param string $action Optional action type to determine rate limit profile (e.g. 'login', 'post')
      *
-     * @throws TooManyRequestsException if the number of attempts exceeds the allowed limit within the time window
+     * @throws TooManyRequestsException if the limit is exceeded
      */
-
-    /*******  e4bdaa72-218f-4b19-b900-f7a504ff2c2a  *******/
-    public static function limit($arg)
+    public static function limit(string $arg, string $action = 'default')
     {
         try {
+            // Infer action if it's default
+            if ($action === 'default') {
+                if (filter_var($arg, FILTER_VALIDATE_EMAIL) || str_contains($arg, '@')) {
+                    $action = 'login';
+                } elseif (isset(self::PROFILES[$arg])) {
+                    $action = $arg;
+                }
+            }
+            
+            $profile = self::PROFILES[$action] ?? self::PROFILES['default'];
+            $attempts = $profile['attempts'];
+            $window = $profile['window'];
+            
             $ipAddress = Utility::getUserIpAddr();
 
             $db = Db::connect2();
             $storage = new PdoStorage($db);
             $rateLimiterFactory = new RateLimiterFactory([
-                'id' => 'login',
+                'id' => $action,
                 'policy' => 'fixed_window',
-                'limit' => self::MAX_ATTEMPTS,
-                'interval' => sprintf('%d seconds', self::TIME_WINDOW),
+                'limit' => $attempts,
+                'interval' => sprintf('%d seconds', $window),
             ], $storage);
 
-            // remove $ from $email
-            $argKey = str_replace('$', '', "$arg");
+            // remove $ from $arg
+            $argKey = str_replace('$', '', $arg);
 
             // Check rate limit
             self::$argLimiter = $rateLimiterFactory->create("$argKey:$arg");
-            self::$ipLimiter = $rateLimiterFactory->create("ip:{$ipAddress}");
+            self::$ipLimiter = $rateLimiterFactory->create("ip:$action:{$ipAddress}");
 
             $emailLimit = self::$argLimiter->consume(1);
             $ipLimit = self::$ipLimiter->consume(1);
@@ -55,12 +67,13 @@ class Limiter extends Db
             if (!$emailLimit->isAccepted() || !$ipLimit->isAccepted()) {
                 // For fixed_window, calculate retry time based on the window interval
                 $currentTime = time();
-                $windowStart = $currentTime - ($currentTime % self::TIME_WINDOW);
-                $nextWindow = $windowStart + self::TIME_WINDOW;
+                $windowStart = $currentTime - ($currentTime % $window);
+                $nextWindow = $windowStart + $window;
                 $retryAfter = max(1, $nextWindow - $currentTime); // Ensure at least 1 second
 
                 header('Retry-After: ' . $retryAfter);
-                throw new TooManyRequestsException('Too many login attempts. Please try again in ' . ceil($retryAfter / 60) . ' minutes.');
+                $msg = str_replace('{minutes}', (string)ceil($retryAfter / 60), $profile['message']);
+                throw new TooManyRequestsException($msg);
             }
         } catch (\Throwable $e) {
             throw $e; // Let the exception bubble up to be handled by the caller
