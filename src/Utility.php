@@ -403,14 +403,21 @@ class Utility
             default => Level::Error // Default for other exceptions
         };
 
-        // Log the error with context to the log directory in the LoggerFactory.php
-        $logger->log($logLevel, '🚨 Application Error', [
-          'message' => $th->getMessage(),
-          'code' => $statusCode,
-          'file' => $th->getFile(),
-          'line' => $th->getLine(),
-          'trace' => $th->getTraceAsString(),
-        ]);
+        // Log the error with context to the log directory in the LoggerFactory.php.
+        // This must never throw: one of the configured handlers emails Critical-level
+        // errors, and if that mail send fails (e.g. bad SMTP creds), an unguarded
+        // failure here would replace the real error response with an opaque 500.
+        try {
+            $logger->log($logLevel, '🚨 Application Error', [
+              'message' => $th->getMessage(),
+              'code' => $statusCode,
+              'file' => $th->getFile(),
+              'line' => $th->getLine(),
+              'trace' => $th->getTraceAsString(),
+            ]);
+        } catch (\Throwable $loggingFailure) {
+            error_log('Failed to log/alert application error: ' . $loggingFailure->getMessage());
+        }
 
         // 5. Prepare a nice message for the user or developer
         $errorMessage = $th instanceof HttpException

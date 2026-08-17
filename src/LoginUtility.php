@@ -187,7 +187,7 @@ class LoginUtility
             // Propagate optional status to child keys if parent is optional
             $childOptionalFields = $optionalFields;
             if ($optionalFields !== null && in_array($safeKey, $optionalFields, true)) {
-                $childOptionalFields = array_merge($optionalFields, array_map('strval', array_keys($value)));
+                $childOptionalFields = array_merge($optionalFields, array_keys($value), array_map('strval', array_keys($value)));
             }
          
             // Dive deeper into nested arrays

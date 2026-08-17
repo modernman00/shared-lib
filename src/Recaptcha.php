@@ -91,9 +91,18 @@ class Recaptcha
      */
     public static function verifyCaptchaEnterprise(array $input, string $action): bool
     {
+        // reCAPTCHA Enterprise has no universal public test key like classic v2/v3 (Enterprise
+        // test keys have to be created per-project in Google Cloud Console). Locally/in CI,
+        // automated tools rack up real, repeated traffic from the same IP that Google's live
+        // risk engine legitimately scores as bot activity, which has nothing to do with the
+        // app's own correctness. Skip the live call in that environment instead.
+        if (($_ENV['APP_ENV'] ?? '') === 'local') {
+            return true;
+        }
+
         $expectedAction = $input['action'] ?? $action;
         $postSiteKey = $input['siteKey'] ?? '';
-        
+
 
         if (empty($postSiteKey)) {
             throw new RecaptchaFailedException("🚨 Missing reCAPTCHA SiteKey — please try again.");

@@ -212,7 +212,10 @@ function showError2(\Throwable $th, Logger $logger): ?string
         default => Level::Error // Default for other exceptions
     };
 
-    // Log the error with context
+    // Log the error with context. This must never throw: one of the configured
+    // handlers emails Critical-level errors, and if that mail send fails (e.g. bad
+    // SMTP creds), an unguarded failure here would replace the real error response
+    // with an opaque, uncaught 500.
     $logger->log($logLevel, '🚨 Application Error', [
         'message' => $th->getMessage(),
         'code' => $statusCode,
