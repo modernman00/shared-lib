@@ -181,7 +181,7 @@ class LoginUtility
 
     foreach ($data as $key => $value) {
         // Clean the key
-        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', $key);
+        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', (string)$key);
 
         if (is_array($value)) {
          
