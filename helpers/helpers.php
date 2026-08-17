@@ -370,13 +370,7 @@ function msgSuccess(int $code, mixed $msg, mixed $token = null): void
  */
 function msgException(int $code, mixed $msg): void
 {
-    http_response_code($code);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'message' => $msg,
-        'status' => 'error',
-        'code' => $code,
-    ]);
+    throw new \Src\Exceptions\HttpException((string) $msg, $code);
 }
 
 function throwError(int $code, mixed $msg): void
