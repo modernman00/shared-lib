@@ -216,13 +216,17 @@ function showError2(\Throwable $th, Logger $logger): ?string
     // handlers emails Critical-level errors, and if that mail send fails (e.g. bad
     // SMTP creds), an unguarded failure here would replace the real error response
     // with an opaque, uncaught 500.
-    $logger->log($logLevel, '🚨 Application Error', [
-        'message' => $th->getMessage(),
-        'code' => $statusCode,
-        'file' => $th->getFile(),
-        'line' => $th->getLine(),
-        'trace' => $th->getTraceAsString(),
-    ]);
+    try {
+        $logger->log($logLevel, '🚨 Application Error', [
+            'message' => $th->getMessage(),
+            'code' => $statusCode,
+            'file' => $th->getFile(),
+            'line' => $th->getLine(),
+            'trace' => $th->getTraceAsString(),
+        ]);
+    } catch (\Throwable $loggingError) {
+        error_log('Failed to log application error: ' . $loggingError->getMessage());
+    }
 
     // 5. Prepare a nice message for the user or developer
     $errorMessage = $th instanceof \Src\Exceptions\HttpException

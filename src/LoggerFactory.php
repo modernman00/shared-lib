@@ -71,15 +71,17 @@ final class LoggerFactory
         }
         $logger = new Logger($_ENV['LOGGER_NAME']);
 
-        // Normalize log path
+        // Normalize log path. Strip any leading "../" or "./" from the configured
+        // path first (its exact dot-count depends on how deep LOGGER_PATH's author
+        // guessed the vendor install would be, which isn't reliable), then anchor
+        // it to the consuming app's real root: BASE_PATH when the app bootstrap has
+        // defined it, otherwise computed from __DIR__ (vendor/{vendor}/{package}/src,
+        // so 4 levels up is always the app root for a Composer-installed package).
         $logPath = $_ENV['LOGGER_PATH'];
         if (!str_starts_with($logPath, '/')) {
-            if (strpos(__DIR__, '/Sites/shared-lib/src') !== false && defined('BASE_PATH')) {
-                $cleanPath = preg_replace('/^(\.\.\/|\.\/)+/', '', $logPath);
-                $logPath = BASE_PATH . '/' . $cleanPath;
-            } else {
-                $logPath = __DIR__ . '/' . ltrim($logPath, '/');
-            }
+            $cleanPath = preg_replace('/^(\.\.\/|\.\/)+/', '', $logPath);
+            $appRoot = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 4);
+            $logPath = $appRoot . '/' . $cleanPath;
         }
 
         // Write logs to file with rotation ( 7 days)

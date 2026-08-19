@@ -14,7 +14,9 @@ namespace Src;
  */
 class AuditLogger
 {
-    private static string $fallbackLogPath = __DIR__ . '/../../../bootstrap/log/fallback_audit.log';
+    // __DIR__ is vendor/{vendor}/{package}/src, so 4 levels up reaches the
+    // consuming app's root (vendor/{vendor}/{package}/src/../../../../ = app root).
+    private static string $fallbackLogPath = __DIR__ . '/../../../../bootstrap/log/fallback_audit.log';
 
     /**
      * Log an event immutably.
