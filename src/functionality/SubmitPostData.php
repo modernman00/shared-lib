@@ -92,6 +92,10 @@ class SubmitPostData
      * @param ?string $sourceFileTable Table name for storing image filename data.
      * @param ?array $newInput Optional new input data to be inserted.
      * @param bool $isCaptcha Whether to verify CAPTCHA.
+     * @param bool $isCaptchaV3 Whether to use reCAPTCHA v3 verification.
+     * @param string $captchaAction The captcha action string.
+     * @param string $generalFileTable The fallback table name for files.
+     * @param ?array $optionalFields Fields that are optional.
      * @return mixed Returns last insert ID on success, or error response on failure.
      */
     public static function submitToOneTablenImage(
@@ -162,6 +166,11 @@ class SubmitPostData
      * @param ?string $sourceFileTable Table name for image filenames
      * @param ?array $postData Optional POST data to override GetRequestData
      * @param bool $isCaptcha Whether to verify CAPTCHA
+     * @param bool $isCaptchaV3 Whether to use reCAPTCHA v3 verification
+     * @param string $captchaAction The captcha action string
+     * @param string $generalFileTable The fallback table name for files
+     * @param string $returnType The return type
+     * @param ?array $optionalFields Fields that are optional
      * @return mixed Returns true on success, or error response on failure.
      */
     public static function submitToMultipleTable(
@@ -237,11 +246,15 @@ class SubmitPostData
      * @param ?string $fileTable          Table to store file metadata (e.g., filename, path).
      * @param ?array $newInput            Additional data to merge into submission (e.g., email config).
      * @param bool $isCaptcha             Whether to validate CAPTCHA before submission.
+     * @param bool $isCaptchaV3           Whether to use reCAPTCHA v3 verification.
+     * @param string $captchaAction       The captcha action string.
      * @param ?array $emailArray          Email config:
      *                                    - 'viewPath' => Blade view for email body
      *                                    - 'recipient' => 'admin' or 'member'
      *                                    - 'subject' => Email subject line
      *                                    - 'emailViewDataWithEmail' => ['firstName', 'lastName', 'email']
+     * @param string $generalFileTable    Table name for general files.
+     * @param ?array $optionalFields      Fields that are optional.
      *
      * @usage Example:
      *   $toCheck = [

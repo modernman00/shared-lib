@@ -58,8 +58,21 @@ class UpdateExistingData
      *  * - `updateData()` → Handles validated updates to a single table, including optional image upload and password hashing
      *   - Uses `$identifier` to locate the row to update (e.g., 'id', 'email', 'mobile')
      *   - Automatically injects `$identifierValue` if missing from POST payload
+     * @param string      $table           Target table for update
      * @param mixed       $identifierValue Value used in WHERE clause to locate the row (e.g., user ID or email)
      * @param string      $identifier      Column name used to identify the row (default: 'id')
+     * @param ?array      $minMaxData      Validation rules
+     * @param ?array      $removeKeys      Keys to exclude from payload
+     * @param ?string     $fileName        File input field name
+     * @param ?string     $imgPath         Upload destination path
+     * @param ?string     $fileTable       Table to store file metadata
+     * @param string      $generalFileTable Fallback table name for files
+     * @param bool        $isRecaptcha     Whether to validate CAPTCHA
+     * @param bool        $isCaptchaV3     Whether to use reCAPTCHA v3
+     * @param string      $captchaAction   CAPTCHA action name
+     * @param ?array      $postUpdateData  Additional data
+     * @param string      $returnType      Return type
+     * @param ?array      $optionalFields  Fields that are optional
      *
      * - If `$sanitisedData[$identifier]` is missing, it will be set to `$identifierValue` before update
      * - Ensures contributor-safe fallback for PATCH-like behavior
