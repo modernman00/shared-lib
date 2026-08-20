@@ -38,12 +38,11 @@ class BuildFormBStrap
      */
     public function __construct(public array $question)
     {
-        $this->token = urlencode(base64_encode((random_bytes(32))));
+        $this->token = $_SESSION['token'] ?? urlencode(base64_encode((random_bytes(32))));
 
         $this->entKey = array_keys($this->question);
         $this->entValue = array_values($this->question);
         $this->entCount = count($this->entValue);
-        $_SESSION['token'] = $this->token;
 
         $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
         $_SESSION['deviceHash'] = $this->dToken;

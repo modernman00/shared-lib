@@ -26,65 +26,65 @@ class Db extends CheckToken
         ];
     }
 
-    public function connect(): ?PDO
+    /**
+     * @throws PDOException if the connection cannot be established. Callers can
+     * rely on always getting a usable PDO back rather than null-checking every
+     * call site; a failed connection is unrecoverable for the request anyway and
+     * is caught by the app's global exception handler (see ErrorHandler).
+     */
+    public function connect(): PDO
     {
         // apply singleton pattern by checking if db connection is already established before connecting again
         if (self::$mockConnection !== null) {
             return self::$mockConnection;
         }
-        try {
-            if (!isset(self::$conn)) {
-                $dbVar = self::dbVariables();
-                self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
-                    PDO::ATTR_PERSISTENT => true,
-                ]);
+        if (!isset(self::$conn)) {
+            $dbVar = self::dbVariables();
+            self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
+                PDO::ATTR_PERSISTENT => true,
+            ]);
 
-                self::$conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
-                self::$conn->setAttribute(attribute: PDO::ATTR_ERRMODE, value: PDO::ERRMODE_EXCEPTION);
-                self::$conn->setAttribute(attribute: PDO::ATTR_EMULATE_PREPARES, value: false);
-
-            } 
-                return self::$conn;
-            
-        } catch (PDOException $e) {
-            Utility::showError($e);
-            return null;
+            self::$conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
+            self::$conn->setAttribute(attribute: PDO::ATTR_ERRMODE, value: PDO::ERRMODE_EXCEPTION);
+            self::$conn->setAttribute(attribute: PDO::ATTR_EMULATE_PREPARES, value: false);
         }
+
+        return self::$conn;
     }
 
-    public static function connect2():? PDO
+    /**
+     * @throws PDOException if the connection cannot be established. See connect().
+     */
+    public static function connect2(): PDO
     {
         if (self::$mockConnection !== null) {
             return self::$mockConnection;
         }
-        try {
-            if (self::$conn === null) {
-                $dbVar = self::dbVariables();
-                self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", $dbVar['username'], $dbVar['password'], [
-                    PDO::ATTR_PERSISTENT => false,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]);
-            }
-
-            return self::$conn;
-        } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return null;
+        if (self::$conn === null) {
+            $dbVar = self::dbVariables();
+            self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", $dbVar['username'], $dbVar['password'], [
+                PDO::ATTR_PERSISTENT => false,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
         }
+
+        return self::$conn;
     }
 
-    public function connectSql() : ?\mysqli
+    /**
+     * @throws \RuntimeException if the mysqli connection cannot be established.
+     */
+    public function connectSql(): \mysqli
     {
         $dbVar2 = self::dbVariables();
-        try {
-            return mysqli_connect($dbVar2['host'], $dbVar2['username'], $dbVar2['password'], $dbVar2['name']);
-        } catch (\Throwable $e) {
-            Utility::showError($e);
-            return null;
+        $conn = mysqli_connect($dbVar2['host'], $dbVar2['username'], $dbVar2['password'], $dbVar2['name']);
+        if ($conn === false) {
+            throw new \RuntimeException('Failed to connect to MySQL: ' . mysqli_connect_error());
         }
+
+        return $conn;
     }
 
     public static function setMockConnection(PDO $pdo): void

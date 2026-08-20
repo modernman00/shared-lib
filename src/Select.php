@@ -23,7 +23,9 @@ class Select extends Db
      * @param string|null $limit the LIMIT clause (optional)
      * @param array|null $colArray an array of columns to select dynamically (optional)
      *
-     * @return string|null the generated SQL query or null if no valid selection type is provided
+     * @return string the generated SQL query
+     *
+     * @throws \Src\Exceptions\ValidationException if $selection does not match a known query type
      */
     public static function formAndMatchQuery(
         string $selection,
@@ -36,7 +38,7 @@ class Select extends Db
         ?string $orderBy = null,
         ?string $limit = null,
         ?array $colArray = null
-    ): string|null {
+    ): string {
         // for col dynamically -
         if ($colArray) {
             $implodeColArray = implode(separator: ', ', array: $colArray);
@@ -95,7 +97,7 @@ class Select extends Db
             'SELECT_COL_DYNAMICALLY_ID' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? $orderBy $limit",
             'SELECT_COL_DYNAMICALLY_ID_AND' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? AND $identifier2 = ? $orderBy $limit",
             'SELECT_COL_DYNAMICALLY_ID_OR' => "SELECT $implodeColArray FROM $table WHERE $identifier1 = ? OR $identifier2 = ? $orderBy $limit",
-            default => null
+            default => throw new \Src\Exceptions\ValidationException('selection not recognised: ' . $selection)
         };
     }
 
@@ -103,8 +105,10 @@ class Select extends Db
      * @param string $table
      * @param string $query SELECT * FROM account WHERE id = ? || SELECT * FROM $table WHERE $dev = ? AND $dev2 = ?
      * @param array|null $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"];
+     *
+     * @return array<int, mixed>
      */
-    public function selectFn(string $query, ?array $bind = null): array|int|string
+    public function selectFn(string $query, ?array $bind = null): array
     {
         try {
             $sql = $query;
@@ -119,7 +123,10 @@ class Select extends Db
         }
     }
 
-    public function selectFn1(string $query, ?array $bind = null): array|int|string
+    /**
+     * @return array<int, mixed>
+     */
+    public function selectFn1(string $query, ?array $bind = null): array
     {
         try {
             $sql = $query;
@@ -138,9 +145,9 @@ class Select extends Db
      * @param string $query
      * @param array|null $bind
      *
-     * @return string|array|int
+     * @return array<int, mixed>
      */
-    public static function selectFn2(string $query, ?array $bind = null): string|array|int
+    public static function selectFn2(string $query, ?array $bind = null): array
     {
         try {
             $sql = $query;
