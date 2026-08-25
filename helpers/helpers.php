@@ -255,11 +255,21 @@ function showError2(\Throwable $th, Logger $logger): ?string
         // Render the 500 view if it exists, otherwise fallback to plain text
         try {
             $blade = \helpers\classes\Blade::get();
-            $html = $blade->run('errors.500', ['message' => $errorMessage]);
-            return $html;
+             // Check if a specific error view exists (e.g., errors.401, errors.404)
+                $viewName = 'errors.' . $statusCode;
+                
+                // BladeOne's viewExists() checks if the template file is present
+                if ($blade->viewExists($viewName)) {
+                    $html = $blade->run($viewName, ['message' => $errorMessage]);
+                } else {
+                    // Fallback to the generic 500 error page if the specific one is missing
+                    $html = $blade->run('errors.500', ['message' => $errorMessage]);
+                }
+                
+                return $html;
         } catch (\Throwable $e) {
             // Fallback if view engine or template fails
-            return "<h1>500 Server Error</h1><p>" . htmlspecialchars($errorMessage) . "</p>";
+             return "<h1>{$statusCode} Server Error</h1><p>" . htmlspecialchars($errorMessage) . "</p>";
         }
     }
 }
