@@ -24,7 +24,7 @@ class LoginUtility
         $textPassword = $inputData['password'];
         $dbPassword = $databaseData['password'];
         $id = $databaseData['id'];
-        $tableDB = $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';
+        $tableDB = $_ENV['DB_TABLE_LOGIN'] ??'account' ?? 'login';
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
@@ -65,7 +65,7 @@ class LoginUtility
     public static function useEmailToFindData($inputData)
     {
         $email = $inputData['email'];
-        $tableDB =  $_ENV['DB_TABLE_LOGIN'] ?? $table ?? 'account' ?? 'login';
+        $tableDB =  $_ENV['DB_TABLE_LOGIN'] ?? 'account' ?? 'login';
         $id = $inputData['id'] ?? $inputData['user_id'] ?? $inputData['no']?? 'no provided';
         $query = Select::formAndMatchQuery(selection: 'SELECT_ONE', table: $tableDB, identifier1: 'email');
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
