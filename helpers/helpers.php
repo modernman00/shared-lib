@@ -259,13 +259,13 @@ function showError2(\Throwable $th, Logger $logger): ?string
                 $viewName = 'errors.' . $statusCode;
                 
                 // BladeOne's viewExists() checks if the template file is present
-                if ($blade->viewExists($viewName)) {
+                 try {
+                    // Attempt to render the specific status code view (e.g. errors.401)
                     $html = $blade->run($viewName, ['message' => $errorMessage]);
-                } else {
-                    // Fallback to the generic 500 error page if the specific one is missing
+                } catch (\Throwable $e) {
+                    // If the specific view doesn't exist, BladeOne throws an exception. Fallback to 500.
                     $html = $blade->run('errors.500', ['message' => $errorMessage]);
                 }
-                
                 return $html;
         } catch (\Throwable $e) {
             // Fallback if view engine or template fails

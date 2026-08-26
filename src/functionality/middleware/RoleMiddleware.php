@@ -86,7 +86,7 @@ final class RoleMiddleware
 
             // GET THE FAMCODE 
             $id = $decoded->data->id ?? $decoded->id;
-            $email = $decoded->data->email ?? $decoded->email;
+            $email = $decoded->data->email ?? $decoded->email ?? null;
   if($email){
                 $_SESSION['auth']['email'] = $email;
             }
