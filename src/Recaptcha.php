@@ -154,7 +154,8 @@ class Recaptcha
 
             // 3. Risk score
             $score = $response['riskAnalysis']['score'] ?? 0;
-            if ($score < 0.7) {
+            $minScore = (float) ($_ENV['RECAPTCHA_MIN_SCORE'] ?? 0.5);
+            if ($score < $minScore) {
                 throw new RecaptchaFailedException("🤖 High‑risk activity detected.");
             }
 
