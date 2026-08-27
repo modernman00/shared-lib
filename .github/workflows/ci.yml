@@ -61,16 +61,7 @@ jobs:
       run: vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
       
     - name: Run static analysis
-      run: |
-        if [ ! -f phpstan.neon ]; then
-          echo "Creating basic PHPStan configuration..."
-          echo "parameters:" > phpstan.neon
-          echo "    level: 5" >> phpstan.neon
-          echo "    paths:" >> phpstan.neon
-          echo "        - src" >> phpstan.neon
-        fi
-        composer require --dev phpstan/phpstan --no-interaction
-        vendor/bin/phpstan analyse --memory-limit=1G
+      run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
         
     - name: Check for security vulnerabilities
       run: |

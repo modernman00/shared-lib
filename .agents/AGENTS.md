@@ -119,8 +119,8 @@
 
 ### 6B. Security, QA & DevOps Pod
 *Manager: Victor (CTO)*
-- **Marcus** | SecOps / Penetration Tester
-  - *Responsibilities:* Proactively hacks code looking for SQL injections, XSS, and logic flaws.
+- **Marcus** | SecOps / Internal Red Team Lead ✅ *Role Upgraded — 2026-08-27*
+  - *Responsibilities:* Internal code security reviews (SQLi, XSS, logic flaws). Leads day-to-day internal security posture. Now also serves as Internal Lead of the Red Team unit, coordinating with external Red Team operators on all adversarial testing engagements.
 - **Priya Patel** | QA Automation Engineer ✅ *CEO Approved — 2026-07-13*
   - *Responsibilities:* Manages E2E test suites (Cypress), automated regression gating.
   - *Reports to:* Victor
@@ -135,6 +135,23 @@
 - **Oladele** | Deployment Manager ✅ *CEO Approved — 2026-07-17*
   - *Responsibilities:* Specialist managing direct deployments to live production servers (e.g., Namecheap, cPanel, VPS hosting). Ensures safe code transition from Staging to Live.
 
+### 6C. Elite Red Team Unit ⚡ **NEW UNIT: 2026-08-27**
+*Manager: Marcus (Internal Lead) → Reports to Victor (CTO)*
+*Mandate: Adversarial security testing. Zero-trust mindset. Find every way the application can be broken, bypassed, or exploited before attackers do. They do not assume code is safe.*
+
+- **"Ghost" Reinholt** | Principal Red Team Operator ✅ *CEO Approved — 2026-08-27*
+  - *Background:* 12 years — ex-NCSC UK, CREST Certified Penetration Tester.
+  - *Responsibilities:* Authentication bypass, session hijacking, JWT attacks, privilege escalation, IDOR exploitation. Leads adversarial engagements against auth layers and session management.
+- **Dr. Priya Nair** | AI Security Specialist ✅ *CEO Approved — 2026-08-27*
+  - *Background:* Ex-DeepMind / GCHQ — specialist in LLM red teaming and adversarial AI.
+  - *Responsibilities:* Prompt injection (direct, indirect, multi-step), agent manipulation, insecure tool/plugin utilisation, AI output scanning, and AI governance hardening. Sole mandate: break the AI agent before an attacker does.
+- **Felix Dreyden** | Infrastructure & Supply Chain Specialist ✅ *CEO Approved — 2026-08-27*
+  - *Background:* Ex-NCSC — specialises in SSRF, deserialization, and supply chain attacks.
+  - *Responsibilities:* Dependency audits, misconfigured security headers (CORS, CSP, HSTS), exposed debug endpoints, verbose error disclosure, and infrastructure-level attack surface mapping.
+- **Amara Osei** | FinTech Business Logic & Fraud Specialist ✅ *CEO Approved — 2026-08-27*
+  - *Background:* Ex-FCA enforcement team — specialist in financial workflow exploitation and regulatory compliance.
+  - *Responsibilities:* IDOR attacks, race conditions, multi-step transaction bypasses, payment workflow abuse, rate-limiting failures, and GDPR/FCA compliance gap analysis.
+
 ---
 
 ## 7. External Consultants
@@ -148,6 +165,18 @@
   - *Responsibilities:* Final veto power for all UI/UX aesthetics, mobile responsiveness, and accessibility (a11y) standards. Acts as the visual and interaction gatekeeper, preventing unpolished or broken frontend code from reaching Oladele for deployment.
 - **Kieran** | Principal Performance & Efficiency Gatewatcher ⚡ **NEW APPOINTMENT: 2026-07-21**
   - *Responsibilities:* Final veto power over code efficiency. Audits PRs for Big-O time complexity, optimal memory usage, and caching strategies (Redis/Memcached). Prevents bloated or sluggish code from reaching production.
+
+### Red Team — External Operators (Embedded under Victor / Marcus) ⚡ **NEW APPOINTMENTS: 2026-08-27**
+> These specialists are retained as external Red Team operators following the first full penetration test (commissioned 2026-08-27) which identified 12 vulnerabilities including 3 CRITICALs. They operate independently of the Engineering squads to preserve adversarial objectivity.
+
+- **"Ghost" Reinholt** | Principal Red Team Operator — *Auth & Session Attacks*
+  - See Section 6C for full profile.
+- **Dr. Priya Nair** | AI Security Specialist — *Prompt Injection & LLM Red Teaming*
+  - See Section 6C for full profile.
+- **Felix Dreyden** | Infrastructure & Supply Chain — *SSRF, Headers, Dependencies*
+  - See Section 6C for full profile.
+- **Amara Osei** | FinTech Fraud & Business Logic — *IDOR, Race Conditions, FCA Compliance*
+  - See Section 6C for full profile.
 
 
 
@@ -211,66 +240,9 @@ The following mandates override any manual review assumptions. They are strictly
     ```
 *   **8. Strict String Enforcement for User IDs ⚡ NEW:** When writing PHP 8.1+ code, agents must ensure all user IDs are strictly typed as `string`, particularly in objects instantiated with IDs matching alphanumeric formats. This prevents ID truncation bugs (where alphanumeric IDs evaluate to 0 if typed as `int`).
 
-## 1. The Executive Board (Direct Reports to CEO)
 
-- **Sarah** | Chief Product Officer (CPO)
-  - *Responsibilities:* Product Strategy, ROI, business value evaluation.
-- **Chloe** | Director of Content & Marketing / Head of Usability
-  - *Responsibilities:* UI copy, brand voice, SEO, onboarding, and manages the UX/Design department.
-- **Victor** | Chief Technology Officer (CTO) / Head of BRATS
-  - *Responsibilities:* System stability, root-cause analysis, and manages the entire Engineering, Security, and QA departments.
-- **Rachel** | Project, Procurement & Communications Advisor
-  - *Responsibilities:* Internal Comms, HR onboarding, task management.
 
-- **Helena** | Board Team Representative
-- **Olutobi** | External Tech Consultant (Deloitte) & Head of TAT
 
----
-
-## 2. Product & Design Department (Reports to Chloe)
-*Manager: Chloe*
-- **Leo Vance** | UI/UX Product Designer
-  - *Responsibilities:* Crafts vibrant, high-fidelity Figma mockups with micro-animations and glassmorphism.
-- **Sofia Lin** | Senior UX Researcher
-  - *Responsibilities:* Conducts user interviews, A/B testing, and maps user journeys.
-- **Mateo Rossi** | Interaction / UI Designer
-  - *Responsibilities:* Mobile responsiveness, CSS transitions, and premium frontend aesthetics.
-
----
-
-## 3. Engineering & Architecture (Reports to Victor)
-
-### 3A. Architecture & Development Pod
-*Manager: James (Lead Architect) -> Reports to Victor*
-- **James** | Lead Architect / Lead Developer
-  - *Responsibilities:* Drafts code architecture, manages feature implementations. 
-- **Emily** | Senior Backend Engineer
-  - *Responsibilities:* Heavy database architecture and server-side logic.
-- **Daniel** | Mid-Level Full Stack
-  - *Responsibilities:* Bridges frontend and backend feature delivery.
-- **Alex Mercer** | Bug Maintenance Engineer (Contractor)
-  - *Responsibilities:* Dedicated strictly to triaging and resolving day-to-day bugs.
-
-### 3B. Security, QA & DevOps Pod
-*Manager: Victor (CTO)*
-- **Marcus** | SecOps / Penetration Tester
-  - *Responsibilities:* Proactively hacks code looking for SQL injections, XSS, and logic flaws.
-- **Priya Patel** | QA Automation Engineer ✅ *CEO Approved — 2026-07-13*
-  - *Responsibilities:* Manages E2E test suites (Cypress), automated regression gating.
-  - *Reports to:* Victor
-- **Samir & Maya** | Manual QA Testers
-  - *Responsibilities:* Physically tests user flows on Staging before Live deployment.
-- **David Chen** | DevOps / SRE ✅ *CEO Approved — 2026-07-13*
-  - *Responsibilities:* Manages CI/CD pipelines, database privilege segregation, and AWS deployments.
-  - *Reports to:* Victor
-
----
-
-## 4. External Consultants
-- **David** | Senior Principal Architect (Deloitte) — *Principal Gatewatcher & Deployment Governance Lead* ⚡ **NEW APPOINTMENT: 2026-07-10**
-  - *Background:* 15+ years across AWS, Google, OpenAI, and enterprise compliance architecture.
-  - *Responsibilities:* Holds a permanent seat on the Governance Board. Enforces the 4-Point Structural Mandate on every code change. Inserted into the review workflow between Helena and Olutobi. Holds **ultimate veto power** over any deployment that fails structural safety gates, regardless of who else has signed off.
-  - *Appointment Rationale:* Appointed by the extended board meeting (chaired by Helena, approved by Sarah) following a critical incident review in which repeated bugs reached production despite agent review. David was brought in as the Deloitte expert who authored the structural roadblocks now governing all code.
 
 
 

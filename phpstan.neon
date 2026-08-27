@@ -1,24 +1,32 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
-    level: 6
+    level: 8
     paths:
         - src
     
     # Ignore specific errors that might be expected in a shared library
     ignoreErrors:
-        # Allow mixed types for flexible utility functions
-        - '#Function .* has parameter \$.*? with no value type specified in iterable type array#'
         # Allow dynamic property access patterns
         - '#Access to an undefined property#'
         # Allow magic methods
         - '#Call to an undefined method#'
-    
+
     # Additional rules
     checkMissingIterableValueType: false
     checkGenericClassInNonGenericObjectType: false
-    
+    # Baseline entries that stop matching (fixed code, or a PHPStan version bump) must
+    # not fail the build - the gate is "no NEW errors", not "the backlog is frozen".
+    reportUnmatchedIgnoredErrors: false
 
-    
     # Exclude patterns
     excludePaths:
         - */vendor/*
         - */tests/*
+        # Pre-existing broken subsystem: these files declare no namespace (so they
+        # are unautoloadable under the Src\ PSR-4 map) and import interfaces/classes
+        # that do not exist. Needs a dedicated fix; excluded so it does not mask the
+        # level-8 gate for the rest of src/.
+        - src/TwilioProvider.php
+        - src/VonageProvider.php

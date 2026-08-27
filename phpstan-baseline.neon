@@ -1,0 +1,1486 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Parameter \\#1 \\$jsonData of static method Src\\\\AuditLogger\\:\\:fallbackToLocalQueue\\(\\) expects string, string\\|false given\\.$#"
+			count: 2
+			path: src/AuditLogger.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtolower expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/BuildFormBStrap.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtoupper expects string, string\\|null given\\.$#"
+			count: 2
+			path: src/BuildFormBulma.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of function count expects array\\|Countable, string given\\.$#"
+			count: 1
+			path: src/BuildFormBulma.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$token$#"
+			count: 1
+			path: src/CheckToken.php
+
+		-
+			message: "#^Method Src\\\\Delete\\:\\:formAndMatchQuery\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/Delete.php
+
+		-
+			message: "#^PHPDoc tag @return with type bool is incompatible with native type int\\.$#"
+			count: 1
+			path: src/Delete.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$colunAnswer$#"
+			count: 1
+			path: src/DeleteFn.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$identifier$#"
+			count: 1
+			path: src/DeleteFn.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtoupper expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/FormBuilder.php
+
+		-
+			message: "#^Part \\$divID \\(non\\-empty\\-array\\|string\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: src/FormBuilder.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtoupper expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/FormBuilderBulma.php
+
+		-
+			message: "#^Property Src\\\\FormBuilderBulma\\:\\:\\$setDay is never read, only written\\.$#"
+			count: 1
+			path: src/FormBuilderBulma.php
+
+		-
+			message: "#^Property Src\\\\FormBuilderBulma\\:\\:\\$setYear is never read, only written\\.$#"
+			count: 1
+			path: src/FormBuilderBulma.php
+
+		-
+			message: "#^Variable \\$option might not be defined\\.$#"
+			count: 3
+			path: src/FormBuilderBulma.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$firstTable$#"
+			count: 4
+			path: src/InnerJoin.php
+
+		-
+			message: "#^Part \\$firstTable \\(array\\|string\\|null\\) of encapsed string cannot be cast to string\\.$#"
+			count: 15
+			path: src/InnerJoin.php
+
+		-
+			message: "#^Parameter \\#5 \\$domain of function setcookie expects string, string\\|false\\|null given\\.$#"
+			count: 2
+			path: src/JwtHandler.php
+
+		-
+			message: "#^Static method Src\\\\LoginUtility\\:\\:checkPassword\\(\\) invoked with 3 parameters, 2 required\\.$#"
+			count: 1
+			path: src/JwtHandler.php
+
+		-
+			message: "#^Static method Src\\\\LoginUtility\\:\\:useEmailToFindData\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 1
+			path: src/JwtHandler.php
+
+		-
+			message: "#^Method Src\\\\LaravelHelper\\:\\:old\\(\\) has parameter \\$default with no type specified\\.$#"
+			count: 1
+			path: src/LaravelHelper.php
+
+		-
+			message: "#^Method Src\\\\LaravelHelper\\:\\:sessionFlash\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/LaravelHelper.php
+
+		-
+			message: "#^Method Src\\\\LaravelHelper\\:\\:sessionGet\\(\\) has parameter \\$default with no type specified\\.$#"
+			count: 1
+			path: src/LaravelHelper.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$firstTable$#"
+			count: 1
+			path: src/LeftJoin.php
+
+		-
+			message: "#^Part \\$firstTable \\(array\\|string\\|null\\) of encapsed string cannot be cast to string\\.$#"
+			count: 3
+			path: src/LeftJoin.php
+
+		-
+			message: "#^Method Src\\\\Limiter\\:\\:limit\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Limiter.php
+
+		-
+			message: "#^Property Src\\\\Limiter\\:\\:\\$argLimiter has no type specified\\.$#"
+			count: 1
+			path: src/Limiter.php
+
+		-
+			message: "#^Property Src\\\\Limiter\\:\\:\\$ipLimiter has no type specified\\.$#"
+			count: 1
+			path: src/Limiter.php
+
+		-
+			message: "#^Method Src\\\\LoggedOut\\:\\:getAuthenticatedUserId\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/LoggedOut.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of function setcookie expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/LoggedOut.php
+
+		-
+			message: "#^Parameter \\#5 \\$domain of function setcookie expects string, string\\|false\\|null given\\.$#"
+			count: 1
+			path: src/LoggedOut.php
+
+		-
+			message: "#^Method Src\\\\LoggerFactory\\:\\:getLogger\\(\\) should return Monolog\\\\Logger but returns Monolog\\\\Logger\\|null\\.$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$fromEmail$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$logPath$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$mailerDsn$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$name$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$toEmail$#"
+			count: 1
+			path: src/LoggerFactory.php
+
+		-
+			message: "#^Argument of an invalid type array\\|int\\<min, \\-1\\>\\|int\\<1, max\\>\\|string supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/LoginUtility.php
+
+		-
+			message: "#^Attribute class Src\\\\SensitiveParameter does not exist\\.$#"
+			count: 2
+			path: src/LoginUtility.php
+
+		-
+			message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
+			count: 3
+			path: src/LoginUtility.php
+
+		-
+			message: "#^Method Src\\\\LoginUtility\\:\\:findUserByEmailPassword\\(\\) should return array but returns array\\|int\\<min, \\-1\\>\\|int\\<1, max\\>\\|string\\.$#"
+			count: 1
+			path: src/LoginUtility.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$databaseData with type mixed is not subtype of native type array\\.$#"
+			count: 1
+			path: src/LoginUtility.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$email with type mixed is not subtype of native type string\\.$#"
+			count: 1
+			path: src/LoginUtility.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$inputData with type mixed is not subtype of native type array\\.$#"
+			count: 2
+			path: src/LoginUtility.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$inputData$#"
+			count: 1
+			path: src/LoginUtility.php
+
+		-
+			message: "#^Method Src\\\\NumberToWord\\:\\:number2word\\(\\) should return string but return statement is missing\\.$#"
+			count: 1
+			path: src/NumberToWord.php
+
+		-
+			message: "#^Method Src\\\\NumberToWord\\:\\:number2wordWithCurrency\\(\\) should return string but return statement is missing\\.$#"
+			count: 1
+			path: src/NumberToWord.php
+
+		-
+			message: "#^Method Src\\\\NumberToWord\\:\\:number2wordWithCurrencyAndDecimal\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/NumberToWord.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function ucfirst expects string, string\\|false given\\.$#"
+			count: 3
+			path: src/NumberToWord.php
+
+		-
+			message: "#^Method Src\\\\Recaptcha\\:\\:verifyCaptcha\\(\\) has parameter \\$input with no type specified\\.$#"
+			count: 1
+			path: src/Recaptcha.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$token$#"
+			count: 1
+			path: src/Recaptcha.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$firstTable$#"
+			count: 1
+			path: src/RightJoin.php
+
+		-
+			message: "#^Part \\$firstTable \\(array\\|string\\|null\\) of encapsed string cannot be cast to string\\.$#"
+			count: 2
+			path: src/RightJoin.php
+
+		-
+			message: "#^Offset 'data' on array\\{data\\: array\\<string\\>, min\\: array\\<int\\>, max\\: array\\<int\\>\\} in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^Offset 'max' on array\\{data\\: array\\<string\\>, min\\: array\\<int\\>, max\\: array\\<int\\>\\} in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^Offset 'min' on array\\{data\\: array\\<string\\>, min\\: array\\<int\\>, max\\: array\\<int\\>\\} in isset\\(\\) always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^Offset 'token' on array\\<string, mixed\\> on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$sessionToken$#"
+			count: 1
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtoupper expects string, string\\|null given\\.$#"
+			count: 2
+			path: src/Sanitise/Sanitise.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strtoupper expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/Sanitise/Validate.php
+
+		-
+			message: "#^Method Src\\\\SecureSession\\:\\:destroy\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SecureSession.php
+
+		-
+			message: "#^Method Src\\\\SecureSession\\:\\:regenerate\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SecureSession.php
+
+		-
+			message: "#^Method Src\\\\SecureSession\\:\\:start\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SecureSession.php
+
+		-
+			message: "#^Parameter \\#1 \\$name of function setcookie expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/SecureSession.php
+
+		-
+			message: "#^Cannot call method fetchColumn\\(\\) on PDOStatement\\|false\\.$#"
+			count: 1
+			path: src/Select.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$identifier3 with type mixed is not subtype of native type string\\|null\\.$#"
+			count: 1
+			path: src/Select.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$table$#"
+			count: 1
+			path: src/Select.php
+
+		-
+			message: "#^PHPDoc tag @return with type mixed is not subtype of native type array\\|int\\|string\\.$#"
+			count: 1
+			path: src/Select.php
+
+		-
+			message: "#^Variable \\$implodeColArray might not be defined\\.$#"
+			count: 4
+			path: src/Select.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$params$#"
+			count: 1
+			path: src/SelectFn.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$query$#"
+			count: 1
+			path: src/SelectFn.php
+
+		-
+			message: "#^Parameter \\$colArray of static method Src\\\\Select\\:\\:formAndMatchQuery\\(\\) expects array\\|null, string given\\.$#"
+			count: 1
+			path: src/SelectFn.php
+
+		-
+			message: "#^Constant APP_EMAIL not found\\.$#"
+			count: 7
+			path: src/SendEmail.php
+
+		-
+			message: "#^Constant APP_NAME not found\\.$#"
+			count: 5
+			path: src/SendEmail.php
+
+		-
+			message: "#^Constant PASS not found\\.$#"
+			count: 5
+			path: src/SendEmail.php
+
+		-
+			message: "#^Constant TEST_EMAIL not found\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Constant USER_APP not found\\.$#"
+			count: 5
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:normalEmail\\(\\) has parameter \\$subject with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendBulkEmail\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendBulkEmail\\(\\) has parameter \\$file with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendBulkEmail\\(\\) has parameter \\$filename with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendBulkEmail\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendBulkEmail\\(\\) has parameter \\$subject with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$email with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$file with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$filename with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$name with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendEmailPdf\\(\\) has parameter \\$subject with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendTwoSelfPdf\\(\\) has parameter \\$file with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendTwoSelfPdf\\(\\) has parameter \\$filename with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendTwoSelfPdf\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Method Src\\\\SendEmail\\:\\:sendTwoSelfPdf\\(\\) has parameter \\$subject with no type specified\\.$#"
+			count: 1
+			path: src/SendEmail.php
+
+		-
+			message: "#^Parameter \\#1 \\$finfo of function finfo_close expects finfo, finfo\\|false given\\.$#"
+			count: 1
+			path: src/ServeImg.php
+
+		-
+			message: "#^Parameter \\#1 \\$finfo of function finfo_file expects finfo, finfo\\|false given\\.$#"
+			count: 1
+			path: src/ServeImg.php
+
+		-
+			message: "#^Parameter \\#2 \\$timestamp of function gmdate expects int\\|null, int\\|false given\\.$#"
+			count: 1
+			path: src/ServeImg.php
+
+		-
+			message: "#^Call to method send\\(\\) on an unknown class Src\\\\SmsProviderInterface\\.$#"
+			count: 1
+			path: src/SmsService.php
+
+		-
+			message: "#^Instantiated class Src\\\\SmsResult not found\\.$#"
+			count: 1
+			path: src/SmsService.php
+
+		-
+			message: "#^Method Src\\\\SmsService\\:\\:send\\(\\) has invalid return type Src\\\\SmsResult\\.$#"
+			count: 1
+			path: src/SmsService.php
+
+		-
+			message: "#^Property Src\\\\SmsService\\:\\:\\$providers has unknown class Src\\\\SmsProviderInterface as its type\\.$#"
+			count: 1
+			path: src/SmsService.php
+
+		-
+			message: "#^Method Src\\\\SubmitForm\\:\\:submitForm\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/SubmitForm.php
+
+		-
+			message: "#^Method Src\\\\SubmitForm\\:\\:submitFormDynamic\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SubmitForm.php
+
+		-
+			message: "#^Method Src\\\\SubmitForm\\:\\:submitFormDynamic\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/SubmitForm.php
+
+		-
+			message: "#^Method Src\\\\SubmitForm\\:\\:submitFormDynamic\\(\\) has parameter \\$table with no type specified\\.$#"
+			count: 1
+			path: src/SubmitForm.php
+
+		-
+			message: "#^PHPDoc tag @return with type bool is incompatible with native type string\\.$#"
+			count: 1
+			path: src/SubmitForm.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:genEmailArray\\(\\) has parameter \\$file with no type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:genEmailArray\\(\\) has parameter \\$fileName with no type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:sendEmailGeneral\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:sendEmailWrapper\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:sendEmailWrapper\\(\\) has parameter \\$recipientType with no type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendEmail\\:\\:sendEmailWrapper\\(\\) has parameter \\$var with no type specified\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$recipient with type mixed is not subtype of native type string\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$array$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Parameter \\#2 \\$name of static method Src\\\\SendEmail\\:\\:sendEmail\\(\\) expects string, int\\|string\\|null given\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Parameter \\#3 \\$subject of static method Src\\\\SendEmail\\:\\:sendEmail\\(\\) expects string, array\\|string given\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Static method Src\\\\data\\\\EmailData\\:\\:defineConstants\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between string and null will always evaluate to false\\.$#"
+			count: 2
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Variable \\$params on left side of \\?\\? is never defined\\.$#"
+			count: 1
+			path: src/ToSendEmail.php
+
+		-
+			message: "#^Method Src\\\\ToSendText\\:\\:send\\(\\) should return bool but return statement is missing\\.$#"
+			count: 1
+			path: src/ToSendText.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, bool\\|string given\\.$#"
+			count: 1
+			path: src/ToSendText.php
+
+		-
+			message: "#^Method Src\\\\Transaction\\:\\:beginTransaction\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Transaction.php
+
+		-
+			message: "#^Method Src\\\\Transaction\\:\\:commit\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Transaction.php
+
+		-
+			message: "#^Method Src\\\\Transaction\\:\\:lastId\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Transaction.php
+
+		-
+			message: "#^Method Src\\\\Transaction\\:\\:rollback\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Transaction.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:makeUpdate\\(\\) has parameter \\$identifiers with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateTableMulti\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateTwoColumns\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWhereRaw\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWhereRaw\\(\\) has parameter \\$setValue with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$likesColumn with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$likesValue with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$table with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$timestampColumn with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$whereColumn with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^Method Src\\\\Update\\:\\:updateWithTimestamp\\(\\) has parameter \\$whereValue with no type specified\\.$#"
+			count: 1
+			path: src/Update.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$identifiers$#"
+			count: 1
+			path: src/UpdateFn.php
+
+		-
+			message: "#^Parameter \\#3 \\$logic of method Src\\\\Update\\:\\:makeUpdate\\(\\) expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/UpdateFn.php
+
+		-
+			message: "#^Binary operation \"\\*\" between string and 1000 results in an error\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Expression on left side of \\?\\? is not nullable\\.$#"
+			count: 3
+			path: src/Utility.php
+
+		-
+			message: "#^Instanceof between Throwable and Src\\\\Exceptions\\\\InvalidArgumentException will always evaluate to false\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:addCountryCode\\(\\) has parameter \\$code with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:addCountryCode\\(\\) has parameter \\$mobile with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:addMonthsToDate\\(\\) has parameter \\$date with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:addMonthsToDate\\(\\) has parameter \\$months with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:changeToJs\\(\\) has parameter \\$variable with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:changeToJs\\(\\) has parameter \\$variableName with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:checkInputEmail\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:checkInputImage\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:cleanSession\\(\\) has parameter \\$x with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:compare\\(\\) has parameter \\$var1 with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:compare\\(\\) has parameter \\$var2 with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:printArr\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:sendText\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:sendText\\(\\) has parameter \\$numbers with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:showError\\(\\) has parameter \\$th with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:showError2\\(\\) never returns null so it can be removed from the return type\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:showError2\\(\\) should return string\\|null but returns string\\|false\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:view\\(\\) should return string but return statement is missing\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:viewBuilderWithCSP\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:viewTemplateEmail\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\Utility\\:\\:viewTemplateEmail\\(\\) has parameter \\$path with no type specified\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$cspOptions$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$logger$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$returnResponse$#"
+			count: 2
+			path: src/Utility.php
+
+		-
+			message: "#^PHPDoc tag @return with type string\\|void is not subtype of native type void\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Parameter \\#1 \\$templatePath of class eftec\\\\bladeone\\\\BladeOne constructor expects string\\|null, string\\|false given\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Parameter \\#2 \\$compiledPath of class eftec\\\\bladeone\\\\BladeOne constructor expects string\\|null, string\\|false given\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Static method Src\\\\data\\\\EmailData\\:\\:defineConstants\\(\\) invoked with 2 parameters, 1 required\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 2
+			path: src/Utility.php
+
+		-
+			message: "#^Variable \\$viewsPath on left side of \\?\\? is never defined\\.$#"
+			count: 1
+			path: src/Utility.php
+
+		-
+			message: "#^Method Src\\\\VirusScan\\:\\:__construct\\(\\) has parameter \\$apiKey with no type specified\\.$#"
+			count: 1
+			path: src/VirusScan.php
+
+		-
+			message: "#^Method Src\\\\VirusScan\\:\\:__construct\\(\\) has parameter \\$tempFileLocation with no type specified\\.$#"
+			count: 1
+			path: src/VirusScan.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$config$#"
+			count: 1
+			path: src/data/EmailData.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\LoginFunctionality\\:\\:login\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/functionality/LoginFunctionality.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$input$#"
+			count: 1
+			path: src/functionality/LoginFunctionality.php
+
+		-
+			message: "#^Parameter \\#1 \\$arg of static method Src\\\\Limiter\\:\\:limit\\(\\) expects string, int\\|string given\\.$#"
+			count: 1
+			path: src/functionality/LoginFunctionality.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\PasswordRecoveryService\\:\\:process\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/functionality/PasswordRecoveryService.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\PasswordRecoveryService\\:\\:process\\(\\) has parameter \\$isCaptcha with no type specified\\.$#"
+			count: 1
+			path: src/functionality/PasswordRecoveryService.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$pathToSentCodeNotification$#"
+			count: 1
+			path: src/functionality/PasswordRecoveryService.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: src/functionality/PasswordResetFunctionality.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\PwdRecoveryCodeFunctionality\\:\\:process\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/functionality/PwdRecoveryCodeFunctionality.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\SendEmailFunctionality\\:\\:email\\(\\) has parameter \\$file with no type specified\\.$#"
+			count: 1
+			path: src/functionality/SendEmailFunctionality.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\SendEmailFunctionality\\:\\:email\\(\\) has parameter \\$fileName with no type specified\\.$#"
+			count: 1
+			path: src/functionality/SendEmailFunctionality.php
+
+		-
+			message: "#^Variable \\$user in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: src/functionality/SignIn.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$allowedTables$#"
+			count: 1
+			path: src/functionality/SubmitPostData.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$fileTable$#"
+			count: 1
+			path: src/functionality/SubmitPostData.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$getTableData$#"
+			count: 1
+			path: src/functionality/SubmitPostData.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$pdo$#"
+			count: 1
+			path: src/functionality/SubmitPostData.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\UpdateExistingData\\:\\:updateMultipleTables\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/functionality/UpdateExistingData.php
+
+		-
+			message: "#^Parameter \\#2 \\$allowedTables of static method Src\\\\UpdateFn\\:\\:updateMultipleTables\\(\\) expects array, array\\|null given\\.$#"
+			count: 1
+			path: src/functionality/UpdateExistingData.php
+
+		-
+			message: "#^Static method Src\\\\functionality\\\\UpdateExistingData\\:\\:unsetPostData\\(\\) is unused\\.$#"
+			count: 1
+			path: src/functionality/UpdateExistingData.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between bool and 'true' will always evaluate to false\\.$#"
+			count: 2
+			path: src/functionality/UpdateExistingData.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between mixed and null will always evaluate to false\\.$#"
+			count: 1
+			path: src/functionality/UpdateExistingData.php
+
+		-
+			message: "#^Property Src\\\\functionality\\\\WebAuthnService\\:\\:\\$server has unknown class Webauthn\\\\Server as its type\\.$#"
+			count: 1
+			path: src/functionality/WebAuthnService.php
+
+		-
+			message: "#^Property Src\\\\functionality\\\\WebAuthnService\\:\\:\\$server is unused\\.$#"
+			count: 1
+			path: src/functionality/WebAuthnService.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$fallbackView$#"
+			count: 1
+			path: src/functionality/middleware/AuthGateMiddleware.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\middleware\\\\FileUploadProcess\\:\\:process\\(\\) has parameter \\$fileName with no type specified\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\middleware\\\\FileUploadProcess\\:\\:process\\(\\) has parameter \\$fileTable with no type specified\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\middleware\\\\FileUploadProcess\\:\\:process\\(\\) has parameter \\$generalFileTable with no type specified\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\middleware\\\\FileUploadProcess\\:\\:process\\(\\) has parameter \\$imgPath with no type specified\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^Method Src\\\\functionality\\\\middleware\\\\FileUploadProcess\\:\\:process\\(\\) has parameter \\$nested with no type specified\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$postData$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$sFile$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^PHPDoc tag @return with type array\\|null is not subtype of native type array\\.$#"
+			count: 1
+			path: src/functionality/middleware/FileUploadProcess.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/functionality/middleware/GetRequestData.php
+
+		-
+			message: "#^Variable \\$data in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: src/functionality/middleware/GetRequestData.php
+
+		-
+			message: "#^Call to function is_array\\(\\) with string will always evaluate to false\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Function Src\\\\smsFunctionality\\\\json_encode\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Function Src\\\\smsFunctionality\\\\json_encode\\(\\) has parameter \\$a with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Contact\\:\\:__construct\\(\\) has parameter \\$number with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:__construct\\(\\) has parameter \\$apiKey with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:__construct\\(\\) has parameter \\$hash with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:__construct\\(\\) has parameter \\$username with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequest\\(\\) has parameter \\$command with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestCurl\\(\\) has parameter \\$command with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestCurl\\(\\) has parameter \\$params with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestFopen\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestFopen\\(\\) has parameter \\$command with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestFopen\\(\\) has parameter \\$params with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:_sendRequestFopen\\(\\) is unused\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:cancelScheduledMessage\\(\\) has parameter \\$id with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:checkKeyword\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:checkKeyword\\(\\) has parameter \\$keyword with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:createContacts\\(\\) has parameter \\$numbers with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:createGroup\\(\\) has parameter \\$name with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:deleteContact\\(\\) has parameter \\$number with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:deleteGroup\\(\\) has parameter \\$groupid with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getAPIMessageHistory\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getAPIMessageHistory\\(\\) has parameter \\$max_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getAPIMessageHistory\\(\\) has parameter \\$min_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getAPIMessageHistory\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getBatchStatus\\(\\) has parameter \\$batchid with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getContacts\\(\\) has parameter \\$groupId with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getContacts\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getEmailToSMSHistory\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getEmailToSMSHistory\\(\\) has parameter \\$max_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getEmailToSMSHistory\\(\\) has parameter \\$min_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getEmailToSMSHistory\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getGroupMessageHistory\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getGroupMessageHistory\\(\\) has parameter \\$max_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getGroupMessageHistory\\(\\) has parameter \\$min_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getGroupMessageHistory\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getHistory\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getHistory\\(\\) has parameter \\$max_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getHistory\\(\\) has parameter \\$min_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getHistory\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getHistory\\(\\) has parameter \\$type with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getMessageStatus\\(\\) has parameter \\$messageid with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getMessages\\(\\) has parameter \\$inbox with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getOptouts\\(\\) has parameter \\$time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSingleMessageHistory\\(\\) has parameter \\$limit with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSingleMessageHistory\\(\\) has parameter \\$max_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSingleMessageHistory\\(\\) has parameter \\$min_time with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSingleMessageHistory\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSurveyResults\\(\\) has parameter \\$end with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSurveyResults\\(\\) has parameter \\$start with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getSurveyResults\\(\\) has parameter \\$surveyid with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:getTemplates\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMms\\(\\) has parameter \\$fileSource with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMms\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMms\\(\\) has parameter \\$numbers with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMmsGroup\\(\\) has parameter \\$fileSource with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMmsGroup\\(\\) has parameter \\$groupId with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendMmsGroup\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSms\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSms\\(\\) has parameter \\$numbers with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSms\\(\\) has parameter \\$sender with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSmsGroup\\(\\) has parameter \\$groupId with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSmsGroup\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSmsGroup\\(\\) has parameter \\$sched with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:transferCredits\\(\\) has parameter \\$credits with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Method Src\\\\smsFunctionality\\\\Textlocal\\:\\:transferCredits\\(\\) has parameter \\$user with no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function rawurlencode expects string, float\\|string given\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Parameter \\$custom of method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSms\\(\\) has invalid type Src\\\\smsFunctionality\\\\numm\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Parameter \\$custom of method Src\\\\smsFunctionality\\\\Textlocal\\:\\:sendSmsGroup\\(\\) has invalid type Src\\\\smsFunctionality\\\\numm\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$custom1 has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$custom2 has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$custom3 has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$first_name has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$groupID has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$last_name has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Contact\\:\\:\\$number has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$apiKey has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$errorReporting has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$errorReporting is never read, only written\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$errors has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$hash has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$lastRequest has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$username has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Property Src\\\\smsFunctionality\\\\Textlocal\\:\\:\\$warnings has no type specified\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Result of && is always false\\.$#"
+			count: 3
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Undefined variable\\: \\$surveyid$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
+
+		-
+			message: "#^Variable \\$sender in empty\\(\\) always exists and is always falsy\\.$#"
+			count: 1
+			path: src/smsFunctionality/Textlocal.php
