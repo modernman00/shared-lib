@@ -16,83 +16,54 @@ use Src\functionality\middleware\FileUploadProcess;
 use Src\functionality\middleware\GetRequestData;
 
 /**
- * Handles validated POST submissions with optional single/multiple image uploads.
- *
- * **Core Responsibilities**
- * - Sanitize and validate incoming payloads
- * - Verify CAPTCHA and (optionally) CSRF token
- * - Upload and sanitise single or multiple image files
- * - Insert cleaned data into one or more database tables atomically
+ * Handles validated updates to single or multiple database tables with optional file uploads.
  *
  * **Usage**
- * - `submitToOneTablenImage()` → Full workflow for a single target table + optional single image
- * - `submitToMultipleTable()` → Workflow for inserting into multiple tables + multiple images
- * - `submitImgDataSingle()` / `submitImgDataMultiple()` → Stand‑alone upload handlers
+ * - `updateData()` → Full update workflow for a single table with optional file upload
+ * - `updateMultipleTables()` → Workflow for updating multiple tables with optional file upload
  *
- * **Design Goals**
- * - Reusable across features like blogs, profiles, and content modules
- * - Clear flow for onboarding contributors — parameters describe expected structures
- * - Defensive patterns to prevent partial inserts or unsafe file handling
- * 
  * ENVIRONMENT VARIABLES:
  * - FILE_UPLOAD_CLOUDMERSIVE: Optional API key for virus scanning uploaded files
- * 
+ *
  * USAGE EXAMPLE:
  * ```php
- * $uploadDir = __DIR__ . '/../../public/images/uploads/';
- * SubmitPostData::submitToOneTablenImage(
+ * $userId = $_SESSION['user_id'];
+ * UpdateExistingData::updateData(
  *     table: 'users',
+ *     identifierValue: $userId,
+ *     identifier: 'id',
  *     minMaxData: [
- *         'data' => ['email', 'password', 'username'],
- *         'min'  => [5, 8, 3],
- *         'max'  => [255, 64, 30]
+ *         'data' => ['username', 'bio'],
+ *         'min'  => [3, 0],
+ *         'max'  => [30, 500]
  *     ],
- *     fileName: 'profile_image',
- *     imgPath: $uploadDir
+ *     fileName: 'avatar',
+ *     imgPath: __DIR__ . '/../../public/images/uploads/'
  * );
  * ```
  */
 class UpdateExistingData
 {
     /**
-     *  * - `updateData()` → Handles validated updates to a single table, including optional image upload and password hashing
-     *   - Uses `$identifier` to locate the row to update (e.g., 'id', 'email', 'mobile')
-     *   - Automatically injects `$identifierValue` if missing from POST payload
+     * Handles validated updates to a single table, including optional image upload and password hashing.
+     *
      * @param string      $table           Target table for update
      * @param mixed       $identifierValue Value used in WHERE clause to locate the row (e.g., user ID or email)
      * @param string      $identifier      Column name used to identify the row (default: 'id')
      * @param ?array      $minMaxData      Validation rules
      * @param ?array      $removeKeys      Keys to exclude from payload
-     * @param ?string     $fileName        File input field name
+     * @param string|array|null $fileName  File input field name
      * @param ?string     $imgPath         Upload destination path
      * @param ?string     $fileTable       Table to store file metadata
      * @param string      $generalFileTable Fallback table name for files
-     * @param bool        $isRecaptcha     Whether to validate CAPTCHA
+     * @param bool        $isCaptcha       Whether to validate CAPTCHA
      * @param bool        $isCaptchaV3     Whether to use reCAPTCHA v3
      * @param string      $captchaAction   CAPTCHA action name
      * @param ?array      $postUpdateData  Additional data
      * @param string      $returnType      Return type
      * @param ?array      $optionalFields  Fields that are optional
      *
-     * - If `$sanitisedData[$identifier]` is missing, it will be set to `$identifierValue` before update
-     * - Ensures contributor-safe fallback for PATCH-like behavior
-
-     * * UPDATE USAGE EXAMPLE:
-     * ```php
-     * $userId = $_SESSION['user_id'];
-     * UpdateExistingData::updateData(
-     *     table: 'users',
-     *     identifierValue: $userId,
-     *     identifier: 'id',
-     *     minMaxData: [
-     *         'data' => ['username', 'bio'],
-     *         'min'  => [3, 0],
-     *         'max'  => [30, 500]
-     *     ],
-     *     fileName: 'avatar',
-     *     imgPath: __DIR__ . '/../../public/images/uploads/'
-     * );
-     * 
+     * @return mixed
      */
     public static function updateData(
         string $table,
@@ -100,27 +71,26 @@ class UpdateExistingData
         string $identifier = 'id',
         ?array $minMaxData = null,
         ?array $removeKeys = null,
-        ?string $fileName = null,
+        string|array|null $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
         string $generalFileTable = 'images',
-        bool $isRecaptcha = false,
+        bool $isCaptcha = false,
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
         ?array $postUpdateData = null,
         string $returnType = 'json',
         ?array $optionalFields = null
-
     ): mixed {
         CorsHandler::setHeaders();
 
         try {
             $input = $postUpdateData ? $postUpdateData : GetRequestData::getRequestData();
-                // this is reCAPTCHA v3
-           if ($isCaptchaV3) {
+            // this is reCAPTCHA v3
+            if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['siteKey']);
-            }elseif ($isRecaptcha === 'true') {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
@@ -135,23 +105,24 @@ class UpdateExistingData
             }
 
             // Attach uploaded filename if present
-              $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, false);
+            if ($fileName !== null) {
+                $fileResult = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, false);
+                $sanitisedData = $fileResult['sanitisedData'] ?? $sanitisedData;
+            }
 
-            // if id is null set it to $identiferValue
-            if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null) {
+            // if id is null set it to $identifierValue
+            if (empty($sanitisedData[$identifier])) {
                 $sanitisedData[$identifier] = $identifierValue;
             }
 
-             $sanitisedDataNew = $sanitisedData['sanitisedData'];
-
-            // Update the blog next
+            // Update the record
             $update = new Update($table);
-            $update->updateMultiplePOST($sanitisedDataNew, $identifier);
+            $update->updateMultiplePOST($sanitisedData, $identifier);
 
-            if($returnType === 'json'){
+            if ($returnType === 'json') {
                 Utility::msgSuccess(200, 'Update was successful');
                 return true;
-            }else{
+            } else {
                 return ['message' => 'Update was successful'];
             }
         } catch (\Throwable $th) {
@@ -160,41 +131,39 @@ class UpdateExistingData
         }
     }
 
-   public static function updateMultipleTables(
-             mixed $identifierValue,
+    public static function updateMultipleTables(
+        mixed $identifierValue,
         string $identifier = 'id',
         ?array $postData = null,
         ?array $allowedTables = null,
         ?array $minMaxData = null,
         ?array $removeKeys = null,
-        ?string $fileName = null,
+        string|array|null $fileName = null,
         ?string $imgPath = null,
         ?string $fileTable = null,
         string $generalFileTable = 'images',
-         bool $isCaptcha = false,
+        bool $isCaptcha = false,
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
         string $returnType = 'json',
         ?array $optionalFields = null
-
     ) {
         CorsHandler::setHeaders();
 
         try {
-               if($postData !== null){
+            if ($postData !== null) {
                 $input = $postData;
-            }else{
+            } else {
                 $input = GetRequestData::getRequestData();
             }
-           if ($isCaptchaV3) {
+
+            if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['token']);
-            }elseif ($isCaptcha === 'true') {
+            } elseif ($isCaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
-
-          
 
             // Token check can be re‑enabled if CSRF validation is required
             $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $optionalFields);           
@@ -206,29 +175,25 @@ class UpdateExistingData
             }
 
             // Attach uploaded filename if present
-            $sanitisedData = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable);
+            if ($fileName !== null) {
+                $fileResult = FileUploadProcess::process($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, true);
+                $sanitisedData = $fileResult['sanitisedData'] ?? $sanitisedData;
+            }
 
-            // // if id is null set it to $identiferValue
-            // if (empty($sanitisedData[$identifier]) || $sanitisedData[$identifier] === null ) {
-            //     $sanitisedData[$identifier] = $identifierValue;
-            // }
-
-            // Update the blog next
-            UpdateFn::updateMultipleTables($sanitisedData, $allowedTables, $identifier, $identifierValue);
+            // Update the tables
+            UpdateFn::updateMultipleTables($sanitisedData, $allowedTables ?? [], $identifier, (string) $identifierValue);
         
-            if($returnType === 'json'){
+            if ($returnType === 'json') {
                 Utility::msgSuccess(200, 'Update was successful');
                 return true;
-            }else{
+            } else {
                 return ['message' => 'Update was successful'];
             }
  
         } catch (\Throwable $th) {
-           Utility::showError($th);
+            Utility::showError($th);
         }
     }
-
-
 
     private static function unsetPostData(array $data, array $keysToRemove): array
     {

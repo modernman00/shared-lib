@@ -68,16 +68,16 @@ class LoginFunctionality
      * - Audit logs include IP and user agent for traceability.
      * - Session variables `auth.2FA_token_ts` and `auth.identifyCust` are set for downstream verification.
      *
-     * @param array $input login payload, must include 'email' or 'username'
-     * @param string $captchaAction action label used for CAPTCHA verification
-     * 
-     * @param bool $issueJwt whether to issue a JWT token upon successful login
      * @param bool $isCaptcha whether to enforce CAPTCHA verification
+     * @param bool $issueJwt whether to issue a JWT token upon successful login
+     * @param string $returnType response type ('json' or array)
      * @param bool $isCaptchaV3 whether to use reCAPTCHA v3 verification
+     * @param string $captchaAction action label used for CAPTCHA verification
+     * @param string $role default role to verify/assign
      *
      * @throws NotFoundException if the login payload is missing or malformed.
      */
-    public static function login($isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', $isCaptchaV3 = false, string $captchaAction = 'LOGIN', string $role = 'users')
+    public static function login(bool $isCaptcha = false, bool $issueJwt = true, string $returnType = 'json', bool $isCaptchaV3 = false, string $captchaAction = 'LOGIN', string $role = 'users')
     {
         try {
             \Src\LoginUtility::checkIpBan(\Src\Utility::getUserIpAddr());
