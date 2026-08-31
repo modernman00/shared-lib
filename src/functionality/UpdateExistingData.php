@@ -56,7 +56,7 @@ class UpdateExistingData
      * @param ?string     $imgPath         Upload destination path
      * @param ?string     $fileTable       Table to store file metadata
      * @param string      $generalFileTable Fallback table name for files
-     * @param bool        $isCaptcha       Whether to validate CAPTCHA
+     * @param bool        $isRecaptcha     Whether to validate CAPTCHA
      * @param bool        $isCaptchaV3     Whether to use reCAPTCHA v3
      * @param string      $captchaAction   CAPTCHA action name
      * @param ?array      $postUpdateData  Additional data
@@ -75,7 +75,7 @@ class UpdateExistingData
         ?string $imgPath = null,
         ?string $fileTable = null,
         string $generalFileTable = 'images',
-        bool $isCaptcha = false,
+        bool $isRecaptcha = false,
         bool $isCaptchaV3 = false, 
         string $captchaAction = 'UPDATE_DATA',
         ?array $postUpdateData = null,
@@ -90,7 +90,7 @@ class UpdateExistingData
             if ($isCaptchaV3) {
                 Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
                 unset($input['action'], $input['siteKey']);
-            } elseif ($isCaptcha) {
+            } elseif ($isRecaptcha) {
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
