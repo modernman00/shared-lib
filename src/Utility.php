@@ -258,7 +258,9 @@ class Utility
             //ip pass from proxy
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
         } else {
-            $ip = $_SERVER['REMOTE_ADDR'];
+            // REMOTE_ADDR is absent on CLI and can be unset behind some FastCGI
+            // setups; fall back rather than return null against a string type.
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         }
 
         return $ip;

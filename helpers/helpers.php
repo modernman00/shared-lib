@@ -15,6 +15,25 @@ use Src\SendEmail;
 
 // use RuntimeException;
 
+if (!function_exists('isTestEnv')) {
+    /**
+     * True when the consuming application is exercising controller methods
+     * directly under PHPUnit (its test bootstrap does define('TESTING_ENV', true)).
+     *
+     * When true, the response/redirect/view/error helpers capture their payload
+     * into the $__testResponse / $__testRedirect / $__testView / $__testError
+     * globals and return, instead of writing to the wire and calling exit() —
+     * which would otherwise kill the test process mid-assertion.
+     *
+     * This library's OWN test suite does not define TESTING_ENV (it mocks
+     * collaborators with Mockery instead), so this is a no-op there.
+     */
+    function isTestEnv(): bool
+    {
+        return defined('TESTING_ENV') && constant('TESTING_ENV') === true;
+    }
+}
+
 if (!function_exists('view2')) {
     /**
      * Renders a view with CSP middleware enabled.
@@ -58,9 +77,13 @@ if (!function_exists('view')) {
      */
     function view(string $path, array $data = [])
     {
+        $normalizedPath = str_replace(['/', '\\'], '.', $path);
+        if (isTestEnv()) {
+            $GLOBALS['__testView'] = ['path' => $normalizedPath, 'data' => $data];
+            return;
+        }
         try {
             $blade = Blade::get();
-            $normalizedPath = str_replace(['/', '\\'], '.', $path);
             echo $blade->run($normalizedPath, $data);
         } catch (\Throwable $e) {
             showError($e);
@@ -276,6 +299,10 @@ function showError2(\Throwable $th, Logger $logger): ?string
 
 function showError($th): void
 {
+    if (isTestEnv()) {
+        $GLOBALS['__testError'] = $th;
+        return;
+    }
     $error = showError2($th, LoggerFactory::getLogger());
     if ($error) {
         echo $error;
@@ -371,6 +398,15 @@ function milliSeconds(): string
 
 function msgSuccess(int $code, mixed $msg, mixed $token = null): void
 {
+    if (isTestEnv()) {
+        $GLOBALS['__testResponse'] = [
+            'code' => $code,
+            'message' => $msg,
+            'token' => $token,
+            'status' => 'success',
+        ];
+        return;
+    }
     http_response_code($code);
     header('Content-Type: application/json');
     echo json_encode([
@@ -508,6 +544,10 @@ function old(string $key, $default = ''): mixed
  */
 function redirect(string $path): void
 {
+    if (isTestEnv()) {
+        $GLOBALS['__testRedirect'] = $path;
+        return;
+    }
     header('Location: ' . url($path));
     exit;
 }

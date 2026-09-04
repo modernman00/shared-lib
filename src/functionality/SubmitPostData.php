@@ -113,14 +113,18 @@ class SubmitPostData
 
             $input = GetRequestData::getRequestData();
 
-            // this is reCAPTCHA v3
-            // this is reCAPTCHA v3
+            // reCAPTCHA verification — skipped when the consuming app runs this
+            // under PHPUnit (see isTestEnv()); the token strip still happens so
+            // prepareData() sees the same shape it would in production.
             if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                }
                 unset($input['action'], $input['siteKey']);
             } elseif ($isCaptcha) {
-                // this is reCAPTCHA v2
-                Recaptcha::verifyCaptcha($input);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptcha($input);
+                }
             }
             \Src\Limiter::limit($table);
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
@@ -191,14 +195,16 @@ class SubmitPostData
 
             $input = $postData ?? GetRequestData::getRequestData();
 
-            // this is reCAPTCHA v3
-            // this is reCAPTCHA v3
+            // reCAPTCHA verification — skipped under PHPUnit (see isTestEnv()).
             if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                }
                 unset($input['action'], $input['token']);
             } elseif ($isCaptcha) {
-                // this is reCAPTCHA v2
-                Recaptcha::verifyCaptcha($input);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptcha($input);
+                }
             }
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, null, $optionalFields);
 
@@ -303,13 +309,16 @@ class SubmitPostData
 
         try {
             $input = GetRequestData::getRequestData();
-            // this is reCAPTCHA v3
+            // reCAPTCHA verification — skipped under PHPUnit (see isTestEnv()).
             if ($isCaptchaV3) {
-                Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptchaEnterprise($input, $captchaAction);
+                }
                 unset($input['action'], $input['token']);
             } elseif ($isCaptcha) {
-                // this is reCAPTCHA v2
-                Recaptcha::verifyCaptcha($input);
+                if (!isTestEnv()) {
+                    Recaptcha::verifyCaptcha($input);
+                }
             }
 
             $sanitisedData = self::prepareData($input, $minMaxData, $removeKeys, $newInput, $optionalFields);
