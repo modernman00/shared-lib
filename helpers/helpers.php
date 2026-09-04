@@ -742,5 +742,31 @@ function preventAbuseTogglin()
     $_SESSION['last_reaction_time'] = time();
 }
 
-// send text to phone using twilio api
+/**
+ * Standardized JSON API success response.
+ *
+ * @param mixed $data
+ * @param string|null $message
+ * @param int $statusCode
+ * @param array<string, string> $headers
+ */
+function apiSuccess(mixed $data = null, ?string $message = null, int $statusCode = 200, array $headers = []): void
+{
+    \Src\ApiResponse::success($data, $message, $statusCode, $headers);
+}
+
+/**
+ * Standardized JSON API error response.
+ *
+ * @param string|array<string, mixed> $error
+ * @param int $statusCode
+ * @param string|null $code
+ * @param mixed $data
+ * @param array<string, string> $headers
+ */
+function apiError(string|array $error, int $statusCode = 400, ?string $code = null, mixed $data = null, array $headers = []): void
+{
+    \Src\ApiResponse::error($error, $statusCode, $code, $data, $headers);
+}
+
 
