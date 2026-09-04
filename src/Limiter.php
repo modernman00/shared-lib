@@ -29,6 +29,9 @@ class Limiter extends Db
      */
     public static function limit(string $arg, string $action = 'default')
     {
+        if (\isTestEnv()) {
+            return;
+        }
         try {
             // Infer action if it's default
             if ($action === 'default') {

@@ -36,6 +36,15 @@ class ToSendEmail
      */
     public static function sendEmailGeneral(array $params, string $recipient)
     {
+        if (\isTestEnv()) {
+            $GLOBALS['__testMail'][] = [
+                'to' => $params['data']['email'] ?? $params['email'] ?? '',
+                'subject' => $params['subject'] ?? '',
+                'view' => $params['viewPath'] ?? '',
+                'recipient' => $recipient,
+            ];
+            return true;
+        }
         try {
             if (!defined('PASS')) {
                 EmailData::defineConstants($recipient);

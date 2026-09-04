@@ -39,6 +39,9 @@ class Recaptcha
      */
     public static function verifyCaptcha($input)
     {
+        if (\isTestEnv()) {
+            return true;
+        }
         // 1. 🕵️‍♂️ Get their CAPTCHA answer
         $token = $input['g-recaptcha-response'] ?? '';
         if ($token === '') {
@@ -91,6 +94,9 @@ class Recaptcha
      */
     public static function verifyCaptchaEnterprise(array $input, string $action): bool
     {
+        if (\isTestEnv()) {
+            return true;
+        }
         // reCAPTCHA Enterprise has no universal public test key like classic v2/v3 (Enterprise
         // test keys have to be created per-project in Google Cloud Console). Locally/in CI,
         // automated tools rack up real, repeated traffic from the same IP that Google's live

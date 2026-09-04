@@ -25,6 +25,10 @@ class ToSendText
 
   public static function send(string $to, string $message, string $provider, string $sender)
   {
+    if (\isTestEnv()) {
+      $GLOBALS['__testSms'][] = ['to' => $to, 'message' => $message, 'provider' => $provider, 'sender' => $sender];
+      return true;
+    }
     try {
       if ($provider == 'twilio') {
         // Implement Twilio sending logic here

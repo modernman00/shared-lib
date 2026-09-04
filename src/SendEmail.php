@@ -46,6 +46,10 @@ class SendEmail
      */
     public static function sendEmail($email, $name, $subject, $message, $file = null, $filename = null)
     {
+        if (\isTestEnv()) {
+            $GLOBALS['__testMail'][] = ['to' => $email, 'name' => $name, 'subject' => $subject];
+            return true;
+        }
         $mail = new PHPMailer(true);
         try {
             //Server settings
@@ -93,6 +97,10 @@ class SendEmail
 
     public static function sendBulkEmail(array $emailAddresses, $subject, $message, $file = null, $filename = null)
     {
+        if (\isTestEnv()) {
+            $GLOBALS['__testMail'][] = ['to' => $emailAddresses, 'subject' => $subject, 'bulk' => true];
+            return true;
+        }
         $mail = new PHPMailer(true);
         try {
             //Server settings
