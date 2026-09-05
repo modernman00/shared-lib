@@ -105,7 +105,7 @@ class PasswordRecoveryService
             $sanitised = CheckSanitise::getSanitisedInputData($input, [
                 'data' => ['email'],
                 'min'  => [5],
-                'max'  => [30],
+                'max'  => [50],
             ]);
 
 
