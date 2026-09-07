@@ -133,23 +133,26 @@ class JwtHandler
          * - false for development and testing
          */
         $env = $_ENV['APP_ENV'] ?? 'production';
-        $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
         $secure = !in_array($env, ['local', 'development'], true) && $isHttps;
         $httponly = true;
-        $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
+        $expire = time() + (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
 
         // Set secure cookie unconditionally to enforce HttpOnly session security
         if (!empty($tokenName)) {
-            setcookie(
-                $tokenName,
-                $generatedToken,
-                time() + (int) $_ENV['COOKIE_EXPIRE'],
-                '/',
-                $domain,
-                $secure,
-                $httponly
-            );
+            $cookieOptions = [
+                'expires' => $expire,
+                'path' => '/',
+                'secure' => $secure,
+                'httponly' => $httponly,
+                'samesite' => 'Lax',
+            ];
+            if (!empty($_ENV['COOKIE_DOMAIN'])) {
+                $cookieOptions['domain'] = $_ENV['COOKIE_DOMAIN'];
+            }
+            setcookie($tokenName, $generatedToken, $cookieOptions);
         }
 
         // 🛑 CRITICAL SECURITY FIX: Never return the raw JWT token to the frontend payload.
@@ -174,39 +177,51 @@ class JwtHandler
     public static function jwtEncodeData(array $user): string
     {
         $token = [
-            'iss' => $_ENV['APP_URL'],
-            'aud' => $_ENV['APP_URL'],
+            'iss' => $_ENV['APP_URL'] ?? '',
+            'aud' => $_ENV['APP_URL'] ?? '',
             'iat' => time(),
             'nbf' => time(),
-            'exp' => time() + (int) $_ENV['COOKIE_EXPIRE'],
+            'exp' => time() + (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000),
             'data' => $user,
-            'sub' => (string) $user['id'],
+            'sub' => (string) ($user['id'] ?? ''),
             'role' => $user['role'] ?? 'users',
             'token_version' => $user['token_version'] ?? 1,
         ];
 
-        return JWT::encode($token, $_ENV['JWT_KEY'], 'HS256');
+        $jwtKey = $_ENV['JWT_KEY'] ?? $_ENV['JWT_TOKEN'] ?? '';
+        if (empty($jwtKey)) {
+            throw new \InvalidArgumentException("JWT key is not defined in environment variables (JWT_KEY or JWT_TOKEN)");
+        }
+
+        return JWT::encode($token, $jwtKey, 'HS256');
     }
 
     public static function jwtEncodeDataAndSetCookies(array $user, string $cookieName = 'auth_forgot'): string
     {
         $jwt = self::jwtEncodeData($user);
         $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? $cookieName;
-        $secure = (!in_array($_ENV['APP_ENV'], ['local', 'development']) && isset($_SERVER['HTTPS']));
+        $env = $_ENV['APP_ENV'] ?? 'production';
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $secure = !in_array($env, ['local', 'development'], true) && $isHttps;
         $httponly = true;
-        $domain = parse_url($_ENV['APP_URL'], PHP_URL_HOST);
-        $success = setcookie(
-            $cookieName,
-            $jwt,
-            time() + (int) $_ENV['COOKIE_EXPIRE'],
-            '/',
-            $domain,
-            $secure,
-            $httponly
-        );
+        $expire = time() + (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
+
+        $cookieOptions = [
+            'expires' => $expire,
+            'path' => '/',
+            'secure' => $secure,
+            'httponly' => $httponly,
+            'samesite' => 'Lax',
+        ];
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieOptions['domain'] = $_ENV['COOKIE_DOMAIN'];
+        }
+
+        $success = setcookie($cookieName, $jwt, $cookieOptions);
 
         if (!$success) {
-            throw new \Exception("Failed to set auth cookie. Domain: {$domain}, Secure: " . ($secure ? 'true' : 'false'));
+            throw new \Exception("Failed to set auth cookie '{$cookieName}'. Secure: " . ($secure ? 'true' : 'false'));
         }
 
         return $jwt;
@@ -226,10 +241,15 @@ class JwtHandler
             throw new UnauthorisedException("Invalid JWT format in cookie '{$cookieName}'");
         }
 
-        // Decode and verify JWT using RS256 algorithm
+        $jwtKey = $_ENV['JWT_KEY'] ?? $_ENV['JWT_TOKEN'] ?? '';
+        if (empty($jwtKey)) {
+            throw new UnauthorisedException("JWT key is not configured");
+        }
+
+        // Decode and verify JWT using HS256 algorithm
         try {
             // Try decoding with the primary active key
-            $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
+            $decoded = JWT::decode($token, new Key($jwtKey, 'HS256'));
         } catch (\Throwable $e) {
             // Graceful Key Overlapping: Fallback to the previous key if primary fails
             if (!empty($_ENV['JWT_KEY_PREVIOUS'])) {

@@ -17,7 +17,8 @@ class JwtHandlerTest extends TestCase
         $_ENV['APP_URL'] = 'https://test.com';
         $_ENV['COOKIE_TOKEN_NAME'] = 'test_token';
         $_ENV['APP_ENV'] = 'testing';
-        $_ENV['JWT_TOKEN'] = 'test_jwt_secret_key';
+        $_ENV['JWT_KEY'] = 'test_jwt_secret_key_that_is_at_least_32_bytes_long!!';
+        $_ENV['JWT_TOKEN'] = 'test_jwt_secret_key_that_is_at_least_32_bytes_long!!';
         
         $this->jwtHandler = new JwtHandler();
     }
@@ -25,7 +26,7 @@ class JwtHandlerTest extends TestCase
     protected function tearDown(): void
     {
         // Clean up environment variables
-        unset($_ENV['COOKIE_EXPIRE'], $_ENV['APP_URL'], $_ENV['TOKEN_NAME'], $_ENV['APP_ENV'], $_ENV['JWT_TOKEN']);
+        unset($_ENV['COOKIE_EXPIRE'], $_ENV['APP_URL'], $_ENV['TOKEN_NAME'], $_ENV['APP_ENV'], $_ENV['JWT_TOKEN'], $_ENV['JWT_KEY']);
     }
 
     public function testConstructorSetsExpiredTime()

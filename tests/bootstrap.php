@@ -1,6 +1,5 @@
 <?php
 
-use Mockery;
 require __DIR__ . '/../vendor/autoload.php';
 
 

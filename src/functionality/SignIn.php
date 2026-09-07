@@ -79,4 +79,64 @@ final class SignIn
             return false;
         }
     }
+
+    /**
+     * Silently and defensively rehydrates the PHP session from a valid auth_token cookie
+     * if the session was flushed by PHP's garbage collector or closed browser tabs.
+     * This protects all portfolio apps against premature session drops.
+     *
+     * @param string|null $cookieName Custom cookie name or default from env
+     * @return array|null The user payload if successfully rehydrated, or null
+     */
+    public static function rehydrateSession(?string $cookieName = null): ?array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            \Src\SecureSession::start();
+        }
+
+        if (!empty($_SESSION['id']) && !empty($_SESSION['auth']['identifyCust'])) {
+            return $_SESSION['user'] ?? null; // Session is already active and valid
+        }
+
+        $tokenName = $cookieName ?? $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+        $token = $_COOKIE[$tokenName] ?? '';
+        if (empty($token) || !is_string($token)) {
+            return null; // No auth cookie present
+        }
+
+        try {
+            $decoded = \Src\JwtHandler::jwtDecodeData($tokenName);
+            $userData = (array) ($decoded->data ?? []);
+            $userId = (string) ($userData['id'] ?? $decoded->sub ?? '');
+
+            if (!empty($userId)) {
+                // Red Team Guard: Protect against cross-account session pollution
+                if (!empty($_SESSION['id']) && (string) $_SESSION['id'] !== (string) $userId) {
+                    $_SESSION = [];
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_regenerate_id(true);
+                    }
+                }
+
+                $_SESSION['id'] = $userId;
+                $_SESSION['manager_id'] = $userId;
+                $_SESSION['auth'] = [
+                    'identifyCust' => $userId,
+                    'email' => (string) ($userData['email'] ?? ''),
+                    'codeVerified' => true,
+                    '2FA_token_ts' => time(),
+                    'type' => (string) ($userData['type'] ?? 'user'),
+                ];
+                $_SESSION['user'] = $userData;
+                $_SESSION['user_id'] = $userId;
+
+                return $userData;
+            }
+        } catch (\Throwable $e) {
+            // Invalid, expired, or revoked token: gracefully let session expire
+            return null;
+        }
+
+        return null;
+    }
 }

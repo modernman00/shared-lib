@@ -7,7 +7,23 @@ namespace Src;
 class SecureSession
 {
     // CREATE SESSION LIFETIME CONSTANT
-    public const SESSION_LIFETIME = 3600; // 60 minutes
+    // DEFAULT SESSION LIFETIME (30 days in seconds)
+    public const SESSION_LIFETIME = 2592000;
+
+    /**
+     * Retrieves the active session lifetime in seconds from environment or default (30 days).
+     */
+    public static function getLifetime(): int
+    {
+        if (!empty($_ENV['SESSION_LIFETIME'])) {
+            return (int) $_ENV['SESSION_LIFETIME'];
+        }
+        if (!empty($_ENV['COOKIE_EXPIRE'])) {
+            return (int) $_ENV['COOKIE_EXPIRE'];
+        }
+
+        return self::SESSION_LIFETIME;
+    }
 
     /**
      * Returns true if the app is running in production mode.
@@ -18,7 +34,9 @@ class SecureSession
      */
     private static function isProduction()
     {
-        $isProduction = ($_ENV['APP_ENV'] === 'production') || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on');
+        $isProduction = (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'production') ||
+                        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
         return $isProduction;
     }
@@ -27,39 +45,46 @@ class SecureSession
      * Start a secure session if none exists.
      *
      * Configures PHP session settings to:
-     *  - expire after 30 minutes
+     *  - expire after configured lifetime (default 30 days)
      *  - be restricted to the current path
-     *  - be restricted to the current HTTP host
+     *  - use host-only domain (or optional COOKIE_DOMAIN)
      *  - use HTTPS if the site is in production
-     *  - be accessible only via the HTTP protocol
-     *  - be accessible from the same site (Lax)
-     * Enables strict mode and sets the garbage collection max lifetime to 30 minutes.
+     *  - be accessible only via HttpOnly protocol
+     *  - use SameSite=Lax
+     * Enables strict mode and sets the garbage collection max lifetime.
      * Starts the session.
-     * If the session is new, sets the security markers (CREATED, IP and UA) to the current values.
+     * If the session is new, sets the security markers (CREATED, LAST_ACTIVITY, IP and UA).
      */
     public static function start()
     {
         if (session_status() === PHP_SESSION_NONE) {
             $isProd = self::isProduction();
+            $lifetime = self::getLifetime();
 
-            session_set_cookie_params([
-                'lifetime' => self::SESSION_LIFETIME,
+            $cookieParams = [
+                'lifetime' => $lifetime,
                 'path' => '/',
-                'domain' => $_SERVER['HTTP_HOST'],
                 'secure' => $isProd,
                 'httponly' => true,
                 'samesite' => 'Lax',
-            ]);
+            ];
+            if (!empty($_ENV['COOKIE_DOMAIN'])) {
+                $cookieParams['domain'] = $_ENV['COOKIE_DOMAIN'];
+            }
+
+            session_set_cookie_params($cookieParams);
             if ($isProd) {
                 ini_set('session.cookie_secure', '1');
             }
             ini_set('session.use_strict_mode', '1');
-            ini_set('session.gc_maxlifetime', self::SESSION_LIFETIME);
+            ini_set('session.gc_maxlifetime', (string) $lifetime);
             session_start();
 
             // Initialize security markers if new session
             if (empty($_SESSION['CREATED'])) {
                 self::regenerate();
+            } else {
+                $_SESSION['LAST_ACTIVITY'] = time();
             }
         }
     }
@@ -72,8 +97,9 @@ class SecureSession
     {
         session_regenerate_id(true);
         $_SESSION['CREATED'] = time();
-        $_SESSION['IP'] = $_SERVER['REMOTE_ADDR'];
-        $_SESSION['UA'] = $_SERVER['HTTP_USER_AGENT'];
+        $_SESSION['LAST_ACTIVITY'] = time();
+        $_SESSION['IP'] = $_SERVER['REMOTE_ADDR'] ?? '';
+        $_SESSION['UA'] = $_SERVER['HTTP_USER_AGENT'] ?? '';
     }
 
     /**
@@ -84,19 +110,32 @@ class SecureSession
      */
     public static function validate()
     {
-        if ($_SESSION['IP'] !== $_SERVER['REMOTE_ADDR'] ||
-            $_SESSION['UA'] !== $_SERVER['HTTP_USER_AGENT']) {
+        // Protect against session hijacking via User Agent mismatch
+        if (isset($_SESSION['UA'], $_SERVER['HTTP_USER_AGENT']) && $_SESSION['UA'] !== $_SERVER['HTTP_USER_AGENT']) {
             self::destroy();
 
             return false;
         }
 
-        // Invalidate idle sessions
-        if (time() - $_SESSION['CREATED'] > self::SESSION_LIFETIME) {
+        // Strict IP verification can be optionally enabled. By default, disabled to prevent
+        // dropping valid mobile users across cell-tower hops and Apple iCloud Private Relay.
+        if (!empty($_ENV['SESSION_STRICT_IP']) && isset($_SESSION['IP'], $_SERVER['REMOTE_ADDR']) && $_SESSION['IP'] !== $_SERVER['REMOTE_ADDR']) {
             self::destroy();
 
             return false;
         }
+
+        // Invalidate idle sessions based on sliding activity window
+        $lifetime = self::getLifetime();
+        $lastActivity = $_SESSION['LAST_ACTIVITY'] ?? $_SESSION['CREATED'] ?? time();
+        if ((time() - $lastActivity) > $lifetime) {
+            self::destroy();
+
+            return false;
+        }
+
+        // Update sliding window
+        $_SESSION['LAST_ACTIVITY'] = time();
 
         return true;
     }
@@ -108,7 +147,21 @@ class SecureSession
     public static function destroy()
     {
         $_SESSION = [];
-        setcookie(session_name(), '', 1, '/');
-        session_destroy();
+        $isProd = self::isProduction();
+        $cookieOptions = [
+            'expires' => time() - 42000,
+            'path' => '/',
+            'secure' => $isProd,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieOptions['domain'] = $_ENV['COOKIE_DOMAIN'];
+        }
+
+        setcookie(session_name(), '', $cookieOptions);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
     }
 }

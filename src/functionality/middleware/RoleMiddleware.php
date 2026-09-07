@@ -95,16 +95,32 @@ final class RoleMiddleware
                 $email = $decoded->email;
             }
 
-  if($email){
+            if ($email) {
                 $_SESSION['auth']['email'] = $email;
             }
 
+            if ($id) {
+                // Red Team Guard: Prevent cross-account session pollution/desync
+                if (!empty($_SESSION['id']) && (string) $_SESSION['id'] !== (string) $id) {
+                    $_SESSION = [];
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_regenerate_id(true);
+                    }
+                    if ($email) {
+                        $_SESSION['auth']['email'] = $email;
+                    }
+                }
+
+                $_SESSION['id'] = $id;
+                $_SESSION['auth']['identifyCust'] = $id;
+                $_SESSION['auth']['codeVerified'] = true;
+                $_SESSION['auth']['2FA_token_ts'] = $_SESSION['auth']['2FA_token_ts'] ?? time();
+            }
 
             return [
                 'id' => $id,
                 'email' => $email,
-                'role' => $role
-             
+                'role' => $role,
             ];
 
           
