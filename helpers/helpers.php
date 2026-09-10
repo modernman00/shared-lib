@@ -662,16 +662,25 @@ function checkEmailExist($email): array|int|string
 }
 
 /**
- * Hashes a given password using bcrypt with a specified cost.
+/**
+ * Hashes a given password using modern standards (Argon2id with defensive fallback).
  * 
  * @param string $password The password to hash
- * @param int $cost The cost of the hash (default is 12)
+ * @param array|int $options The hashing options or legacy cost
  * 
  * @return string The hashed password
  */
-function hashPassword($password, $cost = 12)
+function hashPassword($password, $options = 12)
 {
-    return password_hash($password, PASSWORD_DEFAULT, ['cost' => $cost]);
+    $algo = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
+
+    if (is_int($options)) {
+        $hashOptions = ($algo === PASSWORD_DEFAULT) ? ['cost' => $options] : [];
+    } else {
+        $hashOptions = is_array($options) ? $options : [];
+    }
+
+    return password_hash($password, $algo, $hashOptions);
 }
 
 // unset post data 

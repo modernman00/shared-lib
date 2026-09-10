@@ -38,7 +38,8 @@ class LoginUtility
         // After successful verification, it checks if the stored password hash is outdated (e.g., algorithm changed or cost parameter updated).
         // If so, it updates the password hash in the database with a new, more secure hash.
 
-        if (password_needs_rehash($dbPassword, PASSWORD_DEFAULT, $options)) {
+        $targetAlgo = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
+        if (password_needs_rehash($dbPassword, $targetAlgo, $options)) {
             // If so, create a new hash, and replace the old one
             $newHash = hashPassword($textPassword);
             $tableDB = $_ENV['DB_TABLE_LOGIN'];

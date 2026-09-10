@@ -73,8 +73,9 @@ class UpdateFn extends Update
  * $model->makeUpdateFn($data, ['email', 'mobile'], 'OR');
  */
 
-  public static function makeUpdateFn(string $table, array $data, string|array $identifier, ?string $logic): bool
+  public static function makeUpdateFn(string $table, array $data, string|array $identifier, ?string $logic = 'AND'): bool
   {
+    $logic = $logic ?? 'AND';
     $update = new Update($table);
     return    $update->makeUpdate($data, $identifier, $logic);
   }

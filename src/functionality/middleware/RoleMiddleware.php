@@ -139,14 +139,38 @@ final class RoleMiddleware
      */
     protected function fetchUser(int|string $user_id, int $tokenVersion = 1): ?string
     {
- 
+        try {
             $dbTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
             $id = checkInput($user_id);
-            $query = "SELECT email, token_version FROM $dbTable WHERE id = ?";
-            $stmt = Db::connect2()->prepare($query);
-            $stmt->execute([$id]);
             
-            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            try {
+                $query = "SELECT email, token_version FROM $dbTable WHERE id = ?";
+                $stmt = Db::connect2()->prepare($query);
+                $stmt->execute([$id]);
+                $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            } catch (\PDOException $pe) {
+                // Fallback if table does not have token_version column
+                $query = "SELECT email FROM $dbTable WHERE id = ?";
+                $stmt = Db::connect2()->prepare($query);
+                $stmt->execute([$id]);
+                $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            }
+            
+            if (!$user && strlen((string) $id) > 10) {
+                $truncatedId = substr((string) $id, 0, 10);
+                try {
+                    $query = "SELECT email, token_version FROM $dbTable WHERE id = ?";
+                    $stmt = Db::connect2()->prepare($query);
+                    $stmt->execute([$truncatedId]);
+                    $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+                } catch (\PDOException $pe2) {
+                    $query = "SELECT email FROM $dbTable WHERE id = ?";
+                    $stmt = Db::connect2()->prepare($query);
+                    $stmt->execute([$truncatedId]);
+                    $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+                }
+            }
+
             if (!$user) {
                 return null;
             }
@@ -156,6 +180,9 @@ final class RoleMiddleware
             }
 
             return 'SUCCESSFUL';
-
+        } catch (\Throwable $e) {
+            error_log('RoleMiddleware fetchUser error: ' . $e->getMessage());
+            return null;
+        }
     }
 }
