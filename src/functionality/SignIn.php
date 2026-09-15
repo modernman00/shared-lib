@@ -75,7 +75,16 @@ final class SignIn
             return !empty($user);
         } catch (UnauthorisedException $e) {
             // Token is missing, expired, or tampered with.
-            // Safely swallow the exception so the app doesn't crash.
+            // Safely purge invalid auth cookie so consuming apps don't loop.
+            $tokenName = $_ENV['COOKIE_TOKEN_LOGIN'] ?? 'auth_token';
+            if (isset($_COOKIE[$tokenName]) && !headers_sent()) {
+                setcookie($tokenName, '', [
+                    'expires' => time() - 3600,
+                    'path' => '/',
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]);
+            }
             return false;
         }
     }

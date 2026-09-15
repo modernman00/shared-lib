@@ -256,7 +256,7 @@ class LoginUtility
         $stmt = Db::connect2()->prepare("
             SELECT COUNT(*) as attempts 
             FROM audit_logs 
-            WHERE ip_address = :ip AND status = 'failure' AND created_at > datetime('now', '-24 hours')
+            WHERE ip_address = :ip AND status = 'failure' AND created_at > (NOW() - INTERVAL 24 HOUR)
         ");
         $stmt->execute([':ip' => $ip]);
         $count = (int) $stmt->fetchColumn();

@@ -130,8 +130,8 @@ class Utility
             static $blade = null;
             if (!$blade) {
                 // 1. Get validated paths
-                $viewsPath = realpath(__DIR__ . "$realPathView");
-                $cachePath = realpath(__DIR__ . "$realPathCache");
+                $viewsPath = self::resolvePath($realPathView, '/resources/views');
+                $cachePath = self::resolvePath($realPathCache, '/bootstrap/cache');
                 $blade = new BladeOne($viewsPath, $cachePath, BladeOne::MODE_DEBUG);
                 $blade->setIsCompiled(false);
             }
@@ -153,6 +153,52 @@ class Utility
     }
 
     /**
+     * Get project root directory.
+     */
+    public static function getProjectRoot(): string
+    {
+        if (\defined('BASE_PATH')) {
+            return \BASE_PATH;
+        }
+
+        if (\class_exists(\Composer\Autoload\ClassLoader::class)) {
+            $reflection = new \ReflectionClass(\Composer\Autoload\ClassLoader::class);
+            return \dirname($reflection->getFileName(), 3);
+        }
+
+        return \dirname(__DIR__, 4);
+    }
+
+    /**
+     * Resolve view or cache path dynamically handling symlinks and relative offsets.
+     */
+    public static function resolvePath(string $path, string $fallbackSubpath = '/resources/views'): string
+    {
+        if (str_starts_with($path, '/') && is_dir($path)) {
+            return rtrim($path, '/');
+        }
+
+        $real = realpath(__DIR__ . $path);
+        if ($real && is_dir($real)) {
+            return $real;
+        }
+
+        $cleaned = preg_replace('#^(/\.\.)+#', '', $path);
+        if (empty($cleaned) || $cleaned === $path) {
+            $cleaned = '/' . ltrim($path, '/');
+        }
+
+        $projectRoot = self::getProjectRoot();
+        $targetPath = rtrim($projectRoot . $cleaned, '/');
+
+        if (is_dir($targetPath) || is_dir(dirname($targetPath))) {
+            return $targetPath;
+        }
+
+        return rtrim(__DIR__ . $path, '/');
+    }
+
+    /**
      * Renders a BladeOne template with the given data.
      *
      * @param string $path The template path (e.g., 'index' or 'msg.customer.token')
@@ -165,8 +211,8 @@ class Utility
     public static function view($path, array $data = [], string $realPathView = '/../../../../resources/views', string $realPathCache = '/../../../../bootstrap/cache', int $mode = BladeOne::MODE_DEBUG)
     {
         try {
-            $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
-            $cache = rtrim(__DIR__ . $realPathCache, '/');
+            $view = self::resolvePath($realPathView, '/resources/views');
+            $cache = self::resolvePath($realPathCache, '/bootstrap/cache');
             $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
             // echo $viewFile;
             static $blade = null;
@@ -191,8 +237,8 @@ class Utility
         string $realPathCache = '/../../../../bootstrap/cache',
     ) {
         try {
-            $view = rtrim(__DIR__ . $realPathView, '/'); // Remove trailing slash
-            $cache = rtrim(__DIR__ . $realPathCache, '/');
+            $view = self::resolvePath($realPathView, '/resources/views');
+            $cache = self::resolvePath($realPathCache, '/bootstrap/cache');
             $viewFile = str_replace('/', '.', $path); // Convert to dot notation: msg.customer.token
             // echo $viewFile;
             static $blade = null;
