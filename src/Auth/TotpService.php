@@ -117,4 +117,25 @@ class TotpService
             rawurlencode($issuer)
         );
     }
+
+    /**
+     * Generate inline Data URI SVG QR Code image
+     */
+    public static function getQrCodeDataUri(string $provisioningUri): string
+    {
+        if (class_exists(\chillerlan\QRCode\QRCode::class)) {
+            $options = new \chillerlan\QRCode\QROptions([
+                'outputInterface' => \chillerlan\QRCode\Output\QRMarkupSVG::class,
+                'eccLevel' => \chillerlan\QRCode\Common\EccLevel::M,
+                'scale' => 5,
+                'svgAddXmlHeader' => false,
+            ]);
+
+            $qrcode = new \chillerlan\QRCode\QRCode($options);
+            return $qrcode->render($provisioningUri);
+        }
+
+        // Fallback to Google Chart API Data URI if chillerlan unavailable
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . rawurlencode($provisioningUri);
+    }
 }

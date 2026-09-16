@@ -273,7 +273,7 @@ function showError2(\Throwable $th, Logger $logger): ?string
     if ($isApi) {
         header('Content-Type: application/json');
         $response = json_encode(['message' => $errorMessage, 'code' => $statusCode, 'status' => 'error'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        return $response;
+         echo $response;
     } else {
         // Render the 500 view if it exists, otherwise fallback to plain text
         try {
