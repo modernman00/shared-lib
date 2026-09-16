@@ -1,6 +1,9 @@
 #!/bin/bash
 
 VERSION_FILE="config/version.php"
+
+# --- Extract current version ---
+CURRENT=$(grep "APP_VERSION" "$VERSION_FILE" | sed -E "s/.*'([^']+)'.*/\1/")
 echo "📦 Current APP_VERSION: $CURRENT"
 
 # --- Parse arguments ---
@@ -12,8 +15,6 @@ for arg in "$@"; do
     esac
 done
 
-# --- Extract current version ---
-CURRENT=$(grep "APP_VERSION" "$VERSION_FILE" | sed -E "s/.*'([^']+)'.*/\1/")
 IFS='.' read -r MAJOR MINOR PATCH <<< "${CURRENT//v/}"
 
 # --- Bump version based on mode ---
@@ -38,7 +39,7 @@ echo "🔧 Current version: $CURRENT"
 echo "⏫ Bumping to: $NEW ($MODE)"
 
 # Stop if there are no changes
-if git diff --quiet && git diff --cached --quiet; then
+if [ -z "$(git status --porcelain)" ]; then
   echo "⚠️ No changes to commit."
   exit 0
 fi
