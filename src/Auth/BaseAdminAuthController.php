@@ -13,11 +13,29 @@ abstract class BaseAdminAuthController
     abstract protected function getDashboardUrl(): string;
     abstract protected function getClientIp(): string;
     abstract protected function generateFingerprint(string $ip, string $userAgent): string;
+    abstract protected function getAdminTableName(): string;
+    abstract protected function getAdminColumnMap(): array;
 
     protected function adminUrl(string $path = ''): string
     {
         $prefix = '/' . trim((string) ($_ENV['ADMIN_SECRET_PATH'] ?? getenv('ADMIN_SECRET_PATH') ?: 'admin'), '/');
         return $path === '' ? $prefix : $prefix . '/' . ltrim($path, '/');
+    }
+
+    private function buildAdminSelectQuery(): array
+    {
+        $columnMap = $this->getAdminColumnMap();
+        $tableName = $this->getAdminTableName();
+
+        $selectParts = [];
+        foreach ($columnMap as $alias => $dbColumn) {
+            $selectParts[] = "{$dbColumn} AS {$alias}";
+        }
+
+        $selectClause = implode(', ', $selectParts);
+        $query = "SELECT {$selectClause} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1";
+
+        return ['query' => $query, 'columnMap' => $columnMap];
     }
 
     private function enforceIpFilter(): void
@@ -118,7 +136,12 @@ abstract class BaseAdminAuthController
 
         try {
             $db = Db::connect2();
-            $stmt = $db->prepare('SELECT totp_last_used_step FROM account WHERE email = ? LIMIT 1');
+            $columnMap = $this->getAdminColumnMap();
+            $tableName = $this->getAdminTableName();
+
+            $stmt = $db->prepare(
+                "SELECT {$columnMap['totp_last_used_step']} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1"
+            );
             $stmt->execute([$email]);
             $lastStep = $stmt->fetchColumn();
 
@@ -126,8 +149,9 @@ abstract class BaseAdminAuthController
                 return false;
             }
 
-            $db->prepare('UPDATE account SET totp_last_used_step = ? WHERE email = ?')
-               ->execute([$currentStep, $email]);
+            $db->prepare(
+                "UPDATE {$tableName} SET {$columnMap['totp_last_used_step']} = ? WHERE {$columnMap['email']} = ?"
+            )->execute([$currentStep, $email]);
         } catch (\Throwable) {}
 
         return true;
@@ -171,10 +195,8 @@ abstract class BaseAdminAuthController
         }
 
         $db   = Db::connect2();
-        $stmt = $db->prepare(
-            'SELECT id, email, password, firstName, lastName, type, status, totp_enabled, totp_secret
-             FROM account WHERE email = ? LIMIT 1'
-        );
+        ['query' => $query, 'columnMap' => $columnMap] = $this->buildAdminSelectQuery();
+        $stmt = $db->prepare($query);
         $stmt->execute([$email]);
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -253,7 +275,12 @@ abstract class BaseAdminAuthController
         $email = (string) ($_SESSION['auth']['email'] ?? '');
         try {
             $db   = Db::connect2();
-            $stmt = $db->prepare('SELECT totp_enabled FROM account WHERE email = ? LIMIT 1');
+            $columnMap = $this->getAdminColumnMap();
+            $tableName = $this->getAdminTableName();
+
+            $stmt = $db->prepare(
+                "SELECT {$columnMap['totp_enabled']} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1"
+            );
             $stmt->execute([$email]);
             if ((bool) $stmt->fetchColumn()) {
                 $_SESSION['formError'] = 'Google Authenticator is already configured for this account. Contact support to re-pair.';
@@ -303,8 +330,12 @@ abstract class BaseAdminAuthController
         }
 
         $db = Db::connect2();
-        $db->prepare('UPDATE account SET totp_secret = ?, totp_enabled = 1 WHERE email = ?')
-           ->execute([$secret, $email]);
+        $columnMap = $this->getAdminColumnMap();
+        $tableName = $this->getAdminTableName();
+
+        $db->prepare(
+            "UPDATE {$tableName} SET {$columnMap['totp_secret']} = ?, {$columnMap['totp_enabled']} = 1 WHERE {$columnMap['email']} = ?"
+        )->execute([$secret, $email]);
 
         unset($_SESSION['auth']['temp_totp_secret']);
         $_SESSION['auth']['2fa_passed'] = true;
@@ -344,7 +375,12 @@ abstract class BaseAdminAuthController
         $email = (string) ($_SESSION['auth']['email'] ?? '');
 
         $db   = Db::connect2();
-        $stmt = $db->prepare('SELECT totp_secret FROM account WHERE email = ? LIMIT 1');
+        $columnMap = $this->getAdminColumnMap();
+        $tableName = $this->getAdminTableName();
+
+        $stmt = $db->prepare(
+            "SELECT {$columnMap['totp_secret']} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1"
+        );
         $stmt->execute([$email]);
         $secret = $stmt->fetchColumn();
 
@@ -385,7 +421,13 @@ abstract class BaseAdminAuthController
         }
 
         $db   = Db::connect2();
-        $stmt = $db->prepare('SELECT id, email, type FROM account WHERE email = ? LIMIT 1');
+        $columnMap = $this->getAdminColumnMap();
+        $tableName = $this->getAdminTableName();
+
+        $stmt = $db->prepare(
+            "SELECT {$columnMap['id']} AS id, {$columnMap['email']} AS email, {$columnMap['type']} AS type
+             FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1"
+        );
         $stmt->execute([$email]);
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -393,8 +435,9 @@ abstract class BaseAdminAuthController
             $token   = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', time() + 3600);
 
-            $db->prepare('UPDATE account SET reset_token = ?, reset_token_expires_at = ? WHERE email = ?')
-               ->execute([$token, $expires, $email]);
+            $db->prepare(
+                "UPDATE {$tableName} SET {$columnMap['reset_token']} = ?, {$columnMap['reset_token_expires_at']} = ? WHERE {$columnMap['email']} = ?"
+            )->execute([$token, $expires, $email]);
 
             $this->logAudit($email, 'Admin password reset link dispatched');
         }
@@ -439,9 +482,13 @@ abstract class BaseAdminAuthController
         }
 
         $db   = Db::connect2();
+        $columnMap = $this->getAdminColumnMap();
+        $tableName = $this->getAdminTableName();
+
         $stmt = $db->prepare(
-            'SELECT id, email, type FROM account
-             WHERE email = ? AND reset_token = ? AND reset_token_expires_at > NOW() LIMIT 1'
+            "SELECT {$columnMap['id']} AS id, {$columnMap['email']} AS email, {$columnMap['type']} AS type
+             FROM {$tableName}
+             WHERE {$columnMap['email']} = ? AND {$columnMap['reset_token']} = ? AND {$columnMap['reset_token_expires_at']} > NOW() LIMIT 1"
         );
         $stmt->execute([$email, $token]);
         $user = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -453,8 +500,9 @@ abstract class BaseAdminAuthController
         }
 
         $newHash = password_hash($password, PASSWORD_BCRYPT);
-        $db->prepare('UPDATE account SET password = ?, reset_token = NULL, reset_token_expires_at = NULL WHERE id = ?')
-           ->execute([$newHash, $user['id']]);
+        $db->prepare(
+            "UPDATE {$tableName} SET {$columnMap['password']} = ?, {$columnMap['reset_token']} = NULL, {$columnMap['reset_token_expires_at']} = NULL WHERE {$columnMap['id']} = ?"
+        )->execute([$newHash, $user['id']]);
 
         $this->logAudit($email, 'Super admin successfully reset password');
         $_SESSION['formSuccess'] = 'Password reset successfully. Please log in with your new password.';
