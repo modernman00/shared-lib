@@ -56,7 +56,7 @@ final class LoggerFactory
      *
      * @return Logger Configured logger instance
      */
-    public static function createWithMailer(Level $level = Level::Error): Logger
+    public static function createWithMailer(Level $level = Level::Debug): Logger
     {
         if (self::$logger !== null) {
             return self::$logger; // Reuse existing logger
@@ -109,6 +109,14 @@ final class LoggerFactory
         self::$logger = $logger; // Cache the logger
 
         return $logger;
+    }
+
+    /**
+     * Reset cached logger instance (primarily for testing or reconfiguration).
+     */
+    public static function resetLogger(): void
+    {
+        self::$logger = null;
     }
 
     /**
