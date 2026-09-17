@@ -136,8 +136,8 @@ class PasswordRecoveryService
      */
     private static function finaliseRecovery(string $token, bool $issueJwt = true): void
     {
-        Limiter::$argLimiter->reset();              // Reset argument-based rate limiter
-        Limiter::$ipLimiter->reset();               // Reset IP-level rate limiter
+        Limiter::$argLimiter?->reset();              // Reset argument-based rate limiter
+        Limiter::$ipLimiter?->reset();               // Reset IP-level rate limiter
 
         // After successful login unset the CSRF token to prevent reuse
         unset($_SESSION['token']);

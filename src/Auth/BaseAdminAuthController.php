@@ -570,4 +570,91 @@ abstract class BaseAdminAuthController
 
         redirect($this->adminUrl('login'));
     }
+
+    public function createSuperAdmin(): void
+    {
+        $this->enforceIpFilter();
+
+        if (empty($_SESSION['auth']) || ($_SESSION['auth']['type'] ?? '') !== 'super_admin') {
+            http_response_code(403);
+            $_SESSION['formError'] = 'Unauthorized access.';
+            redirect($this->getDashboardUrl());
+            return;
+        }
+
+        $name     = trim((string) ($_POST['name'] ?? ''));
+        $email    = strtolower(trim((string) ($_POST['email'] ?? '')));
+        $password = trim((string) ($_POST['password'] ?? ''));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8 || $name === '') {
+            $_SESSION['formError'] = 'Please provide a valid name, email, and password (min 8 chars).';
+            redirect($this->getDashboardUrl());
+            return;
+        }
+
+        try {
+            $db = Db::connect2();
+            $columnMap = $this->getAdminColumnMap();
+            $tableName = $this->getAdminTableName();
+
+            // Check if user exists
+            $stmt = $db->prepare("SELECT {$columnMap['id']} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1");
+            $stmt->execute([$email]);
+            if ($stmt->fetch()) {
+                $_SESSION['formError'] = 'A user with that email address already exists.';
+                redirect($this->getDashboardUrl());
+                return;
+            }
+
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+            
+            $cols = "{$columnMap['email']}, {$columnMap['password']}, {$columnMap['type']}";
+            $placeholders = '?, ?, ?';
+            $binds = [$email, $hash, 'super_admin'];
+
+            if (isset($columnMap['status'])) {
+                $cols .= ", {$columnMap['status']}";
+                $placeholders .= ', ?';
+                $binds[] = 'active';
+            }
+
+            if (isset($columnMap['firstName'])) {
+                $nameParts = explode(' ', $name, 2);
+                $firstName = $nameParts[0];
+                $lastName  = $nameParts[1] ?? '';
+                $cols .= ", {$columnMap['firstName']}, {$columnMap['lastName']}";
+                $placeholders .= ', ?, ?';
+                $binds[] = $firstName;
+                $binds[] = $lastName;
+            }
+
+            if (isset($columnMap['mobile'])) {
+                $mobile = trim((string) ($_POST['mobile'] ?? '0000000000'));
+                $cols .= ", {$columnMap['mobile']}";
+                $placeholders .= ', ?';
+                $binds[] = $mobile;
+            }
+
+            // Handle explicit string ID insertion if table uses string primary keys (e.g. familyPlatform/loaneasyfinance UUID)
+            if (isset($columnMap['id'])) {
+                $cols .= ", {$columnMap['id']}";
+                $placeholders .= ', ?';
+                $binds[] = \function_exists('uniqid') ? uniqid('usr_', true) : (string)time();
+            }
+
+            $sql = "INSERT INTO {$tableName} ({$cols}) VALUES ({$placeholders})";
+            $db->prepare($sql)->execute($binds);
+
+
+
+
+            $this->logAudit($email, 'New super admin created by ' . ($_SESSION['auth']['email'] ?? 'admin'));
+            $_SESSION['formSuccess'] = "Super Admin '{$email}' created successfully!";
+        } catch (\Throwable $e) {
+            $_SESSION['formError'] = 'Failed to create Super Admin: ' . $e->getMessage();
+        }
+
+        redirect($this->getDashboardUrl());
+    }
 }
+

@@ -156,8 +156,8 @@ class PasswordResetFunctionality
         }
 
         // Prevent brute-force abuse by clearing rate limits
-        Limiter::$argLimiter->reset();
-        Limiter::$ipLimiter->reset();
+        Limiter::$argLimiter?->reset();
+        Limiter::$ipLimiter?->reset();
 
         unset($_SESSION['token']);
 

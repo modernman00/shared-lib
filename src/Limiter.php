@@ -20,6 +20,15 @@ class Limiter extends Db
     ];
 
     /**
+     * Resets both argument and IP limiters safely, handling null states.
+     */
+    public static function resetAll(): void
+    {
+        self::$argLimiter?->reset();
+        self::$ipLimiter?->reset();
+    }
+
+    /**
      * Applies rate limiting to a given argument and the user's IP address.
      *
      * @param string $arg the argument to be rate-limited, typically an email address or table name
@@ -30,6 +39,16 @@ class Limiter extends Db
     public static function limit(string $arg, string $action = 'default')
     {
         if (\isTestEnv() || isset($_SERVER['HTTP_X_CYPRESS_TEST'])) {
+            $noop = new class {
+                public function reset(): void {}
+                public function consume(int $tokens = 1): object {
+                    return new class {
+                        public function isAccepted(): bool { return true; }
+                    };
+                }
+            };
+            self::$argLimiter ??= $noop;
+            self::$ipLimiter ??= $noop;
             return;
         }
         try {

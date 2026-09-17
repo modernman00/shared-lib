@@ -111,8 +111,8 @@ class PwdRecoveryCodeFunctionality
                 unset($_SESSION['auth']['2FA_token_ts']);
 
                 // Prevent brute-force abuse by clearing rate limits
-                Limiter::$argLimiter->reset();
-                Limiter::$ipLimiter->reset();
+                Limiter::$argLimiter?->reset();
+                Limiter::$ipLimiter?->reset();
 
                 // create the codeVerifiedSession and record timestamp for freshness checks
                 $_SESSION['auth']['codeVerified'] = true;

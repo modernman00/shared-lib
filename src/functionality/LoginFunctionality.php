@@ -124,8 +124,8 @@ class LoginFunctionality
             $userId = $userD['userId'];
 
             // Prevent brute-force abuse by clearing rate limits
-            Limiter::$argLimiter->reset();
-            Limiter::$ipLimiter->reset();
+            Limiter::$argLimiter?->reset();
+            Limiter::$ipLimiter?->reset();
 
             // Clear CSRF token and regenerate session ID
             unset($_SESSION['token']);
