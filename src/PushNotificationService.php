@@ -191,7 +191,7 @@ class PushNotificationService
      * @param string $userId
      * @return array<int, array<string, mixed>>
      */
-    private static function getUserPushSubscriptions(string $userId): array
+    public static function getUserPushSubscriptions(string $userId): array
     {
         try {
             $db = \Src\Db::connect2();

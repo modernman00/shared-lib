@@ -135,21 +135,32 @@ final class NotificationOrchestrator
                 }
             } else {
                 // Channel 2: High-Priority OS WebPush with Sound & Badging
-                $pushed = PushNotificationService::sendPush(
-                    userId: $userId,
-                    message: $body,
-                    url: $actionUrl,
-                    title: $title,
-                    tag: $tag,
-                    badgeCount: $unreadCount,
-                    isSilent: false
-                );
+                $hasPushSubscriptions = !empty(PushNotificationService::getUserPushSubscriptions($userId));
+                $pushed = false;
 
-                self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
+                if ($hasPushSubscriptions) {
+                    $pushed = PushNotificationService::sendPush(
+                        userId: $userId,
+                        message: $body,
+                        url: $actionUrl,
+                        title: $title,
+                        tag: $tag,
+                        badgeCount: $unreadCount,
+                        isSilent: false
+                    );
+                    self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
+                } else {
+                    self::logDelivery($notificationId, 'web_push', 'skipped_no_subscription', 'No active push endpoint registered for user');
+                }
 
-                // Channel 3: Queue Delayed Fallback Email
+                // Channel 3: Queue or Immediately Trigger Fallback
                 if (in_array($priority, ['high', 'critical'], true)) {
-                    self::logDelivery($notificationId, 'email', 'queued', 'Queued for 15-minute fallback');
+                    if (!$hasPushSubscriptions || !$pushed) {
+                        // User is offline with no push capability: trigger instant fallback queue
+                        self::logDelivery($notificationId, 'email', 'queued_immediate', 'Queued for immediate delivery (no push device)');
+                    } else {
+                        self::logDelivery($notificationId, 'email', 'queued', 'Queued for 15-minute fallback');
+                    }
                 }
             }
 
@@ -267,7 +278,7 @@ final class NotificationOrchestrator
                 SELECT COUNT(*) FROM user_socket_presence 
                 WHERE user_id = :uid 
                   AND is_active = 1 
-                  AND last_heartbeat >= DATE_SUB(NOW(), INTERVAL 90 SECOND)
+                  AND last_heartbeat >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
             ");
             $stmt->execute([':uid' => $userId]);
             return ((int)$stmt->fetchColumn()) > 0;
