@@ -5,6 +5,12 @@ declare(strict_types=1);
 namespace Src;
 
 use Src\smsFunctionality\Textlocal;
+use TextMagic\Api\TextMagicApi;
+use TextMagic\Configuration;
+use GuzzleHttp\Client;
+use TextMagic\Models\SendMessageRequest;
+// use Twilio\Rest\Client;
+
 
 /**
  * Class ToSendText
@@ -34,6 +40,29 @@ class ToSendText
         // Implement Twilio sending logic here
       }
 
+      if ($provider === 'textmagic') {
+        // Get your credentials from: https://app.textmagic.com/settings/api
+        $config = Configuration::getDefaultConfiguration()
+          ->setUsername($_ENV['TEXTMAGIC_USERNAME'])
+          ->setPassword($_ENV['TEXTMAGIC_API']);
+
+        $api = new TextMagicApi(new Client(), $config);
+    
+
+        $input = new SendMessageRequest();
+        $input->setText($message);
+        $input->setPhones($to);
+
+        // Test connection
+        try {
+          $result = $api->sendMessage($input);
+        } catch (\TextMagic\ApiException $e) {
+          \showError($e);
+        } catch (\Exception $e) {
+          \showError($e);
+        }
+      }
+
       if ($provider == 'textlocal') {
         // remove the + from the phone number if it exists
         $to = str_replace('+', '', $to);
@@ -45,9 +74,9 @@ class ToSendText
       if ($provider == 'webex') {
         // Webex Interact SMS API implementation
         $payload = json_encode([
-            'from' => $sender,
-            'to' => [$to],
-            'message_body' => $message
+          'from' => $sender,
+          'to' => [$to],
+          'message_body' => $message
         ]);
 
         $ch = curl_init('https://api.webexinteract.com/v1/sms');
@@ -55,8 +84,8 @@ class ToSendText
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'X-AUTH-KEY: ' . ($_ENV['webex_text'] ?? $_ENV['WEBEX_TEXT'] ?? '')
+          'Content-Type: application/json',
+          'X-AUTH-KEY: ' . ($_ENV['webex_text'] ?? $_ENV['WEBEX_TEXT'] ?? '')
         ]);
 
         $response = curl_exec($ch);
@@ -64,7 +93,7 @@ class ToSendText
         curl_close($ch);
 
         if ($httpCode >= 400) {
-            throw new \Exception("Webex Interact API Error: HTTP $httpCode - $response");
+          throw new \Exception("Webex Interact API Error: HTTP $httpCode - $response");
         }
         return json_decode($response, true);
       }
