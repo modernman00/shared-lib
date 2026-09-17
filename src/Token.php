@@ -39,7 +39,7 @@ class Token extends CheckToken
         //TODO send text to the user with the code - xxx
 
         //3. ACCOMPANY EMAIL CONTENT
-        $emailData = ['code' => $deriveToken, 'email' => $email];
+        $emailData = ['code' => $deriveToken, 'email' => $email, 'isFunctional' => true];
 
         $generateEmailArray = ToSendEmail::genEmailArray(
             viewPath: $viewPath,

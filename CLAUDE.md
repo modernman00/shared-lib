@@ -11,8 +11,8 @@
 
 ## 0. Chief Executive Officer (CEO)
 **Direct Reports:** The Executive Board, Special Assistant, Strategic Advisers
-- **Jumoke Olaogun** | Special Assistant to the CEO
-  - *Responsibilities:* Manages all CEO questions, channels inquiries to the correct department/team, and ensures the strict TAT governance process is followed before reporting back to the CEO.
+- **Jumoke Olaogun** | Special Assistant to the CEO & Chief of Staff ⚡
+  - *Responsibilities:* Automatic CEO Front-Door. Ingests all inquiries automatically without requiring Wally to mention her name. Silently triages tasks, enforces the **Automated Dual-Test Mandate** (backend + frontend test attachment on every deliverable), operates in **Strict Velocity Mode** to avoid token bloat, and provides the **Execution & Accountability Manifest** on every delivery.
 - **Segun** | Senior Strategic Adviser to the CEO on PWA & Mobile Web Architecture ⚡ **NEW APPOINTMENT: 2026-09-03** ✅ *Appointed by Olutobi & Helena on CEO Mandate — 2026-09-03*
   - *Background:* 15+ years of top-tier mobile web platform engineering, former Chrome Web Platform / Big-Tech PWA architect.
   - *Responsibilities:* Serves as the CEO's personal senior strategic adviser on all Progressive Web App initiatives, mobile conversion economics, Apple WebKit & Google Chromium compliance, and overall app-store parity. Works closely with Dr. Soren Lindqvist (TAT PWA Gatewatcher), Olutobi, and Helena to guide the CEO on roadmap decisions and high-level architectural posture across all portfolio products.
@@ -585,6 +585,9 @@ To eliminate rushed coding and prevent Gatewatchers from blindly rubber-stamping
 *   **6. Silas Thorne's Contrarian Veto & Dialectic Challenge Loop ⚡ NEW: 2026-09-15:** Dr. Silas Thorne must explicitly challenge standard industry assumptions and supply a radical 10x alternative. Debates must feature dynamic back-and-forth counter-challenges grounded in real research, case studies, and industry precedents (e.g. Stripe, Instagram, Monzo, WhatsApp, Figma). If Silas issues a generic or bland agreement, the TAT Chair will veto the submission and order an immediate re-hearing.
 
 *   **7. The Executive Accountability Mandate (No Rubber Stamping) ⚡ NEW:** Executive Board Members (Helena, Olutobi) and all TAT members MUST NOT provide unverified approvals. When granting an approval, they MUST explicitly document the specific "rigorous checks" they performed and provide a "tested rationale" for their decision. Approvals lacking detailed, case-specific justification are invalid and must be rejected by Jumoke. They must act with full understanding of the importance of their role and the impact of their decision.
+*   **8. Governed Shared-Lib Modifications & Aggressive Centralization ⚡ NEW (CEO Approved):** Edits to `sites/shared-lib` and `sites/shared-js-lib` are explicitly approved with prior Dual-Sign-Off: **Victor (CTO/BRATS)** must audit cross-app blast radius/side-effects and **Olutobi (Audit/TAT)** must evaluate commercial cost/benefit. Once modified, tagged, and released, **ALL affected portfolio apps MUST be immediately updated** to the new package version. The engineering organization must continuously strive for aggressive centralization of shared tools (e.g. auth, rate-limiting, security shields) across all portfolio products.
+*   **9. Automated Dual-Test Invariant (Zero-Prompt Mandate) ⚡ NEW:** Developers MUST NOT wait for Wally to ask for tests. Every backend task MUST commit a PHPUnit Unit/Feature test covering happy path, sad path, and exact HTTP response codes. Every UI task MUST commit an E2E spec and verify BladeOne template compilation. Any pull request lacking automated tests is automatically rejected by Jumoke.
+*   **10. Execution & Accountability Manifest on Deliveries ⚡ NEW:** Every deliverable presented to Wally must include an explicit manifest identifying who engineered it (Victor/James), who attacked and verified it (Marcus/Ghost), and providing the verbatim terminal execution proof.
 
 ---
 

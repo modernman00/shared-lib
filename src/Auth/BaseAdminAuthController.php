@@ -38,6 +38,46 @@ abstract class BaseAdminAuthController
         return ['query' => $query, 'columnMap' => $columnMap];
     }
 
+    /**
+     * Defensively resolves admin first and last name across heterogeneous schemas.
+     * Supports: firstName/lastName, first_name/last_name, combined 'name', or email prefix.
+     *
+     * @param array<string, mixed> $user
+     * @return array{firstName: string, lastName: string}
+     */
+    private function resolveAdminDisplayName(array $user): array
+    {
+        // 1. Direct camelCase
+        $first = $user['firstName'] ?? null;
+        $last  = $user['lastName'] ?? null;
+
+        // 2. Snake case fallback
+        if ($first === null && isset($user['first_name'])) {
+            $first = (string) $user['first_name'];
+            $last  = (string) ($user['last_name'] ?? '');
+        }
+
+        // 3. Combined 'name' fallback (e.g. "Alex Morgan")
+        if ($first === null && !empty($user['name'])) {
+            $parts = explode(' ', trim((string) $user['name']), 2);
+            $first = $parts[0] ?? '';
+            $last  = $parts[1] ?? '';
+        }
+
+        // 4. Email prefix fallback (e.g. "admin" from "admin@domain.com")
+        if (empty($first)) {
+            $email = (string) ($user['email'] ?? '');
+            $parts = explode('@', $email, 2);
+            $first = ucfirst($parts[0] ?: 'Admin');
+            $last  = '';
+        }
+
+        return [
+            'firstName' => (string) $first,
+            'lastName'  => (string) ($last ?? ''),
+        ];
+    }
+
     private function enforceIpFilter(): void
     {
         $allowedIpsRaw = trim((string) ($_ENV['ADMIN_ALLOWED_IPS'] ?? getenv('ADMIN_ALLOWED_IPS') ?: ''));
@@ -228,13 +268,15 @@ abstract class BaseAdminAuthController
         $this->clearFailedAttempts($email);
         session_regenerate_id(true);
 
+        $names = $this->resolveAdminDisplayName($user);
+
         $_SESSION['id'] = $user['id'];
         $_SESSION['auth'] = [
             'id'           => $user['id'],
             'identifyCust' => $user['id'],
             'email'        => $user['email'],
-            'firstName'    => $user['firstName'] ?? 'Admin',
-            'lastName'     => $user['lastName'] ?? '',
+            'firstName'    => $names['firstName'],
+            'lastName'     => $names['lastName'],
             'type'         => 'super_admin',
             '2fa_passed'   => false,
             'fingerprint'  => $this->generateFingerprint(

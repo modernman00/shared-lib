@@ -62,6 +62,7 @@ class PushNotificationService
      * @param bool $isSilent
      * @param string|null $syncAction
      * @param string|null $targetNotificationId
+     * @param array<string, mixed>|null $options
      * @return bool
      */
     public static function sendPush(
@@ -73,7 +74,8 @@ class PushNotificationService
         ?int $badgeCount = null,
         bool $isSilent = false,
         ?string $syncAction = null,
-        ?string $targetNotificationId = null
+        ?string $targetNotificationId = null,
+        ?array $options = null
     ): bool {
         if (empty($userId)) {
             return false;
@@ -116,6 +118,7 @@ class PushNotificationService
                 'isSilent'             => $isSilent,
                 'syncAction'           => $syncAction,
                 'targetNotificationId' => $targetNotificationId,
+                'actions'              => $options['actions'] ?? [],
                 'timestamp'            => time() * 1000,
             ];
 

@@ -146,7 +146,10 @@ final class NotificationOrchestrator
                         title: $title,
                         tag: $tag,
                         badgeCount: $unreadCount,
-                        isSilent: false
+                        isSilent: false,
+                        syncAction: null,
+                        targetNotificationId: $notificationId,
+                        options: $metadata
                     );
                     self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
                 } else {

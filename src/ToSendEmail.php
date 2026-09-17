@@ -15,6 +15,11 @@ use Src\Exceptions\NotFoundException;
 /**
  * Class ToSendEmail
  * @package Src
+ * @param $viewPath - the path to the view
+ * @param $data - the data to be sent to the view - data: ['email' => $email, 'code' => $token, 'isFunctional' => true],
+ * @param $subject - the subject of the email
+ * @param $file - the file to be sent to the view
+ * @param $fileName - the name of the file to be sent to the view
  */     
 class ToSendEmail
 {
@@ -64,6 +69,25 @@ class ToSendEmail
             }
 
             $name = Utility::cleanSession($data['name'] ?? ($params['name'] ?? 'there'));
+
+            // Check if recipient has unsubscribed from non-functional communications
+            $isFunctional = !empty($data['isFunctional']) || !empty($params['isFunctional']);
+            if (!$isFunctional) {
+                $subjectUpper = strtoupper($subject);
+                if (str_contains($subjectUpper, 'TOKEN') || 
+                    str_contains($subjectUpper, 'VERIF') || 
+                    str_contains($subjectUpper, 'PASSWORD') || 
+                    str_contains($subjectUpper, 'SECURITY') || 
+                    str_contains($subjectUpper, '2FA') || 
+                    str_contains($subjectUpper, 'ALERT')) {
+                    $isFunctional = true;
+                }
+            }
+
+            if (!$isFunctional && self::isEmailUnsubscribed($email)) {
+                // Suppress non-functional email send for unsubscribed recipient
+                return false;
+            }
 
             // 3) Render HTML from Blade
             $html = Utility::viewTemplateEmail($viewPath, ['data' => $data]);
@@ -129,5 +153,21 @@ class ToSendEmail
         //  mail("waledevtest@gmail.com", "TEST_EMAIL", $email);
 
         SendEmail::sendEmail($email, $name, $var['subject'], $emailContent, $file, $filename);
+    }
+
+    private static function isEmailUnsubscribed(string $email): bool
+    {
+        try {
+            if (!class_exists('\\Src\\Db')) {
+                return false;
+            }
+            $db = \Src\Db::connect2();
+            $stmt = $db->prepare('SELECT email_unsubscribed FROM account WHERE email = ? LIMIT 1');
+            $stmt->execute([$email]);
+            $res = $stmt->fetchColumn();
+            return !empty($res);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }
