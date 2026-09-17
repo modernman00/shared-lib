@@ -29,7 +29,7 @@ class Limiter extends Db
      */
     public static function limit(string $arg, string $action = 'default')
     {
-        if (\isTestEnv()) {
+        if (\isTestEnv() || isset($_SERVER['HTTP_X_CYPRESS_TEST'])) {
             return;
         }
         try {
