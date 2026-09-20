@@ -172,8 +172,17 @@ class PushNotificationService
                     if ($report->isSubscriptionExpired()) {
                         try {
                             $db = \Src\Db::connect2();
-                            $stmt = $db->prepare("DELETE FROM pushNotification WHERE endpoint = ?");
-                            $stmt->execute([$endpoint]);
+                            // Prune from pushNotification
+                            try {
+                                $stmt1 = $db->prepare("DELETE FROM pushNotification WHERE endpoint = ?");
+                                $stmt1->execute([$endpoint]);
+                            } catch (\Throwable $e) {}
+
+                            // Prune from user_push_subscriptions
+                            try {
+                                $stmt2 = $db->prepare("DELETE FROM user_push_subscriptions WHERE endpoint = ?");
+                                $stmt2->execute([$endpoint]);
+                            } catch (\Throwable $e) {}
                         } catch (\Throwable $e) {
                             error_log("[PushNotificationService] Prune error: " . $e->getMessage());
                         }
@@ -189,19 +198,55 @@ class PushNotificationService
     }
 
     /**
-     * Fetch user's active push subscriptions from database
+     * Fetch user's active push subscriptions from database across both table schemas
      *
      * @param string $userId
      * @return array<int, array<string, mixed>>
      */
     public static function getUserPushSubscriptions(string $userId): array
     {
+        $allSubscriptions = [];
+
         try {
             $db = \Src\Db::connect2();
-            $stmt = $db->prepare('SELECT * FROM pushNotification WHERE id = ?');
-            $stmt->execute([$userId]);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return !empty($rows) ? $rows : [];
+
+            // 1. Try modern user_push_subscriptions table
+            try {
+                $stmt = $db->prepare('SELECT endpoint, p256dh, auth_token FROM user_push_subscriptions WHERE user_id = ?');
+                $stmt->execute([$userId]);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                if (!empty($rows)) {
+                    foreach ($rows as $row) {
+                        $allSubscriptions[] = [
+                            'endpoint' => (string)($row['endpoint'] ?? ''),
+                            'p256dhKey' => (string)($row['p256dh'] ?? ''),
+                            'authKey'   => (string)($row['auth_token'] ?? $row['auth'] ?? ''),
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Table might not exist; fallback
+            }
+
+            // 2. Try legacy pushNotification table
+            try {
+                $stmt2 = $db->prepare('SELECT endpoint, p256dhKey, authKey FROM pushNotification WHERE id = ?');
+                $stmt2->execute([$userId]);
+                $rows2 = $stmt2->fetchAll(\PDO::FETCH_ASSOC);
+                if (!empty($rows2)) {
+                    foreach ($rows2 as $row2) {
+                        $allSubscriptions[] = [
+                            'endpoint' => (string)($row2['endpoint'] ?? ''),
+                            'p256dhKey' => (string)($row2['p256dhKey'] ?? $row2['p256dh'] ?? ''),
+                            'authKey'   => (string)($row2['authKey'] ?? $row2['auth'] ?? ''),
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Table might not exist
+            }
+
+            return $allSubscriptions;
         } catch (\Throwable $e) {
             error_log('[PushNotificationService] DB Fetch error: ' . $e->getMessage());
             return [];

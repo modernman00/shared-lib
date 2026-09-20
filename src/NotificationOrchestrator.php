@@ -102,11 +102,9 @@ final class NotificationOrchestrator
 
             $unreadCount = self::getUnreadCount($userId);
 
-            // 3. Check Presence
+            // 3. Channel 1: In-App Pusher Socket Broadcast (if active)
             $isUserOnline = self::isUserOnline($userId);
-
             if ($isUserOnline) {
-                // Channel 1: In-App Pusher Socket Broadcast
                 $userChannel = 'private-user-' . preg_replace('/[^A-Za-z0-9_-]/', '', $userId);
                 self::broadcastPusher($userChannel, 'new-notification', [
                     'id'           => $notificationId,
@@ -118,52 +116,39 @@ final class NotificationOrchestrator
                     'category'     => $category,
                     'metadata'     => $metadata ?? []
                 ]);
-
                 self::logDelivery($notificationId, 'in_app_socket', 'sent', 'Broadcast to active socket');
+            }
 
-                // If critical, also sync background badge via silent push
-                if ($priority === 'critical') {
-                    PushNotificationService::sendPush(
-                        userId: $userId,
-                        message: $body,
-                        url: $actionUrl,
-                        title: $title,
-                        tag: $tag,
-                        badgeCount: $unreadCount,
-                        isSilent: true
-                    );
-                }
+            // 4. Channel 2: High-Priority OS WebPush to all registered devices
+            $hasPushSubscriptions = !empty(PushNotificationService::getUserPushSubscriptions($userId));
+            $pushed = false;
+
+            if ($hasPushSubscriptions) {
+                $pushed = PushNotificationService::sendPush(
+                    userId: $userId,
+                    message: $body,
+                    url: $actionUrl,
+                    title: $title,
+                    tag: $tag,
+                    badgeCount: $unreadCount,
+                    isSilent: false,
+                    syncAction: null,
+                    targetNotificationId: $notificationId,
+                    options: $metadata
+                );
+                self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
             } else {
-                // Channel 2: High-Priority OS WebPush with Sound & Badging
-                $hasPushSubscriptions = !empty(PushNotificationService::getUserPushSubscriptions($userId));
-                $pushed = false;
+                self::logDelivery($notificationId, 'web_push', 'skipped_no_subscription', 'No active push endpoint registered for user');
+            }
 
-                if ($hasPushSubscriptions) {
-                    $pushed = PushNotificationService::sendPush(
-                        userId: $userId,
-                        message: $body,
-                        url: $actionUrl,
-                        title: $title,
-                        tag: $tag,
-                        badgeCount: $unreadCount,
-                        isSilent: false,
-                        syncAction: null,
-                        targetNotificationId: $notificationId,
-                        options: $metadata
-                    );
-                    self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
-                } else {
-                    self::logDelivery($notificationId, 'web_push', 'skipped_no_subscription', 'No active push endpoint registered for user');
-                }
-
-                // Channel 3: Queue or Immediately Trigger Fallback
-                if (in_array($priority, ['high', 'critical'], true)) {
-                    if (!$hasPushSubscriptions || !$pushed) {
-                        // User is offline with no push capability: trigger instant fallback queue
-                        self::logDelivery($notificationId, 'email', 'queued_immediate', 'Queued for immediate delivery (no push device)');
-                    } else {
-                        self::logDelivery($notificationId, 'email', 'queued', 'Queued for 15-minute fallback');
+            // 5. Channel 3: Email Fallback Queue (for high/critical priority when user is offline or has no push device)
+            if (in_array($priority, ['high', 'critical'], true)) {
+                if (!$hasPushSubscriptions || !$pushed) {
+                    if (!$isUserOnline) {
+                        self::logDelivery($notificationId, 'email', 'queued_immediate', 'Queued for immediate delivery (no push device / offline)');
                     }
+                } else if (!$isUserOnline) {
+                    self::logDelivery($notificationId, 'email', 'queued', 'Queued for 15-minute fallback');
                 }
             }
 
