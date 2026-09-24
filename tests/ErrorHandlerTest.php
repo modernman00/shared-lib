@@ -63,14 +63,33 @@ class ErrorHandlerTest extends TestCase
     // handleError — converts PHP native errors to ErrorException
     // -----------------------------------------------------------------------
 
-    public function testHandleErrorThrowsErrorException(): void
+    public function testHandleErrorThrowsErrorExceptionForUserError(): void
     {
         $previousLevel = error_reporting(E_ALL);
         try {
             $this->expectException(\ErrorException::class);
-            $this->expectExceptionMessage('Division by zero');
+            $this->expectExceptionMessage('Unrecoverable state');
 
-            ErrorHandler::handleError(E_WARNING, 'Division by zero', __FILE__, __LINE__);
+            ErrorHandler::handleError(E_USER_ERROR, 'Unrecoverable state', __FILE__, __LINE__);
+        } finally {
+            error_reporting($previousLevel);
+        }
+    }
+
+    /**
+     * Regression: v2.0.0 threw on every warning, so LoggedOut's session_regenerate_id()
+     * warning turned logout into a 500 in every app.
+     */
+    public function testHandleErrorLetsWarningsNoticesAndDeprecationsThrough(): void
+    {
+        $previousLevel = error_reporting(E_ALL);
+        try {
+            foreach ([E_WARNING, E_NOTICE, E_DEPRECATED, E_USER_WARNING, E_USER_NOTICE, E_USER_DEPRECATED] as $type) {
+                $this->assertFalse(
+                    ErrorHandler::handleError($type, 'non-fatal', __FILE__, __LINE__),
+                    "Error type {$type} must not abort the request."
+                );
+            }
         } finally {
             error_reporting($previousLevel);
         }

@@ -100,8 +100,9 @@ class LoggedOut implements RedirectInterface
             // Finally, destroy the session data on the server
             session_destroy();
 
-            // Regenerate session ID immediately after logout to prevent session fixation
-            // This effectively starts a *new* empty session, but with a fresh ID.
+            // Start a fresh, empty session with a new ID to prevent session fixation.
+            // session_regenerate_id() needs an active session, so it must follow session_start().
+            session_start();
             session_regenerate_id(true);
 
             $this->logger->info("User ID {$userId} logged out successfully. Session ID: {$currentSessionId}");

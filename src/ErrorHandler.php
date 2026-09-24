@@ -25,6 +25,9 @@ final class ErrorHandler
 {
     private static bool $registered = false;
 
+    /** Recoverable error types that should abort the request via handleException(). */
+    private const FATAL_ERROR_TYPES = [E_USER_ERROR, E_RECOVERABLE_ERROR];
+
     /**
      * Register the global exception + error handlers.
      * Safe to call multiple times — only registers once.
@@ -99,6 +102,13 @@ final class ErrorHandler
     ): bool {
         if (!(error_reporting() & $errno)) {
             return false; // error suppressed with @
+        }
+
+        // Only genuine errors abort the request. Warnings, notices and deprecations fall through
+        // to PHP's standard handling (logged, request continues) — escalating them turned harmless
+        // diagnostics (e.g. session_regenerate_id() after session_destroy() in LoggedOut) into 500s.
+        if (!in_array($errno, self::FATAL_ERROR_TYPES, true)) {
+            return false;
         }
 
         throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
