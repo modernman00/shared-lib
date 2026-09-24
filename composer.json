@@ -40,7 +40,7 @@
     "dompdf/dompdf": "^3.1",
     "mpdf/mpdf": "^8.3",
     "web-auth/webauthn-lib": "^5.3",
-    "minishlink/web-push": "^9.0",
+    "minishlink/web-push": "^9.0 || ^10.0",
     "pusher/pusher-php-server": "^7.0",
     "textmagic/textmagic-rest-php-v2": "^3.0"
   },
