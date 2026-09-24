@@ -127,6 +127,48 @@ final class NotificationOrchestrator
             $pushed = false;
 
             if ($hasPushSubscriptions) {
+                // Support passing rich options from $metadata into PushNotificationService::sendPush()
+                // image, vibrate, actions, renotify, requireInteraction, urgency, ttl, dir, lang, data
+                /** @var array<string, mixed> $pushOptions */
+                $pushOptions = is_array($metadata) ? $metadata : [];
+                $pushOptions['category'] = $pushOptions['category'] ?? $category;
+                $pushOptions['notificationId'] = $pushOptions['notificationId'] ?? $notificationId;
+
+                if (isset($metadata['image']) && is_string($metadata['image'])) {
+                    $pushOptions['image'] = $metadata['image'];
+                }
+                if (isset($metadata['vibrate']) && is_array($metadata['vibrate'])) {
+                    $pushOptions['vibrate'] = $metadata['vibrate'];
+                }
+                if (isset($metadata['actions']) && is_array($metadata['actions'])) {
+                    $pushOptions['actions'] = $metadata['actions'];
+                }
+                if (isset($metadata['renotify'])) {
+                    $pushOptions['renotify'] = (bool) $metadata['renotify'];
+                }
+                if (isset($metadata['requireInteraction'])) {
+                    $pushOptions['requireInteraction'] = (bool) $metadata['requireInteraction'];
+                }
+                if (isset($metadata['urgency']) && is_string($metadata['urgency'])) {
+                    $pushOptions['urgency'] = $metadata['urgency'];
+                } elseif (!isset($pushOptions['urgency'])) {
+                    $pushOptions['urgency'] = in_array($priority, ['high', 'critical'], true) ? 'high' : 'normal';
+                }
+                if (isset($metadata['ttl']) && is_numeric($metadata['ttl'])) {
+                    $pushOptions['ttl'] = (int) $metadata['ttl'];
+                }
+                if (isset($metadata['dir']) && is_string($metadata['dir'])) {
+                    $pushOptions['dir'] = $metadata['dir'];
+                }
+                if (isset($metadata['lang']) && is_string($metadata['lang'])) {
+                    $pushOptions['lang'] = $metadata['lang'];
+                }
+                if (isset($metadata['data']) && is_array($metadata['data'])) {
+                    $pushOptions['data'] = $metadata['data'];
+                } elseif (!isset($pushOptions['data']) && !empty($metadata)) {
+                    $pushOptions['data'] = $metadata;
+                }
+
                 $pushed = PushNotificationService::sendPush(
                     userId: $userId,
                     message: $body,
@@ -137,7 +179,7 @@ final class NotificationOrchestrator
                     isSilent: false,
                     syncAction: null,
                     targetNotificationId: $notificationId,
-                    options: $metadata
+                    options: $pushOptions
                 );
                 self::logDelivery($notificationId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush');
             } else {
@@ -164,6 +206,10 @@ final class NotificationOrchestrator
 
     /**
      * Synchronized Cross-Device Mark as Read
+     *
+     * @param string $notificationId
+     * @param string $userId
+     * @return bool True if mark operation succeeded
      */
     public static function markAsRead(string $notificationId, string $userId): bool
     {
@@ -176,7 +222,23 @@ final class NotificationOrchestrator
         try {
             $pdo = Db::connect2();
 
-            // 1. Update orchestration table
+            // 1. Query original tag for this notification to pass as target_tag for client coalescing
+            $targetTag = null;
+            try {
+                $tagStmt = $pdo->prepare("
+                    SELECT tag FROM notification_orchestration 
+                    WHERE id = :id AND user_id = :uid
+                ");
+                $tagStmt->execute([':id' => $notificationId, ':uid' => $userId]);
+                $tagVal = $tagStmt->fetchColumn();
+                if ($tagVal !== false && $tagVal !== null && $tagVal !== '') {
+                    $targetTag = (string) $tagVal;
+                }
+            } catch (\Throwable $e) {
+                // Table might not exist or query failed; graceful degradation
+            }
+
+            // 2. Update orchestration table
             try {
                 $stmt = $pdo->prepare("
                     UPDATE notification_orchestration 
@@ -186,7 +248,7 @@ final class NotificationOrchestrator
                 $stmt->execute([':id' => $notificationId, ':uid' => $userId]);
             } catch (\Throwable $e) {}
 
-            // 2. Update legacy table
+            // 3. Update legacy table
             try {
                 $legStmt = $pdo->prepare("
                     UPDATE notification 
@@ -202,33 +264,26 @@ final class NotificationOrchestrator
 
             $unreadCount = self::getUnreadCount($userId);
 
-            // 3. Broadcast sync event to open tabs
+            // 4. Broadcast sync event to open tabs via Pusher WebSocket
             $userChannel = 'private-user-' . preg_replace('/[^A-Za-z0-9_-]/', '', $userId);
             self::broadcastPusher($userChannel, 'notification-synced', [
                 'action'          => 'READ',
                 'notification_id' => $notificationId,
-                'unread_count'    => $unreadCount
+                'unread_count'    => $unreadCount,
+                'target_tag'      => $targetTag,
             ]);
 
-            // 4. Silent sync push to close OS banners on other devices & reset badge
-            PushNotificationService::sendPush(
-                userId: $userId,
-                message: '',
-                url: '',
-                title: '',
-                tag: 'sync-dismiss',
-                badgeCount: $unreadCount,
-                isSilent: true,
-                syncAction: 'CLOSE_NOTIFICATION',
-                targetNotificationId: $notificationId
-            );
+            // CRITICAL DR. SILAS THORNE / SEGUN GOVERNANCE FIX:
+            // DO NOT dispatch an empty silent push (isSilent: true, message: '', title: '') to background mobile devices,
+            // because on iOS Safari WebKit PWA, push events without calling showNotification() cause Safari to permanently
+            // revoke site push permissions, and on Chromium it displays a generic fallback banner!
 
             // 5. Abort pending email fallback
             try {
                 $cancelStmt = $pdo->prepare("
                     UPDATE notification_delivery_logs 
                     SET status = 'cancelled_already_read' 
-                    WHERE notification_id = :id AND channel = 'email' AND status = 'queued'
+                    WHERE notification_id = :id AND channel = 'email' AND status LIKE 'queued%'
                 ");
                 $cancelStmt->execute([':id' => $notificationId]);
             } catch (\Throwable $e) {}
@@ -236,6 +291,72 @@ final class NotificationOrchestrator
             return true;
         } catch (\Throwable $e) {
             error_log('[NotificationOrchestrator] markAsRead failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Synchronized Cross-Device Batch Mark All as Read
+     *
+     * @param string $userId
+     * @return bool True if batch mark succeeded
+     */
+    public static function markAllAsRead(string $userId): bool
+    {
+        $userId = trim($userId);
+        if ($userId === '') {
+            return false;
+        }
+
+        try {
+            $pdo = Db::connect2();
+
+            // 1. Atomic batch update on notification_orchestration
+            try {
+                $stmt = $pdo->prepare("
+                    UPDATE notification_orchestration 
+                    SET status = 'read', read_at = NOW() 
+                    WHERE user_id = :uid AND status = 'pending'
+                ");
+                $stmt->execute([':uid' => $userId]);
+            } catch (\Throwable $e) {
+                error_log('[NotificationOrchestrator] markAllAsRead orchestration error: ' . $e->getMessage());
+            }
+
+            // 2. Update legacy notification table for the user
+            try {
+                $legStmt = $pdo->prepare("
+                    UPDATE notification 
+                    SET notification_status = 'deleted' 
+                    WHERE receiver_id = :uid AND notification_status != 'deleted'
+                ");
+                $legStmt->execute([':uid' => $userId]);
+            } catch (\Throwable $e) {}
+
+            // 3. Broadcast Pusher sync event to active open tabs
+            $userChannel = 'private-user-' . preg_replace('/[^A-Za-z0-9_-]/', '', $userId);
+            self::broadcastPusher($userChannel, 'notification-synced', [
+                'action'       => 'MARK_ALL_READ',
+                'unread_count' => 0,
+            ]);
+
+            // 4. Cancel pending email delivery logs for this user's notifications
+            try {
+                $cancelStmt = $pdo->prepare("
+                    UPDATE notification_delivery_logs 
+                    SET status = 'cancelled_already_read' 
+                    WHERE channel = 'email' 
+                      AND status LIKE 'queued%' 
+                      AND notification_id IN (
+                          SELECT id FROM notification_orchestration WHERE user_id = :uid
+                      )
+                ");
+                $cancelStmt->execute([':uid' => $userId]);
+            } catch (\Throwable $e) {}
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[NotificationOrchestrator] markAllAsRead failed: ' . $e->getMessage());
             return false;
         }
     }
@@ -303,6 +424,11 @@ final class NotificationOrchestrator
 
     /**
      * Broadcast over Pusher safely
+     *
+     * @param string $channel
+     * @param string $event
+     * @param array<string, mixed> $data
+     * @return void
      */
     private static function broadcastPusher(string $channel, string $event, array $data): void
     {
@@ -328,22 +454,100 @@ final class NotificationOrchestrator
     }
 
     /**
-     * Log delivery attempts
+     * Log delivery attempts with zero-loss fallback.
+     *
+     * @param string $notificationId
+     * @param string $channel
+     * @param string $status
+     * @param string|null $details
+     * @return void
      */
-    private static function logDelivery(string $notificationId, string $channel, string $status, ?string $details = null): void
+    public static function logDelivery(string $notificationId, string $channel, string $status, ?string $details = null): void
     {
         try {
             $pdo = Db::connect2();
-            $stmt = $pdo->prepare("
-                INSERT INTO notification_delivery_logs (notification_id, channel, status, details, attempted_at)
-                VALUES (:nid, :channel, :status, :details, NOW())
-            ");
-            $stmt->execute([
-                ':nid'     => $notificationId,
-                ':channel' => $channel,
-                ':status'  => $status,
-                ':details' => $details,
-            ]);
-        } catch (\Throwable $e) {}
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO notification_delivery_logs (notification_id, channel, status, details, attempted_at)
+                    VALUES (:nid, :channel, :status, :details, NOW())
+                ");
+                $stmt->execute([
+                    ':nid'     => $notificationId,
+                    ':channel' => $channel,
+                    ':status'  => $status,
+                    ':details' => $details,
+                ]);
+                return;
+            } catch (\Throwable) {
+                // Fallback if schema has created_at instead of attempted_at
+                $stmt = $pdo->prepare("
+                    INSERT INTO notification_delivery_logs (notification_id, channel, status, details, created_at)
+                    VALUES (:nid, :channel, :status, :details, NOW())
+                ");
+                $stmt->execute([
+                    ':nid'     => $notificationId,
+                    ':channel' => $channel,
+                    ':status'  => $status,
+                    ':details' => $details,
+                ]);
+                return;
+            }
+        } catch (\Throwable $e) {
+            $fallbackPayload = [
+                'notification_id' => $notificationId,
+                'channel'         => $channel,
+                'status'          => $status,
+                'details'         => $details,
+                'error'           => $e->getMessage(),
+            ];
+            error_log('[NOTIFICATION_DELIVERY_LOG_FAILURE] ' . json_encode($fallbackPayload, JSON_UNESCAPED_SLASHES));
+        }
+    }
+
+    /**
+     * Retrieve delivery logs for a specific notification.
+     *
+     * @param string $notificationId
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getDeliveryLogs(string $notificationId): array
+    {
+        $notificationId = trim($notificationId);
+        if ($notificationId === '') {
+            return [];
+        }
+
+        try {
+            $pdo = Db::connect2();
+
+            // Attempt with attempted_at and created_at alias for universal schema compatibility
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT channel, status, details, attempted_at, attempted_at AS created_at 
+                    FROM notification_delivery_logs 
+                    WHERE notification_id = :nid 
+                    ORDER BY id ASC
+                ");
+                $stmt->execute([':nid' => $notificationId]);
+                /** @var array<int, array<string, mixed>> $rows */
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                return $rows;
+            } catch (\Throwable) {
+                // Fallback if schema uses created_at instead of attempted_at
+                $stmt = $pdo->prepare("
+                    SELECT channel, status, details, created_at, created_at AS attempted_at 
+                    FROM notification_delivery_logs 
+                    WHERE notification_id = :nid 
+                    ORDER BY id ASC
+                ");
+                $stmt->execute([':nid' => $notificationId]);
+                /** @var array<int, array<string, mixed>> $rows */
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                return $rows;
+            }
+        } catch (\Throwable $e) {
+            error_log('[NotificationOrchestrator] getDeliveryLogs failed: ' . $e->getMessage());
+            return [];
+        }
     }
 }

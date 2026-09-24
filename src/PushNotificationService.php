@@ -23,26 +23,72 @@ class PushNotificationService
 {
     /**
      * Red Team Allowlist for Push Service Endpoints (SSRF Mitigation)
+     *
+     * Strict verification:
+     * - Scheme MUST be 'https'
+     * - Port MUST be empty/omitted or strictly 443
+     * - User and password credentials MUST be empty
+     * - Exact hosts: 'fcm.googleapis.com', 'android.googleapis.com'
+     * - Exact domain suffixes: '.push.apple.com', '.push.services.mozilla.com', '.notify.windows.com', '.push.amazon.com'
+     * - Disallows bare 'googleapis.com' and arbitrary non-push subdomains
+     * - Disallows IP addresses (IPv4, IPv6, localhost, 169.254.169.254)
+     *
+     * @param string $endpoint
+     * @return bool
      */
     public static function isAllowedPushEndpoint(string $endpoint): bool
     {
         $parsed = parse_url($endpoint);
-        if (!$parsed || empty($parsed['host']) || empty($parsed['scheme']) || $parsed['scheme'] !== 'https') {
+        if (!$parsed || empty($parsed['host']) || empty($parsed['scheme'])) {
             return false;
         }
 
-        $host = strtolower($parsed['host']);
-        $allowedSuffixes = [
-            'push.apple.com',
+        // Scheme MUST be strictly https
+        if (strtolower($parsed['scheme']) !== 'https') {
+            return false;
+        }
+
+        // Port MUST be empty/omitted or strictly 443
+        if (isset($parsed['port']) && $parsed['port'] !== 443) {
+            return false;
+        }
+
+        // User and pass MUST be empty
+        if (!empty($parsed['user']) || !empty($parsed['pass'])) {
+            return false;
+        }
+
+        $host = trim(strtolower($parsed['host']), '[]');
+
+        // Disallow IP addresses (IPv4, IPv6, localhost, cloud metadata 169.254.169.254)
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false || $host === 'localhost') {
+            return false;
+        }
+
+        // Exact allowed hosts (FCM / GCM)
+        $exactHosts = [
             'fcm.googleapis.com',
-            'googleapis.com',
+            'android.googleapis.com',
+            'push.apple.com',
             'push.services.mozilla.com',
             'notify.windows.com',
             'push.amazon.com',
         ];
 
+        if (in_array($host, $exactHosts, true)) {
+            return true;
+        }
+
+        // Exact domain suffixes (Apple APNs, Mozilla Autopush, Windows WNS, Amazon ADM)
+        $allowedSuffixes = [
+            '.push.apple.com',
+            '.push.services.mozilla.com',
+            '.notify.windows.com',
+            '.push.amazon.com',
+        ];
+
         foreach ($allowedSuffixes as $suffix) {
-            if ($host === $suffix || str_ends_with($host, '.' . $suffix)) {
+            if (str_ends_with($host, $suffix)) {
                 return true;
             }
         }
@@ -51,19 +97,19 @@ class PushNotificationService
     }
 
     /**
-     * Send push notification to a user or list of users
+     * Send rich PWA Web Push notification to user(s) with native Chromium and WebKit parity.
      *
-     * @param string|int|array<int, string|int>|null $userId
-     * @param string $message
-     * @param string|null $url
-     * @param string $title
-     * @param string $tag
-     * @param int|null $badgeCount
-     * @param bool $isSilent
-     * @param string|null $syncAction
-     * @param string|null $targetNotificationId
-     * @param array<string, mixed>|null $options
-     * @return bool
+     * @param string|int|array<int, string|int>|null $userId Target user ID or array of user IDs
+     * @param string $message Main notification body text
+     * @param string|null $url Navigation destination URL upon clicking notification
+     * @param string $title Bold headline title
+     * @param string $tag Coalescing identifier (max 32 chars URL-safe)
+     * @param int|null $badgeCount Unread counter for Web Badging API (0 clears badge)
+     * @param bool $isSilent Backward-compatibility flag for silent notifications
+     * @param string|null $syncAction Backward-compatibility action flag (e.g. 'CLOSE_NOTIFICATION')
+     * @param string|null $targetNotificationId Backward-compatibility target notification ID
+     * @param array<string, mixed>|null $options Rich notification configuration
+     * @return bool True if queued/dispatched to at least one valid subscription
      */
     public static function sendPush(
         string|int|array|null $userId,
@@ -94,32 +140,129 @@ class PushNotificationService
 
         $auth = [
             'VAPID' => [
-                'subject' => $subject,
-                'publicKey' => $publicKey,
+                'subject'    => $subject,
+                'publicKey'  => $publicKey,
                 'privateKey' => $privateKey,
             ],
         ];
 
         try {
-            $defaultOptions = [
-                'timeout' => 3, // Bounded 3-second timeout (Gate 4)
+            // Gate 4 Bounded cURL Timeouts & Open-Redirect SSRF Mitigation
+            $defaultOptions = [];
+            $timeout = 3;
+            $clientOptions = [
+                'timeout'         => 3.0,
+                'connect_timeout' => 2.0,
+                'allow_redirects' => false,
+                'http_errors'     => false,
             ];
-            $webPush = new WebPush($auth, $defaultOptions);
+            $webPush = new WebPush($auth, $defaultOptions, $timeout, $clientOptions);
             $webPush->setReuseVAPIDHeaders(true);
 
-            $basePayloadArray = [
-                'title'                => $title,
-                'body'                 => $message,
-                'url'                  => $url ?: '/',
-                'icon'                 => $appLogo,
-                'badge'                => '/public/img/favicon/favicon-32x32.png',
-                'tag'                  => $tag,
-                'isSilent'             => $isSilent,
-                'syncAction'           => $syncAction,
-                'targetNotificationId' => $targetNotificationId,
-                'actions'              => $options['actions'] ?? [],
-                'timestamp'            => time() * 1000,
+            // Extract & normalize rich options
+            $effectiveUrl = $url ?: (string)($options['url'] ?? '/');
+            $rawTag = (string)($options['tag'] ?? $tag);
+            $cleanedTag = preg_replace('/[^A-Za-z0-9_-]/', '', $rawTag) ?? '';
+            $sanitizedTag = substr($cleanedTag, 0, 32);
+
+            // Renotify & tag normalization (WHATWG throw rule defense: renotify requires non-empty tag)
+            $renotify = (bool)($options['renotify'] ?? false);
+            if ($sanitizedTag === '') {
+                $sanitizedTag = 'general';
+            }
+
+            // Silent & vibration conflict resolution (WHATWG throw rule defense)
+            $silent = (bool)($options['silent'] ?? $isSilent);
+            $isSilentEffective = $silent;
+
+            $vibrate = null;
+            if (!$silent && !empty($options['vibrate']) && is_array($options['vibrate'])) {
+                $vibrate = array_values(array_map('intval', $options['vibrate']));
+            }
+
+            // Media & icons
+            $image = isset($options['image']) && is_string($options['image']) && $options['image'] !== ''
+                ? $options['image']
+                : null;
+            if ($image !== null) {
+                $appUrl = rtrim((string)(getenv('APP_URL') ?: ($_ENV['APP_URL'] ?? '')), '/');
+                if ($appUrl !== '' && str_starts_with($image, '/')) {
+                    $image = $appUrl . $image;
+                }
+            }
+
+            $icon = isset($options['icon']) && is_string($options['icon']) && $options['icon'] !== ''
+                ? $options['icon']
+                : $appLogo;
+
+            $badge = isset($options['badge']) && is_string($options['badge']) && $options['badge'] !== ''
+                ? $options['badge']
+                : '/public/img/favicon/favicon-32x32.png';
+
+            // Interaction and presentation flags
+            $requireInteraction = (bool)($options['requireInteraction'] ?? false);
+            $dir = in_array($options['dir'] ?? '', ['auto', 'ltr', 'rtl'], true) ? (string)$options['dir'] : 'auto';
+            $lang = isset($options['lang']) && is_string($options['lang']) && $options['lang'] !== '' ? (string)$options['lang'] : 'en-US';
+            $timestamp = isset($options['timestamp']) && is_numeric($options['timestamp'])
+                ? (int)$options['timestamp']
+                : (int)(round(microtime(true) * 1000));
+
+            // Actions array normalization (max 2 actions, typed action items)
+            $actions = [];
+            $rawActions = $options['actions'] ?? [];
+            if (is_array($rawActions)) {
+                $count = 0;
+                foreach ($rawActions as $act) {
+                    if ($count >= 2) {
+                        break;
+                    }
+                    if (!is_array($act) || empty($act['action']) || empty($act['title'])) {
+                        continue;
+                    }
+                    $actionItem = [
+                        'action' => (string)$act['action'],
+                        'title'  => (string)$act['title'],
+                    ];
+                    if (!empty($act['icon']) && is_string($act['icon'])) {
+                        $actionItem['icon'] = $act['icon'];
+                    }
+                    $actType = $act['type'] ?? 'button';
+                    if (in_array($actType, ['button', 'text'], true)) {
+                        $actionItem['type'] = $actType;
+                    }
+                    if (!empty($act['placeholder']) && is_string($act['placeholder'])) {
+                        $actionItem['placeholder'] = $act['placeholder'];
+                    }
+                    $actions[] = $actionItem;
+                    $count++;
+                }
+            }
+
+            // RFC 8030 Gateway Header Options
+            if (isset($options['ttl']) && is_numeric($options['ttl']) && (int)$options['ttl'] >= 0) {
+                $ttl = (int)$options['ttl'];
+            } else {
+                $ttl = $silent ? 300 : 86400;
+            }
+
+            if (!empty($options['urgency']) && in_array($options['urgency'], ['very-low', 'low', 'normal', 'high'], true)) {
+                $urgency = (string)$options['urgency'];
+            } else {
+                $urgency = $silent ? 'low' : 'high';
+            }
+
+            $webPushOptions = [
+                'TTL'     => $ttl,
+                'urgency' => $urgency,
+                'topic'   => $sanitizedTag,
             ];
+
+            // Metadata resolution
+            $customData = is_array($options['data'] ?? null) ? $options['data'] : [];
+            $targetNotifId = $targetNotificationId ?: ($options['targetNotificationId'] ?? ($customData['targetNotificationId'] ?? null));
+            $notifId = $targetNotifId ?: ($options['notificationId'] ?? ($customData['notificationId'] ?? null));
+            $category = (string)($options['category'] ?? ($customData['category'] ?? 'general'));
+            $syncActionEffective = $syncAction ?: ($options['syncAction'] ?? null);
 
             $hasSubscriptions = false;
 
@@ -129,8 +272,8 @@ class PushNotificationService
 
                 // Centralized Automatic Red Counter Resolution:
                 // Ensure every active push notification delivers an integer badge counter
-                $effectiveBadgeCount = $badgeCount;
-                if ($effectiveBadgeCount === null && !$isSilent) {
+                $effectiveBadgeCount = $badgeCount ?? ($options['badgeCount'] ?? null);
+                if ($effectiveBadgeCount === null && !$silent) {
                     if (class_exists('\\Src\\NotificationOrchestrator')) {
                         try {
                             $computed = \Src\NotificationOrchestrator::getUnreadCount($uidStr);
@@ -143,17 +286,53 @@ class PushNotificationService
                     }
                 }
 
-                $userPayloadArray = array_merge($basePayloadArray, [
-                    'badgeCount' => $effectiveBadgeCount,
+                $clearBadge = ($effectiveBadgeCount === 0) || !empty($options['clearBadge']);
+
+                // Nested data object containing url, tag, badgeCount, notificationId, actions, and custom data
+                $nestedData = array_merge($customData, [
+                    'url'                  => $effectiveUrl,
+                    'tag'                  => $sanitizedTag,
+                    'badgeCount'           => $effectiveBadgeCount,
+                    'clearBadge'           => $clearBadge,
+                    'notificationId'       => $notifId,
+                    'targetNotificationId' => $targetNotifId,
+                    'category'             => $category,
+                    'actions'              => $actions,
                 ]);
+
+                // Dual-Level Payload Structure (21 top-level keys matching W3C + backward-compat)
+                $userPayloadArray = [
+                    'title'                => $title,
+                    'body'                 => $message,
+                    'url'                  => $effectiveUrl,
+                    'icon'                 => $icon,
+                    'badge'                => $badge,
+                    'image'                => $image,
+                    'tag'                  => $sanitizedTag,
+                    'badgeCount'           => $effectiveBadgeCount,
+                    'clearBadge'           => $clearBadge,
+                    'vibrate'              => $vibrate,
+                    'renotify'             => $renotify,
+                    'silent'               => $silent,
+                    'requireInteraction'   => $requireInteraction,
+                    'dir'                  => $dir,
+                    'lang'                 => $lang,
+                    'actions'              => $actions,
+                    'data'                 => $nestedData,
+                    'timestamp'            => $timestamp,
+                    'isSilent'             => $isSilentEffective,
+                    'syncAction'           => $syncActionEffective,
+                    'targetNotificationId' => $targetNotifId,
+                ];
+
                 $payload = json_encode($userPayloadArray, JSON_UNESCAPED_SLASHES);
 
                 foreach ($subscriptions as $sub) {
                     $endpoint = (string)($sub['endpoint'] ?? '');
                     $p256dh = (string)($sub['p256dhKey'] ?? $sub['p256dh'] ?? '');
-                    $auth = (string)($sub['authKey'] ?? $sub['auth'] ?? '');
+                    $authKey = (string)($sub['authKey'] ?? $sub['auth'] ?? '');
 
-                    if ($endpoint === '' || $p256dh === '' || $auth === '') {
+                    if ($endpoint === '' || $p256dh === '' || $authKey === '') {
                         continue;
                     }
 
@@ -164,14 +343,15 @@ class PushNotificationService
                     }
 
                     $subscriptionObject = Subscription::create([
-                        'endpoint' => $endpoint,
-                        'keys' => [
+                        'endpoint'        => $endpoint,
+                        'keys'            => [
                             'p256dh' => $p256dh,
-                            'auth' => $auth,
+                            'auth'   => $authKey,
                         ],
+                        'contentEncoding' => 'aes128gcm',
                     ]);
 
-                    $webPush->queueNotification($subscriptionObject, $payload ?: null);
+                    $webPush->queueNotification($subscriptionObject, $payload ?: null, $webPushOptions);
                     $hasSubscriptions = true;
                 }
             }
