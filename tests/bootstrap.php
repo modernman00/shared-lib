@@ -19,7 +19,13 @@ $loggerMock = Mockery::mock('Logger');
 $loggerMock->shouldReceive('error')->andReturnNull();
 $loggerMock->shouldReceive('info')->andReturnNull();
 $loggerMock->shouldReceive('debug')->andReturnNull();
+$loggerMock->shouldReceive('log')->andReturnNull();
+$loggerMock->shouldReceive('warning')->andReturnNull();
+$loggerMock->shouldReceive('critical')->andReturnNull();
 
 Mockery::mock('alias:Src\LoggerFactory')
     ->shouldReceive('getLogger')
-    ->andReturn($loggerMock);
+    ->andReturn($loggerMock)
+    ->shouldReceive('resetLogger')
+    ->andReturnNull();
+

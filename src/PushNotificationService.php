@@ -107,14 +107,13 @@ class PushNotificationService
             $webPush = new WebPush($auth, $defaultOptions);
             $webPush->setReuseVAPIDHeaders(true);
 
-            $payloadArray = [
+            $basePayloadArray = [
                 'title'                => $title,
                 'body'                 => $message,
                 'url'                  => $url ?: '/',
                 'icon'                 => $appLogo,
                 'badge'                => '/public/img/favicon/favicon-32x32.png',
                 'tag'                  => $tag,
-                'badgeCount'           => $badgeCount,
                 'isSilent'             => $isSilent,
                 'syncAction'           => $syncAction,
                 'targetNotificationId' => $targetNotificationId,
@@ -122,12 +121,32 @@ class PushNotificationService
                 'timestamp'            => time() * 1000,
             ];
 
-            $payload = json_encode($payloadArray, JSON_UNESCAPED_SLASHES);
             $hasSubscriptions = false;
 
             foreach ($userIds as $uid) {
                 $uidStr = (string) $uid;
                 $subscriptions = self::getUserPushSubscriptions($uidStr);
+
+                // Centralized Automatic Red Counter Resolution:
+                // Ensure every active push notification delivers an integer badge counter
+                $effectiveBadgeCount = $badgeCount;
+                if ($effectiveBadgeCount === null && !$isSilent) {
+                    if (class_exists('\\Src\\NotificationOrchestrator')) {
+                        try {
+                            $computed = \Src\NotificationOrchestrator::getUnreadCount($uidStr);
+                            $effectiveBadgeCount = $computed > 0 ? $computed : 1;
+                        } catch (\Throwable) {
+                            $effectiveBadgeCount = 1;
+                        }
+                    } else {
+                        $effectiveBadgeCount = 1;
+                    }
+                }
+
+                $userPayloadArray = array_merge($basePayloadArray, [
+                    'badgeCount' => $effectiveBadgeCount,
+                ]);
+                $payload = json_encode($userPayloadArray, JSON_UNESCAPED_SLASHES);
 
                 foreach ($subscriptions as $sub) {
                     $endpoint = (string)($sub['endpoint'] ?? '');

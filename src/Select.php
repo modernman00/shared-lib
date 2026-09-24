@@ -107,38 +107,30 @@ class Select extends Db
      * @param array|null $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"];
      *
      * @return array<int, mixed>
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
     public function selectFn(string $query, ?array $bind = null): array
     {
-        try {
-            $sql = $query;
-            $result = $this->connect()->prepare($sql);
-            $result->execute($bind);
+        $sql = $query;
+        $result = $this->connect()->prepare($sql);
+        $result->execute($bind);
 
-            return $result->fetchAll();
-        } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return [];
-        }
+        return $result->fetchAll();
     }
 
     /**
      * @return array<int, mixed>
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
     public function selectFn1(string $query, ?array $bind = null): array
     {
-        try {
-            $sql = $query;
-            $result = $this->connect()->prepare($sql);
-            $result->execute($bind);
+        $sql = $query;
+        $result = $this->connect()->prepare($sql);
+        $result->execute($bind);
 
-            return $result->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return [];
-        }
+        return $result->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -146,82 +138,64 @@ class Select extends Db
      * @param array|null $bind
      *
      * @return array<int, mixed>
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
     public static function selectFn2(string $query, ?array $bind = null): array
     {
-        try {
-            $sql = $query;
-            $result = self::connect2()->prepare($sql);
-            $result->execute($bind);
+        $sql = $query;
+        $result = self::connect2()->prepare($sql);
+        $result->execute($bind);
 
-            return $result->fetchAll();
-        } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return [];
-        }
+        return $result->fetchAll();
     }
 
     /**
-     * Undocumented function.
-     *
      * @param string $query - SELECT * FROM account WHERE id = ? || SELECT * FROM $table WHERE $dev = ? AND $dev2 = ?
      * @param array $bind = ['woguns@ymail.com', "wale@loaneasyfinance.com"];
      *
-     * @return mixed
+     * @return string|int
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
-    public function selectCountFn(string $query, ?array $bind = null): string|array|int
+    public function selectCountFn(string $query, ?array $bind = null): string|int
     {
-        try {
-            $sql = $query;
-            $result = $this->connect()->prepare(query: $sql);
-            $result->execute(params: $bind);
+        $sql = $query;
+        $result = $this->connect()->prepare(query: $sql);
+        $result->execute(params: $bind);
 
-            return $result->rowCount();
-        } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return [];
-        }
+        return $result->rowCount();
     }
 
     /**
      * @param string $query
      * @param array|null $bind
      *
-     * @return string|array|int
+     * @return string|int
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
-    public static function selectCountFn2(string $query, ?array $bind = null): string|array|int
+    public static function selectCountFn2(string $query, ?array $bind = null): string|int
     {
-        try {
-            $sql = $query;
-            $result = self::connect2()->prepare(query: $sql);
-            $result->execute(params: $bind);
+        $sql = $query;
+        $result = self::connect2()->prepare(query: $sql);
+        $result->execute(params: $bind);
 
-            return $result->rowCount();
-        } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return [];
-        }
+        return $result->rowCount();
     }
 
     /**
      * @param mixed $table
      *
      * @return mixed
+     *
+     * @throws PDOException if the query fails; callers are responsible for catching.
      */
     public function selectCountAll($table): mixed
     {
-        try {
-            $query = "SELECT COUNT(*) FROM $table";
+        $query = "SELECT COUNT(*) FROM $table";
 
-            return $this->connect()->query($query)->fetchColumn();
-        } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return [];
-        }
+        return $this->connect()->query($query)->fetchColumn();
     }
 
     /**
@@ -230,25 +204,23 @@ class Select extends Db
      * @param string $switch to switch between ONE_IDENTIFIER or TWO_IDENTIFIERS
      *
      * @return mixed
+     *
+     * @throws \Throwable if query building or execution fails; callers are responsible for catching.
      */
     public static function combineSelect(array $array, $callback, string $switch)
     {
-        try {
-            $query = match ($switch) {
-                'ONE_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column']),
+        $query = match ($switch) {
+            'ONE_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column']),
 
-                'ONE_IDENTIFIER_COLUMN_ID' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], identifier1: $array['identifier1']),
+            'ONE_IDENTIFIER_COLUMN_ID' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], identifier1: $array['identifier1']),
 
-                'TWO_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], column2: $array['column2']),
+            'TWO_IDENTIFIER_COLUMN' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], column: $array['column'], column2: $array['column2']),
 
-                'ONE_IDENTIFIER' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1']),
+            'ONE_IDENTIFIER' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1']),
 
-                'TWO_IDENTIFIERS' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1'], identifier2: $array['identifier2']),
-            };
+            'TWO_IDENTIFIERS' => self::formAndMatchQuery(selection: $array['selection'], table: $array['table'], identifier1: $array['identifier1'], identifier2: $array['identifier2']),
+        };
 
-            return self::$callback($query, $array['bind'] ?? null);
-        } catch (\Throwable $th) {
-            Utility::showError(th: $th);
-        }
+        return self::$callback($query, $array['bind'] ?? null);
     }
 }

@@ -101,6 +101,9 @@ final class NotificationOrchestrator
             }
 
             $unreadCount = self::getUnreadCount($userId);
+            if ($unreadCount <= 0) {
+                $unreadCount = 1; // Newly dispatched alert guarantees at least 1 red badge counter
+            }
 
             // 3. Channel 1: In-App Pusher Socket Broadcast (if active)
             $isUserOnline = self::isUserOnline($userId);
