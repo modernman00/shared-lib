@@ -295,21 +295,13 @@ class Utility
 
     // GET IP ADDRESS
 
+    /**
+     * The address the request comes from, for rate limits and IP bans. Forwarding
+     * headers are only believed from proxies listed in TRUSTED_PROXIES (see ClientIp).
+     */
     public static function getUserIpAddr(): string
     {
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            //ip from share internet
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            //ip pass from proxy
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            // REMOTE_ADDR is absent on CLI and can be unset behind some FastCGI
-            // setups; fall back rather than return null against a string type.
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        }
-
-        return $ip;
+        return ClientIp::fromGlobals();
     }
 
     /**

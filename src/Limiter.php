@@ -29,6 +29,46 @@ class Limiter extends Db
     }
 
     /**
+     * The two buckets a request counts against.
+     *  - arg: for login it is the account (email), so guessing one account from many
+     *    devices still hits one limit. For anything else (a table name from
+     *    SubmitPostData, an action name) it is this person: connection + session.
+     *    It used to be the bare name, which made one bucket for the whole platform.
+     *  - ip: this connection, per action (as before). Deliberately not per $arg:
+     *    callers such as the recovery-code check pass the guessed value as $arg, and
+     *    a per-$arg bucket would let each guess start a fresh count. Dropping the
+     *    session cookie does not reset it.
+     *
+     * @return array{arg: string, ip: string}
+     */
+    public static function bucketKeys(string $arg, string $action, string $ipAddress, string $sessionId): array
+    {
+        $argKey = str_replace('$', '', $arg);
+        if ($action === 'login') {
+            return ['arg' => "{$argKey}:{$argKey}", 'ip' => "ip:{$action}:{$ipAddress}"];
+        }
+        return [
+            'arg' => "{$argKey}:{$ipAddress}:{$sessionId}",
+            'ip' => "ip:{$action}:{$ipAddress}",
+        ];
+    }
+
+    /**
+     * The Cypress header skips limits for browser tests on developer machines only.
+     * Anyone can send a header, so in production, staging or an unknown environment
+     * it is ignored.
+     *
+     * @param array<string, mixed> $server
+     */
+    public static function testHeaderSkipsLimits(array $server, string $appEnv): bool
+    {
+        if (!isset($server['HTTP_X_CYPRESS_TEST'])) {
+            return false;
+        }
+        return in_array(strtolower(trim($appEnv)), ['local', 'development', 'testing'], true);
+    }
+
+    /**
      * Applies rate limiting to a given argument and the user's IP address.
      *
      * @param string $arg the argument to be rate-limited, typically an email address or table name
@@ -38,7 +78,8 @@ class Limiter extends Db
      */
     public static function limit(string $arg, string $action = 'default')
     {
-        if (\isTestEnv() || isset($_SERVER['HTTP_X_CYPRESS_TEST'])) {
+        $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV');
+        if (\isTestEnv() || self::testHeaderSkipsLimits($_SERVER, is_string($appEnv) ? $appEnv : '')) {
             $noop = new class {
                 public function reset(): void {}
                 public function consume(int $tokens = 1): object {
@@ -76,12 +117,11 @@ class Limiter extends Db
                 'interval' => sprintf('%d seconds', $window),
             ], $storage);
 
-            // remove $ from $arg
-            $argKey = str_replace('$', '', $arg);
+            $keys = self::bucketKeys($arg, $action, $ipAddress, session_id() ?: 'no_session');
 
             // Check rate limit
-            self::$argLimiter = $rateLimiterFactory->create("$argKey:$arg");
-            self::$ipLimiter = $rateLimiterFactory->create("ip:$action:{$ipAddress}");
+            self::$argLimiter = $rateLimiterFactory->create($keys['arg']);
+            self::$ipLimiter = $rateLimiterFactory->create($keys['ip']);
 
             $emailLimit = self::$argLimiter->consume(1);
             $ipLimit = self::$ipLimiter->consume(1);
