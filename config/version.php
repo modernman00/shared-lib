@@ -1,3 +1,3 @@
 <?php
-define('APP_VERSION', 'v2.0.4');
+define('APP_VERSION', 'v2.0.5');
 
