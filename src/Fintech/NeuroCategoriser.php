@@ -60,8 +60,8 @@ class NeuroCategoriser
             return $fuzzyMatch;
         }
 
-        // ── Stage 5: Semantic Keyword & Token Fallback ────────────────────────
-        $semanticCat = $this->semanticTokenClassifier($normalized);
+        // ── Stage 5: Semantic Keyword & Token Fallback (Test both raw and normalized) ──
+        $semanticCat = $this->semanticTokenClassifier($normalized, $cleanDesc);
         if ($semanticCat !== null) {
             return $semanticCat;
         }
@@ -77,10 +77,10 @@ class NeuroCategoriser
         // 1. Convert to uppercase UTF-8
         $clean = mb_strtoupper($raw, 'UTF-8');
 
-        // 2. Strip common fintech prefixes, payment channels, and aggregator tokens
+        // 2. Strip common fintech prefixes and aggregator tokens
         $prefixes = [
             '/^(SQ\s*\*|SUMUP\s*\*|IZ\s*\*|PAYPAL\s*\*|TST\s*\*|CURVE\s*\*|STRIPE\s*\*|KLARNA\s*\*)/i',
-            '/^(VISA\s+DEBIT\s+|POS\s+PURCHASE\s+|CONTACTLESS\s+|CARD\s+PURCHASE\s+|DIRECT\s+DEBIT\s+|BILL\s+PAYMENT\s+TO\s+|STANDING\s+ORDER\s+TO\s+|STANDING\s+ORDER\s+|PAYMENT\s+VIA\s+MOBILE\s*-\s*|AUTOMATED\s+CREDIT\s+|PYMT\s+FP\s+|FP\s+\d+\s+)/i',
+            '/^(VISA\s+DEBIT\s+|POS\s+PURCHASE\s+|CONTACTLESS\s+|CARD\s+PURCHASE\s+)/i',
         ];
         foreach ($prefixes as $pattern) {
             $clean = preg_replace($pattern, '', $clean) ?? $clean;
@@ -91,10 +91,10 @@ class NeuroCategoriser
             return 'AMAZON';
         }
 
-        // 3. Strip common location suffixes and trailing terminal IDs / numeric reference codes
+        // 3. Strip common location suffixes and trailing terminal IDs
         $clean = preg_replace('/\b(LONDON|MANCHESTER|BIRMINGHAM|LEEDS|GLASGOW|ENG|GBR|UK)\b.*$/i', '', $clean) ?? $clean;
         $clean = preg_replace('/[#\*]\d+.*$/', '', $clean) ?? $clean;
-        $clean = preg_replace('/\b\d{3,}\b/', '', $clean) ?? $clean;
+        $clean = preg_replace('/\b\d{4,}\b/', '', $clean) ?? $clean;
 
         // 4. Strip punctuation and multiple spaces
         $clean = preg_replace('/[^\w\s&+-]/u', ' ', $clean) ?? $clean;
@@ -108,6 +108,10 @@ class NeuroCategoriser
      */
     private function findFuzzyMatch(string $normalized): ?string
     {
+        if ($normalized === '') {
+            return null;
+        }
+
         $bestScore = 0.0;
         $bestCategory = null;
 
@@ -127,17 +131,20 @@ class NeuroCategoriser
     }
 
     /**
-     * Classifies general tokens (e.g. "HOTEL", "CAFE", "PHARMACY", "DENTAL", "PETS").
+     * Classifies general tokens (e.g. "HOTEL", "CAFE", "PHARMACY", "DENTAL", "PETS", "AUTOMATED CREDIT", "PAYMENT VIA MOBILE").
      */
-    private function semanticTokenClassifier(string $normalized): ?string
+    private function semanticTokenClassifier(string $normalized, string $raw = ''): ?string
     {
+        $target = mb_strtoupper($raw . ' ' . $normalized, 'UTF-8');
+
         $patterns = [
-            'SALARY_INCOME' => ['/\b(SALARY|PAYROLL|WAGES|WAGE|PAYE|EMPLOYER|DIRECT CREDIT|DWP|UNIVERSAL CREDIT|CHILD BENEFIT|PENSION|PIPS|HMRC)\b/i'],
+            'SALARY_INCOME' => ['/\b(AUTOMATED CREDIT|DIRECT CREDIT|SALARY|PAYROLL|WAGES|WAGE|PAYE|EMPLOYER|DWP|UNIVERSAL CREDIT|CHILD BENEFIT|PENSION|PIPS|HMRC)\b/i'],
+            'TRANSFERS'     => ['/\b(PAYMENT VIA MOBILE|STANDING ORDER|FASTER PAYMENT|PYMT FP|FP\s+\d+|TR FP|\bFP\b|TRANSFER TO|TRANSFER FROM|TRF TO|TRF FROM|ATM|CASH WITHDRAWAL|HSBC UK BANK|BARCLAYS|NATWEST|LLOYDS|SANTANDER|MONZO|REVOLUT|STARLING)\b/i'],
             'GAMBLING'      => ['/\b(BET365|SKYBET|SKY BET|PADDY POWER|LADBROKES|WILLIAM HILL|BETFAIR|BETFRED|CORAL|CASUMO|TOMBOLA|POKER|CASINO|888|GROSVENOR|GALA BINGO|MECCA BINGO|VIRGIN BET|BETWAY|BOYLESPORTS|UNIBET|MIDNITE|LOTTO|NATIONAL LOTTERY|POSTCODE LOTTERY)\b/i'],
             'BNPL_CREDIT'   => ['/\b(KLARNA|CLEARPAY|LAYBUY|ZILCH|DRAFTY|LENDING STREAM|FERRATUM|WAGESTREAM|MYJAR|SAFETYNET|OODLE|MONEYBOAT|118 118|CREDITSPRING|VERY\.CO|LITTLEWOODS)\b/i'],
             'BANK_CHARGES'  => ['/\b(UNPAID|RETURNED DD|UNPAID DD|RETURNED DIRECT DEBIT|INSUFFICIENT FUNDS|RETURNED ITEM|UNPAID CHEQUE|OVERDRAFT FEE|BANK CHARGE)\b/i'],
             'HOUSING_RENT'  => ['/\b(HARDWARE|PLUMBING|TIMBER|GARDEN|FURNITURE|CARPET|DECORATING|ESTATE AGENT|RENT|LANDLORD|MORTGAGE|HOUSING|LETTINGS|TENANCY|COUNCIL TAX)\b/i'],
-            'UTILITIES'     => ['/\b(BRITISH GAS|EDF|E\.ON|OCTOPUS|SCOTTISH POWER|THAMES WATER|SEVERN TRENT|ANGLIAN WATER|SOUTHERN WATER|WATER|ELECTRIC|GAS|ENERGY|UTILITY)\b/i'],
+            'UTILITIES'     => ['/\b(BRITISH GAS|EDF|E\.ON|OCTOPUS|SCOTTISH POWER|THAMES WATER|SEVERN TRENT|ANGLIAN WATER|SOUTHERN WATER|WATER|ELECTRIC|GAS|ENERGY|UTILITY|BILL PAYMENT)\b/i'],
             'COMMS'         => ['/\b(BT GROUP|BT BROADBAND|EE MOBILE|EE LIMITED|VODAFONE|O2 MOBILE|VIRGIN MEDIA|TALKTALK|PLUSNET|GIFFGAFF|SMARTY|THREE UK|BROADBAND|TELECOM|FIBRE|CELLULAR|WIRELESS)\b/i', '/^(EE|O2|BT|SKY)\s/i'],
             'GROCERIES'     => ['/\b(TESCO|SAINSBURYS|SAINSBURY|ASDA|MORRISONS|ALDI|LIDL|WAITROSE|MARKS & SPENCER|M&S|CO-OP|COOP|ICELAND|FARMFOODS|OCADO|SUPERMARKET|GROCERY|MARKET|FOODSTORE|BAKERY|BUTCHER|GREENGROCER)\b/i'],
             'DEBT_REPAYMENT'=> ['/\b(BARCLAYCARD|CAPITAL ONE|MBNA|VANQUIS|AQUA|HALIFAX CARD|NATWEST CARD|LOAN REPAYMENT|LOAN|CREDIT CARD|FINANCE|HP REPAYMENT|PCP|AMEX|AMERICAN EXPRESS)\b/i'],
@@ -146,14 +153,13 @@ class NeuroCategoriser
             'SUBSCRIPTIONS' => ['/\b(NETFLIX|SPOTIFY|DISNEY|PRIME VIDEO|AMAZON PRIME|APPLE\.COM|GOOGLE PLAY|PLAYSTATION|XBOX|NINTENDO|PUREGYM|THE GYM|GYM|DAVID LLOYD)\b/i'],
             'WELLBEING'     => ['/\b(PHARMACY|CHEMIST|HEALTH|FITNESS|YOGA|MASSAGE|SALON|BARBER|HAIR|DENTAL|OPTICIAN|DOCTOR|CLINIC)\b/i'],
             'SHOPPING'      => ['/\b(AMAZON|AMZN|ARGOS|EBAY|BOOTS|SUPERDRUG|CURRYS|IKEA|NEXT|PRIMARK|ZARA|ASOS|TK MAXX|B&M|HOME BARGAINS|STORE|FASHION|BOUTIQUE|JEWELLERY|SHOES|CLOTHING|ELECTRONICS|BOOKSHOP)\b/i'],
-            'TRANSFERS'     => ['/\b(TRANSFER TO|TRANSFER FROM|TRF TO|TRF FROM|ATM|CASH WITHDRAWAL)\b/i'],
             'INSURANCE'     => ['/\b(ASSURANCE|UNDERWRITING|POLICY|LIFE INSURANCE)\b/i'],
             'CHARITY'       => ['/\b(FOUNDATION|TRUST|HOSPICE|DONATION|APPEAL)\b/i'],
         ];
 
         foreach ($patterns as $category => $regexList) {
             foreach ($regexList as $pattern) {
-                if (preg_match($pattern, $normalized) === 1) {
+                if (preg_match($pattern, $target) === 1) {
                     return $category;
                 }
             }

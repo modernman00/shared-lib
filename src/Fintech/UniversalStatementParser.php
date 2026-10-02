@@ -558,6 +558,7 @@ class UniversalStatementParser
             'opening balance', 'closing balance', 'sort code', 'account number',
             'iban', 'bic', 'transaction type', 'paid in', 'paid out',
             'brought forward', 'balance from previous', 'period covered',
+            'previous balance', 'statement date', 'balance brought forward',
             'account summary', 'interest rate', 'total paid in', 'total paid out'
         ];
         foreach ($boilerplate as $b) {
