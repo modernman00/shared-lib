@@ -27,7 +27,10 @@ use Src\functionality\SendEmailFunctionality;
 class SubmitPostData
 {
     // Default keys to remove from the payload before database insertion
-    private const DEFAULT_REMOVE_KEYS = ['submit', 'button', 'token', 'g-recaptcha-response', 'grecaptcharesponse', 'siteKey', 'action'];
+    private const DEFAULT_REMOVE_KEYS = [
+        'submit', 'button', 'token', 'g-recaptcha-response', 'grecaptcharesponse', 'siteKey', 'action',
+        'website_hp', 'hp_username', 'hp_email', 'fax_number', 'phone_number_hp', 'company_website_trap'
+    ];
 
     /**
      * Centralized transaction wrapper to reduce try/catch repetition.
@@ -63,6 +66,9 @@ class SubmitPostData
         ?array $newInput,
         ?array $optionalFields = null
     ): array {
+        // Enforce anti-bot zero-friction defense (Honeypot + Disposable Email block)
+        \Src\BotGuard::enforce($input);
+
         if (!empty($newInput)) {
             $input = array_merge($input, $newInput);
         }
