@@ -96,4 +96,24 @@ class BotGuardTest extends TestCase
         BotGuard::enforce($cleanInput);
         $this->assertTrue(true);
     }
+
+    public function testEndToEndHumanRegistrationPayloadPassesSanitisation(): void
+    {
+        $payload = [
+            'name' => 'Wally Olaogun',
+            'email' => 'wally@gmail.com',
+            'password' => 'SecurePass123!',
+            'website_hp' => '',
+            'hp_username' => '',
+        ];
+
+        // 1. BotGuard check
+        BotGuard::enforce($payload);
+
+        // 2. Sanitisation pipeline
+        $sanitised = \Src\LoginUtility::getSanitisedInputData($payload);
+
+        $this->assertEquals('Wally Olaogun', $sanitised['name']);
+        $this->assertEquals('wally@gmail.com', $sanitised['email']);
+    }
 }

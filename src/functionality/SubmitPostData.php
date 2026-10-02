@@ -73,7 +73,14 @@ class SubmitPostData
             $input = array_merge($input, $newInput);
         }
 
-        $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $optionalFields);
+        // Merge honeypot & default removal keys into optional fields for sanitisation
+        $allOptional = array_values(array_unique(array_merge(
+            $optionalFields ?? [],
+            \Src\BotGuard::HONEYPOT_FIELDS,
+            self::DEFAULT_REMOVE_KEYS
+        )));
+
+        $sanitisedDataRaw = LoginUtility::getSanitisedInputData($input, $minMaxData, $allOptional);
         // Assuming unsetPostData is a global/utility function
         $sanitisedData = \unsetPostData($sanitisedDataRaw, $removeKeys ?? self::DEFAULT_REMOVE_KEYS);
 

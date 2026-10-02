@@ -135,8 +135,15 @@ class Sanitise
         if (isset($this->formData['submit'])) {
             unset($this->formData['submit']);
         }
+
+        $autoExempt = array_merge(
+            \Src\BotGuard::HONEYPOT_FIELDS,
+            ['submit', 'button', 'token', 'g-recaptcha-response', 'grecaptcharesponse', 'siteKey', 'action']
+        );
+        $effectiveOptional = array_merge($this->optionalFields ?? [], $autoExempt);
+
         foreach ($this->formData as $key => $value) {
-            if ($this->optionalFields !== null && in_array($key, $this->optionalFields, true)) {
+            if (in_array($key, $effectiveOptional, true)) {
                 continue;
             }
             if (is_string($value) && ($value === '' || $value === 'select')) {

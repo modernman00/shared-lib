@@ -161,4 +161,19 @@ class SanitiseTest extends TestCase
         $this->assertStringNotContainsString('<script>', $cleanData['name']);
         $this->assertStringContainsString('John', $cleanData['name']);
     }
+
+    public function testEmptyHoneypotFieldsDoNotTriggerRequiredFieldError(): void
+    {
+        $sanitise = new Sanitise([
+            'name' => 'Wally Doe',
+            'email' => 'wally@example.com',
+            'website_hp' => '',
+            'hp_username' => '',
+        ]);
+
+        $cleanData = $sanitise->getCleanData();
+        $this->assertEmpty($sanitise->errors);
+        $this->assertEquals('Wally Doe', $cleanData['name']);
+        $this->assertEquals('wally@example.com', $cleanData['email']);
+    }
 }
