@@ -94,9 +94,10 @@ class UniversalStatementParser
         $currentDate = null;
         $currentDesc = [];
         $currentAmount = null;
+        $currentType = 'expense';
 
         $dateRegex = '/\b(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}|\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})\b/i';
-        $amountRegex = '/(?:[£$€]|\b)?(-?\(?[£$€]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)\b/i';
+        $amountRegex = '/(?:\b|[£$€])(-?\(?[£$€]?\s*\d+(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/i';
 
         foreach ($lines as $line) {
             // Ignore common PDF header/footer clutter
@@ -110,37 +111,46 @@ class UniversalStatementParser
             if ($hasDate && $hasAmount && !empty($amountMatches[1])) {
                 // If we had a pending transaction, flush it
                 if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount);
+                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
                 }
 
                 // Start new transaction
                 $rawDate = $dateMatches[1];
-                $currentDate = $this->standardizeDate($rawDate);
-
-                // Disambiguate amount (choose transaction amount vs running balance)
-                $chosenRawAmount = $amountMatches[1][0];
-                $currentAmount = $this->parseAmount($chosenRawAmount);
+                $parsedDate = $this->standardizeDate($rawDate);
+                if ($parsedDate === null) {
+                    continue;
+                }
+                $currentDate = $parsedDate;
 
                 // Extract description: remove date and amount strings from line
                 $descChunk = preg_replace($dateRegex, '', $line) ?? '';
                 $descChunk = preg_replace($amountRegex, '', $descChunk) ?? '';
-                $currentDesc = [trim($descChunk)];
+                $cleanChunk = trim($descChunk);
+                $currentDesc = $cleanChunk !== '' ? [$cleanChunk] : [];
+
+                [$currentAmount, $currentType] = $this->resolveAmountAndType($amountMatches[1][0], $cleanChunk);
             } elseif ($hasDate && !$hasAmount) {
                 // Potential date anchor with description on next line
                 if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount);
+                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
                 }
-                $currentDate = $this->standardizeDate($dateMatches[1]);
+                $parsedDate = $this->standardizeDate($dateMatches[1]);
+                if ($parsedDate === null) {
+                    $currentDate = null;
+                    continue;
+                }
+                $currentDate = $parsedDate;
                 $descChunk = preg_replace($dateRegex, '', $line) ?? '';
                 $currentDesc = [trim($descChunk)];
                 $currentAmount = null;
             } elseif (!$hasDate && $hasAmount && $currentDate !== null && $currentAmount === null) {
                 // Trailing amount for current pending date
-                $currentAmount = $this->parseAmount($amountMatches[1][0]);
                 $descChunk = preg_replace($amountRegex, '', $line) ?? '';
                 if (trim($descChunk) !== '') {
                     $currentDesc[] = trim($descChunk);
                 }
+                $descStr = implode(' ', $currentDesc);
+                [$currentAmount, $currentType] = $this->resolveAmountAndType($amountMatches[1][0], $descStr);
             } elseif ($currentDate !== null && $currentAmount === null) {
                 // Accumulating multi-line description
                 $currentDesc[] = trim($line);
@@ -149,7 +159,7 @@ class UniversalStatementParser
 
         // Flush any remaining trailing transaction
         if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-            $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount);
+            $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
         }
 
         return $transactions;
@@ -427,7 +437,7 @@ class UniversalStatementParser
     /**
      * @return array{date: string, description: string, amount: float, category: string, type: string}
      */
-    private function buildTransaction(string $date, string $description, float $amount): array
+    private function buildTransaction(string $date, string $description, float $amount, string $type = 'expense'): array
     {
         $cleanDesc = trim(preg_replace('/\s+/', ' ', $description) ?? 'Unknown');
         $category = $this->categoriser->categorise($cleanDesc);
@@ -437,14 +447,20 @@ class UniversalStatementParser
             'description' => $cleanDesc,
             'amount' => $amount,
             'category' => $category,
-            'type' => $amount < 0 ? 'expense' : 'income',
+            'type' => $type,
         ];
     }
 
-    public function parseAmount(string $raw): float
+    /**
+     * Resolves polarity (+ income / - expense) based on UK bank statement markers.
+     *
+     * @return array{0: float, 1: string} [signedAmount, type]
+     */
+    public function resolveAmountAndType(string $rawAmount, string $description): array
     {
-        $str = trim($raw);
+        $str = trim($rawAmount);
         $isNegative = false;
+        $isCreditExplicit = false;
 
         if (preg_match('/^\((.*)\)$/', $str, $m)) {
             $isNegative = true;
@@ -453,50 +469,79 @@ class UniversalStatementParser
         if (preg_match('/\bDR\b/i', $str)) {
             $isNegative = true;
         }
-
-        $clean = preg_replace('/[^\d.-]/', '', $str) ?? '0';
-        $val = (float) $clean;
-
-        if ($isNegative && $val > 0) {
-            $val = -$val;
+        if (preg_match('/\bCR\b/i', $str)) {
+            $isCreditExplicit = true;
         }
 
-        return $val;
+        $clean = preg_replace('/[^\d.-]/', '', $str) ?? '0';
+        $val = abs((float) $clean);
+        $upperDesc = strtoupper($description);
+
+        // Explicit Credit / Inflows
+        if ($isCreditExplicit || preg_match('/\b(AUTOMATED CREDIT|SALARY|PAYROLL|WAGES|WAGE|PAYE|DIRECT CREDIT|CREDIT|TRANSFER FROM|TRF FROM|REFUND|DWP|UNIVERSAL CREDIT|CHILD BENEFIT|PENSION|PIPS|HMRC|INTEREST PAID|CASHBACK|DIVIDEND)\b/i', $upperDesc)) {
+            return [$val, 'income'];
+        }
+
+        // Explicit Debit / Outflows
+        if ($isNegative || preg_match('/\b(PAYMENT VIA MOBILE|STANDING ORDER|SO|CARD PAYMENT|CONTACTLESS|DIRECT DEBIT|DD|BILL PAYMENT|BP|POS|TRANSFER TO|TRF TO|WITHDRAWAL|ATM|CASH|FEE|CHARGES|BET365|SKYBET|KLARNA|CLEARPAY|PAYMENT)\b/i', $upperDesc)) {
+            return [-$val, 'expense'];
+        }
+
+        // Default: Standard bank line item is an expense
+        return [-$val, 'expense'];
     }
 
-    public function standardizeDate(string $raw): string
+    public function parseAmount(string $raw): float
     {
-        $clean = trim(explode(' ', trim($raw))[0]);
+        [$amt] = $this->resolveAmountAndType($raw, '');
+        return $amt;
+    }
+
+    public function standardizeDate(string $raw): ?string
+    {
+        $clean = trim($raw);
 
         if (is_numeric($clean) && (int)$clean > 30000 && (int)$clean < 65000) {
             $unix = ((int)$clean - 25569) * 86400;
             return gmdate('Y-m-d', $unix);
         }
 
-        $formats = ['d/m/Y', 'd-m-Y', 'Y-m-d', 'd.m.Y', 'd M Y', 'd M, Y', 'M d, Y', 'm/d/Y', 'd/m/y'];
+        $formats = [
+            'd/m/Y', 'd/m/y',
+            'd-m-Y', 'd-m-y',
+            'd.m.Y', 'd.m.y',
+            'Y-m-d', 'Y/m/d',
+            'd M Y', 'd M y', 'd M, Y', 'd M, y',
+            'd F Y', 'd F y', 'd F, Y', 'd F, y',
+            'j M Y', 'j M y',
+            'j F Y', 'j F y',
+            'M d, Y', 'M d Y',
+            'm/d/Y', 'm/d/y'
+        ];
+
         foreach ($formats as $f) {
             $dt = \DateTime::createFromFormat($f, $clean);
             if ($dt !== false) {
+                $year = (int)$dt->format('Y');
+                if ($year < 100) {
+                    $year += 2000;
+                    $dt->setDate($year, (int)$dt->format('m'), (int)$dt->format('d'));
+                }
                 return $dt->format('Y-m-d');
             }
         }
 
-        return date('Y-m-d');
+        $ts = strtotime($clean);
+        if ($ts !== false && $ts > 946684800) {
+            return date('Y-m-d', $ts);
+        }
+
+        return null;
     }
 
     public function isValidDate(string $str): bool
     {
-        $s = trim(explode(' ', trim($str))[0]);
-        if (preg_match('/^\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}$/', $s)) {
-            return true;
-        }
-        if (preg_match('/^\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2}$/', $s)) {
-            return true;
-        }
-        if (preg_match('/^\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}$/i', $s)) {
-            return true;
-        }
-        return false;
+        return $this->standardizeDate($str) !== null;
     }
 
     private function isNumericCurrency(string $str): bool
@@ -511,7 +556,9 @@ class UniversalStatementParser
         $boilerplate = [
             'page ', 'statement of account', 'balance carried forward',
             'opening balance', 'closing balance', 'sort code', 'account number',
-            'iban', 'bic', 'transaction type', 'paid in', 'paid out'
+            'iban', 'bic', 'transaction type', 'paid in', 'paid out',
+            'brought forward', 'balance from previous', 'period covered',
+            'account summary', 'interest rate', 'total paid in', 'total paid out'
         ];
         foreach ($boilerplate as $b) {
             if (str_contains($lower, $b)) {
