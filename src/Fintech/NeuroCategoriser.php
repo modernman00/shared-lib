@@ -105,6 +105,7 @@ class NeuroCategoriser
         }
 
         // 3. Strip trailing payment channel noise, card stamps, references, and dates
+        $clean = preg_replace('/\b(NATWEST|BARCLAYS|HSBC|LLOYDS|SANTANDER|HALIFAX|MONZO|STARLING)\s+FP\b.*/i', '', $clean) ?? $clean;
         $clean = preg_replace('/\s+ON\s+\d{1,2}\s+[A-Z]{3}.*$/i', '', $clean) ?? $clean;
         $clean = preg_replace('/\s+VIA\s+MOBILE\b.*$/i', '', $clean) ?? $clean;
         $clean = preg_replace('/\s+PYMT\s+FP\b.*$/i', '', $clean) ?? $clean;

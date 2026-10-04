@@ -141,13 +141,30 @@ class UniversalStatementParser
         $previousBalance = null;
         $accumulatedDesc = [];
 
-        // 1. Scan headers for Statement Year anchor (e.g. "Statement Date 20 May 2026" or "2026")
-        foreach (array_slice($lines, 0, 30) as $headerLine) {
-            if (preg_match('/\b(20\d{2})\b/', $headerLine, $ym)) {
-                $statementYear = $ym[1];
-                break;
+        // 1. Scan headers for Statement Period / Year anchor
+        $startYear = (int) date('Y');
+        $endYear = (int) date('Y');
+        $headerSlice = implode("\n", array_slice($lines, 0, 40));
+
+        if (preg_match('/Period Covered\s+(?:\w+\s+)?\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})\s+to\s+\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})/i', $headerSlice, $pm)) {
+            $startYear = (int) $pm[1];
+            $endYear = (int) $pm[2];
+        } elseif (preg_match('/\b(\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4}))\s+BROUGHT FORWARD/i', $headerSlice, $bm)) {
+            $startYear = (int) $bm[2];
+            $endYear = $startYear;
+            if (preg_match('/Statement Date\s+\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})/i', $headerSlice, $sm)) {
+                $endYear = (int) $sm[1];
             }
+        } elseif (preg_match('/Statement Date\s+\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})/i', $headerSlice, $sm)) {
+            $endYear = (int) $sm[1];
+            $startYear = $endYear;
+        } elseif (preg_match('/\b(20\d{2})\b/', $headerSlice, $ym)) {
+            $startYear = (int) $ym[1];
+            $endYear = $startYear;
         }
+
+        $currentYear = $startYear;
+        $lastMonth = null;
 
         // Line-start date regex (anchored strictly at the start of the line or column)
         $leadingDateRegex = '/^\s*(\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:\s+\d{2,4})?|\d{1,2}[\/\.\-]\d{1,2}(?:[\/\.\-]\d{2,4})?)\b/i';
@@ -159,9 +176,20 @@ class UniversalStatementParser
                 continue;
             }
 
-            // Detect initial opening/brought forward balance lines to seed previousBalance
+            // Detect initial opening/brought forward balance lines to seed previousBalance & activeLedgerDate
             if (preg_match('/(BROUGHT\s+FORWARD|PREVIOUS\s+BALANCE|OPENING\s+BALANCE|BALANCE\s+FROM\s+PREVIOUS)/i', $trimmed)) {
                 $accumulatedDesc = []; // Reset description accumulator across pages
+                if (preg_match($leadingDateRegex, $trimmed, $dateMatches)) {
+                    $rawDate = $dateMatches[1];
+                    if (preg_match('/\b(20\d{2})\b/', $rawDate, $ym)) {
+                        $currentYear = (int) $ym[1];
+                    }
+                    $parsedDate = $this->standardizeDateWithYear($rawDate, (string) $currentYear);
+                    if ($parsedDate !== null) {
+                        $activeLedgerDate = $parsedDate;
+                        $lastMonth = (int) date('m', (int) strtotime($parsedDate));
+                    }
+                }
                 if (preg_match_all($amountPattern, $trimmed, $balMatches) && !empty($balMatches[1])) {
                     $rawBal = end($balMatches[1]);
                     $previousBalance = $this->parsePureFloat($rawBal);
@@ -177,7 +205,22 @@ class UniversalStatementParser
             $hasLeadingDate = (bool) preg_match($leadingDateRegex, $trimmed, $dateMatches);
             if ($hasLeadingDate) {
                 $rawDate = $dateMatches[1];
-                $parsedDate = $this->standardizeDateWithYear($rawDate, $statementYear);
+
+                // Check for explicit 4-digit year in rawDate or month calendar roll-over
+                if (preg_match('/\b(20\d{2})\b/', $rawDate, $ym)) {
+                    $currentYear = (int) $ym[1];
+                    if (preg_match('/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i', $rawDate, $monMatch)) {
+                        $lastMonth = (int) date('m', (int) strtotime($monMatch[0] . ' 1 2000'));
+                    }
+                } elseif (preg_match('/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i', $rawDate, $monMatch)) {
+                    $mNum = (int) date('m', (int) strtotime($monMatch[0] . ' 1 2000'));
+                    if ($lastMonth !== null && $mNum < $lastMonth && $mNum <= 6 && $lastMonth >= 7) {
+                        $currentYear = min($endYear, $currentYear + 1);
+                    }
+                    $lastMonth = $mNum;
+                }
+
+                $parsedDate = $this->standardizeDateWithYear($rawDate, (string) $currentYear);
                 if ($parsedDate !== null) {
                     $activeLedgerDate = $parsedDate;
                 }
@@ -642,13 +685,9 @@ class UniversalStatementParser
     public function standardizeDateWithYear(string $raw, string $defaultYear): ?string
     {
         $clean = trim($raw);
-        $direct = $this->standardizeDate($clean);
-        if ($direct !== null) {
-            return $direct;
-        }
 
-        // Try appending default year if date format is e.g. "20 MAY" or "20 May" or "20/05"
-        if (preg_match('/^\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}$/', $clean) || preg_match('/^\d{1,2}[\/\.\-]\d{1,2}$/', $clean)) {
+        // If date has NO explicit 4-digit year (e.g. "04 DEC", "04 Dec", "04/12", "4 Dec")
+        if (preg_match('/^\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}$/i', $clean) || preg_match('/^\d{1,2}[\/\.\-]\d{1,2}$/', $clean)) {
             $withYear = $clean . ' ' . $defaultYear;
             $res = $this->standardizeDate($withYear);
             if ($res !== null) {
@@ -656,7 +695,8 @@ class UniversalStatementParser
             }
         }
 
-        return null;
+        // Direct parse if year is already explicitly present (e.g. "02 DEC 2025", "2026-01-06", "06/01/26")
+        return $this->standardizeDate($clean);
     }
 
     public function isValidDate(string $str): bool

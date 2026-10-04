@@ -276,6 +276,10 @@ class MerchantTaxonomyDatabase
         'HMRC' => 'SALARY_INCOME',
         'UNIVERSAL CREDIT' => 'SALARY_INCOME',
         'PAYROLL' => 'SALARY_INCOME',
+        'SHANES BUYING AND' => 'BUSINESS',
+        'SHANES BUYING' => 'BUSINESS',
+        'AMY SUTER' => 'GENERAL',
+        'VAPE CLOUD' => 'SHOPPING',
 
         // ─── LOCAL MERCHANTS, FUEL, DINING & CONVENIENCE ───────────────────────
         'TREDEGAR FUEL' => 'TRANSPORT',
