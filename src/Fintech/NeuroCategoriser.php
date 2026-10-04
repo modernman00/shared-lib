@@ -77,26 +77,39 @@ class NeuroCategoriser
         // 1. Convert to uppercase UTF-8
         $clean = mb_strtoupper($raw, 'UTF-8');
 
-        // 2. Strip common fintech prefixes and aggregator tokens
-        $prefixes = [
+        // 2. Strip standard bank transaction descriptors / prefixes
+        $bankPrefixes = [
+            '/^(ONLINE\s+TRANSACTION\s+|ON-LINE\s+TRANSACTION\s+)/i',
+            '/^(DIRECT\s+DEBIT\s+PAYMENT\s+TO\s+|DIRECT\s+DEBIT\s+TO\s+|DIRECT\s+DEBIT\s+|DD\s+TO\s+|DD\s+)/i',
+            '/^(CARD\s+PAYMENT\s+TO\s+|CARD\s+PAYMENT\s+|CONTACTLESS\s+PURCHASE\s+TO\s+|CONTACTLESS\s+|CARD\s+PURCHASE\s+)/i',
+            '/^(AUTOMATED\s+CREDIT\s+FROM\s+|AUTOMATED\s+CREDIT\s+TO\s+|AUTOMATED\s+CREDIT\s+|DIRECT\s+CREDIT\s+FROM\s+|DIRECT\s+CREDIT\s+)/i',
+            '/^(BILL\s+PAYMENT\s+TO\s+|BILL\s+PAYMENT\s+|STANDING\s+ORDER\s+TO\s+|STANDING\s+ORDER\s+)/i',
+            '/^(TRANSFER\s+TO\s+|TRANSFER\s+FROM\s+|TRF\s+TO\s+|TRF\s+FROM\s+)/i',
+            '/^(VISA\s+DEBIT\s+|POS\s+PURCHASE\s+|POS\s+)/i',
             '/^(SQ\s*\*|SUMUP\s*\*|IZ\s*\*|PAYPAL\s*\*|TST\s*\*|CURVE\s*\*|STRIPE\s*\*|KLARNA\s*\*)/i',
-            '/^(VISA\s+DEBIT\s+|POS\s+PURCHASE\s+|CONTACTLESS\s+|CARD\s+PURCHASE\s+)/i',
         ];
-        foreach ($prefixes as $pattern) {
+        foreach ($bankPrefixes as $pattern) {
             $clean = preg_replace($pattern, '', $clean) ?? $clean;
         }
+
+        // 3. Strip trailing payment channel noise, card stamps, references, and dates
+        $clean = preg_replace('/\s+ON\s+\d{1,2}\s+[A-Z]{3}.*$/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\s+VIA\s+MOBILE\b.*$/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\s+PYMT\s+FP\b.*$/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\s+REF\s+NO\b.*$/i', '', $clean) ?? $clean;
+        $clean = preg_replace('/\s+MANDATE\s+NO\b.*$/i', '', $clean) ?? $clean;
 
         // Special handling for Amazon Marketplace
         if (preg_match('/AMZN|AMAZON/i', $clean)) {
             return 'AMAZON';
         }
 
-        // 3. Strip common location suffixes and trailing terminal IDs
+        // 4. Strip common location suffixes and trailing terminal IDs
         $clean = preg_replace('/\b(LONDON|MANCHESTER|BIRMINGHAM|LEEDS|GLASGOW|ENG|GBR|UK)\b.*$/i', '', $clean) ?? $clean;
         $clean = preg_replace('/[#\*]\d+.*$/', '', $clean) ?? $clean;
         $clean = preg_replace('/\b\d{4,}\b/', '', $clean) ?? $clean;
 
-        // 4. Strip punctuation and multiple spaces
+        // 5. Strip punctuation and multiple spaces
         $clean = preg_replace('/[^\w\s&+-]/u', ' ', $clean) ?? $clean;
         $clean = preg_replace('/\s+/', ' ', $clean) ?? $clean;
 

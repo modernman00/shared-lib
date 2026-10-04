@@ -88,78 +88,154 @@ class UniversalStatementParser
      * @param array<int, string> $lines
      * @return array<int, array{date: string, description: string, amount: float, category: string, type: string}>
      */
+    /**
+     * Deterministic Multi-Line Transaction State Machine for PDF text streams.
+     * Incorporates Line-Start Anchoring, Sparse Date Inheritance, and Balance Delta Reconciliation.
+     *
+     * @param array<int, string> $lines
+     * @return array<int, array{date: string, description: string, amount: float, category: string, type: string}>
+     */
     public function extractTransactionsFromPdfLines(array $lines): array
     {
         $transactions = [];
-        $currentDate = null;
-        $currentDesc = [];
-        $currentAmount = null;
-        $currentType = 'expense';
+        $activeLedgerDate = null;
+        $statementYear = date('Y');
+        $previousBalance = null;
 
-        $dateRegex = '/\b(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4}|\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})\b/i';
-        $amountRegex = '/(?:\b|[£$€])(-?\(?[£$€]?\s*\d+(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/i';
-
-        foreach ($lines as $line) {
-            // Ignore common PDF header/footer clutter
-            if ($this->isBoilerplateLine($line)) {
-                continue;
-            }
-
-            $hasDate = (bool) preg_match($dateRegex, $line, $dateMatches);
-            $hasAmount = (bool) preg_match_all($amountRegex, $line, $amountMatches);
-
-            if ($hasDate && $hasAmount && !empty($amountMatches[1])) {
-                // If we had a pending transaction, flush it
-                if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
-                }
-
-                // Start new transaction
-                $rawDate = $dateMatches[1];
-                $parsedDate = $this->standardizeDate($rawDate);
-                if ($parsedDate === null) {
-                    continue;
-                }
-                $currentDate = $parsedDate;
-
-                // Extract description: remove date and amount strings from line
-                $descChunk = preg_replace($dateRegex, '', $line) ?? '';
-                $descChunk = preg_replace($amountRegex, '', $descChunk) ?? '';
-                $cleanChunk = trim($descChunk);
-                $currentDesc = $cleanChunk !== '' ? [$cleanChunk] : [];
-
-                [$currentAmount, $currentType] = $this->resolveAmountAndType($amountMatches[1][0], $cleanChunk);
-            } elseif ($hasDate && !$hasAmount) {
-                // Potential date anchor with description on next line
-                if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-                    $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
-                }
-                $parsedDate = $this->standardizeDate($dateMatches[1]);
-                if ($parsedDate === null) {
-                    $currentDate = null;
-                    continue;
-                }
-                $currentDate = $parsedDate;
-                $descChunk = preg_replace($dateRegex, '', $line) ?? '';
-                $currentDesc = [trim($descChunk)];
-                $currentAmount = null;
-            } elseif (!$hasDate && $hasAmount && $currentDate !== null && $currentAmount === null) {
-                // Trailing amount for current pending date
-                $descChunk = preg_replace($amountRegex, '', $line) ?? '';
-                if (trim($descChunk) !== '') {
-                    $currentDesc[] = trim($descChunk);
-                }
-                $descStr = implode(' ', $currentDesc);
-                [$currentAmount, $currentType] = $this->resolveAmountAndType($amountMatches[1][0], $descStr);
-            } elseif ($currentDate !== null && $currentAmount === null) {
-                // Accumulating multi-line description
-                $currentDesc[] = trim($line);
+        // 1. Scan headers for Statement Year anchor (e.g. "Statement Date 20 May 2026" or "2026")
+        foreach (array_slice($lines, 0, 30) as $headerLine) {
+            if (preg_match('/\b(20\d{2})\b/', $headerLine, $ym)) {
+                $statementYear = $ym[1];
+                break;
             }
         }
 
-        // Flush any remaining trailing transaction
-        if ($currentDate !== null && $currentAmount !== null && !empty($currentDesc)) {
-            $transactions[] = $this->buildTransaction($currentDate, implode(' ', $currentDesc), $currentAmount, $currentType);
+        // Line-start date regex (anchored strictly at the start of the line or column)
+        $leadingDateRegex = '/^\s*(\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:\s+\d{2,4})?|\d{1,2}[\/\.\-]\d{1,2}(?:[\/\.\-]\d{2,4})?)\b/i';
+        $amountPattern = '/(?:\b|[£$€])(-?\(?[£$€]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/i';
+
+        $pendingDescLines = [];
+        $pendingDate = null;
+        $pendingAmount = null;
+        $pendingType = 'expense';
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+
+            // Detect initial opening/brought forward balance lines to seed previousBalance
+            if (preg_match('/(BROUGHT\s+FORWARD|PREVIOUS\s+BALANCE|OPENING\s+BALANCE|BALANCE\s+FROM\s+PREVIOUS)/i', $trimmed)) {
+                if (preg_match_all($amountPattern, $trimmed, $balMatches) && !empty($balMatches[1])) {
+                    $rawBal = end($balMatches[1]);
+                    $previousBalance = $this->parsePureFloat($rawBal);
+                }
+                continue;
+            }
+
+            // Ignore common PDF header/footer clutter
+            if ($this->isBoilerplateLine($trimmed)) {
+                continue;
+            }
+
+            $hasLeadingDate = (bool) preg_match($leadingDateRegex, $trimmed, $dateMatches);
+            $hasAmounts = (bool) preg_match_all($amountPattern, $trimmed, $amountMatches);
+
+            if ($hasLeadingDate) {
+                $rawDate = $dateMatches[1];
+                $parsedDate = $this->standardizeDateWithYear($rawDate, $statementYear);
+                if ($parsedDate !== null) {
+                    $activeLedgerDate = $parsedDate;
+                }
+                // Strip the leading date from the line
+                $lineWithoutDate = trim(substr($trimmed, strlen($dateMatches[0])));
+            } else {
+                $lineWithoutDate = $trimmed;
+            }
+
+            if ($hasAmounts && !empty($amountMatches[1]) && $activeLedgerDate !== null) {
+                // If we had a pending transaction, flush it
+                if ($pendingDate !== null && $pendingAmount !== null && !empty($pendingDescLines)) {
+                    $transactions[] = $this->buildTransaction($pendingDate, implode(' ', $pendingDescLines), $pendingAmount, $pendingType);
+                    $pendingDescLines = [];
+                    $pendingAmount = null;
+                }
+
+                $matchedAmounts = $amountMatches[1];
+                $numAmounts = count($matchedAmounts);
+
+                $extractedTxAmount = null;
+                $extractedBalance = null;
+                $calculatedType = 'expense';
+
+                if ($numAmounts >= 2) {
+                    // Typical UK Statement Row: [Description...] [Paid In / Paid Out Amount] [Balance]
+                    $txAmtStr = $matchedAmounts[$numAmounts - 2];
+                    $balStr = $matchedAmounts[$numAmounts - 1];
+
+                    $rawTxFloat = $this->parsePureFloat($txAmtStr);
+                    $rawBalFloat = $this->parsePureFloat($balStr);
+
+                    if ($previousBalance !== null) {
+                        $delta = round($rawBalFloat - $previousBalance, 2);
+                        if ($delta > 0.005) {
+                            $calculatedType = 'income';
+                            $extractedTxAmount = abs($rawTxFloat);
+                        } elseif ($delta < -0.005) {
+                            $calculatedType = 'expense';
+                            $extractedTxAmount = -abs($rawTxFloat);
+                        }
+                    }
+
+                    $previousBalance = $rawBalFloat;
+                    $extractedBalance = $rawBalFloat;
+
+                    // Strip amounts from the text to isolate description
+                    $cleanDesc = $lineWithoutDate;
+                    foreach ($matchedAmounts as $mAmt) {
+                        $pos = strrpos($cleanDesc, $mAmt);
+                        if ($pos !== false) {
+                            $cleanDesc = substr_replace($cleanDesc, '', $pos, strlen($mAmt));
+                        }
+                    }
+                    $cleanDesc = trim(preg_replace('/[£$€]/', '', $cleanDesc) ?? '');
+
+                    if ($extractedTxAmount === null) {
+                        [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($txAmtStr, $cleanDesc);
+                    }
+                } else {
+                    // Single amount found on the line
+                    $singleAmtStr = $matchedAmounts[0];
+                    $rawSingleFloat = $this->parsePureFloat($singleAmtStr);
+
+                    $cleanDesc = $lineWithoutDate;
+                    $pos = strrpos($cleanDesc, $singleAmtStr);
+                    if ($pos !== false) {
+                        $cleanDesc = substr_replace($cleanDesc, '', $pos, strlen($singleAmtStr));
+                    }
+                    $cleanDesc = trim(preg_replace('/[£$€]/', '', $cleanDesc) ?? '');
+
+                    [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($singleAmtStr, $cleanDesc);
+                }
+
+                $pendingDate = $activeLedgerDate;
+                $pendingAmount = $extractedTxAmount;
+                $pendingType = $calculatedType;
+                if ($cleanDesc !== '') {
+                    $pendingDescLines[] = $cleanDesc;
+                }
+            } else {
+                // Line has no amount: could be multi-line description continuation
+                if ($activeLedgerDate !== null && !empty($lineWithoutDate)) {
+                    $pendingDescLines[] = $lineWithoutDate;
+                }
+            }
+        }
+
+        // Flush any trailing pending transaction
+        if ($pendingDate !== null && $pendingAmount !== null && !empty($pendingDescLines)) {
+            $transactions[] = $this->buildTransaction($pendingDate, implode(' ', $pendingDescLines), $pendingAmount, $pendingType);
         }
 
         return $transactions;
@@ -534,6 +610,36 @@ class UniversalStatementParser
         $ts = strtotime($clean);
         if ($ts !== false && $ts > 946684800) {
             return date('Y-m-d', $ts);
+        }
+
+        return null;
+    }
+
+    public function parsePureFloat(string $str): float
+    {
+        $clean = preg_replace('/[£$€,\s]/u', '', trim($str)) ?? '0';
+        if (preg_match('/^\((.*)\)$/', $clean, $m)) {
+            $clean = '-' . $m[1];
+        }
+        $clean = preg_replace('/[^\d.-]/', '', $clean) ?? '0';
+        return (float) $clean;
+    }
+
+    public function standardizeDateWithYear(string $raw, string $defaultYear): ?string
+    {
+        $clean = trim($raw);
+        $direct = $this->standardizeDate($clean);
+        if ($direct !== null) {
+            return $direct;
+        }
+
+        // Try appending default year if date format is e.g. "20 MAY" or "20 May" or "20/05"
+        if (preg_match('/^\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}$/', $clean) || preg_match('/^\d{1,2}[\/\.\-]\d{1,2}$/', $clean)) {
+            $withYear = $clean . ' ' . $defaultYear;
+            $res = $this->standardizeDate($withYear);
+            if ($res !== null) {
+                return $res;
+            }
         }
 
         return null;
