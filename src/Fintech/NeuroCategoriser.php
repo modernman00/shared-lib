@@ -24,6 +24,7 @@ class NeuroCategoriser
     {
         $this->userId = $userId;
         $this->taxonomy = MerchantTaxonomyDatabase::getDirectMap();
+        uksort($this->taxonomy, fn(string $a, string $b): int => strlen($b) <=> strlen($a));
     }
 
     /**
@@ -47,10 +48,19 @@ class NeuroCategoriser
         // ── Stage 2: Fintech Noise Stripper & Normalizer ──────────────────────
         $normalized = $this->normalizeFintechDescription($cleanDesc);
 
-        // ── Stage 3: Exact Knowledge Base Match ───────────────────────────────
+        // ── Stage 3: Exact Knowledge Base Match (Longest merchants first) ─────
         foreach ($this->taxonomy as $merchant => $category) {
-            if ($normalized === $merchant || str_contains($normalized, $merchant)) {
+            if ($normalized === $merchant) {
                 return $category;
+            }
+            if (strlen($merchant) <= 4) {
+                if (preg_match('/\b' . preg_quote($merchant, '/') . '\b/u', $normalized)) {
+                    return $category;
+                }
+            } else {
+                if (str_contains($normalized, $merchant)) {
+                    return $category;
+                }
             }
         }
 
@@ -74,14 +84,16 @@ class NeuroCategoriser
      */
     public function normalizeFintechDescription(string $raw): string
     {
-        // 1. Convert to uppercase UTF-8
-        $clean = mb_strtoupper($raw, 'UTF-8');
+        // 1. Convert to uppercase UTF-8 and normalize apostrophes
+        $clean = str_replace(["\u{2019}", "\u{2018}", "'"], '', mb_strtoupper($raw, 'UTF-8'));
 
         // 2. Strip standard bank transaction descriptors / prefixes
         $bankPrefixes = [
             '/^(ONLINE\s+TRANSACTION\s+|ON-LINE\s+TRANSACTION\s+)/i',
             '/^(DIRECT\s+DEBIT\s+PAYMENT\s+TO\s+|DIRECT\s+DEBIT\s+TO\s+|DIRECT\s+DEBIT\s+|DD\s+TO\s+|DD\s+)/i',
+            '/^(CARD\s+TRANSACTION(\s+\d{4})?(\s+\d{1,2}[A-Z]{3}\d{0,4})?(\s+(?:C|CD|D|CNP|CR))?\s+)/i',
             '/^(CARD\s+PAYMENT\s+TO\s+|CARD\s+PAYMENT\s+|CONTACTLESS\s+PURCHASE\s+TO\s+|CONTACTLESS\s+|CARD\s+PURCHASE\s+)/i',
+            '/^(CASH\s+WITHDRAWAL(\s+[A-Z\s]+)?(\s+\d{1,2}[A-Z]{3})?\s+)/i',
             '/^(AUTOMATED\s+CREDIT\s+FROM\s+|AUTOMATED\s+CREDIT\s+TO\s+|AUTOMATED\s+CREDIT\s+|DIRECT\s+CREDIT\s+FROM\s+|DIRECT\s+CREDIT\s+)/i',
             '/^(BILL\s+PAYMENT\s+TO\s+|BILL\s+PAYMENT\s+|STANDING\s+ORDER\s+TO\s+|STANDING\s+ORDER\s+)/i',
             '/^(TRANSFER\s+TO\s+|TRANSFER\s+FROM\s+|TRF\s+TO\s+|TRF\s+FROM\s+)/i',

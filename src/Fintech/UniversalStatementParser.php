@@ -64,12 +64,50 @@ class UniversalStatementParser
             $pages = array_slice($pages, 0, 60);
 
             $rawLines = [];
+            $noticeMarkers = [
+                'statement abbreviations',
+                'ways to bank with natwest',
+                'important information about compensation arrangements',
+                'making a complaint',
+                'financial services compensation scheme'
+            ];
+
             foreach ($pages as $page) {
                 $text = $page->getText();
+                $lower = strtolower($text);
+
+                // Only skip page if it has notice markers AND DOES NOT have transaction table markers
+                $hasTable = (bool) preg_match('/(Date\s+Description|BROUGHT\s+FORWARD)/i', $text);
+                if (!$hasTable) {
+                    $isNotice = false;
+                    foreach ($noticeMarkers as $m) {
+                        if (str_contains($lower, $m)) {
+                            $isNotice = true;
+                            break;
+                        }
+                    }
+                    if ($isNotice) {
+                        continue;
+                    }
+                }
+
                 $pageLines = explode("\n", $text);
+                $inTable = false;
                 foreach ($pageLines as $line) {
                     $cleaned = trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', $line) ?? '');
-                    if ($cleaned !== '') {
+                    if ($cleaned === '') {
+                        continue;
+                    }
+                    // Detect start of transaction table on this page
+                    if (preg_match('/(Date\s+Description|BROUGHT\s+FORWARD)/i', $cleaned)) {
+                        $inTable = true;
+                    }
+                    // Stop immediately when entering overdraft disclosures, interest notices, or fee schedules
+                    if (preg_match('/(Interest\s*\(variable\)|Overdraft\s+Arrangements|arranged\s+overdraft|unarranged\s+overdraft|charging\s+periods?\s+starting)/i', $cleaned)) {
+                        $inTable = false;
+                        break;
+                    }
+                    if ($inTable) {
                         $rawLines[] = $cleaned;
                     }
                 }
@@ -101,6 +139,7 @@ class UniversalStatementParser
         $activeLedgerDate = null;
         $statementYear = date('Y');
         $previousBalance = null;
+        $accumulatedDesc = [];
 
         // 1. Scan headers for Statement Year anchor (e.g. "Statement Date 20 May 2026" or "2026")
         foreach (array_slice($lines, 0, 30) as $headerLine) {
@@ -114,11 +153,6 @@ class UniversalStatementParser
         $leadingDateRegex = '/^\s*(\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:\s+\d{2,4})?|\d{1,2}[\/\.\-]\d{1,2}(?:[\/\.\-]\d{2,4})?)\b/i';
         $amountPattern = '/(?:\b|[£$€])(-?\(?[£$€]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/i';
 
-        $pendingDescLines = [];
-        $pendingDate = null;
-        $pendingAmount = null;
-        $pendingType = 'expense';
-
         foreach ($lines as $line) {
             $trimmed = trim($line);
             if ($trimmed === '') {
@@ -127,6 +161,7 @@ class UniversalStatementParser
 
             // Detect initial opening/brought forward balance lines to seed previousBalance
             if (preg_match('/(BROUGHT\s+FORWARD|PREVIOUS\s+BALANCE|OPENING\s+BALANCE|BALANCE\s+FROM\s+PREVIOUS)/i', $trimmed)) {
+                $accumulatedDesc = []; // Reset description accumulator across pages
                 if (preg_match_all($amountPattern, $trimmed, $balMatches) && !empty($balMatches[1])) {
                     $rawBal = end($balMatches[1]);
                     $previousBalance = $this->parsePureFloat($rawBal);
@@ -140,8 +175,6 @@ class UniversalStatementParser
             }
 
             $hasLeadingDate = (bool) preg_match($leadingDateRegex, $trimmed, $dateMatches);
-            $hasAmounts = (bool) preg_match_all($amountPattern, $trimmed, $amountMatches);
-
             if ($hasLeadingDate) {
                 $rawDate = $dateMatches[1];
                 $parsedDate = $this->standardizeDateWithYear($rawDate, $statementYear);
@@ -154,19 +187,29 @@ class UniversalStatementParser
                 $lineWithoutDate = $trimmed;
             }
 
-            if ($hasAmounts && !empty($amountMatches[1]) && $activeLedgerDate !== null) {
-                // If we had a pending transaction, flush it
-                if ($pendingDate !== null && $pendingAmount !== null && !empty($pendingDescLines)) {
-                    $transactions[] = $this->buildTransaction($pendingDate, implode(' ', $pendingDescLines), $pendingAmount, $pendingType);
-                    $pendingDescLines = [];
-                    $pendingAmount = null;
-                }
+            $hasAmounts = (bool) preg_match_all($amountPattern, $lineWithoutDate, $amountMatches);
 
+            if ($hasAmounts && !empty($amountMatches[1]) && $activeLedgerDate !== null) {
                 $matchedAmounts = $amountMatches[1];
                 $numAmounts = count($matchedAmounts);
 
+                // Strip matched amounts from current line to isolate remaining description chunk
+                $cleanChunk = $lineWithoutDate;
+                foreach ($matchedAmounts as $mAmt) {
+                    $pos = strrpos($cleanChunk, $mAmt);
+                    if ($pos !== false) {
+                        $cleanChunk = substr_replace($cleanChunk, '', $pos, strlen($mAmt));
+                    }
+                }
+                $cleanChunk = trim(preg_replace('/[£$€]/', '', $cleanChunk) ?? '');
+                if ($cleanChunk !== '') {
+                    $accumulatedDesc[] = $cleanChunk;
+                }
+
+                $fullDescription = trim(preg_replace('/\s+/', ' ', implode(' ', $accumulatedDesc)) ?? '');
+                $accumulatedDesc = []; // Reset accumulator immediately for next transaction
+
                 $extractedTxAmount = null;
-                $extractedBalance = null;
                 $calculatedType = 'expense';
 
                 if ($numAmounts >= 2) {
@@ -189,53 +232,24 @@ class UniversalStatementParser
                     }
 
                     $previousBalance = $rawBalFloat;
-                    $extractedBalance = $rawBalFloat;
-
-                    // Strip amounts from the text to isolate description
-                    $cleanDesc = $lineWithoutDate;
-                    foreach ($matchedAmounts as $mAmt) {
-                        $pos = strrpos($cleanDesc, $mAmt);
-                        if ($pos !== false) {
-                            $cleanDesc = substr_replace($cleanDesc, '', $pos, strlen($mAmt));
-                        }
-                    }
-                    $cleanDesc = trim(preg_replace('/[£$€]/', '', $cleanDesc) ?? '');
-
                     if ($extractedTxAmount === null) {
-                        [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($txAmtStr, $cleanDesc);
+                        [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($txAmtStr, $fullDescription);
                     }
                 } else {
                     // Single amount found on the line
                     $singleAmtStr = $matchedAmounts[0];
-                    $rawSingleFloat = $this->parsePureFloat($singleAmtStr);
-
-                    $cleanDesc = $lineWithoutDate;
-                    $pos = strrpos($cleanDesc, $singleAmtStr);
-                    if ($pos !== false) {
-                        $cleanDesc = substr_replace($cleanDesc, '', $pos, strlen($singleAmtStr));
-                    }
-                    $cleanDesc = trim(preg_replace('/[£$€]/', '', $cleanDesc) ?? '');
-
-                    [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($singleAmtStr, $cleanDesc);
+                    [$extractedTxAmount, $calculatedType] = $this->resolveAmountAndType($singleAmtStr, $fullDescription);
                 }
 
-                $pendingDate = $activeLedgerDate;
-                $pendingAmount = $extractedTxAmount;
-                $pendingType = $calculatedType;
-                if ($cleanDesc !== '') {
-                    $pendingDescLines[] = $cleanDesc;
+                if ($extractedTxAmount !== null && $fullDescription !== '') {
+                    $transactions[] = $this->buildTransaction($activeLedgerDate, $fullDescription, $extractedTxAmount, $calculatedType);
                 }
             } else {
-                // Line has no amount: could be multi-line description continuation
-                if ($activeLedgerDate !== null && !empty($lineWithoutDate)) {
-                    $pendingDescLines[] = $lineWithoutDate;
+                // Line has no amount: accumulate as multi-line description chunk for the upcoming transaction
+                if ($lineWithoutDate !== '') {
+                    $accumulatedDesc[] = $lineWithoutDate;
                 }
             }
-        }
-
-        // Flush any trailing pending transaction
-        if ($pendingDate !== null && $pendingAmount !== null && !empty($pendingDescLines)) {
-            $transactions[] = $this->buildTransaction($pendingDate, implode(' ', $pendingDescLines), $pendingAmount, $pendingType);
         }
 
         return $transactions;
@@ -416,7 +430,7 @@ class UniversalStatementParser
             }
 
             $transactions[] = $this->buildTransaction(
-                $this->standardizeDate($dateVal),
+                $this->standardizeDate($dateVal) ?? date('Y-m-d'),
                 $descVal,
                 $amount
             );
@@ -444,7 +458,7 @@ class UniversalStatementParser
         }
 
         $counts = array_map('count', $samples);
-        $colCount = !empty($counts) ? max($counts) : 3;
+        $colCount = max($counts) > 0 ? max($counts) : 3;
         $dateScores = array_fill(0, $colCount, 0);
         $amountScores = array_fill(0, $colCount, 0);
         $descScores = array_fill(0, $colCount, 0);
@@ -665,7 +679,14 @@ class UniversalStatementParser
             'iban', 'bic', 'transaction type', 'paid in', 'paid out',
             'brought forward', 'balance from previous', 'period covered',
             'previous balance', 'statement date', 'balance brought forward',
-            'account summary', 'interest rate', 'total paid in', 'total paid out'
+            'account summary', 'interest rate', 'total paid in', 'total paid out',
+            'retstmt', 'national westminster bank plc', 'registered in england',
+            'prudential regulation authority', 'financial conduct authority',
+            'financial services firm reference', 'bishopsgate, london',
+            'ear %', 'nar %', 'charging period', 'unarranged overdraft', 'date description',
+            'unpaid transaction fees', 'unpaid transaction fee', 'adapt, student, graduate',
+            'premier select, premier reward', 'nominal monthly rate', 'nominal annual rate',
+            'here\'s a reminder about what you could be charged'
         ];
         foreach ($boilerplate as $b) {
             if (str_contains($lower, $b)) {
