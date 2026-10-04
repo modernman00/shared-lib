@@ -42,7 +42,8 @@
     "web-auth/webauthn-lib": "^5.3",
     "minishlink/web-push": "^9.0 || ^10.0",
     "pusher/pusher-php-server": "^7.0",
-    "textmagic/textmagic-rest-php-v2": "^3.0"
+    "textmagic/textmagic-rest-php-v2": "^3.0",
+    "smalot/pdfparser": "^2.11"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.75",

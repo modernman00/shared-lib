@@ -69,15 +69,21 @@ class UniversalStatementParser
                 'ways to bank with natwest',
                 'important information about compensation arrangements',
                 'making a complaint',
-                'financial services compensation scheme'
             ];
 
             foreach ($pages as $page) {
                 $text = $page->getText();
                 $lower = strtolower($text);
 
-                // Only skip page if it has notice markers AND DOES NOT have transaction table markers
-                $hasTable = (bool) preg_match('/(Date\s+Description|BROUGHT\s+FORWARD)/i', $text);
+                // Only skip page if it has notice markers AND DOES NOT have transaction table markers or transaction date lines
+                $hasTable = (bool) preg_match('/(Date\s+Description|BROUGHT\s+FORWARD|DATE\s+TYPE\s+TRANSACTION|\bOPENING\s+BALANCE\b|\b\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}\s+(?:DIRECT DEBIT|APPLE PAY|FASTER PAYMENT|CHIP & PIN|CARD SUBSCRIPTION|ONLINE PAYMENT|CONTACTLESS))/i', $text);
+                if (!$hasTable) {
+                    $dateAmtCount = preg_match_all('/\b\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}\b.*?[£$€]\s*\d+/u', $text);
+                    if ($dateAmtCount >= 2) {
+                        $hasTable = true;
+                    }
+                }
+
                 if (!$hasTable) {
                     $isNotice = false;
                     foreach ($noticeMarkers as $m) {
@@ -94,18 +100,24 @@ class UniversalStatementParser
                 $pageLines = explode("\n", $text);
                 $inTable = false;
                 foreach ($pageLines as $line) {
-                    $cleaned = trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', $line) ?? '');
+                    // Retain \t (\x09) while cleaning other control characters for column sniffing
+                    $cleaned = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', ' ', $line) ?? '');
                     if ($cleaned === '') {
                         continue;
                     }
-                    // Detect start of transaction table on this page
-                    if (preg_match('/(Date\s+Description|BROUGHT\s+FORWARD)/i', $cleaned)) {
-                        $inTable = true;
-                    }
                     // Stop immediately when entering overdraft disclosures, interest notices, or fee schedules
-                    if (preg_match('/(Interest\s*\(variable\)|Overdraft\s+Arrangements|arranged\s+overdraft|unarranged\s+overdraft|charging\s+periods?\s+starting)/i', $cleaned)) {
+                    if (preg_match('/(Interest\s*\(variable\)|Overdraft\s+Arrangements|arranged\s+overdraft|unarranged\s+overdraft|charging\s+periods?\s+starting|Interest will be payable to you each day)/i', $cleaned)) {
                         $inTable = false;
                         break;
+                    }
+                    // Detect start of transaction table on this page
+                    if (preg_match('/(Date\s+Description|BROUGHT\s+FORWARD|DATE\s+TYPE\s+TRANSACTION|\bOPENING\s+BALANCE\s*\t)/i', $cleaned)) {
+                        $inTable = true;
+                    }
+                    // Also detect line with transaction starting even if preceded by disclaimer/letterhead
+                    if (preg_match('/(\b\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}\s+(?:DIRECT DEBIT|APPLE PAY|FASTER PAYMENT|CHIP & PIN|CARD SUBSCRIPTION|ONLINE PAYMENT|CONTACTLESS).*)/i', $cleaned, $txM)) {
+                        $inTable = true;
+                        $cleaned = $txM[1];
                     }
                     if ($inTable) {
                         $rawLines[] = $cleaned;
@@ -120,12 +132,6 @@ class UniversalStatementParser
         }
     }
 
-    /**
-     * Deterministic Multi-Line Transaction State Machine for PDF text streams.
-     *
-     * @param array<int, string> $lines
-     * @return array<int, array{date: string, description: string, amount: float, category: string, type: string}>
-     */
     /**
      * Deterministic Multi-Line Transaction State Machine for PDF text streams.
      * Incorporates Line-Start Anchoring, Sparse Date Inheritance, and Balance Delta Reconciliation.
@@ -149,6 +155,9 @@ class UniversalStatementParser
         if (preg_match('/Period Covered\s+(?:\w+\s+)?\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})\s+to\s+\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4})/i', $headerSlice, $pm)) {
             $startYear = (int) $pm[1];
             $endYear = (int) $pm[2];
+        } elseif (preg_match('/(\d{1,2}[\/\.\-]\d{1,2}[\/\-](\d{4}))\s*-\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\-](\d{4}))/i', $headerSlice, $sm)) {
+            $startYear = (int) $sm[2];
+            $endYear = (int) $sm[4];
         } elseif (preg_match('/\b(\d{1,2}\s+[A-Za-z]{3,9}\s+(\d{4}))\s+BROUGHT FORWARD/i', $headerSlice, $bm)) {
             $startYear = (int) $bm[2];
             $endYear = $startYear;
@@ -168,7 +177,7 @@ class UniversalStatementParser
 
         // Line-start date regex (anchored strictly at the start of the line or column)
         $leadingDateRegex = '/^\s*(\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*(?:\s+\d{2,4})?|\d{1,2}[\/\.\-]\d{1,2}(?:[\/\.\-]\d{2,4})?)\b/i';
-        $amountPattern = '/(?:\b|[£$€])(-?\(?[£$€]?\s*\d{1,3}(?:,\d{3})*(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/i';
+        $amountPattern = '/(?:\b|[£$€])(-?\(?[£$€]?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2})\)?(?:\s*(?:CR|DR))?)(?=\s|$)/iu';
 
         foreach ($lines as $line) {
             $trimmed = trim($line);
@@ -236,6 +245,10 @@ class UniversalStatementParser
                 $matchedAmounts = $amountMatches[1];
                 $numAmounts = count($matchedAmounts);
 
+                // Check for Starling tab-delimited IN vs OUT markers in raw line
+                $isExplicitStarlingIn = (bool) preg_match('/\t£\s*\d/', $line);
+                $isExplicitStarlingOut = (bool) preg_match('/\t\s+£\s*\d/', $line);
+
                 // Strip matched amounts from current line to isolate remaining description chunk
                 $cleanChunk = $lineWithoutDate;
                 foreach ($matchedAmounts as $mAmt) {
@@ -244,7 +257,7 @@ class UniversalStatementParser
                         $cleanChunk = substr_replace($cleanChunk, '', $pos, strlen($mAmt));
                     }
                 }
-                $cleanChunk = trim(preg_replace('/[£$€]/', '', $cleanChunk) ?? '');
+                $cleanChunk = trim(preg_replace('/[£$€]/u', '', $cleanChunk) ?? '');
                 if ($cleanChunk !== '') {
                     $accumulatedDesc[] = $cleanChunk;
                 }
@@ -255,7 +268,23 @@ class UniversalStatementParser
                 $extractedTxAmount = null;
                 $calculatedType = 'expense';
 
-                if ($numAmounts >= 2) {
+                if ($isExplicitStarlingIn) {
+                    $txAmtStr = $matchedAmounts[0];
+                    $rawTxFloat = $this->parsePureFloat($txAmtStr);
+                    $extractedTxAmount = abs($rawTxFloat);
+                    $calculatedType = 'income';
+                    if ($numAmounts >= 2) {
+                        $previousBalance = $this->parsePureFloat($matchedAmounts[$numAmounts - 1]);
+                    }
+                } elseif ($isExplicitStarlingOut) {
+                    $txAmtStr = $matchedAmounts[0];
+                    $rawTxFloat = $this->parsePureFloat($txAmtStr);
+                    $extractedTxAmount = -abs($rawTxFloat);
+                    $calculatedType = 'expense';
+                    if ($numAmounts >= 2) {
+                        $previousBalance = $this->parsePureFloat($matchedAmounts[$numAmounts - 1]);
+                    }
+                } elseif ($numAmounts >= 2) {
                     // Typical UK Statement Row: [Description...] [Paid In / Paid Out Amount] [Balance]
                     $txAmtStr = $matchedAmounts[$numAmounts - 2];
                     $balStr = $matchedAmounts[$numAmounts - 1];
@@ -289,7 +318,7 @@ class UniversalStatementParser
                 }
             } else {
                 // Line has no amount: accumulate as multi-line description chunk for the upcoming transaction
-                if ($lineWithoutDate !== '') {
+                if ($lineWithoutDate !== '' && $activeLedgerDate !== null) {
                     $accumulatedDesc[] = $lineWithoutDate;
                 }
             }
