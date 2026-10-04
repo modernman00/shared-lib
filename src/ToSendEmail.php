@@ -33,6 +33,25 @@ class ToSendEmail
             'fileName' => $fileName,
         ];
     }
+    /**
+     * A subject as the recipient should read it. Utility::checkInput() used to be applied
+     * here; its whitelist stripped apostrophes, emoji and accents, and names stored
+     * HTML-escaped arrived as "&#039;". Entities are decoded (twice, for values escaped
+     * twice), tags removed, and line breaks / control characters flattened so a subject
+     * can never add a mail header.
+     */
+    public static function cleanSubject(mixed $subject): string
+    {
+        if (!is_string($subject)) {
+            return 'No Subject';
+        }
+        $text = html_entity_decode(html_entity_decode($subject, ENT_QUOTES | ENT_HTML5, 'UTF-8'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = strip_tags($text);
+        $text = (string) preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $text);
+        $text = trim((string) preg_replace('/\s{2,}/u', ' ', $text));
+        return $text !== '' ? $text : 'No Subject';
+    }
+
     // This is a more general function that can be used for any email sending, it will handle the rendering of the email and the sending of the email.
 
     /**
@@ -44,7 +63,7 @@ class ToSendEmail
         if (\isTestEnv()) {
             $GLOBALS['__testMail'][] = [
                 'to' => $params['data']['email'] ?? $params['email'] ?? '',
-                'subject' => $params['subject'] ?? '',
+                'subject' => self::cleanSubject($params['subject'] ?? ''),
                 'view' => $params['viewPath'] ?? '',
                 'recipient' => $recipient,
             ];
@@ -62,7 +81,7 @@ class ToSendEmail
             // 2) Extract + validate inputs
             $data = $params['data'];
             $viewPath = $params['viewPath'];
-            $subject = Utility::checkInput($params['subject']) ?? 'No Subject';
+            $subject = self::cleanSubject($params['subject'] ?? '');
             $email = Utility::checkInputEmail($data['email'] ?? ($params['email'] ?? ''));
             if ($email === null) {
                 throw new NotFoundException('A valid recipient email is required.');
