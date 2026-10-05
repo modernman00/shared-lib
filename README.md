@@ -150,3 +150,4 @@ For support, please open an issue on the [GitHub repository](https://github.com/
 ## Changelog
 
 For a detailed changelog, see [RELEASES](https://github.com/modernman00/shared-lib/releases).
+
