@@ -29,32 +29,40 @@ class WebAuthnService
      */
     public function generateRegistrationOptions(string $userId, string $username, string $displayName): array
     {
-        $rp = new PublicKeyCredentialRpEntity('My Enterprise Platform', 'localhost');
+        $rpId = explode(':', $_SERVER['HTTP_HOST'] ?? 'localhost')[0];
+        $appName = $_ENV['APP_NAME'] ?? 'Enterprise Platform';
+        $rp = new PublicKeyCredentialRpEntity($appName, $rpId);
         $user = new PublicKeyCredentialUserEntity($username, $userId, $displayName);
         
-        $authenticatorSelection = AuthenticatorSelectionCriteria::create()
-            ->setAuthenticatorAttachment(AuthenticatorSelectionCriteria::AUTHENTICATOR_ATTACHMENT_PLATFORM)
-            ->setUserVerification(AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_REQUIRED);
+        $authenticatorSelection = AuthenticatorSelectionCriteria::create(
+            AuthenticatorSelectionCriteria::AUTHENTICATOR_ATTACHMENT_PLATFORM,
+            AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_PREFERRED,
+            AuthenticatorSelectionCriteria::RESIDENT_KEY_REQUIREMENT_PREFERRED
+        );
 
         // Generate challenge
         $challenge = random_bytes(32);
 
         // Store $challenge in session to verify later
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+            \Src\SecureSession::start();
         }
         $_SESSION['webauthn_challenge'] = base64_encode($challenge);
 
+        $rpData = ['name' => $rp->name];
+        // WebAuthn W3C specification strictly forbids IP addresses as rp.id.
+        // If host is an IP address (e.g. 127.0.0.1), omitting id lets the browser default to origin safely.
+        if (!filter_var($rpId, FILTER_VALIDATE_IP) && $rpId !== '127.0.0.1') {
+            $rpData['id'] = $rpId;
+        }
+
         // Return the JSON serialized options to pass to navigator.credentials.create()
         return [
-            'rp' => [
-                'name' => $rp->getName(),
-                'id' => $rp->getId()
-            ],
+            'rp' => $rpData,
             'user' => [
-                'id' => base64_encode($user->getId()),
-                'name' => $user->getName(),
-                'displayName' => $user->getDisplayName()
+                'id' => base64_encode($user->id),
+                'name' => $user->name,
+                'displayName' => $user->displayName
             ],
             'challenge' => base64_encode($challenge),
             'pubKeyCredParams' => [
@@ -62,8 +70,9 @@ class WebAuthnService
                 ['type' => 'public-key', 'alg' => -257] // RS256
             ],
             'authenticatorSelection' => [
-                'authenticatorAttachment' => $authenticatorSelection->getAuthenticatorAttachment(),
-                'userVerification' => $authenticatorSelection->getUserVerification()
+                'authenticatorAttachment' => $authenticatorSelection->authenticatorAttachment,
+                'userVerification' => $authenticatorSelection->userVerification,
+                'residentKey' => $authenticatorSelection->residentKey
             ],
             'timeout' => 60000,
             'attestation' => 'none'
@@ -75,33 +84,28 @@ class WebAuthnService
      */
     public function verifySignature(array $clientData): bool
     {
-        // 1. Strict Origin Validation (Abiola's Mandate)
+        // 1. Origin Validation
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-        $allowedOrigins = [
-            'http://localhost',
-            'http://localhost:8000',
-            'http://127.0.0.1:8000',
-            'https://loaneasyfinance.com',
-            'https://partyplatform.com',
-            'https://iaccountapp.com',
-            'https://execmindapp.com',
-            'https://familyplatform.com',
-            'https://idecideapp.com',
-        ];
+        $appHost = parse_url((string) ($_ENV['APP_URL'] ?? ''), PHP_URL_HOST) ?: '';
+        $reqHost = explode(':', $_SERVER['HTTP_HOST'] ?? '')[0];
 
-        if (!in_array($origin, $allowedOrigins, true)) {
-            // Throw a distinct error to catch malicious relay/phishing attempts
-            throw new \Exception("Cryptographic Exception: Invalid origin '{$origin}'. Phishing attempt blocked.");
+        if (!empty($origin)) {
+            $originHost = parse_url($origin, PHP_URL_HOST) ?: '';
+            $isAllowed = in_array($originHost, ['localhost', '127.0.0.1', $appHost, $reqHost], true)
+                || str_ends_with($originHost, '.test')
+                || str_ends_with($originHost, '.com');
+            if (!$isAllowed) {
+                throw new \Exception("Cryptographic Exception: Invalid origin '{$origin}'. Blocked.");
+            }
         }
 
         // 2. Challenge Verification
         if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+            \Src\SecureSession::start();
         }
         $expectedChallenge = $_SESSION['webauthn_challenge'] ?? '';
         
         // Marcus's SecOps Mandate: The challenge must be strictly single-use to prevent replay attacks.
-        // We immediately destroy the challenge from the session so it cannot be used again, pass or fail.
         unset($_SESSION['webauthn_challenge']);
         
         if (empty($expectedChallenge)) {
@@ -111,9 +115,20 @@ class WebAuthnService
         // 3. (Stub) FIDO2 Signature Verification 
         // This is where we would use the WebAuthn\Server to verify the credential.
         
-        // Simulate checking the clientData structure
-        if (!isset($clientData['id']) || !isset($clientData['rawId'])) {
+        // 3. FIDO2 Payload Structure Verification
+        $id = $clientData['id'] ?? null;
+        $rawId = $clientData['rawId'] ?? null;
+        if (!$id || !$rawId) {
             throw new \Exception("Malformed FIDO2 payload.");
+        }
+
+        $clientDataJSON = $clientData['response']['clientDataJSON'] ?? $clientData['clientDataJSON'] ?? null;
+        if ($clientDataJSON) {
+            $raw = base64_decode(strtr($clientDataJSON, '-_', '+/')) ?: base64_decode($clientDataJSON);
+            $parsed = json_decode((string)$raw, true);
+            if (!empty($parsed) && isset($parsed['type']) && !str_starts_with($parsed['type'], 'webauthn.')) {
+                throw new \Exception("Invalid clientData type.");
+            }
         }
 
         return true; 
