@@ -157,6 +157,17 @@ class BankProfileMatcher
             'date_format' => 'd M Y',
             'has_eod_balance' => false,
         ],
+        'monese' => [
+            'name' => 'Monese',
+            'patterns' => [
+                'monese',
+                'monese ltd',
+                'monese.com',
+                'poolgb'
+            ],
+            'date_format' => 'd/m/Y',
+            'has_eod_balance' => false,
+        ],
     ];
 
     /**
