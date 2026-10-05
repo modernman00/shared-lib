@@ -15,16 +15,20 @@ namespace Src\Fintech;
 class UniversalStatementParser
 {
     private NeuroCategoriser $categoriser;
+    private BankProfileMatcher $profileMatcher;
+    private MerchantCleanser $cleanser;
 
     public function __construct(?int $userId = null)
     {
         $this->categoriser = new NeuroCategoriser($userId);
+        $this->profileMatcher = new BankProfileMatcher();
+        $this->cleanser = new MerchantCleanser();
     }
 
     /**
      * Universal entrypoint for all financial document files.
      *
-     * @return array<int, array{date: string, description: string, amount: float, category: string, type: string}>
+     * @return array<int, array{date: string, description: string, merchant?: string, amount: float, category: string, type: string}>
      */
     public function parse(string $filePath, string $extension): array
     {
@@ -39,9 +43,123 @@ class UniversalStatementParser
     }
 
     /**
+     * Parses PDF statement and returns full diagnostic envelope with health scorecard.
+     *
+     * @return array{
+     *     success: bool,
+     *     bank: string,
+     *     is_scanned: bool,
+     *     transactions: array<int, array{date: string, description: string, merchant?: string, amount: float, category: string, type: string}>,
+     *     total_count: int,
+     *     total_inflow: float,
+     *     total_outflow: float,
+     *     net_cashflow: float,
+     *     reconciled: bool,
+     *     error: ?string
+     * }
+     */
+    public function parsePdfWithDiagnostics(string $filePath): array
+    {
+        if (!class_exists('\Smalot\PdfParser\Parser')) {
+            return [
+                'success' => false,
+                'bank' => 'Unknown',
+                'is_scanned' => false,
+                'transactions' => [],
+                'total_count' => 0,
+                'total_inflow' => 0.0,
+                'total_outflow' => 0.0,
+                'net_cashflow' => 0.0,
+                'reconciled' => false,
+                'error' => 'PDF parser library not installed.',
+            ];
+        }
+
+        try {
+            if (filesize($filePath) > 15 * 1024 * 1024) {
+                return [
+                    'success' => false,
+                    'bank' => 'Unknown',
+                    'is_scanned' => false,
+                    'transactions' => [],
+                    'total_count' => 0,
+                    'total_inflow' => 0.0,
+                    'total_outflow' => 0.0,
+                    'net_cashflow' => 0.0,
+                    'reconciled' => false,
+                    'error' => 'File exceeds safety limit of 15MB.',
+                ];
+            }
+
+            $parser = new \Smalot\PdfParser\Parser();
+            $pdf = $parser->parseFile($filePath);
+            $pages = array_slice($pdf->getPages(), 0, 60);
+
+            $fullText = '';
+            foreach ($pages as $p) {
+                $fullText .= $p->getText() . "\n";
+            }
+
+            if (strlen(trim($fullText)) < 50) {
+                return [
+                    'success' => false,
+                    'bank' => 'Scanned Document',
+                    'is_scanned' => true,
+                    'transactions' => [],
+                    'total_count' => 0,
+                    'total_inflow' => 0.0,
+                    'total_outflow' => 0.0,
+                    'net_cashflow' => 0.0,
+                    'reconciled' => false,
+                    'error' => 'Scanned document or image-only PDF detected. Please upload an electronic PDF downloaded from your banking app.',
+                ];
+            }
+
+            $bankProfile = $this->profileMatcher->detectProfile($fullText);
+            $transactions = $this->parsePdf($filePath);
+
+            $totalInflow = 0.0;
+            $totalOutflow = 0.0;
+            foreach ($transactions as $t) {
+                if ($t['amount'] > 0) {
+                    $totalInflow += $t['amount'];
+                } else {
+                    $totalOutflow += abs($t['amount']);
+                }
+            }
+
+            return [
+                'success' => true,
+                'bank' => $bankProfile['name'],
+                'is_scanned' => false,
+                'transactions' => $transactions,
+                'total_count' => count($transactions),
+                'total_inflow' => round($totalInflow, 2),
+                'total_outflow' => round($totalOutflow, 2),
+                'net_cashflow' => round($totalInflow - $totalOutflow, 2),
+                'reconciled' => count($transactions) > 0,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'bank' => 'Unknown',
+                'is_scanned' => false,
+                'transactions' => [],
+                'total_count' => 0,
+                'total_inflow' => 0.0,
+                'total_outflow' => 0.0,
+                'net_cashflow' => 0.0,
+                'reconciled' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Parses PDF Bank & Credit Card Statements without external LLMs.
      *
-     * @return array<int, array{date: string, description: string, amount: float, category: string, type: string}>
+     * @return array<int, array{date: string, description: string, merchant?: string, amount: float, category: string, type: string}>
      */
     public function parsePdf(string $filePath): array
     {
@@ -62,6 +180,16 @@ class UniversalStatementParser
 
             // Safety limit: max 60 pages
             $pages = array_slice($pages, 0, 60);
+
+            // Scanned Document Guard: check if PDF is rasterized image without text
+            $totalTextLen = 0;
+            foreach ($pages as $p) {
+                $totalTextLen += strlen(trim($p->getText()));
+            }
+            if ($totalTextLen < 50) {
+                error_log("UniversalStatementParser: Scanned / Image-only PDF detected with insufficient digital text (<50 chars): $filePath");
+                return [];
+            }
 
             $rawLines = [];
             $noticeMarkers = [
@@ -597,16 +725,26 @@ class UniversalStatementParser
     }
 
     /**
-     * @return array{date: string, description: string, amount: float, category: string, type: string}
+     * @return array{date: string, description: string, merchant: string, amount: float, category: string, type: string}
      */
     private function buildTransaction(string $date, string $description, float $amount, string $type = 'expense'): array
     {
         $cleanDesc = trim(preg_replace('/\s+/', ' ', $description) ?? 'Unknown');
-        $category = $this->categoriser->categorise($cleanDesc);
+        $cleanMerchant = $this->cleanser->clean($cleanDesc);
+
+        // Classify using clean merchant, but fallback to raw description if needed
+        $category = $this->categoriser->categorise($cleanMerchant);
+        if ($category === 'General' || $category === 'Uncategorized') {
+            $fallbackCat = $this->categoriser->categorise($cleanDesc);
+            if ($fallbackCat !== 'General' && $fallbackCat !== 'Uncategorized') {
+                $category = $fallbackCat;
+            }
+        }
 
         return [
             'date' => $date,
             'description' => $cleanDesc,
+            'merchant' => $cleanMerchant,
             'amount' => $amount,
             'category' => $category,
             'type' => $type,

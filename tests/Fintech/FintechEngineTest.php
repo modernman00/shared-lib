@@ -155,4 +155,62 @@ class FintechEngineTest extends TestCase
         $this->assertEquals(-11.99, $last['amount']);
         $this->assertEquals('expense', $last['type']);
     }
+
+    public function testBankProfileMatcherDetection(): void
+    {
+        $matcher = new \Src\Fintech\BankProfileMatcher();
+
+        $starlingDoc = "Starling Bank Limited registered in England. www.starlingbank.com";
+        $p1 = $matcher->detectProfile($starlingDoc);
+        $this->assertEquals('starling', $p1['id']);
+        $this->assertEquals('Starling Bank', $p1['name']);
+
+        $barclaysDoc = "Barclays Bank UK PLC. www.barclays.co.uk";
+        $p2 = $matcher->detectProfile($barclaysDoc);
+        $this->assertEquals('barclays', $p2['id']);
+
+        $hsbcDoc = "HSBC UK Bank plc, 1 Centenary Square, Birmingham";
+        $p3 = $matcher->detectProfile($hsbcDoc);
+        $this->assertEquals('hsbc', $p3['id']);
+
+        $unknownDoc = "Generic Credit Union Statement of Account";
+        $p4 = $matcher->detectProfile($unknownDoc);
+        $this->assertEquals('universal', $p4['id']);
+    }
+
+    public function testMerchantCleanserNoiseStripping(): void
+    {
+        $cleanser = new \Src\Fintech\MerchantCleanser();
+
+        $this->assertEquals('24/7 Home Rescue', $cleanser->clean('DIRECT DEBIT 24/7 Home Rescue (GC781913)'));
+        $this->assertEquals('MAISA CHOMA HOUSE', $cleanser->clean('APPLE PAY MAISA CHOMA HOUSE'));
+        $this->assertEquals('Aldi', $cleanser->clean('CHIP & PIN ALDI 104 775'));
+        $this->assertEquals('Amazon', $cleanser->clean('ONLINE PAYMENT AMAZON* 7T5G59HK5'));
+        $this->assertEquals('Lidl', $cleanser->clean('APPLE PAY LIDL GB SWINDON BARNFI'));
+        $this->assertEquals('Segun Olaogun', $cleanser->clean('FASTER PAYMENT Segun Olaogun (From S Olaogun)'));
+    }
+
+    public function testParsePdfWithDiagnostics(): void
+    {
+        $filePath = '/Users/waleolaogun/Downloads/StarlingStatement_01-12-2025_22-01-2026.pdf';
+        if (!file_exists($filePath)) {
+            $this->markTestSkipped('Starling statement file not found in Downloads.');
+        }
+
+        $diag = $this->parser->parsePdfWithDiagnostics($filePath);
+
+        $this->assertTrue($diag['success']);
+        $this->assertEquals('Starling Bank', $diag['bank']);
+        $this->assertFalse($diag['is_scanned']);
+        $this->assertEquals(142, $diag['total_count']);
+        $this->assertGreaterThan(5000, $diag['total_inflow']);
+        $this->assertGreaterThan(6000, $diag['total_outflow']);
+        $this->assertTrue($diag['reconciled']);
+        $this->assertNull($diag['error']);
+
+        // Verify merchant field is populated on transactions
+        $first = $diag['transactions'][0];
+        $this->assertArrayHasKey('merchant', $first);
+        $this->assertEquals('24/7 Home Rescue', $first['merchant']);
+    }
 }
