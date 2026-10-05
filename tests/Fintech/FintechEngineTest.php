@@ -85,4 +85,74 @@ class FintechEngineTest extends TestCase
         $this->assertEquals('outstanding_debt', $mem2[0]['key']);
         $this->assertEquals('income_declaration', $mem2[1]['key']);
     }
+
+    public function testStarlingPdfLineExtractionAndPolarity(): void
+    {
+        $starlingLines = [
+            "Summary\t01/12/2025 - 22/01/2026",
+            "DATE\tTYPE\tTRANSACTION\tIN\tOUT\tEND OF DAY ACCOUNT BALANCE",
+            "\tOPENING BALANCE \t\t\t£1481.76",
+            "01/12/2025 DIRECT DEBIT 24/7 Home Rescue (GC781913)\t £4.94\t",
+            "01/12/2025 FASTER PAYMENT OLAOGUN E (Your money)\t£60.00\t\t",
+            "01/12/2025 FASTER PAYMENT Segun Olaogun (From S Olaogun)\t£500.00\t £1807.05",
+            "02/12/2025 ONLINE PAYMENT TESCO CREDIT CARDS\t £940.00\t",
+            "22/12/2025 FASTER PAYMENT Eniola Olaogun (INSURANCE)\t£1500.00\t £1934.50",
+            "21/01/2026 ONLINE PAYMENT AMAZON* 7T5G59HK5\t £11.99 £200.37"
+        ];
+
+        $results = $this->parser->extractTransactionsFromPdfLines($starlingLines);
+
+        $this->assertCount(6, $results);
+        // 1. OUT payment
+        $this->assertEquals('2025-12-01', $results[0]['date']);
+        $this->assertEquals(-4.94, $results[0]['amount']);
+        $this->assertEquals('expense', $results[0]['type']);
+
+        // 2. IN payment (\t£60.00\t\t)
+        $this->assertEquals('2025-12-01', $results[1]['date']);
+        $this->assertEquals(60.00, $results[1]['amount']);
+        $this->assertEquals('income', $results[1]['type']);
+
+        // 3. IN payment with End of day balance (\t£500.00\t £1807.05)
+        $this->assertEquals('2025-12-01', $results[2]['date']);
+        $this->assertEquals(500.00, $results[2]['amount']);
+        $this->assertEquals('income', $results[2]['type']);
+
+        // 4. OUT payment (\t £940.00\t)
+        $this->assertEquals('2025-12-02', $results[3]['date']);
+        $this->assertEquals(-940.00, $results[3]['amount']);
+        $this->assertEquals('expense', $results[3]['type']);
+
+        // 5. IN payment > 1000 without comma (\t£1500.00\t £1934.50)
+        $this->assertEquals('2025-12-22', $results[4]['date']);
+        $this->assertEquals(1500.00, $results[4]['amount']);
+        $this->assertEquals('income', $results[4]['type']);
+
+        // 6. 2026 roll-over OUT payment
+        $this->assertEquals('2026-01-21', $results[5]['date']);
+        $this->assertEquals(-11.99, $results[5]['amount']);
+        $this->assertEquals('expense', $results[5]['type']);
+    }
+
+    public function testStarlingRealPdfParseIfExists(): void
+    {
+        $filePath = '/Users/waleolaogun/Downloads/StarlingStatement_01-12-2025_22-01-2026.pdf';
+        if (!file_exists($filePath)) {
+            $this->markTestSkipped('Starling statement file not found in Downloads.');
+        }
+
+        $results = $this->parser->parsePdf($filePath);
+        $this->assertCount(142, $results);
+
+        // First transaction verification
+        $this->assertEquals('2025-12-01', $results[0]['date']);
+        $this->assertEquals(-4.94, $results[0]['amount']);
+        $this->assertEquals('expense', $results[0]['type']);
+
+        // Last transaction verification
+        $last = end($results);
+        $this->assertEquals('2026-01-21', $last['date']);
+        $this->assertEquals(-11.99, $last['amount']);
+        $this->assertEquals('expense', $last['type']);
+    }
 }
