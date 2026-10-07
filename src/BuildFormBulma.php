@@ -114,12 +114,16 @@ class BuildFormBulma
             $multiple = ''; // multiple for file input
             $fileName = "";
 
+            $isCodeField = strtolower((string) $nameKey) === 'code';
+            $codeAutocomplete = $isCodeField ? 'one-time-code' : "new-{$nameKey}";
+            $codeInputMode = $isCodeField ? 'inputmode="numeric"' : '';
+
             if ($this->entValue[$i] === 'text') {
                 echo <<<HTML
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control">
-                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" data-original="$value" value="$value"  id="{$nameKey}" required>
+                            <input type="text" autocomplete="$codeAutocomplete" $codeInputMode class="input" placeholder="PLEASE ENTER YOUR $var" name="$nameKey" data-original="$value" value="$value"  id="{$nameKey}" required>
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>
@@ -131,7 +135,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control has-icons-left has-icons-right">
-                            <input type="text" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
+                            <input type="text" autocomplete="$codeAutocomplete" $codeInputMode class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
                             <span class="icon is-small is-left">
                                 $fontAwesome
                             </span>
@@ -148,7 +152,7 @@ class BuildFormBulma
                     <div class="field">
                         <label class="label" for="$nameKey"><b>$var</b></label>
                         <div class="control">
-                            <input type="number" autocomplete="new-$nameKey" class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
+                            <input type="number" autocomplete="$codeAutocomplete" $codeInputMode class="input" placeholder="$var" required name="$nameKey" data-original="$value" value="$value">
                             <p class="help" id="{$nameKey}_help"></p>
                             <p class="help" id="{$nameKey}_error"></p>
                         </div>

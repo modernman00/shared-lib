@@ -28,7 +28,7 @@ class TokenTest extends TestCase
         $token = Token::generateAuthToken();
         
         $this->assertIsString($token);
-        $this->assertEquals(12, strlen($token)); // 6 bytes = 12 hex characters
+        $this->assertEquals(6, strlen($token)); // 3 bytes = 6 hex characters
         $this->assertMatchesRegularExpression('/^[A-F0-9]+$/', $token);
     }
 
@@ -49,7 +49,14 @@ class TokenTest extends TestCase
 
     public function testGenerateSendTokenEmailMethodExists()
     {
-        // Test that the method exists
+        // Test that the method exists and accepts optional $subject
         $this->assertTrue(method_exists(Token::class, 'generateSendTokenEmail'));
+        $reflection = new \ReflectionMethod(Token::class, 'generateSendTokenEmail');
+        $params = $reflection->getParameters();
+        $this->assertCount(3, $params);
+        $this->assertEquals('data', $params[0]->getName());
+        $this->assertEquals('viewPath', $params[1]->getName());
+        $this->assertEquals('subject', $params[2]->getName());
+        $this->assertTrue($params[2]->isOptional());
     }
 }

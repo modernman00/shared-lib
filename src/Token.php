@@ -12,15 +12,15 @@ class Token extends CheckToken
     /**
      * Helps to generate token, aπnd it updates the login table as well.
      * two sessions are set $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust'].
+    /**
+     * @param array<string, mixed> $data
+     * @param string                $viewPath
+     * @param string|null           $subject
      *
-     * @param mixed $data
-     * @param string $viewPath
-     *
-     * @throws \Exception
      * @throws \Throwable
      * @throws \InvalidArgumentException
      */
-    public static function generateSendTokenEmail($data, $viewPath): void
+    public static function generateSendTokenEmail($data, $viewPath, ?string $subject = null): void
     {
         $id = $data['id'] ?? $data['no'] ?? $data['user_id'] ?? $data['userId'] ?? null;
         // 1. check if email exists
@@ -38,13 +38,30 @@ class Token extends CheckToken
         $_SESSION['auth']['email'] = $email;
         //TODO send text to the user with the code - xxx
 
-        //3. ACCOMPANY EMAIL CONTENT
-        $emailData = ['code' => $deriveToken, 'email' => $email, 'isFunctional' => true];
+        //3. ACCOMPANY EMAIL CONTENT (Heuristic-compliant subject for iOS 17+ / Android OTP autofill)
+        $appName = (string) ($data['appName'] ?? $_ENV['APP_NAME'] ?? 'Security');
+        $finalSubject = $subject ?? "{$deriveToken} is your {$appName} verification code";
+
+        $baseUrl = rtrim((string) ($_ENV['APP_URL'] ?? ''), '/');
+        $verifyRoute = (string) ($data['verifyRoute'] ?? '/manager/verify');
+        $sessId = session_id();
+        $tokenParam = (string) ($_SESSION['token'] ?? ($sessId !== false ? $sessId : ''));
+
+        $emailData = [
+            'code' => $deriveToken,
+            'email' => $email,
+            'appName' => $appName,
+            'isFunctional' => true,
+        ];
+
+        if (!empty($baseUrl)) {
+            $emailData['verifyUrl'] = "{$baseUrl}{$verifyRoute}?code={$deriveToken}&token={$tokenParam}";
+        }
 
         $generateEmailArray = ToSendEmail::genEmailArray(
             viewPath: $viewPath,
             data: $emailData,
-            subject: 'TOKEN'
+            subject: $finalSubject
         );
 
         ToSendEmail::sendEmailGeneral(
