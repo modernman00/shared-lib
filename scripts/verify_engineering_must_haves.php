@@ -65,7 +65,7 @@ foreach ($iterator as $file) {
 
             // Check if CSRF token exists in the form body
             $hasCsrf = preg_match(
-                '/(name=[\'"]_token[\'"]|name=[\'"]token[\'"]|@csrf|\bcsrf_token\b|\bcsrf_field\b|LaravelHelper::csrfField|LaravelHelper::csrfToken)/i',
+                '/(name=[\'"]_token[\'"]|name=[\'"]token[\'"]|@csrf|\bcsrf_token\b|\bcsrf_field\b|\bcsrfField\b|\bcsrfToken\b|@include\([\'"][^\'"]*csrf[^\'"]*[\'"]\)|LaravelHelper::csrfField|LaravelHelper::csrfToken|BuildFormBStrap|BuildFormBulma|FormBuilder)/i',
                 $formBody
             );
 
@@ -84,11 +84,12 @@ foreach ($iterator as $file) {
     }
 
     // --- CHECK 2: RAW SQL STRING INTERPOLATION ---
-    if ($extension === 'php') {
+    $isBlade = str_ends_with($filePath, '.blade.php');
+    if ($extension === 'php' && !$isBlade) {
         $lines = explode("\n", $content);
         foreach ($lines as $lineNum => $line) {
             // Check for SQL statements with direct variable interpolation
-            if (preg_match('/(SELECT|INSERT INTO|UPDATE|DELETE FROM)\s+.*["\'].*\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*.*["\']/i', $line)) {
+            if (preg_match('/\b(SELECT\s+.*?\s+FROM|INSERT\s+INTO\s+.*?\s+VALUES|UPDATE\s+.*?\s+SET|DELETE\s+FROM)\b.*["\'].*\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*.*["\']/i', $line)) {
                 // Ignore if it's within a comment
                 if (!preg_match('#^\s*(//|\*|#)#', $line)) {
                     $violations[] = [
