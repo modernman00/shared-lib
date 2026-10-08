@@ -102,7 +102,7 @@ class Recaptcha
         // automated tools rack up real, repeated traffic from the same IP that Google's live
         // risk engine legitimately scores as bot activity, which has nothing to do with the
         // app's own correctness. Skip the live call in that environment instead.
-        if (($_ENV['APP_ENV'] ?? '') === 'local') {
+        if (in_array($_ENV['APP_ENV'] ?? '', ['local', 'development'], true) || \Src\Utility::isLocalEnv()) {
             return true;
         }
 

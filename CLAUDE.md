@@ -210,7 +210,31 @@
 - **Principal Engineers** | (James, Ryan Mitchell, Tariq Vance) — Diagnose systemic ripple effects.
 - **Sofia Lin & Mateo Rossi** | Embedded UX Telemetry Analysts — Translate client-side frustration logs into actionable UI refactors.
 
+### 6E. Full-Spectrum Engineering Squad (Yoruba Personas) ⚡ **MANDATED: 2026-10-08**
+*Executive Convening: Olutobi, Victor & Helena | Reporting to Victor (CTO) & Sarah (CPO)*
+*Mandate: Deliver end-to-end software craftsmanship across the full engineering spectrum with an enforced RFC Process, Strong Definition of Done (DoD), and automated pre-review gates.*
+
+1. **Oluwafemi "Femi" Adeleke** | Lead Technical Product Manager (TPM & RFC Steward)
+   - *Responsibilities:* Owns PRDs, sprint backlogs, feature scoping, acceptance criteria, and stewards the 1–2 page RFC process from discovery to sign-off.
+2. **Eniola Balogun** | Lead Product Designer & Design Systems Architect
+   - *Responsibilities:* Crafts Figma component libraries, `@modernman00/shared-js-lib` design tokens, WCAG AAA accessibility, 60fps micro-animations, and mobile touch targets ($\ge 44\text{px}$).
+3. **Damilola "Dami" Ogunleye** | Principal Core Systems & Distributed Backend Architect
+   - *Responsibilities:* Heavy backend PHP 8.2+ architecture, high-concurrency transaction safety, distributed Redis caching, async queue workers, and primary engineering peer reviewer.
+4. **Kehinde "Kenny" Akindele** | Staff Frontend & Progressive Web Apps Architect
+   - *Responsibilities:* Modern Vanilla JS/TypeScript architectures, PWA service worker lifecycles (working with Segun), View Transitions, Core Web Vitals optimization, and zero-unnecessary-npm posture.
+5. **Babatunde "Tunde" Olatunji** | Lead DevOps & Platform Engineer
+   - *Responsibilities:* Infrastructure-as-Code, CI/CD pipeline automation, containerization, Nginx reverse proxy hardening, and zero-downtime deployment pipelines.
+6. **Ayomide "Ayo" Adeyemi** | Lead Site Reliability Engineer (SRE & Telemetry / Observability)
+   - *Responsibilities:* OpenTelemetry tracing, structured JSON event logging, SLI/SLO threshold monitoring, automated alerting, and production error budgeting (enforces "Monitored" in DoD).
+7. **Gbenga Adebisi** | Lead Database Reliability Engineer (DBRE)
+   - *Responsibilities:* Zero-downtime schema migrations (strictly no table locks), `EXPLAIN ANALYZE` query optimization, composite indexing, and strict string typing for IDs.
+8. **Simisola "Simi" Alabi** | Lead QA Automation & SDET Engineer
+   - *Responsibilities:* Pre-flight CI test automation, Playwright/Cypress E2E test suites, chaos failure injection testing (network dropouts, DB disconnects), and mutation test coverage.
+9. **Oladapo "Dapo" Salami** | Staff DevSecOps & Application Security Engineer
+   - *Responsibilities:* Automated SAST/DAST pipelines (Semgrep, Trivy), OWASP Top 10 hardening, secret leak detection, and purple-team regression testing (working with Marcus & Ghost).
+
 ---
+
 
 ## 7. External Consultants
 - **David** | Senior Principal Architect (Deloitte) — *Principal Gatewatcher & Deployment Governance Lead* ⚡ **NEW APPOINTMENT: 2026-07-10**
@@ -302,6 +326,24 @@ The following mandates override any manual review assumptions. They are strictly
 *   **10. Automated Threat & UX Telemetry Mandate ⚡ NEW: 2026-09-06:** To transition from reactive to proactive defense and stability:
     - **Purple Teaming**: Every vulnerability discovered by the Red Team MUST be codified into an automated regression test/DAST rule in Staging before the fix is considered complete.
     - **UX Friction as a Defect**: BRATS is required to evaluate Real User Monitoring (RUM) data (Dead Clicks, Rage Clicks, form drop-offs) provided by the UX Research team. Usability blockers that cause user churn must be triaged and resolved with the same urgency as a fatal 500 error.
+*   **11. The RFC (Request for Comments) Mandate ⚡ NEW: 2026-10-08:** Before any engineer or agent writes code for a massive, multi-file, or architectural feature, they MUST author a simple 1–2 page RFC document (`docs/rfcs/0000-RFC-TEMPLATE.md`). Sharing this document with the squad and TAT catches architectural mistakes, unindexed queries, database locks, and blast radiuses before a single line of code is written. No branch may merge without an approved RFC.
+*   **12. Strong Definition of Done (DoD) & Automated Pre-Review Gate ⚡ NEW: 2026-10-08:** A feature is NEVER "done" when the code is written. It is done ONLY when it is **Tested, Documented, Peer-Reviewed, and Monitored**:
+    - **Automated Pre-Review Machine Gate**: Every single piece of code MUST pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep SAST), and unit tests (PHPUnit 100%) in CI before a human engineer or reviewer even looks at it.
+    - **Peer Reviewed**: Approved by a designated senior peer engineer (Dami Ogunleye for backend, Kenny Akindele for frontend).
+    - **Documented**: RFC updated to as-built, PHPDoc/TypeScript strict types complete, and `CHANGELOG.md` updated.
+    - **Monitored**: Structured JSON event logging, telemetry metrics (OpenTelemetry/PostHog), and SRE alert thresholds (Ayo Adeyemi) active in production.
+*   **13. The 10 Golden Engineering Invariants (Zero-Bypass Architecture) ⚡ NEW: 2026-10-08:** All code across all 7 portfolio applications must strictly satisfy the 10 Golden Invariants:
+    1. **Universal CSRF Shield**: Every form & state-changing request must include `@csrf`, `LaravelHelper::csrfField()`, or `_token`.
+    2. **Prepared Statements Only**: Parameterized queries with `?` or `:name`; raw variable interpolation in SQL is strictly forbidden.
+    3. **Contextual Output Encoding**: Strict XSS mitigation (`{{ }}` in Blade, `htmlspecialchars()` in PHP).
+    4. **Defensive Null Typing**: Null-coalescing `??` on all array accesses; optional chaining `?.` in JavaScript.
+    5. **Universal Rate Limiting**: `\Src\Limiter` & `\Src\BotGuard` on public, auth, and sensitive endpoints.
+    6. **Strict Tenant Isolation (Anti-IDOR)**: Queries must be scoped to authenticated session user ID.
+    7. **Resilient Error Shielding**: Never disclose stack traces, SQL errors, or credentials in production.
+    8. **Mobile Touch Ergonomics**: Touch targets $\ge 44\text{px} \times 44\text{px}$ with no horizontal scroll.
+    9. **Zero N+1 Query Loops**: Batch-loaded queries with composite indexes ($O(n \log n)$ max).
+    10. **Structured JSON Telemetry**: Every state change emits structured logs with `trace_id` and `user_id`.
+    - *Enforcement Tooling*: Automated scanner in `scripts/verify_engineering_must_haves.php` halts commits failing these gates.
 
 
 ### Agent Rules

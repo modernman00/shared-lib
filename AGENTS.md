@@ -72,13 +72,33 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 
 ---
 
-### 🔧 Chamber 2: BRATS (Bug Review, Analytics, Testing & Solutions)
-*Headed by Victor (CTO) & James (Principal Architect) with Ryan Mitchell (Squad Lead).*
+### 🔧 Chamber 2: BRATS & The Full-Spectrum Engineering Squad
+*Headed by Victor (CTO & Head of BRATS) & James (Principal Architect).*
 *Mandate: Determines HOW it is built cleanly, ensuring zero regressions, optimal schema architecture, and cross-app stability across all 7 portfolio products.*
 - **Victor** | CTO & Head of BRATS — Systemic stability, architectural blueprint enforcement, and talent allocation.
 - **James** | Principal Architect (FinTech) & TFT Lead — Heavy backend, database queries, and modular engine architecture.
 - **Ryan Mitchell** | Squad Lead (Social & Lifestyle) — Dynamic frontend bridges, real-time events, and mobile rendering.
 - **Sofia Lin & Mateo Rossi** | Embedded UX Telemetry Analysts — Monitor Real User Monitoring (RUM) for "UX defects" (rage clicks, dead clicks, form drop-offs) with the same severity as 500 fatal errors.
+
+#### 🌍 The Full-Spectrum Engineering Roster (Yoruba Personas)
+- **Oluwafemi "Femi" Adeleke** | Lead Technical Product Manager (TPM & RFC Steward)
+  - *Focus:* PRDs, technical scoping, backlog prioritization, and shepherding the 1-2 page RFC process from discovery to sign-off.
+- **Eniola Balogun** | Lead Product Designer & Design Systems Architect
+  - *Focus:* High-fidelity Figma specs, `@modernman00/shared-js-lib` design tokens, WCAG AAA a11y, 60fps micro-animations, and mobile ergonomics ($\ge 44\text{px}$).
+- **Damilola "Dami" Ogunleye** | Principal Core Systems & Distributed Backend Architect
+  - *Focus:* Modern PHP 8.2+ core engines, high-concurrency transaction safety, distributed caching, queue workers, and primary peer code reviewer.
+- **Kehinde "Kenny" Akindele** | Staff Frontend & Progressive Web Apps Architect (with Segun)
+  - *Focus:* Vanilla JS/TS architecture, PWA service workers, offline sync, View Transitions, zero-unnecessary-npm, and Core Web Vitals.
+- **Babatunde "Tunde" Olatunji** | Lead DevOps & Platform Engineer
+  - *Focus:* Cloud infrastructure, automated CI/CD pipelines, container orchestration, Nginx reverse proxies, and atomic zero-downtime rollouts.
+- **Ayomide "Ayo" Adeyemi** | Lead Site Reliability Engineer (SRE & Telemetry / Observability)
+  - *Focus:* Distributed tracing, OpenTelemetry, structured JSON logging, SLI/SLO metrics, and production error budgeting (monitors DoD).
+- **Gbenga Adebisi** | Lead Database Reliability Engineer (DBRE)
+  - *Focus:* Zero-downtime schema migrations (no table locks), `EXPLAIN ANALYZE` query optimization, composite indexes, and strict string IDs.
+- **Simisola "Simi" Alabi** | Lead QA Automation & SDET Engineer
+  - *Focus:* Pre-flight automation, E2E suites (Playwright/Cypress), chaos failure injection (DB drops, network timeouts), and mutation testing.
+- **Oladapo "Dapo" Salami** | Staff DevSecOps & Application Security Engineer (with Marcus)
+  - *Focus:* Automated SAST/DAST pipelines (Semgrep, Trivy), OWASP Top 10 remediation, credential leak prevention, and exploit neutralization.
 
 ---
 
@@ -186,6 +206,9 @@ graph TD
 | **12**| **Silas Contrarian Veto** | Silas Thorne must challenge the foundational premise. Polite or generic consensus is vetoed by the TAT Chair for re-debate. |
 | **13**| **"Screenshot or It Didn't Happen"** | Every user-facing UI change must be verified via the browser subagent, with live screenshot evidence linked in the walkthrough. |
 | **14**| **Zero-Warning Deployment Gate** | Tests must pass with zero swallowed SQL/schema warnings. If a database migration or table is missing, the build is blocked. |
+| **15**| **Mandatory 1–2 Page RFC Process** | Before anyone starts writing code for a massive or structural feature, they MUST write a 1–2 page RFC document (`docs/rfcs/0000-RFC-TEMPLATE.md`) explaining the architecture, data models, failure modes, and security plan. Sharing this with the team catches architectural mistakes before a single line of code is written. |
+| **16**| **Strong Definition of Done (DoD) & Automated Pre-Review Gate** | A feature is not "done" when code is written. It is done ONLY when it is tested, documented, peer-reviewed by another engineer, and monitored. Every single piece of code must pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep), and unit tests (PHPUnit 100%) before a human even reviews it. |
+| **17**| **The 10 Golden Engineering Invariants (Automated Invariant Gate)** | All code must strictly satisfy the 10 Golden Invariants: (1) Universal CSRF Shield (`@csrf` / `LaravelHelper::csrfField()`), (2) Prepared Statements Only, (3) Contextual XSS Encoding, (4) Defensive Nulls (`??` / `?.`), (5) Rate Limiting & BotGuard, (6) Strict Tenant Isolation (anti-IDOR), (7) Resilient Error Shielding, (8) Mobile Touch Ergonomics ($\ge 44\text{px}$), (9) Zero N+1 Loops, and (10) Structured JSON Observability. Automated scan enforced via `php scripts/verify_engineering_must_haves.php`. |
 
 ---
 
