@@ -79,7 +79,7 @@ class Limiter extends Db
     public static function limit(string $arg, string $action = 'default')
     {
         $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV');
-        if (\isTestEnv() || self::testHeaderSkipsLimits($_SERVER, is_string($appEnv) ? $appEnv : '')) {
+        if ((function_exists('isTestEnv') && \isTestEnv()) || self::testHeaderSkipsLimits($_SERVER, is_string($appEnv) ? $appEnv : '')) {
             $noop = new class {
                 public function reset(): void {}
                 public function consume(int $tokens = 1): object {

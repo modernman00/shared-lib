@@ -104,28 +104,32 @@ function p($data): void
     }
 }
 
-function loggedDetection(string $filename, string $receivingEmail): bool
-{
-    //TODO send text to the user with the code
-    EmailData::defineConstants('admin');
-    $getIp = getUserIpAddr();
-    $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " . date('h:i:sa') . "  and with this IP address: $getIp  <br><br>  IT Security Team";
+if (!function_exists('loggedDetection')) {
+    function loggedDetection(string $filename, string $receivingEmail): bool
+    {
+        //TODO send text to the user with the code
+        EmailData::defineConstants('admin');
+        $getIp = getUserIpAddr();
+        $msg = "Hello, <br><br> This is a notification that a <strong>logged -in</strong> has been detected from this file : $filename at this time: " . date('h:i:sa') . "  and with this IP address: $getIp  <br><br>  IT Security Team";
 
-    SendEmail::sendEmail($receivingEmail, 'logged-in', 'LOGGED-IN DETECTION', $msg);
+        SendEmail::sendEmail($receivingEmail, 'logged-in', 'LOGGED-IN DETECTION', $msg);
 
-    return true;
+        return true;
+    }
 }
 
 /**
  * compare two variable or use to verify.
  */
-function compare($var1, $var2): bool
-{
-    if ($var1 != $var2) {
-        return false;
-    }
+if (!function_exists('compare')) {
+    function compare($var1, $var2): bool
+    {
+        if ($var1 != $var2) {
+            return false;
+        }
 
-    return true;
+        return true;
+    }
 }
 
 // GET IP ADDRESS

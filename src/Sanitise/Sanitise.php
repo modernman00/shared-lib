@@ -192,14 +192,12 @@ class Sanitise
     protected function sanitizeData(): self
     {
         foreach ($this->formData as $key => $value) {
+            if ($key === 'password' || str_contains(strtolower((string)$key), 'password') || $key === 'pwd') {
+                $this->cleanData[$key] = is_string($value) ? trim($value) : $value;
+                continue;
+            }
 
-            // if (!is_string($value)) {
-            //     $this->cleanData[$key] = $value;
-            //     continue;
-            // }
-
-                $this->cleanData[$key] = \checkInput($value);
-            
+            $this->cleanData[$key] = \checkInput($value);
         }
 
         return $this;

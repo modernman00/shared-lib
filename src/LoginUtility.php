@@ -41,7 +41,7 @@ class LoginUtility
         $targetAlgo = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT;
         if (password_needs_rehash($dbPassword, $targetAlgo, $options)) {
             // If so, create a new hash, and replace the old one
-            $newHash = hashPassword($textPassword);
+            $newHash = function_exists('hashPassword') ? \hashPassword($textPassword) : password_hash($textPassword, $targetAlgo, $options);
             $tableDB = $_ENV['DB_TABLE_LOGIN'];
             // Update the password in the database
             $update = new Update($tableDB);

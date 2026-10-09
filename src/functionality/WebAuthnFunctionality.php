@@ -74,10 +74,13 @@ class WebAuthnFunctionality
                 throw new \InvalidArgumentException("Missing credential ID.");
             }
 
+            $userRole = (string)($input['role'] ?? $_SESSION['role'] ?? 'users');
+
             $db = Db::connect2();
-            $stmt = $db->prepare("INSERT INTO user_passkeys (user_id, credential_id, public_key, device_name, attestation_type) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO user_passkeys (user_id, user_role, credential_id, public_key, device_name, attestation_type) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $userId,
+                $userRole,
                 $credentialId,
                 $publicKey,
                 $deviceName,
@@ -159,7 +162,7 @@ class WebAuthnFunctionality
             }
 
             $db = Db::connect2();
-            $stmt = $db->prepare("SELECT user_id, public_key FROM user_passkeys WHERE credential_id = ?");
+            $stmt = $db->prepare("SELECT user_id, public_key, user_role FROM user_passkeys WHERE credential_id = ?");
             $stmt->execute([$credentialId]);
             $record = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -167,18 +170,67 @@ class WebAuthnFunctionality
                 throw new \Exception("Biometric credential not recognized on this device.");
             }
 
-            $loginTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
-            $userStmt = $db->prepare("SELECT * FROM `{$loginTable}` WHERE id = ? OR no = ? LIMIT 1");
-            $userStmt->execute([$record['user_id'], $record['user_id']]);
-            $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+            if (session_status() === PHP_SESSION_NONE) {
+                \Src\SecureSession::start();
+            }
+
+            $userRole = $record['user_role'] ?? 'users';
+            $user = null;
+            $redirect = '/dashboard';
+
+            if ($userRole === 'staff') {
+                $staffStmt = $db->prepare("SELECT * FROM `staff` WHERE `staffEmail` = ? OR `no` = ? LIMIT 1");
+                $staffStmt->execute([$record['user_id'], $record['user_id']]);
+                $user = $staffStmt->fetch(PDO::FETCH_ASSOC);
+                if ($user) {
+                    $email = (string)($user['staffEmail'] ?? '');
+                    $name = trim(($user['staffFirstName'] ?? '') . ' ' . ($user['staffLastName'] ?? ''));
+                    $_SESSION['staff_email'] = $email;
+                    $_SESSION['staff_name'] = $name;
+                    $_SESSION['role'] = 'staff';
+                    $redirect = '/staff/portal';
+                }
+            } elseif ($userRole === 'client') {
+                $clientStmt = $db->prepare("SELECT * FROM `clients` WHERE `clientEmail` = ? OR `no` = ? LIMIT 1");
+                $clientStmt->execute([$record['user_id'], $record['user_id']]);
+                $user = $clientStmt->fetch(PDO::FETCH_ASSOC);
+                if ($user) {
+                    $email = (string)($user['clientEmail'] ?? '');
+                    $name = (string)($user['clientName'] ?? 'Care Home');
+                    $_SESSION['client_email'] = $email;
+                    $_SESSION['client_name'] = $name;
+                    $_SESSION['role'] = 'client';
+                    $redirect = '/client/portal';
+                }
+            } elseif ($userRole === 'admin') {
+                $adminStmt = $db->prepare("SELECT * FROM `account` WHERE `email` = ? OR `id` = ? LIMIT 1");
+                $adminStmt->execute([$record['user_id'], $record['user_id']]);
+                $user = $adminStmt->fetch(PDO::FETCH_ASSOC);
+                if ($user) {
+                    $email = (string)($user['email'] ?? '');
+                    $name = (string)($user['fullName'] ?? 'Admin');
+                    $_SESSION['id'] = $user['id'];
+                    $_SESSION['email'] = $email;
+                    $_SESSION['admin_code'] = $user['admin_code'] ?? 'TOP900';
+                    $_SESSION['role'] = 'admin';
+                    $redirect = '/admin/hub';
+                }
+            }
+
+            if (!$user) {
+                $loginTable = $_ENV['DB_TABLE_LOGIN'] ?? 'users';
+                $userStmt = $db->prepare("SELECT * FROM `{$loginTable}` WHERE id = ? OR no = ? LIMIT 1");
+                $userStmt->execute([$record['user_id'], $record['user_id']]);
+                $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+            }
 
             if (!$user) {
                 throw new \Exception("Associated user account not found.");
             }
 
             $userId = (string)($user['id'] ?? $user['no'] ?? '1');
-            $email = (string)($user['email'] ?? '');
-            $name = (string)($user['name'] ?? $user['first_name'] ?? $user['username'] ?? 'User');
+            $email = (string)($user['email'] ?? $user['staffEmail'] ?? $user['clientEmail'] ?? '');
+            $name = (string)($user['name'] ?? $user['fullName'] ?? $user['clientName'] ?? $user['staffFirstName'] ?? 'User');
 
             if (session_status() === PHP_SESSION_NONE) {
                 \Src\SecureSession::start();
@@ -228,13 +280,15 @@ class WebAuthnFunctionality
             $updateStmt = $db->prepare("UPDATE user_passkeys SET last_used_at = CURRENT_TIMESTAMP WHERE credential_id = ?");
             $updateStmt->execute([$credentialId]);
 
-            // Determine redirect URL
-            $appName = strtolower((string)($_ENV['APP_NAME'] ?? ''));
-            $redirect = '/dashboard';
-            if (str_contains($appName, 'loaneasy') || str_contains($appName, 'loan')) {
-                $redirect = '/customer/mainPage';
-            } elseif (str_contains($appName, 'party')) {
-                $redirect = '/manager/dashboard';
+            // Determine redirect URL if not already assigned
+            if (empty($redirect) || $redirect === '/dashboard') {
+                $appName = strtolower((string)($_ENV['APP_NAME'] ?? ''));
+                $redirect = '/dashboard';
+                if (str_contains($appName, 'loaneasy') || str_contains($appName, 'loan')) {
+                    $redirect = '/customer/mainPage';
+                } elseif (str_contains($appName, 'party')) {
+                    $redirect = '/manager/dashboard';
+                }
             }
 
             Utility::msgSuccess(200, "Login successful", ['redirect' => $redirect]);
