@@ -527,6 +527,16 @@ function route(string $name, array $params = []): string
     return url($uri);
 }
 
+if (!function_exists('admin_url')) {
+    /**
+     * Generate dynamic admin URL using ADMIN_SECRET_PATH environment setting.
+     */
+    function admin_url(string $path = ''): string
+    {
+        return \Src\Utility::adminUrl($path);
+    }
+}
+
 /**
  * Retrieve a value from the old POST data or return default.
  */

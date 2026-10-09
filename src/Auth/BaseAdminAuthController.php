@@ -18,8 +18,7 @@ abstract class BaseAdminAuthController
 
     protected function adminUrl(string $path = ''): string
     {
-        $prefix = '/' . trim((string) ($_ENV['ADMIN_SECRET_PATH'] ?? getenv('ADMIN_SECRET_PATH') ?: 'admin'), '/');
-        return $path === '' ? $prefix : $prefix . '/' . ltrim($path, '/');
+        return \Src\Utility::adminUrl($path);
     }
 
     private function buildAdminSelectQuery(): array

@@ -659,4 +659,16 @@ class Utility
 
         return in_array($env, ['local', 'development'], true);
     }
+
+    /**
+     * Generate dynamic admin URL using ADMIN_SECRET_PATH environment setting.
+     */
+    public static function adminUrl(string $path = ''): string
+    {
+        $secret = (string) ($_ENV['ADMIN_SECRET_PATH'] ?? getenv('ADMIN_SECRET_PATH') ?: 'admin');
+        $secretPath = '/' . trim($secret, '/');
+        $path = trim($path, '/');
+
+        return $path === '' ? $secretPath : $secretPath . '/' . $path;
+    }
 }
