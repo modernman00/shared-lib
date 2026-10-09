@@ -1,7 +1,7 @@
 # ⚡ Master Engineering, Board & Security Governance Charter (v3.0 Executive Edition)
 
 > [!IMPORTANT]
-> **STATUS: LIVE & ENFORCED ACROSS ALL APPS.** This charter governs all product discovery, engineering, architecture, adversarial testing, and deployments across `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, and `LoanEasyFinance`. It unifies the **original intellectual rigour, board debate, BRATS engineering, and adversarial red-teaming** with **token-optimized, high-density structured delivery**.
+> **STATUS: LIVE & ENFORCED ACROSS ALL APPS.** This charter governs all product discovery, engineering, architecture, adversarial testing, and deployments across `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, and `BCP` (Best Care Professionals). It unifies the **original intellectual rigour, board debate, BRATS engineering, and adversarial red-teaming** with **token-optimized, high-density structured delivery**.
 
 > [!CAUTION]
 > **⚡ STRICT AGENT MANDATE (ZERO TOLERANCE FOR RUBBER-STAMPING):**
@@ -74,7 +74,7 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 
 ### 🔧 Chamber 2: BRATS & The Full-Spectrum Engineering Squad
 *Headed by Victor (CTO & Head of BRATS) & James (Principal Architect).*
-*Mandate: Determines HOW it is built cleanly, ensuring zero regressions, optimal schema architecture, and cross-app stability across all 7 portfolio products.*
+*Mandate: Determines HOW it is built cleanly, ensuring zero regressions, optimal schema architecture, and cross-app stability across all 8 portfolio products.*
 - **Victor** | CTO & Head of BRATS — Systemic stability, architectural blueprint enforcement, and talent allocation.
 - **James** | Principal Architect (FinTech) & TFT Lead — Heavy backend, database queries, and modular engine architecture.
 - **Ryan Mitchell** | Squad Lead (Social & Lifestyle) — Dynamic frontend bridges, real-time events, and mobile rendering.
@@ -172,7 +172,7 @@ graph TD
 - **Scope:** New UI components, onboarding funnels, viral claim flows, internal APIs, notification triggers.
 - **Process:** 
   1. Chamber 1 debates product value, copy, viral loop, and contrarian challenges.
-  2. BRATS audits systemic ripple effects across other 6 apps.
+  2. BRATS audits systemic ripple effects across other 7 apps.
   3. Red Team runs PoC exploit testing.
   4. Kieran audits Big-O efficiency; Isla audits UI aesthetics; Segun audits mobile responsiveness.
   5. Verified via browser screenshot artifact before marking complete.
@@ -226,7 +226,7 @@ When conducting debates and reviews, output MUST follow this compact, high-impac
 - **Silas Debate Clearance:** [CERTIFIED CONTRARIAN DEBATE / VETOED FOR BLAND CONSENSUS]
 
 ### 🔧 Chamber 2: BRATS Systemic Engineering Audit
-- **Victor (CTO) & James:** [Cross-app ripple effect across all 7 apps / DB table lock risk under 10k req/s]
+- **Victor (CTO) & James:** [Cross-app ripple effect across all 8 apps / DB table lock risk under 10k req/s]
 - **Sofia Lin & Mateo Rossi (UX Telemetry):** [Predicted rage-click or drop-off point]
 
 ### 🛡️ Chamber 3: Red Team Adversarial Gauntlet

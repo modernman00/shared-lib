@@ -332,7 +332,7 @@ The following mandates override any manual review assumptions. They are strictly
     - **Peer Reviewed**: Approved by a designated senior peer engineer (Dami Ogunleye for backend, Kenny Akindele for frontend).
     - **Documented**: RFC updated to as-built, PHPDoc/TypeScript strict types complete, and `CHANGELOG.md` updated.
     - **Monitored**: Structured JSON event logging, telemetry metrics (OpenTelemetry/PostHog), and SRE alert thresholds (Ayo Adeyemi) active in production.
-*   **13. The 10 Golden Engineering Invariants (Zero-Bypass Architecture) ⚡ NEW: 2026-10-08:** All code across all 7 portfolio applications must strictly satisfy the 10 Golden Invariants:
+*   **13. The 10 Golden Engineering Invariants (Zero-Bypass Architecture) ⚡ NEW: 2026-10-08:** All code across all 8 portfolio applications must strictly satisfy the 10 Golden Invariants:
     1. **Universal CSRF Shield**: Every form & state-changing request must include `@csrf`, `LaravelHelper::csrfField()`, or `_token`.
     2. **Prepared Statements Only**: Parameterized queries with `?` or `:name`; raw variable interpolation in SQL is strictly forbidden.
     3. **Contextual Output Encoding**: Strict XSS mitigation (`{{ }}` in Blade, `htmlspecialchars()` in PHP).
@@ -490,6 +490,7 @@ Before Victor signs off on any TFT work and transmits it to Jumoke, Victor MUST 
 - **iAccountApp** (FinTech & Accounting)
 - **LoanEasyFinance** (FinTech & Lending)
 - **FamilyPlatform** (Social, Heritage & Kinship)
+- **BCP / Best Care Professionals** (Healthcare, Care Staffing, CQC Compliance & Rostering)
 
 **2. Mandatory Assessment Domains:**
 - **Deployment Automation (`deploy.sh`):** Standardizing zero-downtime deployment scripts, post-deploy smoke tests, cache invalidations, and automated rollback triggers across all production hosting servers.

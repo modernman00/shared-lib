@@ -2,6 +2,7 @@
   "name": "modernman00/shared-lib",
   "description": "Shared library for common functions and classes across projects",
   "type": "library",
+  "bin": ["bin/verify-must-haves"],
   "license": "MIT",
   "autoload": {
     "psr-4": {

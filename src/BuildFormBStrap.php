@@ -44,7 +44,7 @@ class BuildFormBStrap
         $this->entValue = array_values($this->question);
         $this->entCount = count($this->entValue);
 
-        $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+        $this->dToken = hash('sha256', ($_SERVER['HTTP_USER_AGENT'] ?? 'CLI') . ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
         $_SESSION['deviceHash'] = $this->dToken;
     }
 

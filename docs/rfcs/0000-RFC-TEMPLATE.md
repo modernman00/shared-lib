@@ -6,7 +6,7 @@
 - **Gatewatchers:** David (Architecture) / Gbenga Adebisi (DBRE) / Oladapo Salami & Marcus (SecOps) / Ayo Adeyemi (SRE)
 - **Status:** DRAFT | IN REVIEW | APPROVED | REJECTED | IMPLEMENTED
 - **Created Date:** YYYY-MM-DD
-- **Target Apps:** [PartyPlatform | FamilyPlatform | iDecide | iAccount | TenantScore | ExecMind | LoanEasyFinance | shared-lib]
+- **Target Apps:** [PartyPlatform | FamilyPlatform | iDecide | iAccount | TenantScore | ExecMind | LoanEasyFinance | BCP | shared-lib]
 
 ---
 
@@ -41,7 +41,7 @@
 
 ## 3. Blast Radius & Cross-App Ripple Effects
 - **Shared Library Impact:** Does this touch `modernman00/shared-lib` or `@modernman00/shared-js-lib`?
-- **Portfolio Blast Radius:** Which of the 7 portfolio applications will be impacted?
+- **Portfolio Blast Radius:** Which of the 8 portfolio applications will be impacted?
 - **Backward Compatibility:** How do we handle in-flight sessions or old mobile clients during deployment?
 
 ---

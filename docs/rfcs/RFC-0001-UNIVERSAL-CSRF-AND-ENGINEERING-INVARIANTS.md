@@ -7,14 +7,14 @@
 - **Executive Sponsors:** Olutobi (Head of TAT), Victor (CTO & Head of BRATS), Helena (Board Rep)
 - **Status:** APPROVED
 - **Created Date:** 2026-10-08
-- **Target Apps:** `shared-lib`, `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`
+- **Target Apps:** `shared-lib`, `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `BCP`
 
 ---
 
 ## 1. Problem Statement & User Value (The "Why")
 
 ### Context & Motivation
-Across the company's 7 applications, several user-facing forms have suffered from missing CSRF tokens. In high-concurrency transactional environments (event RSVPs, loan applications, financial balance updates), missing CSRF allows external malicious domains to execute authenticated state mutations on behalf of legitimate users without their knowledge. Relying on individual developers to manually "remember" CSRF or prepared statements during crunch time is an unviable operational anti-pattern.
+Across the company's 8 applications, several user-facing forms have suffered from missing CSRF tokens. In high-concurrency transactional environments (event RSVPs, loan applications, financial balance updates, care shift bookings), missing CSRF allows external malicious domains to execute authenticated state mutations on behalf of legitimate users without their knowledge. Relying on individual developers to manually "remember" CSRF or prepared statements during crunch time is an unviable operational anti-pattern.
 
 ### User & Commercial Impact
 - **Security:** Eliminates OWASP Top 10 A01 (Broken Access Control) across all state-changing endpoints.
@@ -80,6 +80,7 @@ sequenceDiagram
   - `TenantScore`: Tenant application submissions and background verification requests.
   - `ExecMind`: AI prompt mutations and strategic note updates.
   - `LoanEasyFinance`: Loan application disclosures and affordability inputs.
+  - `BCP`: Care worker shift assignments, candidate applications, and client care requests.
 - **Backward Compatibility**: Fully backward compatible. All existing valid tokens remain valid; only forms previously omitting tokens receive the required shield.
 
 ---

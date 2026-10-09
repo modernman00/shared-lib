@@ -95,17 +95,33 @@ class ToSendEmail
                 $subjectUpper = strtoupper($subject);
                 if (str_contains($subjectUpper, 'TOKEN') || 
                     str_contains($subjectUpper, 'VERIF') || 
+                    str_contains($subjectUpper, 'CODE') || 
                     str_contains($subjectUpper, 'PASSWORD') || 
                     str_contains($subjectUpper, 'SECURITY') || 
                     str_contains($subjectUpper, '2FA') || 
+                    str_contains($subjectUpper, 'LOGIN') || 
+                    str_contains($subjectUpper, 'SIGN-IN') || 
+                    str_contains($subjectUpper, 'SIGN IN') || 
                     str_contains($subjectUpper, 'ALERT')) {
                     $isFunctional = true;
                 }
             }
 
-            if (!$isFunctional && self::isEmailUnsubscribed($email)) {
-                // Suppress non-functional email send for unsubscribed recipient
-                return false;
+            // Always reflect calculated isFunctional into template data
+            $data['isFunctional'] = $isFunctional;
+            $data['email'] = $email;
+
+            if (!$isFunctional) {
+                if (\Src\Auth\UnsubscribeHandler::isEmailUnsubscribed($email)) {
+                    // Suppress non-functional email send for unsubscribed recipient
+                    return false;
+                }
+                if (empty($data['unsubscribeUrl'])) {
+                    $data['unsubscribeUrl'] = \Src\Auth\UnsubscribeHandler::getUnsubscribeUrl($email);
+                }
+                if (empty($data['unsubscribeToken'])) {
+                    $data['unsubscribeToken'] = \Src\Auth\UnsubscribeHandler::generateToken($email);
+                }
             }
 
             // 3) Render HTML from Blade
@@ -159,34 +175,20 @@ class ToSendEmail
 
         $emailContent = Utility::viewTemplateEmail($var['viewPath'], compact('data'));
 
-        $email = Utility::checkInputEmail($data['email']);
-        $email = Utility::checkInputEmail($data['email'] ?? ($params['email'] ?? ''));
+        $email = Utility::checkInputEmail($data['email'] ?? '');
         if ($email === null) {
             throw new NotFoundException('A valid recipient email is required.');
         }
         $name = $data['firstName'] ?? $data['first_name'] ?? 'there';
 
-        $file = $var['file'];
-        $filename = $var['fileName'];
-
-        //  mail("waledevtest@gmail.com", "TEST_EMAIL", $email);
+        $file = $var['file'] ?? null;
+        $filename = $var['fileName'] ?? null;
 
         SendEmail::sendEmail($email, $name, $var['subject'], $emailContent, $file, $filename);
     }
 
     private static function isEmailUnsubscribed(string $email): bool
     {
-        try {
-            if (!class_exists('\\Src\\Db')) {
-                return false;
-            }
-            $db = \Src\Db::connect2();
-            $stmt = $db->prepare('SELECT email_unsubscribed FROM account WHERE email = ? LIMIT 1');
-            $stmt->execute([$email]);
-            $res = $stmt->fetchColumn();
-            return !empty($res);
-        } catch (\Throwable $e) {
-            return false;
-        }
+        return \Src\Auth\UnsubscribeHandler::isEmailUnsubscribed($email);
     }
 }

@@ -231,7 +231,8 @@ class AdminService
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Fetch count
-            $countSql = "SELECT COUNT(*) FROM users" . (!empty($search) ? " WHERE email LIKE ?" : "");
+            $baseQuery = 'SELECT COUNT(*) FROM users';
+            $countSql = $baseQuery . (!empty($search) ? ' WHERE email LIKE ?' : '');
             $countStmt = $this->db->prepare($countSql);
             $countStmt->execute($params);
             $totalCount = (int)$countStmt->fetchColumn();

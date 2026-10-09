@@ -188,9 +188,9 @@ abstract class BaseAdminAuthController
                 return false;
             }
 
-            $db->prepare(
-                "UPDATE {$tableName} SET {$columnMap['totp_last_used_step']} = ? WHERE {$columnMap['email']} = ?"
-            )->execute([$currentStep, $email]);
+            $query = sprintf('UPDATE %s SET %s = ? WHERE %s = ?',
+                $tableName, $columnMap['totp_last_used_step'], $columnMap['email']);
+            $db->prepare($query)->execute([$currentStep, $email]);
         } catch (\Throwable) {}
 
         return true;
@@ -375,7 +375,7 @@ abstract class BaseAdminAuthController
         $tableName = $this->getAdminTableName();
 
         $db->prepare(
-            "UPDATE {$tableName} SET {$columnMap['totp_secret']} = ?, {$columnMap['totp_enabled']} = 1 WHERE {$columnMap['email']} = ?"
+            sprintf('UPDATE %s SET %s = ?, %s = 1 WHERE %s = ?', $tableName, $columnMap['totp_secret'], $columnMap['totp_enabled'], $columnMap['email'])
         )->execute([$secret, $email]);
 
         unset($_SESSION['auth']['temp_totp_secret']);
@@ -477,7 +477,7 @@ abstract class BaseAdminAuthController
             $expires = date('Y-m-d H:i:s', time() + 3600);
 
             $db->prepare(
-                "UPDATE {$tableName} SET {$columnMap['reset_token']} = ?, {$columnMap['reset_token_expires_at']} = ? WHERE {$columnMap['email']} = ?"
+                sprintf('UPDATE %s SET %s = ?, %s = ? WHERE %s = ?', $tableName, $columnMap['reset_token'], $columnMap['reset_token_expires_at'], $columnMap['email'])
             )->execute([$token, $expires, $email]);
 
             $this->logAudit($email, 'Admin password reset link dispatched');
@@ -542,7 +542,7 @@ abstract class BaseAdminAuthController
 
         $newHash = password_hash($password, PASSWORD_BCRYPT);
         $db->prepare(
-            "UPDATE {$tableName} SET {$columnMap['password']} = ?, {$columnMap['reset_token']} = NULL, {$columnMap['reset_token_expires_at']} = NULL WHERE {$columnMap['id']} = ?"
+            sprintf('UPDATE %s SET %s = ?, %s = NULL, %s = NULL WHERE %s = ?', $tableName, $columnMap['password'], $columnMap['reset_token'], $columnMap['reset_token_expires_at'], $columnMap['id'])
         )->execute([$newHash, $user['id']]);
 
         $this->logAudit($email, 'Super admin successfully reset password');

@@ -7,7 +7,7 @@ namespace Src;
 /**
  * Standardized API Response Contract
  *
- * Provides an immutable, uniform envelope across all 7 portfolio applications:
+ * Provides an immutable, uniform envelope across all 8 portfolio applications:
  * Success: { ok: true, status: 'success', data: mixed, message: string|null, error: null }
  * Error:   { ok: false, status: 'error', data: mixed, error: string, errors: array, message: string, code: string|null }
  */

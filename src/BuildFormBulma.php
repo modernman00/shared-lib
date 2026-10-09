@@ -14,6 +14,7 @@ class BuildFormBulma
      * When there is a need for new entries, use the newEnt array.
      */
     private array $entKey;
+    private string $dToken;
 
     private string $token;
 
@@ -41,7 +42,7 @@ class BuildFormBulma
         $this->entCount = count($this->entValue);
         
        
-        $this->dToken = hash('sha256', $_SERVER['HTTP_USER_AGENT'] . $_SERVER['REMOTE_ADDR']);
+        $this->dToken = hash('sha256', ($_SERVER['HTTP_USER_AGENT'] ?? 'CLI') . ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
         $_SESSION['deviceHash'] = $this->dToken;
 
     }

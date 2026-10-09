@@ -25,12 +25,12 @@ class Delete extends Db
         }
 
         return match ($selection) {
-            'DELETE_OR' => "DELETE FROM $table WHERE $identifier1 =? OR $identifier2 = ? $limit",
-            'DELETE_AND' => "DELETE FROM $table WHERE $identifier1 =? AND $identifier2 = ? $limit",
-            'DELETE_ALL' => "DELETE FROM $table $limit",
-            'DELETE_ONE' => "DELETE FROM $table WHERE $identifier1 = ? $limit",
-            'DELETE_COL' => "DELETE $column FROM $table $limit",
-            'DELETE_UPDATE' => "UPDATE $table SET status ='deleted' WHERE $identifier1 = ? LIMIT 1",
+            'DELETE_OR' => sprintf('DELETE FROM %s WHERE %s =? OR %s = ? %s', $table, $identifier1, $identifier2, $limit),
+            'DELETE_AND' => sprintf('DELETE FROM %s WHERE %s =? AND %s = ? %s', $table, $identifier1, $identifier2, $limit),
+            'DELETE_ALL' => sprintf('DELETE FROM %s %s', $table, $limit),
+            'DELETE_ONE' => sprintf('DELETE FROM %s WHERE %s = ? %s', $table, $identifier1, $limit),
+            'DELETE_COL' => sprintf('DELETE %s FROM %s %s', $column, $table, $limit),
+            'DELETE_UPDATE' => sprintf("UPDATE %s SET status ='deleted' WHERE %s = ? LIMIT 1", $table, $identifier1),
             default => null
         };
     }

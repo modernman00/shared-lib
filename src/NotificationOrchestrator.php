@@ -13,7 +13,7 @@ use PDO;
  * Universal Multi-Channel Notification Orchestrator
  *
  * Provides a unified dispatch engine for all portfolio platforms:
- * (FamilyPlatform, PartyPlatform, LoanEasyFinance, iAccountApp, ExecMindApp, iDecide)
+ * (FamilyPlatform, PartyPlatform, LoanEasyFinance, iAccountApp, ExecMindApp, iDecide, TenantScore, BCP)
  *
  * Implements:
  * - Presence-aware arbitration (Pusher In-App vs WebPush vs Email)
