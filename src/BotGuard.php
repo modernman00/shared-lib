@@ -36,6 +36,8 @@ class BotGuard
         // Spam / automated test domains
         'formtests.info' => true,
         'belettersmail.com' => true,
+        'nolettersbox.com' => true,
+        'lettersbox.com' => true,
         'mailinator.com' => true,
         'guerrillamail.com' => true,
         'guerrillamailblock.com' => true,

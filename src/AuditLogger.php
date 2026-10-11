@@ -65,6 +65,22 @@ class AuditLogger
         }
     }
 
+    private static function getFallbackLogPath(): string
+    {
+        $cwdLog = getcwd() . '/bootstrap/log';
+        if (is_dir($cwdLog) && is_writable($cwdLog)) {
+            return $cwdLog . '/fallback_audit.log';
+        }
+        if (defined('APP_ROOT') && is_dir(APP_ROOT . '/bootstrap/log')) {
+            return APP_ROOT . '/bootstrap/log/fallback_audit.log';
+        }
+        $appLog = dirname(__DIR__, 4) . '/bootstrap/log';
+        if (is_dir($appLog) && is_writable($appLog)) {
+            return $appLog . '/fallback_audit.log';
+        }
+        return sys_get_temp_dir() . '/fallback_audit.log';
+    }
+
     /**
      * Writes the failed log push to a local append-only queue for later processing.
      */
@@ -76,13 +92,13 @@ class AuditLogger
             'payload' => json_decode($jsonData, true)
         ]) . PHP_EOL;
 
-        // Ensure directory exists
-        $dir = dirname(self::$fallbackLogPath);
+        $path = self::getFallbackLogPath();
+        $dir = dirname($path);
         if (!is_dir($dir)) {
             @mkdir($dir, 0777, true);
         }
 
         // Append to local fallback log
-        @file_put_contents(self::$fallbackLogPath, $logEntry, FILE_APPEND | LOCK_EX);
+        @file_put_contents($path, $logEntry, FILE_APPEND | LOCK_EX);
     }
 }

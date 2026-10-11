@@ -40,8 +40,10 @@ class Db extends CheckToken
         }
         if (!isset(self::$conn)) {
             $dbVar = self::dbVariables();
+            $tz = date('P') ?: '+00:00';
             self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
                 PDO::ATTR_PERSISTENT => true,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '{$tz}'",
             ]);
 
             self::$conn->setAttribute(attribute: PDO::ATTR_DEFAULT_FETCH_MODE, value: PDO::FETCH_ASSOC);
@@ -62,11 +64,13 @@ class Db extends CheckToken
         }
         if (self::$conn === null) {
             $dbVar = self::dbVariables();
+            $tz = date('P') ?: '+00:00';
             self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", $dbVar['username'], $dbVar['password'], [
                 PDO::ATTR_PERSISTENT => false,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '{$tz}'",
             ]);
         }
 

@@ -47,6 +47,8 @@ class BotGuardTest extends TestCase
     {
         $this->assertTrue(BotGuard::isDisposableEmail('kmgrlyju@formtests.info', false));
         $this->assertTrue(BotGuard::isDisposableEmail('xhemail1970@belettersmail.com', false));
+        $this->assertTrue(BotGuard::isDisposableEmail('ingebert552253@nolettersbox.com', false));
+        $this->assertTrue(BotGuard::isDisposableEmail('test@lettersbox.com', false));
         $this->assertTrue(BotGuard::isDisposableEmail('test@mailinator.com', false));
         $this->assertTrue(BotGuard::isDisposableEmail('bot@guerrillamail.com', false));
         $this->assertTrue(BotGuard::isDisposableEmail('throw@10minutemail.com', false));
