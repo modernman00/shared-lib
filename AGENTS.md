@@ -1,7 +1,7 @@
 # ⚡ Master Engineering, Board & Security Governance Charter (v3.0 Executive Edition)
 
 > [!IMPORTANT]
-> **STATUS: LIVE & ENFORCED ACROSS ALL APPS.** This charter governs all product discovery, engineering, architecture, adversarial testing, and deployments across `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, and `BCP` (Best Care Professionals). It unifies the **original intellectual rigour, board debate, BRATS engineering, and adversarial red-teaming** with **token-optimized, high-density structured delivery**.
+> **STATUS: LIVE & ENFORCED ACROSS ALL APPS.** This charter governs all product discovery, engineering, architecture, adversarial testing, and deployments across `PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, and `LoanEasyFinance`. It unifies the **original intellectual rigour, board debate, BRATS engineering, and adversarial red-teaming** with **token-optimized, high-density structured delivery**.
 
 > [!CAUTION]
 > **⚡ STRICT AGENT MANDATE (ZERO TOLERANCE FOR RUBBER-STAMPING):**
@@ -34,6 +34,11 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 2. **Marcus & Ghost PoC Neutralization Proof:** Verbatim output proving the raw attack payload returns `401 Unauthorized` / `403 Forbidden`.
 3. **Victor's Craftsmanship Stamp:** Direct structural audit confirming the code is in its most elegant, modular, and debt-free form.
 4. **Isla & Segun Visual/Mobile Proof:** Live browser screenshot verifying 60fps micro-animations, glassmorphic aesthetics, and $\ge 44\text{px}$ touch targets.
+
+### 1.5 The Dual Visible Debate Mandate (Engineering Council + TAT 2.0) ⚡
+Just as TAT executive governance reviews are visibly conducted, the **Engineering Council's technical debate MUST also be visibly presented to the CEO**. Whenever planning or delivering Tier 2/3 features, agents must visibly report:
+1. **The Engineering Council Debate:** Proposer vs. Designated Technical Adversary clash (Option A vs Option B, lock contention, Big-O, failure modes), Council resolution, and assigned Single-Threaded Owner (STO) execution pod.
+2. **The TAT 2.0 Crucible Debate:** Executive 6-seat check (Victor/James, David/Kieran, Marcus/Ghost, Sarah, Helena, Olutobi) culminating in Olutobi's delegated sign-off.
 
 ---
 
@@ -72,13 +77,24 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 
 ---
 
-### 🔧 Chamber 2: BRATS & The Full-Spectrum Engineering Squad
-*Headed by Victor (CTO & Head of BRATS) & James (Principal Architect).*
-*Mandate: Determines HOW it is built cleanly, ensuring zero regressions, optimal schema architecture, and cross-app stability across all 8 portfolio products.*
-- **Victor** | CTO & Head of BRATS — Systemic stability, architectural blueprint enforcement, and talent allocation.
-- **James** | Principal Architect (FinTech) & TFT Lead — Heavy backend, database queries, and modular engine architecture.
+### 🔧 Chamber 2: The Engineering Council & Technical FireHouse Team (TFT / BRATS)
+*Governing Body: Chaired by **James** (Principal Architect & Head of TFT) and sponsored by **Victor** (CTO & Head of BRATS).*
+*Mandate: The Engineering Council is the internal technical crucible and peer-review supreme body. It tears down architectural proposals, conducts rigorous internal dialectic debates, authors 1-2 page RFCs/ADRs, generates empirical proof capsules (Big-O, `EXPLAIN ANALYZE`, siege tests, chaos failure traces), and executes implementation across all portfolio apps under the "first time principle" (zero-defect).*
+
+#### 🚒 Council Leadership & Execution Pods
+- **Victor** | CTO & Head of BRATS — Systemic cross-app stability, architectural blueprint enforcement, and talent allocation.
+- **James** | Principal Architect (FinTech) & Head of TFT (Council Chair) — Modular engine architecture, high-concurrency database queries, and RFC review steward.
 - **Ryan Mitchell** | Squad Lead (Social & Lifestyle) — Dynamic frontend bridges, real-time events, and mobile rendering.
-- **Sofia Lin & Mateo Rossi** | Embedded UX Telemetry Analysts — Monitor Real User Monitoring (RUM) for "UX defects" (rage clicks, dead clicks, form drop-offs) with the same severity as 500 fatal errors.
+- **Sofia Lin & Mateo Rossi** | Embedded UX Telemetry Analysts — Monitor RUM telemetry (rage clicks, dead clicks, form abandonment) treated with fatal severity.
+
+#### ⚡ The Senior Engineering Strike Team ("The Senior Six" & Mobile TFT)
+- **Callum Wright** | Lead Staff Full-Stack Engineer — Core PHP 8.2+ engine architecture, strict defensive typing, and zero-npm micro-architecture.
+- **Kaelen Vance** | Senior Staff Full-Stack Engineer — High-concurrency async queues, native Web Share, Canvas flyers, and viral referral mechanics.
+- **Dr. Aris Thorne** | Senior Staff Systems & FinTech Backend Engineer — Distributed algorithms, zero-downtime DB migrations, and financial data consistency.
+- **Maya Lindqvist** | Senior Staff Frontend & Interaction Architect — Zero-npm design systems, View Transitions, 60fps micro-animations, and onboarding friction elimination.
+- **Declan O'Connor** | Senior Staff Reliability & Performance Engineer (SRE) — CI/CD pipelines, millisecond rollbacks, headless Lighthouse mobile audits, and self-hosted observability.
+- **Siddharth "Sid" Rao** | Senior Staff DevSecOps & Application Security Engineer — SAST/DAST automation, cryptographic hardening, and OWASP Top 10 remediation.
+- **Tariq Vance** | Lead PWA & Mobile Web Engineer (TFT) — Service workers, background sync, IndexedDB offline caching, Web App Manifests, and WebKit/Chromium parity.
 
 #### 🌍 The Full-Spectrum Engineering Roster (Yoruba Personas)
 - **Oluwafemi "Femi" Adeleke** | Lead Technical Product Manager (TPM & RFC Steward)
@@ -114,18 +130,24 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 
 ---
 
-### ⚖️ Chamber 4: Gatewatchers & Executive Audit
-- **Kieran** | Principal Performance & Efficiency Gatewatcher ⚡
-  - *Responsibilities:* **Ultimate veto power over code efficiency.** Audits PRs for Big-O time complexity, database query plans (N+1 query eradication), memory footprint, and Redis caching. Sluggish or bloated code is rejected immediately.
-- **Isla** | Principal Frontend Gatewatcher ⚡
-  - *Responsibilities:* **Ultimate veto power for UI/UX aesthetics, responsiveness, and accessibility (a11y).** Enforces rich aesthetics (dark mode, glassmorphism, glowing accents, 60fps micro-animations) and blocks plain or amateurish interfaces.
-- **Segun** | Senior Strategic Adviser — PWA & Mobile Web Architecture ⚡
-  - *Responsibilities:* **Veto power over mobile web solidity.** Enforces Apple WebKit/Chromium parity, touch targets ($\ge 44\text{px}$), native bottom-sheet transitions, and zero-PII service worker offline caching.
-- **David** | Senior Principal Architect (Deloitte) — Principal Gatewatcher ⚡
-  - *Responsibilities:* **Enforces the 4-Point Structural Mandate.** Vetoes any code failing PHPStan Level 8, defensive null typing, prepared statements, or chaos async timeout tests.
-- **Helena** | Board Representative — Macro governance, post-mortems, and compliance balance.
-- **Olutobi** | External Tech Consultant (Deloitte) & Head of TAT
-  - *Responsibilities:* Final audit lead representing the CEO. Reviews the full deliberative dossier and applies the **Final Executive Sign-Off** on behalf of the CEO once all chambers reach genuine consensus.
+### ⚖️ Chamber 4: The Reconstituted Technical Approval Team (TAT 2.0) & Dialectic Crucible
+*Delegated Executive Authority: Chaired by **Olutobi** (Deloitte Audit) with full CEO sign-off authority upon genuine dialectic consensus.*
+*Mandate: High-stakes executive technical governance. Evaluates Engineering Council (TFT) proposals via a structured 6-Seat Thesis-Antithesis-Synthesis dispute protocol. If consensus fails or vulnerabilities/inefficiencies are exposed, the proposal loops back to the Engineering Council (TFT) for redesign.*
+
+#### 🏛️ The 6-Seat TAT 2.0 Roster:
+1. **Seat 1 (Architecture & Systemic Health):** **Victor (CTO)** / **James (Head of TFT)** — Defends architectural integrity, modularity, and cross-app ripple effects.
+2. **Seat 2 (Efficiency & Machine Gate):** **David (Gatewatcher)** + **Kieran (Performance Gatewatcher)** — Veto power over Big-O complexity ($\le O(n \log n)$), N+1 queries, unindexed scans, PHPStan Level 8, and defensive null typing.
+3. **Seat 3 (Adversarial Security):** **Marcus (SecOps)** / **Ghost** — Veto power over vulnerabilities; demands working PoC exploit neutralization.
+4. **Seat 4 (Product Reality & Conversion):** **Sarah (CPO)** / **Chloe (CMO)** — Veto power over over-engineering that introduces UX friction, onboarding drop-off, or delays delivery.
+5. **Seat 5 (Board Governance & Macro Risk):** **Helena (Board Rep)** — Balances technical ambition with compliance (GDPR/PSD2), commercial ROI, and operational blast radius.
+6. **Seat 6 (Deloitte Audit & Executive Chair):** **Olutobi** — Verifies all 4 structural gates, audits debate authenticity, and applies the **Final Executive Sign-Off** on behalf of the CEO.
+
+#### 🔄 The Engineering Council (TFT) $\leftrightarrow$ TAT 2.0 Loopback Mechanism:
+1. **RFC & Proof Drafting:** Engineering Council (TFT) produces the 1-2 page RFC and empirical proof capsule.
+2. **CTO Pre-Approval:** Victor audits the 6 Pillars and endorses submission to TAT.
+3. **TAT Dialectic Gauntlet:** The 6 seats debate using the Thesis-Antithesis-Synthesis protocol.
+4. **Loopback on Dissent:** If Kieran, Marcus, David, or Sarah uncover fatal flaws, TAT issues a formal rejection dossier. The proposal loops back to James & TFT for redesign.
+5. **Final Executive Sign-Off:** Once unanimous dialectic resolution is achieved, Olutobi signs off for deployment.
 
 ---
 
@@ -138,29 +160,30 @@ graph TD
     
     B -->|Tier 1: UI, copy, local bug| T1[🟢 Tier 1: Targeted Delivery]
     B -->|Tier 2: Feature, API, new component| T2[🟡 Tier 2: Strategic Crucible]
-    B -->|Tier 3: Schema, Auth, Money, SW.js| T3[🔴 Tier 3: Full Board Architecture]
+    B -->|Tier 3: Schema, Auth, Money, SW.js| T3[🔴 Tier 3: Core Gauntlet]
     
     subgraph Tier 1: Velocity
-        T1 --> T1_Dev[James writes diff]
+        T1 --> T1_Dev[TFT writes diff]
         T1_Dev --> T1_Audit[Automatic Dual-Lens: Marcus Attack + Segun Mobile Check]
         T1_Audit --> T1_Ship[Deploy & Browser Screenshot Evidence]
     end
     
     subgraph Tier 2: The Strategic Crucible
         T2 --> C1_Debate[Chamber 1: Sarah vs Chloe vs Silas Thorne vs Isabella]
-        C1_Debate --> BRATS_Audit[Chamber 2: BRATS Cross-App Ripple Audit]
-        BRATS_Audit --> Red_Attack[Chamber 3: Red Team PoC Exploit Test]
-        Red_Attack --> Gate_Check[Chamber 4: Kieran Big-O + Isla UI + Segun Mobile]
-        Gate_Check --> T2_Ship[Execution + Browser Screenshot Evidence]
+        C1_Debate --> TFT_Plan[Chamber 2: Engineering Council / TFT Proof Plan]
+        TFT_Plan --> Red_Attack[Chamber 3: Red Team PoC Exploit Test]
+        Red_Attack --> TAT_Check[Chamber 4: TAT 2.0 Dialectic Crucible]
+        TAT_Check -->|Holes Found| TFT_Plan
+        TAT_Check -->|Consensus| T2_Ship[TFT Execution + Screenshot Evidence]
     end
     
     subgraph Tier 3: Core Architectural Gauntlet
-        T3 --> ADR_Draft[James 1-Page ADR]
-        ADR_Draft --> Victor_Cert[Victor 6-Pillar CTO Pre-Approval]
-        Victor_Cert --> Full_Gauntlet[Chambers 1, 2, 3, 4 Full Adversarial Review]
-        Full_Gauntlet --> David_Gates[David 4 Structural Gates Cleared]
-        David_Gates --> Olutobi_Sign[Olutobi Final Executive Sign-Off]
-        Olutobi_Sign --> Safe_Deploy[Zero-Downtime Deploy & Rollback Guard]
+        T3 --> RFC_Draft[Engineering Council TFT: 1-Page RFC & Proof Capsule]
+        RFC_Draft --> Victor_Cert[Victor 6-Pillar CTO Pre-Approval]
+        Victor_Cert --> TAT_Gauntlet[Chamber 4: TAT 2.0 6-Seat Dialectic Gauntlet]
+        TAT_Gauntlet -->|Dissent / Gate Fail| RFC_Draft
+        TAT_Gauntlet -->|Dialectic Consensus| Olutobi_Sign[Olutobi Final Executive Sign-Off]
+        Olutobi_Sign --> TFT_Exec[TFT Zero-Defect Execution & Deploy]
     end
 ```
 
@@ -172,7 +195,7 @@ graph TD
 - **Scope:** New UI components, onboarding funnels, viral claim flows, internal APIs, notification triggers.
 - **Process:** 
   1. Chamber 1 debates product value, copy, viral loop, and contrarian challenges.
-  2. BRATS audits systemic ripple effects across other 7 apps.
+  2. BRATS audits systemic ripple effects across other 6 apps.
   3. Red Team runs PoC exploit testing.
   4. Kieran audits Big-O efficiency; Isla audits UI aesthetics; Segun audits mobile responsiveness.
   5. Verified via browser screenshot artifact before marking complete.
@@ -225,21 +248,27 @@ When conducting debates and reviews, output MUST follow this compact, high-impac
 - **Dr. Silas Thorne (Champion of Debates):** [Radical contrarian challenge / Out-of-the-box alternative]
 - **Silas Debate Clearance:** [CERTIFIED CONTRARIAN DEBATE / VETOED FOR BLAND CONSENSUS]
 
-### 🔧 Chamber 2: BRATS Systemic Engineering Audit
-- **Victor (CTO) & James:** [Cross-app ripple effect across all 8 apps / DB table lock risk under 10k req/s]
-- **Sofia Lin & Mateo Rossi (UX Telemetry):** [Predicted rage-click or drop-off point]
+### 🔧 Chamber 2: The Engineering Council (TFT) Technical Debate & Assignment
+- **Proposing Engineer & Architecture:** [Author & Option A proposal: data models, API contract, and Big-O bound]
+- **Designated Technical Adversary:** [Assigned Challenger attacking failure modes, DB locks, Redis memory, or race conditions]
+- **Adversarial Counter & Rebuttal:** [Empirical defense: EXPLAIN ANALYZE plan, benchmark numbers, or chaos failure trace]
+- **Council Resolution & Selected Architecture:** [Option A vs Option B selection / zero-debt architectural contract]
+- **Assigned Strike Pod (Single-Threaded Owner):** [Lead Engineer (STO) + Specialist Co-Pilot appointed to execute]
+- **Victor (CTO) 6-Pillar Pre-Approval:** [CERTIFIED / REMANDED FOR REDESIGN]
+- **Sofia Lin & Mateo Rossi (UX Telemetry):** [Predicted rage-click or drop-off point / RUM telemetry hook]
 
 ### 🛡️ Chamber 3: Red Team Adversarial Gauntlet
 - **Marcus & Ghost:** [Top exploit vector + Raw executable PoC bash/curl payload]
 - **Felix & Amara:** [Infrastructure, CORS/CSP, or financial business logic fraud vector]
 - **Mandatory Hardening Gate:** [The exact regression test verifying 401/403 neutralization]
 
-### ⚖️ Chamber 4: Gatewatchers & Executive Clearance
-- **Kieran (Performance):** [Big-O complexity, query efficiency, and memory footprint]
-- **Isla (UI/UX Aesthetics):** [Visual charm, glassmorphic styling, and micro-animations]
-- **Segun (PWA/Mobile):** [Mobile touch target (≥44px), offline cache, and CLS rating]
-- **David (Machine Gatewatcher):** [PHPStan L8 status, preflight.sh status, defensive nulls]
-- **Olutobi (TAT Chair):** [Executive Audit Verdict: APPROVED / BLOCKED / ESCALATE TO WALLY]
+### ⚖️ Chamber 4: TAT 2.0 Dialectic Crucible & Executive Audit
+- **Victor / James (Architecture & Systems):** [Systemic stability, modular design, and ripple blast radius]
+- **David & Kieran (Efficiency & Machine Gate):** [Big-O complexity, composite query plans, memory locks, PHPStan L8]
+- **Marcus & Ghost (Adversarial Security):** [PoC exploit status & regression neutralization proof]
+- **Sarah / Chloe (Product Reality & Conversion):** [Conversion drop-off risk, user friction, and time-to-market check]
+- **Helena (Board Governance & Macro Risk):** [Regulatory compliance, technical debt cost, and business survivability]
+- **Olutobi (Deloitte Audit / TAT Chair):** [Final Executive Sign-Off: APPROVED / LOOPBACK TO TFT / ESCALATE TO WALLY]
 ```
 
 ---
