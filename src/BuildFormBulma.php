@@ -836,20 +836,48 @@ class BuildFormBulma
                 echo <<<HTML
                     <p class="subtitle has-text-centered is-primary" id="{$nameKey}"><i>$nameKey</i></p>
                     HTML;
-            } elseif ($this->entValue[$i][0] === 'radio') {
+            } elseif (is_array($this->entValue[$i]) && ($this->entValue[$i][0] ?? '') === 'radio') {
+                $labelValue = $this->entValue[$i][1] ?? '';
+                $yesVal = $this->entValue[$i][2] ?? 'Yes';
+                $noVal = $this->entValue[$i][3] ?? 'No';
                 echo <<<HTML
                     <hr><br>
                     <div class="control">
                         <label class="radio">
-                            {$this->entValue[$i][1]}
-                            <input type="radio" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}_yes" class="{$this->entKey[$i]}">
-                            {$this->entValue[$i][2]}
+                            $labelValue
+                            <input type="radio" name="{$this->entKey[$i]}" value="$yesVal" id="{$this->entKey[$i]}_yes" class="{$this->entKey[$i]}">
+                            $yesVal
                         </label>
                         <label class="radio">
-                            <input type="radio" name="{$this->entKey[$i]}" id="{$this->entKey[$i]}_no" class="{$this->entKey[$i]}">
-                            {$this->entValue[$i][3]}
+                            <input type="radio" name="{$this->entKey[$i]}" value="$noVal" id="{$this->entKey[$i]}_no" class="{$this->entKey[$i]}">
+                            $noVal
                         </label>
                         <p class="help" id="{$this->entKey[$i]}_error"></p>
+                    </div>
+                    <br>
+                    HTML;
+            } elseif (is_array($this->entValue[$i]) && ($this->entValue[$i][0] ?? '') === 'radioComment') {
+                $labelValue = $this->entValue[$i][1] ?? '';
+                $yesVal = $this->entValue[$i][2] ?? 'Yes';
+                $noVal = $this->entValue[$i][3] ?? 'No';
+                echo <<<HTML
+                    <hr><br>
+                    <div class="field">
+                        <label class="label"><b>$labelValue</b></label>
+                        <div class="control">
+                            <label class="radio">
+                                <input type="radio" name="{$this->entKey[$i]}" value="$yesVal" id="{$this->entKey[$i]}_yes" class="{$this->entKey[$i]}">
+                                $yesVal
+                            </label>
+                            <label class="radio">
+                                <input type="radio" name="{$this->entKey[$i]}" value="$noVal" id="{$this->entKey[$i]}_no" class="{$this->entKey[$i]}">
+                                $noVal
+                            </label>
+                            <p class="help" id="{$this->entKey[$i]}_error"></p>
+                        </div>
+                        <div class="control" style="margin-top: 8px;">
+                            <textarea name="{$this->entKey[$i]}Comment" id="{$this->entKey[$i]}Comment" placeholder="Please add any further relevant comment especially if you selected No" class="textarea" rows="2"></textarea>
+                        </div>
                     </div>
                     <br>
                     HTML;
@@ -910,7 +938,8 @@ class BuildFormBulma
                     </div>
                     HTML;
             } else {
-                echo "Invalid form element type: {$this->entValue[$i]}";
+                $typeStr = is_array($this->entValue[$i]) ? json_encode($this->entValue[$i]) : (string) $this->entValue[$i];
+                echo "Invalid form element type: {$typeStr}";
             }
         }
     }

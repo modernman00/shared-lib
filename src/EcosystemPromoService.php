@@ -222,7 +222,7 @@ class EcosystemPromoService
         }
 
         // 4. If no specific keyword match, select default strategic internal partner
-        $defaultSibling = $this->getDefaultSiblingApp($currentAppKey, $placement);
+        $defaultSibling = $this->getDefaultSiblingApp($currentAppKey, $placement, $context);
         if ($defaultSibling !== null) {
             return $this->formatEcosystemBanner($defaultSibling, $currentAppKey, $placement, $context);
         }
@@ -370,27 +370,56 @@ class EcosystemPromoService
     }
 
     /**
-     * Selects a strategic default sibling app based on current surface.
+     * Selects an ecosystem sister app using zero-cron deterministic time-window hashing
+     * combined with session impression cycling to eliminate banner blindness.
+     *
+     * @param string $currentApp Current application key
+     * @param string $placement Surface identifier
+     * @param array<string, mixed> $context Context attributes
+     * @return string|null Sister app key or null
      */
-    private function getDefaultSiblingApp(string $currentApp, string $placement): ?string
+    private function getDefaultSiblingApp(string $currentApp, string $placement, array $context = []): ?string
     {
-        $rotation = match ($currentApp) {
-            'partyplatform' => match ($placement) {
-                'budget', 'manage_budget' => 'iaccount',
-                'event_details', 'guest_hub' => 'familyplatform',
-                default => 'idecide',
-            },
-            'familyplatform' => match ($placement) {
-                'chores', 'calendar' => 'idecide',
-                'household_budget' => 'iaccount',
-                default => 'partyplatform',
-            },
-            'idecide' => 'partyplatform',
-            'iaccount' => 'partyplatform',
-            default => 'partyplatform',
-        };
+        // 1. Filter all eligible sister apps (strictly excluding current host app)
+        $eligibleApps = array_values(array_filter(
+            array_keys(self::PORTFOLIO_CATALOG),
+            static fn(string $app): bool => $app !== $currentApp
+        ));
 
-        return ($rotation !== $currentApp && isset(self::PORTFOLIO_CATALOG[$rotation])) ? $rotation : null;
+        if (empty($eligibleApps)) {
+            return null;
+        }
+
+        $count = count($eligibleApps);
+
+        // 2. Day-of-year rotation baseline (0-365):
+        // Automatically varies every single day at midnight UTC without cron or background workers.
+        $dayOfYear = isset($context['mock_day_of_year']) && is_numeric($context['mock_day_of_year'])
+            ? (int) $context['mock_day_of_year']
+            : (int) date('z');
+
+        // 3. Placement salt ensures distinct pages on the same day feature distinct apps
+        $placementSalt = abs(crc32($currentApp . ':' . $placement)) % $count;
+
+        // 4. Session-aware impression index:
+        // Sequentially cycles through eligible apps across page loads within an active user session.
+        $sessionOffset = 0;
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION)) {
+            $sessionKey = '_eco_promo_seq_' . $currentApp;
+            $sessionOffset = isset($_SESSION[$sessionKey]) && is_numeric($_SESSION[$sessionKey])
+                ? (int) $_SESSION[$sessionKey]
+                : 0;
+
+            // Increment sequentially for the next page load
+            $_SESSION[$sessionKey] = ($sessionOffset + 1) % $count;
+        } elseif (isset($context['mock_session_offset']) && is_numeric($context['mock_session_offset'])) {
+            $sessionOffset = (int) $context['mock_session_offset'];
+        }
+
+        // 5. Deterministic target index
+        $targetIndex = ($dayOfYear + $placementSalt + $sessionOffset) % $count;
+
+        return $eligibleApps[$targetIndex] ?? $eligibleApps[0];
     }
 
     /**

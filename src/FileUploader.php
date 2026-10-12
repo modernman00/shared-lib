@@ -120,9 +120,11 @@ class FileUploader
 
             if (self::shouldVirusScan($fileTemp)) {
                 try {
-                    new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
-                } catch (Throwable $e) {
-                    continue; // virus found or scan failed - skip this file
+                    $cloudmersiveKey = $_ENV['FILE_UPLOAD_CLOUDMERSIVE'] ?? getenv('FILE_UPLOAD_CLOUDMERSIVE') ?: null;
+                    new ScanVirus($fileTemp, is_string($cloudmersiveKey) ? $cloudmersiveKey : null);
+                } catch (ValidationException $e) {
+                    $saveFiles['errors'][] = "File {$originalName}: " . $e->getMessage();
+                    continue; // virus found - skip this file
                 }
             }
 
@@ -183,7 +185,8 @@ class FileUploader
         }
 
         if (self::shouldVirusScan($fileTemp)) {
-            new ScanVirus($fileTemp, $_ENV['FILE_UPLOAD_CLOUDMERSIVE']);
+            $cloudmersiveKey = $_ENV['FILE_UPLOAD_CLOUDMERSIVE'] ?? getenv('FILE_UPLOAD_CLOUDMERSIVE') ?: null;
+            new ScanVirus($fileTemp, is_string($cloudmersiveKey) ? $cloudmersiveKey : null);
         }
 
         $pathToImage = $fileLocation . $fileName;
@@ -286,7 +289,8 @@ class FileUploader
 
     private static function shouldVirusScan(string $fileTemp): bool
     {
-        if (!isset($_ENV['FILE_UPLOAD_CLOUDMERSIVE'])) {
+        $key = $_ENV['FILE_UPLOAD_CLOUDMERSIVE'] ?? getenv('FILE_UPLOAD_CLOUDMERSIVE') ?: '';
+        if (empty($key)) {
             return false;
         }
 
