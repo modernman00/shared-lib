@@ -34,10 +34,20 @@ class EmailData
     {
         $data = self::getEmailConfig($sender);
 
-        define('USER_APP', $data['username']);
-        define('PASS', $data['password']);
-        define('APP_EMAIL', $data['senderEmail']);
-        define('APP_NAME', $data['senderName']);
-        define('TEST_EMAIL', $data['testEmail']);
+        if (!defined('USER_APP')) {
+            define('USER_APP', $data['username']);
+        }
+        if (!defined('PASS')) {
+            define('PASS', $data['password']);
+        }
+        if (!defined('APP_EMAIL')) {
+            define('APP_EMAIL', $data['senderEmail']);
+        }
+        if (!defined('APP_NAME')) {
+            define('APP_NAME', $data['senderName']);
+        }
+        if (!defined('TEST_EMAIL')) {
+            define('TEST_EMAIL', $data['testEmail']);
+        }
     }
 }

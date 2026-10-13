@@ -16,6 +16,163 @@ abstract class BaseAdminAuthController
     abstract protected function getAdminTableName(): string;
     abstract protected function getAdminColumnMap(): array;
 
+    public const TRUSTED_2FA_COOKIE_NAME = 'admin_2fa_trust';
+    public const DEFAULT_2FA_LIFETIME = 604800; // 7 days in seconds
+
+    public static function get2faTrustCookieName(): string
+    {
+        return (string) ($_ENV['ADMIN_2FA_COOKIE_NAME'] ?? getenv('ADMIN_2FA_COOKIE_NAME') ?: self::TRUSTED_2FA_COOKIE_NAME);
+    }
+
+    public static function get2faTrustLifetime(): int
+    {
+        $days = (int) ($_ENV['ADMIN_2FA_LIFETIME_DAYS'] ?? getenv('ADMIN_2FA_LIFETIME_DAYS') ?: 7);
+        if ($days <= 0) {
+            $days = 7;
+        }
+        return $days * 86400;
+    }
+
+    /**
+     * Issues a cryptographically signed 7-day Trusted Device cookie upon successful TOTP verification.
+     */
+    public static function issue2faTrustCookie(string|int $adminId, string $email): void
+    {
+        $lifetime = self::get2faTrustLifetime();
+        $expires = time() + $lifetime;
+        $userAgent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown');
+        $deviceHash = hash('sha256', $userAgent);
+
+        $payload = [
+            'id'          => (string) $adminId,
+            'email'       => strtolower(trim($email)),
+            'iat'         => time(),
+            'exp'         => $expires,
+            'device_hash' => $deviceHash,
+            'nonce'       => bin2hex(random_bytes(16)),
+        ];
+
+        $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        if ($jsonPayload === false) {
+            return;
+        }
+
+        $secretKey = (string) ($_ENV['APP_KEY'] ?? getenv('APP_KEY') ?: 'zero-trust-admin-salt');
+        $signature = hash_hmac('sha256', $jsonPayload, $secretKey);
+        $token = rtrim(strtr(base64_encode($jsonPayload), '+/', '-_'), '=') . '.' . $signature;
+
+        $isProd = ($_ENV['APP_ENV'] ?? 'production') === 'production';
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $secure = $isHttps || $isProd;
+
+        $cookieOptions = [
+            'expires'  => $expires,
+            'path'     => '/',
+            'secure'   => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieOptions['domain'] = (string) $_ENV['COOKIE_DOMAIN'];
+        }
+
+        setcookie(self::get2faTrustCookieName(), $token, $cookieOptions);
+        $_COOKIE[self::get2faTrustCookieName()] = $token;
+    }
+
+    /**
+     * Verifies the cryptographic 7-day Trusted Device cookie.
+     */
+    public static function verify2faTrustCookie(string|int $adminId, string $email): bool
+    {
+        $cookieName = self::get2faTrustCookieName();
+        $token = (string) ($_COOKIE[$cookieName] ?? '');
+        if ($token === '' || !str_contains($token, '.')) {
+            return false;
+        }
+
+        [$encodedPayload, $signature] = explode('.', $token, 2);
+        $jsonPayload = base64_decode(strtr($encodedPayload, '-_', '+/'), true);
+        if ($jsonPayload === false || $jsonPayload === '') {
+            return false;
+        }
+
+        $secretKey = (string) ($_ENV['APP_KEY'] ?? getenv('APP_KEY') ?: 'zero-trust-admin-salt');
+        $expectedSignature = hash_hmac('sha256', $jsonPayload, $secretKey);
+
+        if (!hash_equals($expectedSignature, $signature)) {
+            return false;
+        }
+
+        /** @var array{id?: string, email?: string, exp?: int, device_hash?: string}|null $payload */
+        $payload = json_decode($jsonPayload, true);
+        if (!is_array($payload)) {
+            return false;
+        }
+
+        // 1. Expiration check
+        if (empty($payload['exp']) || (int) $payload['exp'] < time()) {
+            return false;
+        }
+
+        // 2. Identity match
+        if (empty($payload['id']) || (string) $payload['id'] !== (string) $adminId) {
+            return false;
+        }
+
+        if (empty($payload['email']) || strtolower((string) $payload['email']) !== strtolower(trim($email))) {
+            return false;
+        }
+
+        // 3. Device platform binding check (prevents token exfiltration across different browsers)
+        $userAgent = (string) ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown');
+        $currentDeviceHash = hash('sha256', $userAgent);
+        if (!empty($payload['device_hash']) && !hash_equals((string) $payload['device_hash'], $currentDeviceHash)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Public helper to check if a trusted device cookie is valid for a given admin.
+     */
+    public static function checkTrustedDevice(string|int $adminId, string $email): bool
+    {
+        return self::verify2faTrustCookie($adminId, $email);
+    }
+
+    /**
+     * Revokes and clears the 7-day Trusted Device cookie.
+     */
+    public static function clear2faTrustCookie(): void
+    {
+        $cookieName = self::get2faTrustCookieName();
+        $isProd = ($_ENV['APP_ENV'] ?? 'production') === 'production';
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $secure = $isHttps || $isProd;
+
+        $cookieOptions = [
+            'expires'  => time() - 42000,
+            'path'     => '/',
+            'secure'   => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+
+        setcookie($cookieName, '', $cookieOptions);
+
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieOptions['domain'] = (string) $_ENV['COOKIE_DOMAIN'];
+            setcookie($cookieName, '', $cookieOptions);
+        }
+
+        unset($_COOKIE[$cookieName]);
+    }
+
     protected function adminUrl(string $path = ''): string
     {
         return \Src\Utility::adminUrl($path);
@@ -300,6 +457,13 @@ abstract class BaseAdminAuthController
             return;
         }
 
+        if (self::verify2faTrustCookie((string) $user['id'], $email)) {
+            $_SESSION['auth']['2fa_passed'] = true;
+            $this->logAudit($email, 'Super admin login passed 2FA via 7-day trusted device token');
+            redirect($this->getDashboardUrl());
+            return;
+        }
+
         $this->logAudit($email, 'Super admin login step 1 passed — 2FA challenge required');
         redirect($this->adminUrl('2fa'));
     }
@@ -379,9 +543,13 @@ abstract class BaseAdminAuthController
         )->execute([$secret, $email]);
 
         unset($_SESSION['auth']['temp_totp_secret']);
+        $userId = (string) ($_SESSION['auth']['id'] ?? '');
+        if ($userId !== '') {
+            self::issue2faTrustCookie($userId, $email);
+        }
         $_SESSION['auth']['2fa_passed'] = true;
 
-        $this->logAudit($email, 'Super admin enabled and verified Google Authenticator 2FA');
+        $this->logAudit($email, 'Super admin enabled and verified Google Authenticator 2FA (7-day device trust enabled)');
         $_SESSION['formSuccess'] = 'Google Authenticator 2FA successfully paired and enabled!';
         redirect($this->getDashboardUrl());
     }
@@ -396,6 +564,15 @@ abstract class BaseAdminAuthController
         }
 
         if (!empty($_SESSION['auth']['2fa_passed'])) {
+            redirect($this->getDashboardUrl());
+            return;
+        }
+
+        $email = (string) ($_SESSION['auth']['email'] ?? '');
+        $userId = (string) ($_SESSION['auth']['id'] ?? '');
+        if ($email !== '' && $userId !== '' && self::verify2faTrustCookie($userId, $email)) {
+            $_SESSION['auth']['2fa_passed'] = true;
+            $this->logAudit($email, 'Passed TOTP 2FA via 7-day trusted device token');
             redirect($this->getDashboardUrl());
             return;
         }
@@ -439,8 +616,14 @@ abstract class BaseAdminAuthController
             return;
         }
 
+        $rememberDevice = !isset($_POST['remember_device']) || filter_var($_POST['remember_device'], FILTER_VALIDATE_BOOLEAN);
+        $userId = (string) ($_SESSION['auth']['id'] ?? '');
+        if ($rememberDevice && $userId !== '') {
+            self::issue2faTrustCookie($userId, $email);
+        }
+
         $_SESSION['auth']['2fa_passed'] = true;
-        $this->logAudit($email, 'Passed TOTP 2FA challenge');
+        $this->logAudit($email, 'Passed TOTP 2FA challenge' . ($rememberDevice ? ' (7-day device trust enabled)' : ''));
         redirect($this->getDashboardUrl());
     }
 
@@ -555,6 +738,8 @@ abstract class BaseAdminAuthController
         if (!empty($_SESSION['auth']['email'])) {
             $this->logAudit($_SESSION['auth']['email'], 'Super admin logged out');
         }
+
+        self::clear2faTrustCookie();
 
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {

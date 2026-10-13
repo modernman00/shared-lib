@@ -51,6 +51,14 @@ final class AdminGuardMiddleware
             $currentFingerprint = (string) ($_SESSION['admin_fingerprint'] ?? '');
 
             if ($currentFingerprint === '' || !hash_equals($currentFingerprint, $expectedFingerprint)) {
+                // Graceful Mobile/ISP Roaming: If holding valid 7-day 2FA trust token, re-bind to new network
+                $adminId = $_SESSION['auth']['id'] ?? $_SESSION['admin_id'] ?? $_SESSION['id'] ?? null;
+                $email = $_SESSION['auth']['email'] ?? null;
+                if ($adminId && $email && BaseAdminAuthController::checkTrustedDevice((string) $adminId, (string) $email)) {
+                    self::bindSession($ip, $userAgent);
+                    return;
+                }
+
                 error_log("[AdminGuard] Session hijacking or missing fingerprint detected: IP={$ip} UA={$userAgent}");
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {

@@ -46,7 +46,7 @@ class SendEmail
      */
     public static function sendEmail($email, $name, $subject, $message, $file = null, $filename = null)
     {
-        if (\isTestEnv()) {
+        if (function_exists('\\isTestEnv') && \isTestEnv()) {
             $GLOBALS['__testMail'][] = ['to' => $email, 'name' => $name, 'subject' => $subject];
             return true;
         }
@@ -75,7 +75,9 @@ class SendEmail
             //Recipients
             $mail->setFrom(APP_EMAIL, APP_NAME);
             $mail->addAddress($email, $name);
-            $mail->addBCC(TEST_EMAIL);
+            if (defined('TEST_EMAIL') && TEST_EMAIL !== '') {
+    $mail->addBCC(TEST_EMAIL);
+}
             if ($file && $filename) {
                 // 💡 Determine MIME type dynamically here
                 $mimeType = self::getMimeTypeFromFilename($file);
