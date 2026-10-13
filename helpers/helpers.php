@@ -792,4 +792,76 @@ function apiError(string|array $error, int $statusCode = 400, ?string $code = nu
     \Src\ApiResponse::error($error, $statusCode, $code, $data, $headers);
 }
 
+// set id for any application
+/**
+ * Summary of setId
+ * @param array $postData that is the $_POST or $_GET data
+ * @param string $name  the name of the field to get the name from
+ * @param string $table  the table to check for the id
+ * @throws Exception
+ * @return array{0: mixed}
+ */
+function setId(array $postData, string $name, string $table): array
+    {
+
+        $sanitiseName = ($postData["$name"]) ? checkInput($postData["$name"]) : throw new Exception("Provide Info");
+
+        $idName = preg_replace('/[^A-Za-z ]/', '', $sanitiseName);
+        $id = random_int(1000, 900000);
+        $id .= strtoupper($idName);
+
+        //check if the reference number exist
+        $query = Select::formAndMatchQuery(selection: 'SELECT_COUNT_ONE', table: $table, identifier1: 'id');
+        $idCheck = Select::selectFn2($query, [$id]);
+        if ($idCheck >= 1) {
+            $id = (random_int(100, 999999));
+            $id .= strtoupper($idName);
+        }
+        $postData['id'] = $id;
+        return $postData;
+    }
+
+    /**
+ * Set a unique ID for any application.
+ *
+ * @param array  $postData The $_POST or $_GET data.
+ * @param string $name     The name of the field to get the name from.
+ * @param string $table    The table to check for the id.
+ * @param int    $digits   Number of random digits to prepend (default 6).
+ * @throws Exception
+ * @return array{0: mixed}
+ */
+function setId2(array $postData, string $name, string $table, int $digits = 6): array
+{
+    // Validate and sanitise the incoming name
+    if (empty($postData[$name])) {
+        throw new Exception("Provide Info");
+    }
+
+    $sanitisedName = strtoupper(checkInput($postData[$name]));
+
+    // Guard against invalid digit counts
+    if ($digits < 1) {
+        throw new Exception("Number of digits must be at least 1");
+    }
+
+    // Dynamically determine the random range from the digit count
+    $min = (int) pow(10, $digits - 1);   // e.g. 6 digits → 100000
+    $max = (int) pow(10, $digits) - 1;   // e.g. 6 digits → 999999
+
+    // Keep generating until we find one that doesn't already exist
+    do {
+        $id = random_int($min, $max) . $sanitisedName;
+
+        // Check if the reference number already exists
+        // Adjust this query to match your Select class API
+        $query = Select::formAndMatchQuery(selection: 'SELECT_COUNT_ONE', table: $table, identifier1: 'id');
+        $idCheck = Select::selectFn2($query, [$id]);
+
+        $exists = !empty($idCheck);
+    } while ($exists);
+
+    return [$id];
+}
+
 

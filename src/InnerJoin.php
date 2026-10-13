@@ -267,4 +267,34 @@ class InnerJoin extends Db
             return false;
         }
     }
+
+    /**
+     * Executes a static INNER JOIN query across multiple tables with an AND condition in the WHERE clause.
+     *
+     * @param string $firstTable The primary table to select from.
+     * @param string $para The column used for joining the tables.
+     * @param array $table An array of table names to join with the primary table.
+     * @param mixed $id The value to bind to both sides of the AND condition.
+     * @return array Returns an array of fetched records on success, or empty array on failure.
+     */
+    public static function joinParamAndStatic(string $firstTable, string $para, array $table, mixed $id): array
+    {
+        $firstTable = Utility::checkInput(data: $firstTable);
+
+        try {
+            $buildInnerJoinQuery = array_map(fn($tab) => " INNER JOIN $tab ON $firstTable.$para = $tab.$para ", $table);
+            $innerQueryToString = join(' ', $buildInnerJoinQuery);
+            $firstJoinedTable = $table[0] ?? $firstTable;
+            $query2 = "SELECT * FROM $firstTable $innerQueryToString WHERE $firstTable.$para = ? AND $firstJoinedTable.$para = ?";
+            $result = self::connect2()->prepare($query2);
+            $result->execute([$id, $id]);
+
+            return $result->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            Utility::showError(th: $e);
+
+            return [];
+        }
+    }
 }
+
