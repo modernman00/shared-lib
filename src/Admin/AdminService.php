@@ -21,7 +21,7 @@ class AdminService
             'color' => '#6366f1',
             'icon' => 'fa-brain-circuit',
             'badge' => 'Active',
-            'domain' => 'execmind.app'
+            'domain' => 'execmindapp.com'
         ],
         'partyplatform' => [
             'id' => 'partyplatform',
@@ -31,7 +31,7 @@ class AdminService
             'color' => '#ec4899',
             'icon' => 'fa-sparkles',
             'badge' => 'Active',
-            'domain' => 'partyplatform.app'
+            'domain' => 'mypartyplatform.com'
         ],
         'familyplatform' => [
             'id' => 'familyplatform',
@@ -41,7 +41,7 @@ class AdminService
             'color' => '#10b981',
             'icon' => 'fa-house-heart',
             'badge' => 'Active',
-            'domain' => 'familyplatform.app'
+            'domain' => 'myfamilyplatform.com'
         ],
         'idecide' => [
             'id' => 'idecide',
@@ -51,7 +51,7 @@ class AdminService
             'color' => '#f59e0b',
             'icon' => 'fa-scale-balanced',
             'badge' => 'Active',
-            'domain' => 'idecide.app'
+            'domain' => 'idecideapp.com'
         ],
         'iaccount' => [
             'id' => 'iaccount',
@@ -61,7 +61,7 @@ class AdminService
             'color' => '#3b82f6',
             'icon' => 'fa-wallet',
             'badge' => 'Active',
-            'domain' => 'iaccount.app'
+            'domain' => 'iaccountapp.com'
         ],
         'scoretenant' => [
             'id' => 'scoretenant',
@@ -72,6 +72,26 @@ class AdminService
             'icon' => 'fa-building-shield',
             'badge' => 'Active',
             'domain' => 'tenantscore.app'
+        ],
+        'loaneasyfinance' => [
+            'id' => 'loaneasyfinance',
+            'name' => 'LoanEasyFinance',
+            'tagline' => 'Ethical Personal Lending & Dynamic Affordability',
+            'category' => 'FinTech & Lending',
+            'color' => '#059669',
+            'icon' => 'fa-hand-holding-dollar',
+            'badge' => 'Active',
+            'domain' => 'loaneasyfinance.com'
+        ],
+        'bcp' => [
+            'id' => 'bcp',
+            'name' => 'BestCarePro',
+            'tagline' => 'Professional Care Management & Compliance Portal',
+            'category' => 'HealthTech & Care',
+            'color' => '#0284c7',
+            'icon' => 'fa-user-nurse',
+            'badge' => 'Active',
+            'domain' => 'bestcarepro.co.uk'
         ],
     ];
 
