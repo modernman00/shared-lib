@@ -109,4 +109,45 @@ class SeoEngineTest extends TestCase
         $this->assertStringContainsString('Disallow: /custom-private/', $robots);
         $this->assertStringContainsString('Sitemap: https://familyhub.app/sitemap.xml', $robots);
     }
+
+    public function testGenerateFaqSchema(): void
+    {
+        $faqs = [
+            [
+                'question' => 'Is PartyPlatform free for guests?',
+                'answer' => 'Yes! Guests RSVP and contribute to potlucks 100% free with zero registration.',
+            ],
+            [
+                'question' => 'Can I collect money for group gifts?',
+                'answer' => 'Yes, our built-in pledge tracker manages contributions securely.',
+            ],
+        ];
+
+        $jsonLd = SeoEngine::generateFaqSchema($faqs);
+
+        $this->assertStringContainsString('<script type="application/ld+json">', $jsonLd);
+        $this->assertStringContainsString('"@type": "FAQPage"', $jsonLd);
+        $this->assertStringContainsString('"@type": "Question"', $jsonLd);
+        $this->assertStringContainsString('"name": "Is PartyPlatform free for guests?"', $jsonLd);
+        $this->assertStringContainsString('"@type": "Answer"', $jsonLd);
+        $this->assertStringContainsString('"text": "Yes! Guests RSVP and contribute to potlucks 100% free with zero registration."', $jsonLd);
+    }
+
+    public function testRenderFaqAccordionHtml(): void
+    {
+        $faqs = [
+            [
+                'question' => 'How does TenantScore protect my data?',
+                'answer' => 'We use <strong>bank-grade 256-bit encryption</strong> and never sell tenant data.',
+            ],
+        ];
+
+        $html = SeoEngine::renderFaqAccordionHtml($faqs);
+
+        $this->assertStringContainsString('itemscope itemtype="https://schema.org/FAQPage"', $html);
+        $this->assertStringContainsString('<details', $html);
+        $this->assertStringContainsString('<summary', $html);
+        $this->assertStringContainsString('How does TenantScore protect my data?', $html);
+        $this->assertStringContainsString('<strong>bank-grade 256-bit encryption</strong>', $html);
+    }
 }

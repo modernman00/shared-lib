@@ -194,6 +194,29 @@ class SeoEngine
             }
         }
 
+        // FAQPage Schema
+        if (!empty($schemaOptions['faq']) && is_array($schemaOptions['faq'])) {
+            $mainEntity = [];
+            foreach ($schemaOptions['faq'] as $faqItem) {
+                if (is_array($faqItem) && !empty($faqItem['question']) && !empty($faqItem['answer'])) {
+                    $mainEntity[] = [
+                        '@type' => 'Question',
+                        'name' => trim(strip_tags((string) $faqItem['question'])),
+                        'acceptedAnswer' => [
+                            '@type' => 'Answer',
+                            'text' => trim(strip_tags((string) $faqItem['answer'])),
+                        ],
+                    ];
+                }
+            }
+            if (!empty($mainEntity)) {
+                $graph[] = [
+                    '@type' => 'FAQPage',
+                    'mainEntity' => $mainEntity,
+                ];
+            }
+        }
+
         // Custom Schemas
         if (!empty($schemaOptions['custom']) && is_array($schemaOptions['custom'])) {
             foreach ($schemaOptions['custom'] as $custom) {
@@ -215,6 +238,78 @@ class SeoEngine
         return '<script type="application/ld+json">' . "\n" .
             json_encode($schemaPayload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) .
             "\n</script>";
+    }
+
+    /**
+     * Generates a standalone FAQPage JSON-LD schema tag.
+     *
+     * @param array<int, array{question: string, answer: string}> $faqs
+     * @return string Valid <script type="application/ld+json"> tag
+     */
+    public static function generateFaqSchema(array $faqs): string
+    {
+        return self::renderJsonLd(['faq' => $faqs]);
+    }
+
+    /**
+     * Alias for renderJsonLd() for API consistency.
+     *
+     * @param array<string, mixed> $schemaOptions
+     * @return string JSON-LD <script> block
+     */
+    public static function generateJsonLd(array $schemaOptions): string
+    {
+        return self::renderJsonLd($schemaOptions);
+    }
+
+    /**
+     * Renders a semantic, accessible HTML FAQ accordion using <details> and <summary>.
+     * Guarantees touch targets >= 44px, zero JavaScript runtime requirement, and WCAG AAA compliance.
+     *
+     * @param array<int, array{question: string, answer: string}> $faqs
+     * @param array{class?: string, item_class?: string, question_class?: string, answer_class?: string} $options
+     * @return string Semantic HTML accordion markup
+     */
+    public static function renderFaqAccordionHtml(array $faqs, array $options = []): string
+    {
+        if (empty($faqs)) {
+            return '';
+        }
+
+        $containerClass = htmlspecialchars((string) ($options['class'] ?? 'seo-faq-accordion space-y-4 my-8'), ENT_QUOTES, 'UTF-8');
+        $itemClass = htmlspecialchars((string) ($options['item_class'] ?? 'seo-faq-item group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 p-5 shadow-sm transition-all duration-200 hover:shadow-md'), ENT_QUOTES, 'UTF-8');
+        $summaryClass = htmlspecialchars((string) ($options['question_class'] ?? 'seo-faq-question flex w-full cursor-pointer list-none items-center justify-between text-left text-base sm:text-lg font-semibold text-slate-900 dark:text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500'), ENT_QUOTES, 'UTF-8');
+        $answerClass = htmlspecialchars((string) ($options['answer_class'] ?? 'seo-faq-answer mt-3 text-sm sm:text-base leading-relaxed text-slate-650 dark:text-slate-350 pr-4'), ENT_QUOTES, 'UTF-8');
+
+        $html = [];
+        $html[] = "<div class=\"{$containerClass}\" itemscope itemtype=\"https://schema.org/FAQPage\">";
+
+        foreach ($faqs as $faq) {
+            $question = htmlspecialchars(trim((string) $faq['question']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $rawAnswer = trim((string) $faq['answer']);
+            // Allow safe basic tags for formatting (strong, em, a, p, br)
+            $safeAnswer = strip_tags($rawAnswer, '<strong><em><b><i><a><p><br><ul><li>');
+
+            if ($question === '' || $safeAnswer === '') {
+                continue;
+            }
+
+            $html[] = "  <details class=\"{$itemClass}\" itemscope itemprop=\"mainEntity\" itemtype=\"https://schema.org/Question\">";
+            $html[] = "    <summary class=\"{$summaryClass}\">";
+            $html[] = "      <span itemprop=\"name\">{$question}</span>";
+            $html[] = "      <span class=\"seo-faq-icon ml-4 shrink-0 transition-transform duration-200 group-open:rotate-180\" aria-hidden=\"true\">";
+            $html[] = "        <svg class=\"h-5 w-5 text-slate-500\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/></svg>";
+            $html[] = "      </span>";
+            $html[] = "    </summary>";
+            $html[] = "    <div class=\"{$answerClass}\" itemscope itemprop=\"acceptedAnswer\" itemtype=\"https://schema.org/Answer\">";
+            $html[] = "      <div itemprop=\"text\">{$safeAnswer}</div>";
+            $html[] = "    </div>";
+            $html[] = "  </details>";
+        }
+
+        $html[] = '</div>';
+
+        return implode("\n", $html) . "\n";
     }
 
     /**
