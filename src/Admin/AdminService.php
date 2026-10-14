@@ -71,7 +71,7 @@ class AdminService
             'color' => '#8b5cf6',
             'icon' => 'fa-building-shield',
             'badge' => 'Active',
-            'domain' => 'tenantscore.app'
+            'domain' => 'scoretenant.com'
         ],
         'loaneasyfinance' => [
             'id' => 'loaneasyfinance',
