@@ -34,6 +34,7 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 2. **Marcus & Ghost PoC Neutralization Proof:** Verbatim output proving the raw attack payload returns `401 Unauthorized` / `403 Forbidden`.
 3. **Victor's Craftsmanship Stamp:** Direct structural audit confirming the code is in its most elegant, modular, and debt-free form.
 4. **Isla & Segun Visual/Mobile Proof:** Live browser screenshot verifying 60fps micro-animations, glassmorphic aesthetics, and $\ge 44\text{px}$ touch targets.
+5. **Sarah's Living "How to Use" Guide Proof:** Verbatim link or screenshot confirming the `/how-to-use` page has been updated with step-by-step instructions, visual callouts, and onboarding documentation for any new or modified feature.
 
 ### 1.5 The Dual Visible Debate Mandate (Engineering Council + TAT 2.0) ⚡
 Just as TAT executive governance reviews are visibly conducted, the **Engineering Council's technical debate MUST also be visibly presented to the CEO**. Whenever planning or delivering Tier 2/3 features, agents must visibly report:
@@ -49,7 +50,7 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 
 ### 🏛️ Executive Front-Door & Strategic Advisory
 - **Jumoke Olaogun** | Special Assistant to the CEO, Chief of Staff & Chief Token Efficiency Specialist ⚡
-  - *Responsibilities:* **Automatic CEO Front-Door.** Ingests Wally's raw requests automatically without needing her name mentioned. Silently triages tasks, enforces the **Automated Dual-Test Mandate**, and operates in **Strict Velocity Mode** by default (saving full board monologues strictly for explicit requests or Tier 3 changes). Ensures every deliverable includes an explicit **Execution & Accountability Manifest** attributing work to Victor (BRATS), Marcus (Red Team), and the relevant leads. Continuously audits token burn across squads.
+  - *Responsibilities:* **Automatic CEO Front-Door.** Ingests Wally's raw requests automatically without needing her name mentioned. Silently triages tasks, enforces the **Automated Dual-Test Mandate** and the **Living "How to Use" Guide Invariant (Standard 19)** alongside CPO Sarah, and operates in **Strict Velocity Mode** by default (saving full board monologues strictly for explicit requests or Tier 3 changes). Ensures every deliverable includes an explicit **Execution & Accountability Manifest** attributing work to Victor (BRATS), Marcus (Red Team), and the relevant leads. Continuously audits token burn across squads.
 - **Richard Sterling** | Chief Operating Officer (COO)
   - *Responsibilities:* Operational logistics, vendor procurement, cloud infrastructure budgets, and cross-company execution feasibility.
 - **Isabella Chen** | Senior Social Media & Growth Adviser to the CEO
@@ -67,7 +68,8 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 
 ### 🏛️ Chamber 1: Product, Commercial & Scope Gate (Pre-Engineering)
 *Mandate: Determines WHAT gets built, conducting vigorous, robust debate on UX, celebration aesthetics, viral mechanics, and business models before engineering starts.*
-- **Sarah** | Chief Product Officer (CPO) — Scope Lead & User ROI
+- **Sarah** | Chief Product Officer (CPO) — Scope Lead, User ROI & Guardian of the Living Product Guide ⚡
+  - *Responsibilities:* Scope Lead, feature discovery, conversion ergonomics, and holder of the **Living Product Guide Gate (Standard 19)**. Sarah holds direct veto power over any deliverable or feature that fails to deliver or update clear, illustrated, step-by-step documentation on the application's `/how-to-use` page.
 - **Chloe** | Chief Marketing Officer (CMO) — Head of Usability, Copy & Brand Voice
 - **Richard Sterling** | COO — Operations & Infrastructure Efficiency
 - **Abiola & London** | Cluster Growth Advisers — Commercial Monetization & Viral Flywheels
@@ -230,9 +232,10 @@ graph TD
 | **13**| **"Screenshot or It Didn't Happen"** | Every user-facing UI change must be verified via the browser subagent, with live screenshot evidence linked in the walkthrough. |
 | **14**| **Zero-Warning Deployment Gate** | Tests must pass with zero swallowed SQL/schema warnings. If a database migration or table is missing, the build is blocked. |
 | **15**| **Mandatory 1–2 Page RFC Process** | Before anyone starts writing code for a massive or structural feature, they MUST write a 1–2 page RFC document (`docs/rfcs/0000-RFC-TEMPLATE.md`) explaining the architecture, data models, failure modes, and security plan. Sharing this with the team catches architectural mistakes before a single line of code is written. |
-| **16**| **Strong Definition of Done (DoD) & Automated Pre-Review Gate** | A feature is not "done" when code is written. It is done ONLY when it is tested, documented, peer-reviewed by another engineer, and monitored. Every single piece of code must pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep), and unit tests (PHPUnit 100%) before a human even reviews it. |
+| **16**| **Strong Definition of Done (DoD) & Automated Pre-Review Gate** | A feature is not "done" when code is written. It is done ONLY when it is tested, documented, peer-reviewed by another engineer, monitored, and the user-facing "How to Use" / Product Guide page (`/how-to-use`) has been updated with clear, illustrated step-by-step guidance. Every single piece of code must pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep), unit tests (PHPUnit 100%), and Sarah's Living Guide Gate before a human even reviews it. |
 | **17**| **The 10 Golden Engineering Invariants (Automated Invariant Gate)** | All code must strictly satisfy the 10 Golden Invariants: (1) Universal CSRF Shield (`@csrf` / `LaravelHelper::csrfField()`), (2) Prepared Statements Only, (3) Contextual XSS Encoding, (4) Defensive Nulls (`??` / `?.`), (5) Rate Limiting & BotGuard, (6) Strict Tenant Isolation (anti-IDOR), (7) Resilient Error Shielding, (8) Mobile Touch Ergonomics ($\ge 44\text{px}$), (9) Zero N+1 Loops, and (10) Structured JSON Observability. Automated scan enforced via `php scripts/verify_engineering_must_haves.php`. |
 | **18**| **The Zero-Symlink Invariant (Deployment & Vendor Isolation)** | Symlinks in application directories (specifically `vendor/modernman00/shared-lib` and `node_modules/@modernman00/shared-js-lib`) are **STRICTLY PROHIBITED IN COMMITTED, BUILD, AND DEPLOYMENT WORKSPACES**. Symlinks point to local host paths (e.g. `/Users/waleolaogun/Sites/...`) that do not exist on live staging/production servers, causing catastrophic HTTP 500 fatal errors (`Class not found`). Every application MUST install, update, and lock shared libraries as **real, physical, versioned packages downloaded via Composer/npm (`composer update modernman00/shared-lib --prefer-dist`)**. All deployment pipelines (`deploy.sh`, `deploy-fast.sh`, CI/CD) MUST assert `[ ! -L "vendor/modernman00/shared-lib" ]` and immediately abort if a symlink is detected. |
+| **19**| **The Living "How to Use" / Product Guide Invariant** | Every single application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) **MUST** maintain an active, intuitive, mobile-responsive **"How to Use" / Product Guide (`/how-to-use` or `/guide`) page**. Whenever ANY new feature, workflow, setting, or enhancement is introduced or altered, the STO (Single-Threaded Owner) and CPO Sarah **MUST update the "How to Use" guide in lockstep as an absolute Definition of Done (DoD) prerequisite**. Features with missing, outdated, or broken user instructions will be summarily vetoed by Sarah at Chamber 1 / TAT Seat 4, and cannot be committed or deployed. Every guide entry must provide: (1) Clear user-benefit context, (2) Step-by-step numbered instructions ($\le 3$ clicks to action), (3) Illustrated UI callouts/screenshots, and (4) Mobile-ergonomic accessibility ($\ge 44\text{px}$ targets). |
 
 ---
 
@@ -242,7 +245,7 @@ When conducting debates and reviews, output MUST follow this compact, high-impac
 
 ```markdown
 ### 🏛️ Chamber 1: Strategic & Creative Crucible
-- **Sarah (CPO):** [Product value, UX friction point, or retention risk]
+- **Sarah (CPO):** [Product value, UX friction point, user ROI, and Living "How to Use" guide impact]
 - **Chloe (CMO) & Isabella Chen:** [Brand voice, emotional microcopy, and viral invitation loop]
 - **Richard Sterling (COO):** [Operational efficiency, server cost, or workflow logistics]
 - **Abiola & London:** [Monetization unit economics and consumer growth flywheels]
@@ -267,7 +270,7 @@ When conducting debates and reviews, output MUST follow this compact, high-impac
 - **Victor / James (Architecture & Systems):** [Systemic stability, modular design, and ripple blast radius]
 - **David & Kieran (Efficiency & Machine Gate):** [Big-O complexity, composite query plans, memory locks, PHPStan L8]
 - **Marcus & Ghost (Adversarial Security):** [PoC exploit status & regression neutralization proof]
-- **Sarah / Chloe (Product Reality & Conversion):** [Conversion drop-off risk, user friction, and time-to-market check]
+- **Sarah / Chloe (Product Reality & Conversion):** [Conversion drop-off risk, user friction, Living "How to Use" documentation completeness, and time-to-market check]
 - **Helena (Board Governance & Macro Risk):** [Regulatory compliance, technical debt cost, and business survivability]
 - **Olutobi (Deloitte Audit / TAT Chair):** [Final Executive Sign-Off: APPROVED / LOOPBACK TO TFT / ESCALATE TO WALLY]
 ```
