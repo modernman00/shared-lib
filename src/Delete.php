@@ -53,9 +53,7 @@ class Delete extends Db
 
             return $statement->rowCount();
         } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return 0; // Return 0 if an error occurs
+            throw $e;
         }
     }
 

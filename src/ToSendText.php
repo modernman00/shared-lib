@@ -43,8 +43,8 @@ class ToSendText
       if ($provider === 'textmagic') {
         // Get your credentials from: https://app.textmagic.com/settings/api
         $config = Configuration::getDefaultConfiguration()
-          ->setUsername($_ENV['TEXTMAGIC_USERNAME'])
-          ->setPassword($_ENV['TEXTMAGIC_API']);
+          ->setUsername($_ENV['TEXTMAGIC_USERNAME'] ?? '')
+          ->setPassword($_ENV['TEXTMAGIC_API'] ?? '');
 
         $api = new TextMagicApi(new Client(), $config);
     
@@ -53,14 +53,8 @@ class ToSendText
         $input->setText($message);
         $input->setPhones($to);
 
-        // Test connection
-        try {
-          $result = $api->sendMessage($input);
-        } catch (\TextMagic\ApiException $e) {
-          \showError($e);
-        } catch (\Exception $e) {
-          \showError($e);
-        }
+        $api->sendMessage($input);
+        return true;
       }
 
       if ($provider == 'textlocal') {
@@ -97,9 +91,10 @@ class ToSendText
         }
         return json_decode($response, true);
       }
+
+      return false;
     } catch (\Throwable $th) {
-      // Log the error or handle it as needed
-      \showError($th);
+      throw $th;
     }
   }
 }

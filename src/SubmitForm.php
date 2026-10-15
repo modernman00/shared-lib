@@ -107,10 +107,8 @@ class SubmitForm extends Db
             msgSuccess(200, $lastId);
 
             return $outcome;
-        } catch (\PDOException $e) {
-            showError($e);
         } catch (\Throwable $e) {
-            showError($e);
+            throw $e;
         }
     }
 
@@ -120,6 +118,7 @@ class SubmitForm extends Db
      * @param mixed $field - post array
      * @param mixed $lastIdCol the column you want to return the last id - e.g id, no, eventNo 
      * @return mixed 
+     * @throws \Throwable If insert fails
      */
 
     public static function submitFormDynamicLastId($table, $field, $lastIdCol)
@@ -153,12 +152,8 @@ class SubmitForm extends Db
             // msgSuccess(200, $lastInsertedId);
 
             return $lastInsertedId;
-        } catch (\PDOException $e) {
-            showError($e);
-            return $e;
         } catch (\Throwable $e) {
-            showError($e);
-            return $e;
+            throw $e;
         }
     }
 }

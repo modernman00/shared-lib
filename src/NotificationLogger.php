@@ -24,8 +24,15 @@ class NotificationLogger
     try {
         \Src\SubmitForm::submitForm('notification_logs', $data);
     } catch (\Throwable $e) {
-        // swallow
-        \showError($e);
+        try {
+            \Src\LoggerFactory::getLogger()->warning('NotificationLogger::log failed: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'channel' => $channel,
+                'status' => $status,
+            ]);
+        } catch (\Throwable) {
+            error_log('NotificationLogger::log failed: ' . $e->getMessage());
+        }
     }
  }
 
@@ -37,7 +44,11 @@ class NotificationLogger
         $stmt->execute([$eventId, $inviteeId, $channel, "%$messageSnippet%"]);
         return $stmt->rowCount() > 0;
     } catch (\Throwable $e) {
-        \showError($e);
+        try {
+            \Src\LoggerFactory::getLogger()->warning('NotificationLogger::hasSent check failed: ' . $e->getMessage());
+        } catch (\Throwable) {
+            error_log('NotificationLogger::hasSent check failed: ' . $e->getMessage());
+        }
         return false;
     }
  }

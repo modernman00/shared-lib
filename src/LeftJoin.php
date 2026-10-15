@@ -65,9 +65,7 @@ class LeftJoin extends Db
 
             return $result->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return false;
+            throw $e;
         }
     }
 }

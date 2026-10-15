@@ -44,10 +44,7 @@ class Update extends Db
             // Execute the statement and return the result as a bool
             return $stmt->execute();
         } catch (PDOException $e) {
-            // Log or handle the exception as needed
-            Utility::showError($e);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -78,7 +75,7 @@ class Update extends Db
 
             return $result;
         } catch (PDOException $e) {
-            Utility::showError($e);
+            throw $e;
         }
     }
 
@@ -107,7 +104,7 @@ class Update extends Db
 
             return $result;
         } catch (PDOException $e) {
-            Utility::showError($e);
+            throw $e;
         }
     }
 
@@ -171,8 +168,7 @@ class Update extends Db
 
             return $stmt->execute($values);
         } catch (PDOException $e) {
-            Utility::showError($e);
-            return false;
+            throw $e;
         }
     }
 
@@ -208,9 +204,7 @@ class Update extends Db
 
             return $stmt->execute($values);
         } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return false;
+            throw $e;
         }
     }
 

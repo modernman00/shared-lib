@@ -52,9 +52,7 @@ class RightJoin extends Db
 
             return $result->fetchAll();
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return false;
+            throw $e;
         }
     }
 }

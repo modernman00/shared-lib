@@ -80,8 +80,7 @@ class InnerJoin extends Db
             return $result->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            Utility::showError($e);
-            return false;
+            throw $e;
         }
     }
 
@@ -125,9 +124,7 @@ class InnerJoin extends Db
             return $result->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            Utility::showError($e);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -164,9 +161,7 @@ class InnerJoin extends Db
 
             return $result->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -198,9 +193,7 @@ class InnerJoin extends Db
 
             return $result->fetchAll();
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -232,7 +225,7 @@ class InnerJoin extends Db
             $jsResult = $result->fetchAll(PDO::FETCH_OBJ);
             echo json_encode($jsResult, JSON_PRETTY_PRINT);
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
+            throw $e;
         }
     }
 
@@ -262,9 +255,7 @@ class InnerJoin extends Db
 
             return $result->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -291,9 +282,7 @@ class InnerJoin extends Db
 
             return $result->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            Utility::showError(th: $e);
-
-            return [];
+            throw $e;
         }
     }
 }

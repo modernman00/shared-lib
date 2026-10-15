@@ -311,7 +311,6 @@ function showError($th): void
     if ($error) {
         echo $error;
     }
-    exit();
 }
 // FUNCTION TO SEND TEXT TO PHONE
 
@@ -384,8 +383,6 @@ function humanTiming($time)
 
         return 'just now'; // Default fallback if time is not within any unit
     } catch (\Throwable $th) {
-        return showError($th);
-
         return false;
     }
 }
@@ -657,9 +654,7 @@ function sendPostRequest(string $url, array $formData, array $options = []): ?ar
 
         return $data;
     } catch (\Exception $e) {
-        showError($e);
-
-        return null;
+        throw $e;
     }
 }
 
