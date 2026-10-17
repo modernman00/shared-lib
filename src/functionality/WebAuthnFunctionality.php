@@ -77,15 +77,31 @@ class WebAuthnFunctionality
             $userRole = (string)($input['role'] ?? $_SESSION['role'] ?? 'users');
 
             $db = Db::connect2();
-            $stmt = $db->prepare("INSERT INTO user_passkeys (user_id, user_role, credential_id, public_key, device_name, attestation_type) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $userId,
-                $userRole,
-                $credentialId,
-                $publicKey,
-                $deviceName,
-                'none'
-            ]);
+            try {
+                $stmt = $db->prepare("INSERT INTO user_passkeys (user_id, user_role, credential_id, public_key, device_name, attestation_type) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->execute([
+                    $userId,
+                    $userRole,
+                    $credentialId,
+                    $publicKey,
+                    $deviceName,
+                    'none'
+                ]);
+            } catch (\PDOException $e) {
+                // Defensive fallback for legacy tables where user_role column does not exist yet
+                if (str_contains($e->getMessage(), 'user_role') || (string)$e->getCode() === '42S22') {
+                    $stmt = $db->prepare("INSERT INTO user_passkeys (user_id, credential_id, public_key, device_name, attestation_type) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->execute([
+                        $userId,
+                        $credentialId,
+                        $publicKey,
+                        $deviceName,
+                        'none'
+                    ]);
+                } else {
+                    throw $e;
+                }
+            }
             
             Utility::msgSuccess(200, "Device registered successfully");
         } catch (\Throwable $th) {
@@ -162,9 +178,23 @@ class WebAuthnFunctionality
             }
 
             $db = Db::connect2();
-            $stmt = $db->prepare("SELECT user_id, public_key, user_role FROM user_passkeys WHERE credential_id = ?");
-            $stmt->execute([$credentialId]);
-            $record = $stmt->fetch(PDO::FETCH_ASSOC);
+            try {
+                $stmt = $db->prepare("SELECT user_id, public_key, user_role FROM user_passkeys WHERE credential_id = ?");
+                $stmt->execute([$credentialId]);
+                $record = $stmt->fetch(PDO::FETCH_ASSOC);
+            } catch (\PDOException $e) {
+                // Defensive fallback for legacy tables where user_role column does not exist yet
+                if (str_contains($e->getMessage(), 'user_role') || (string)$e->getCode() === '42S22') {
+                    $stmt = $db->prepare("SELECT user_id, public_key FROM user_passkeys WHERE credential_id = ?");
+                    $stmt->execute([$credentialId]);
+                    $record = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($record) {
+                        $record['user_role'] = 'users';
+                    }
+                } else {
+                    throw $e;
+                }
+            }
 
             if (!$record) {
                 throw new \Exception("Biometric credential not recognized on this device.");
