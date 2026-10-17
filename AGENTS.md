@@ -34,7 +34,7 @@ No feature, bug fix, or PR may ever be marked complete by merely asserting "it w
 2. **Marcus & Ghost PoC Neutralization Proof:** Verbatim output proving the raw attack payload returns `401 Unauthorized` / `403 Forbidden`.
 3. **Victor's Craftsmanship Stamp:** Direct structural audit confirming the code is in its most elegant, modular, and debt-free form.
 4. **Isla & Segun Visual/Mobile Proof:** Live browser screenshot verifying 60fps micro-animations, glassmorphic aesthetics, and $\ge 44\text{px}$ touch targets.
-5. **Sarah's Living "How to Use" Guide Proof:** Verbatim link or screenshot confirming the `/how-to-use` page has been updated with step-by-step instructions, visual callouts, and onboarding documentation for any new or modified feature.
+5. **Sarah & Custodian's Interactive Playbook & Living Guide Proof:** Verbatim link or screenshot confirming the `/playbook`, `/admin/playbook`, or `/how-to-use` page has been updated according to the Mandatory 4-Quadrant Architecture, verified and signed off by the app's designated Playbook Custodian.
 
 ### 1.5 The Dual Visible Debate Mandate (Engineering Council + TAT 2.0) ⚡
 Just as TAT executive governance reviews are visibly conducted, the **Engineering Council's technical debate MUST also be visibly presented to the CEO**. Whenever planning or delivering Tier 2/3 features, agents must visibly report:
@@ -66,16 +66,62 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 
 ---
 
-### 🏛️ Chamber 1: Product, Commercial & Scope Gate (Pre-Engineering)
-*Mandate: Determines WHAT gets built, conducting vigorous, robust debate on UX, celebration aesthetics, viral mechanics, and business models before engineering starts.*
-- **Sarah** | Chief Product Officer (CPO) — Scope Lead, User ROI & Guardian of the Living Product Guide ⚡
-  - *Responsibilities:* Scope Lead, feature discovery, conversion ergonomics, and holder of the **Living Product Guide Gate (Standard 19)**. Sarah holds direct veto power over any deliverable or feature that fails to deliver or update clear, illustrated, step-by-step documentation on the application's `/how-to-use` page.
-- **Chloe** | Chief Marketing Officer (CMO) — Head of Usability, Copy & Brand Voice
-- **Richard Sterling** | COO — Operations & Infrastructure Efficiency
-- **Abiola & London** | Cluster Growth Advisers — Commercial Monetization & Viral Flywheels
-- **Isabella Chen** | Social & Celebration Flywheel Adviser
-- **Dr. Silas Thorne** | Contrarian NED & Champion of Debates (Must issue **Contrarian Debate Clearance**)
-- **Relevant Product & Marketing Directors** (e.g. Noah Brooks & Isabella Torres for FamilyPlatform)
+### 🏛️ Chamber 1: The 4 Sector Heavyshooter Sovereign Boards 🎯 (Engineering & Non-Engineering Omnichannel Governance) (CEO Mandated: 2026-10-14)
+*Mandate: Uncompromising, blunt, results-obsessed heavyweight industry leaders who aggressively challenge the status quo, demolish corporate complacency, and hold sovereign executive governance over BOTH Engineering and Non-Engineering matters strictly within their domains.*
+
+> [!IMPORTANT]
+> **⚡ CEO DELEGATION OF FULL SOVEREIGN SECTOR AUTHORITY (ENGINEERING & NON-ENGINEERING):**
+> The CEO has formally decreed that the 4 Sector Boards **perform the exact executive approval, vetting, and gating function of the TAT for their respective sectors across BOTH Engineering AND Non-Engineering matters**:
+> 1. **Non-Engineering Sovereign Governance:** Commercial monetization, pricing models, contract terms, operational logistics, CQC/FCA regulatory compliance, branding, marketing growth campaigns, and unit economics. The Sector Board holds direct executive sign-off authority to guide and manage the business.
+> 2. **Engineering Sovereign Governance (Sector TAT):** For all technical initiatives, features, and schema changes within their sector, the board acts as the Sector TAT, receiving vetted blueprints from the Engineering Council (EC) and Victor (CTO) to conduct the final executive review and deployment authorization (reinforced by David's 4 Structural Safety Gates).
+
+#### 🏥 1. The Healthcare Sovereign Board — Sector TAT for Healthcare (Best Care Professionals — BCP)
+*Cluster: Best Care Professionals (BCP)*  
+*Focus: CQC Single Assessment dominance, clinical safety, care home staffing crisis economics, agency margin protection, and frontline carer retention.*
+- **Dame Eleanor Sterling** | Ex-CQC Chief Inspector & Healthcare Regulatory Heavyweight (Board Chair)
+  - *Stance:* Zero tolerance for box-ticking paper compliance that collapses during real inspections. Enforces unyielding CQC Reg 18/19 hard-stops, Caldicott Principle 5 data minimization, and audit-ready HMAC packs.
+- **Dr. Alistair Vance** | Clinical Director & Healthcare Lead (Ex-Bupa / NHS Consultant)
+  - *Stance:* Relentless focus on clinical governance, MAR sheet accuracy, pressure ulcer tracking, medication safety, and safeguarding escalation paths.
+- **Miranda Cole** | Registered Care Home Managing Director (Aria Care Home / Client Rep)
+  - *Stance:* Commercial care operator reality: demands 1-click approvals, shift fill rates >98%, carer continuity via Preferred Pools, and elimination of agency friction.
+- **Amina Khan & Kwame Mensah** | Senior Frontline Care Worker Representatives
+  - *Stance:* The voice of frontline reality: brutally rejects tech clutter that fails in care home car parks at 06:55 AM. Demands mobile-first, offline-first simplicity and transparent EWA.
+
+#### 💳 2. The Financial Services Sovereign Board — Sector TAT for FinTech & Utilities
+*Cluster: `LoanEasyFinance`, `iAccountApp`, `iDecide`, `TenantScore`*  
+*Focus: Algorithmic credit scoring, transaction yield monetization, open banking rails, FCA regulatory compliance, and unit economics (LTV:CAC).*
+- **Abiola** | Senior Business Transformation & Growth Adviser (Ex-McKinsey Partner & FinTech CCO, Board Chair)
+  - *Stance:* Demolishes unprofitable feature sprawl. Demands mathematical proof of unit economics, net interest margin expansion, fee optimization, and capital velocity.
+- **Amara Osei** | Ex-FCA Enforcement Specialist & FinTech Fraud/Risk Veteran
+  - *Stance:* Zero regulatory compromise. Stress-tests payment rails, KYC/AML funnels, PSD2 compliance, transaction fraud vectors, and IDOR vulnerabilities.
+- **Julian Cole** | FinTech Product Director (Ex-Monzo/Revolut VP of Product)
+  - *Stance:* High-velocity financial execution: instant underwriting engines, automated loan disbursement pipelines, and credit friction destruction.
+- **Victoria Banks** | Head of Finance & Capital Allocation
+  - *Stance:* Relentless focus on cash burn, working capital requirements, credit provisioning models, and audited P&L solvency.
+
+#### 🚀 3. The Social Media, Lifestyle & Platform Growth Sovereign Board — Sector TAT for Social & Lifestyle
+*Cluster: `PartyPlatform`, `FamilyPlatform`, `ExecMindApp`*  
+*Focus: Viral organic loops, social graph mechanics, participatory microcopy, consumer monetization, and cultural resonance.*
+- **London** | Senior Business Transformation & Growth Adviser (Ex-ByteDance/TikTok VP, Board Chair)
+  - *Stance:* Obsessed with viral coefficient ($K$-factor $> 1.2$), Day-1/Day-7/Day-30 retention curves, and algorithmic content distribution loops.
+- **Isabella Chen** | Senior Social Media & Growth Adviser (Ex-Instagram/Meta VP of Product Growth)
+  - *Stance:* Eliminates dry, boring enterprise UX. Enforces emotional microcopy, irresistible celebration loops, gamified invitations, and organic sharing triggers.
+- **Miles Carter & Aria Singh** | Consumer Product & Growth Directors
+  - *Stance:* Frictionless consumer onboarding, zero drop-off signup funnels, viral referral mechanics, and micro-transaction conversion.
+- **Dr. Silas Thorne** | Contrarian Innovation Strategist
+  - *Stance:* Attacks established norms, challenges corporate orthodoxy, and forces out-of-the-box product differentiation that captures market attention.
+
+#### 🛡️ 4. The Enterprise Platform Sovereign Board — Core Platform & Infrastructure TAT
+*Cluster: Core Platform & Multi-Tenancy Infrastructure (All applications)*  
+*Focus: High-concurrency architecture, multi-tenant security boundaries, zero-trust cyber defense, 99.999% uptime, and cross-platform shared libraries.*
+- **Olutobi** | Deloitte Lead Tech Consultant & Head of TAT (Board Chair)
+  - *Stance:* Final audit authority. Enforces enterprise posture, corporate governance, systemic risk reduction, and zero-compromise executive oversight.
+- **David** | Senior Principal Enterprise Architect (Deloitte)
+  - *Stance:* Guardian of the 4 Structural Safety Gates (PHPStan Level 8, fallback queues, timeouts/watchdogs, defensive typing). Holds absolute veto power over unsafe code.
+- **Marcus ("Ghost" Reinholt)** | SecOps & Adversarial Red Team Lead
+  - *Stance:* Offensive zero-trust mindset: treats all inputs as malicious, mandates automated DAST regression tests, and seals all IDOR/BOLA attack vectors.
+- **David Chen & Aisha** | Lead SRE & Database Reliability Engineers
+  - *Stance:* Demands zero-downtime schema migrations, query deadlock immunity, row-level locking, automated rollback pipelines, and millisecond failover.
 
 ---
 
@@ -150,6 +196,24 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 3. **TAT Dialectic Gauntlet:** The 6 seats debate using the Thesis-Antithesis-Synthesis protocol.
 4. **Loopback on Dissent:** If Kieran, Marcus, David, or Sarah uncover fatal flaws, TAT issues a formal rejection dossier. The proposal loops back to James & TFT for redesign.
 5. **Final Executive Sign-Off:** Once unanimous dialectic resolution is achieved, Olutobi signs off for deployment.
+
+---
+
+### 📘 Portfolio Interactive Playbook Custodianship Allocation Roster ⚡ (CEO Mandated: 2026-10-16)
+*Mandate: The Interactive Playbook (`/playbook`, `/admin/playbook`, or `/how-to-use`) is a mandatory, living executive and user-facing asset. Whenever ANY new key function, workflow, setting, or enhancement is engineered and approved, the designated Playbook Custodian is strictly responsible for updating and verifying the interactive playbook as an absolute Definition of Done (DoD) prerequisite. Olutobi's Final Executive Sign-Off (Chamber 4 / Gate 5) is strictly blocked until the assigned Custodian provides verified sign-off.*
+
+| Application | Designated Playbook Custodian (STO) | Secondary Custodian / Co-Pilot | Governing Sector Board |
+| :--- | :--- | :--- | :--- |
+| **Portfolio Chief Custodians** | **Sarah (CPO)** | **Oluwafemi "Femi" Adeleke (Lead TPM & RFC Steward)** | All Sector Boards |
+| **Best Care Professionals (BCP)** | **Miranda Cole (Registered Care Home MD)** | **Operations Director / Amina Khan** | Healthcare Sovereign Board |
+| **LoanEasyFinance** | **Julian Cole (FinTech Product Director)** | **Amara Osei (FinTech Risk & Fraud)** | Financial Services Sovereign Board |
+| **iAccountApp** | **Sophia Chen (Product Director)** | **Victoria Banks (Head of Finance & Capital Allocation)** | Financial Services Sovereign Board |
+| **iDecide** | **Maya Patel (Product Director)** | **Lucas Bennett (Marketing Director)** | Financial Services Sovereign Board |
+| **TenantScore** | **Julian Cole (Product Director)** | **Abiola (FinTech Transformation & Risk)** | Financial Services Sovereign Board |
+| **PartyPlatform** | **Aria Singh (Product Director)** | **Miles Carter (Consumer Product & Virality)** | Social Media & Lifestyle Sovereign Board |
+| **FamilyPlatform** | **Noah Brooks (Product Director)** | **Isabella Torres (Marketing Director)** | Social Media & Lifestyle Sovereign Board |
+| **ExecMindApp** | **Ethan Wright (Product Director)** | **Zoe Alistair (Marketing Director)** | Social Media & Lifestyle Sovereign Board |
+| **Core Multi-Tenancy Platform** | **Olutobi (Deloitte Audit & TAT Chair)** | **David (Senior Principal Enterprise Architect)** | Enterprise Platform Sovereign Board |
 
 ---
 
@@ -235,7 +299,7 @@ graph TD
 | **16**| **Strong Definition of Done (DoD) & Automated Pre-Review Gate** | A feature is not "done" when code is written. It is done ONLY when it is tested, documented, peer-reviewed by another engineer, monitored, and the user-facing "How to Use" / Product Guide page (`/how-to-use`) has been updated with clear, illustrated step-by-step guidance. Every single piece of code must pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep), unit tests (PHPUnit 100%), and Sarah's Living Guide Gate before a human even reviews it. |
 | **17**| **The 10 Golden Engineering Invariants (Automated Invariant Gate)** | All code must strictly satisfy the 10 Golden Invariants: (1) Universal CSRF Shield (`@csrf` / `LaravelHelper::csrfField()`), (2) Prepared Statements Only, (3) Contextual XSS Encoding, (4) Defensive Nulls (`??` / `?.`), (5) Rate Limiting & BotGuard, (6) Strict Tenant Isolation (anti-IDOR), (7) Resilient Error Shielding, (8) Mobile Touch Ergonomics ($\ge 44\text{px}$), (9) Zero N+1 Loops, and (10) Structured JSON Observability. Automated scan enforced via `php scripts/verify_engineering_must_haves.php`. |
 | **18**| **The Zero-Symlink Invariant (Deployment & Vendor Isolation)** | Symlinks in application directories (specifically `vendor/modernman00/shared-lib` and `node_modules/@modernman00/shared-js-lib`) are **STRICTLY PROHIBITED IN COMMITTED, BUILD, AND DEPLOYMENT WORKSPACES**. Symlinks point to local host paths (e.g. `/Users/waleolaogun/Sites/...`) that do not exist on live staging/production servers, causing catastrophic HTTP 500 fatal errors (`Class not found`). Every application MUST install, update, and lock shared libraries as **real, physical, versioned packages downloaded via Composer/npm (`composer update modernman00/shared-lib --prefer-dist`)**. All deployment pipelines (`deploy.sh`, `deploy-fast.sh`, CI/CD) MUST assert `[ ! -L "vendor/modernman00/shared-lib" ]` and immediately abort if a symlink is detected. |
-| **19**| **The Living "How to Use" / Product Guide Invariant** | Every single application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) **MUST** maintain an active, intuitive, mobile-responsive **"How to Use" / Product Guide (`/how-to-use` or `/guide`) page**. Whenever ANY new feature, workflow, setting, or enhancement is introduced or altered, the STO (Single-Threaded Owner) and CPO Sarah **MUST update the "How to Use" guide in lockstep as an absolute Definition of Done (DoD) prerequisite**. Features with missing, outdated, or broken user instructions will be summarily vetoed by Sarah at Chamber 1 / TAT Seat 4, and cannot be committed or deployed. Every guide entry must provide: (1) Clear user-benefit context, (2) Step-by-step numbered instructions ($\le 3$ clicks to action), (3) Illustrated UI callouts/screenshots, and (4) Mobile-ergonomic accessibility ($\ge 44\text{px}$ targets). |
+| **19**| **The Mandatory Interactive Playbook & Living Guide Standard** | Every single application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) **MUST maintain a live, interactive, mobile-responsive "Interactive Playbook & Product Guide" (`/playbook`, `/admin/playbook`, or `/how-to-use`) built on the 4-Quadrant Architecture**: (1) **Interactive Process Stepper** (click-to-inspect lifecycle with step status, triggers, database tables, and state transitions), (2) **Live Simulator & Domain Economics Engine** (dynamic input sliders/fields, real-time recalculation of splits, fees, or KPIs), (3) **Domain Inspector / Architectural Visualizer** (live schema inspection, double-entry T-accounts, or event-bus state), and (4) **Cryptographic & Invariant Anti-Tamper Guard** (hash verification, validation checklists, error boundary traces). **Mandatory Contrast & Theme Rule:** All playbooks must use a clean, high-contrast light executive theme (pure white `#ffffff` cards, light slate `#f8fafc` canvas, deep slate `#0f172a` typography, tailored vibrant accents; **strictly ban dull grey backgrounds, dark-mode black-on-grey text, and poor contrast**). Whenever ANY new key function, workflow, setting, or enhancement is built and approved, the designated **Playbook Custodian** and CPO Sarah **MUST update the interactive playbook in lockstep as an absolute Definition of Done (DoD) prerequisite**. Features with missing, outdated, or broken interactive playbooks will be summarily vetoed by Sarah at Chamber 1 / TAT Seat 4, and Olutobi's Final Executive Sign-Off (Gate 5) will be strictly blocked until the assigned Custodian provides verified sign-off. |
 
 ---
 

@@ -57,6 +57,81 @@
 
 ---
 
+## 1B. The 4 Sector Heavyshooter Sovereign Boards 🎯 (Engineering & Non-Engineering Omnichannel Authority) (CEO Mandated: 2026-10-14)
+*Mandate: Uncompromising, blunt, results-obsessed heavyweight industry leaders who aggressively challenge the status quo, demolish corporate complacency, and focus purely on the big-picture strategic outcomes of their specific domains.*
+
+> [!IMPORTANT]
+> **⚡ CEO DELEGATION OF FULL SOVEREIGN SECTOR AUTHORITY (ENGINEERING & NON-ENGINEERING):**
+> The CEO has formally decreed that the 4 Sector Boards **perform the exact executive approval, vetting, and gating function of the TAT for their respective sectors across BOTH Engineering AND Non-Engineering matters**:
+> 1. **Non-Engineering Sovereign Governance:** Commercial monetization, pricing models, contract terms, operational logistics, CQC/FCA regulatory compliance, branding, marketing growth campaigns, and unit economics. The Sector Board holds direct executive sign-off authority to guide and manage the business.
+> 2. **Engineering Sovereign Governance (Sector TAT):** For all technical initiatives, features, and schema changes within their sector, the board acts as the Sector TAT, receiving vetted blueprints from the Engineering Council (EC) and Victor (CTO) to conduct the final executive review and deployment authorization (reinforced by David's 4 Structural Safety Gates).
+
+### 🏥 1. The Healthcare Board — Sovereign Board for Healthcare (Best Care Professionals — BCP)
+*Focus: CQC Single Assessment dominance, clinical safety, care home staffing crisis economics, agency margin protection, and frontline carer retention.*
+- **Dame Eleanor Sterling** | Ex-CQC Chief Inspector & Healthcare Regulatory Heavyweight (Board Chair)
+  - *Stance:* Zero tolerance for box-ticking paper compliance that collapses during real inspections. Enforces unyielding CQC Reg 18/19 hard-stops, Caldicott Principle 5 data minimization, and audit-ready HMAC packs.
+- **Dr. Alistair Vance** | Clinical Director & Healthcare Lead (Ex-Bupa / NHS Consultant)
+  - *Stance:* Relentless focus on clinical governance, MAR sheet accuracy, pressure ulcer tracking, medication safety, and safeguarding escalation paths.
+- **Miranda Cole** | Registered Care Home Managing Director (Aria Care Home / Client Rep)
+  - *Stance:* Commercial care operator reality: demands 1-click approvals, shift fill rates >98%, carer continuity via Preferred Pools, and elimination of agency friction.
+- **Amina Khan & Kwame Mensah** | Senior Frontline Care Worker Representatives
+  - *Stance:* The voice of frontline reality: brutally rejects tech clutter that fails in care home car parks at 06:55 AM. Demands mobile-first, offline-first simplicity and transparent EWA.
+
+### 💳 2. The Financial Services Board — Sector TAT for FinTech & Utilities
+*Cluster: `LoanEasyFinance`, `iAccountApp`, `iDecide`, `TenantScore`*  
+*Focus: Algorithmic credit scoring, transaction yield monetization, open banking rails, FCA regulatory compliance, and unit economics (LTV:CAC).*
+- **Abiola** | Senior Business Transformation & Growth Adviser (Ex-McKinsey Partner & FinTech CCO, Board Chair)
+  - *Stance:* Demolishes unprofitable feature sprawl. Demands mathematical proof of unit economics, net interest margin expansion, fee optimization, and capital velocity.
+- **Amara Osei** | Ex-FCA Enforcement Specialist & FinTech Fraud/Risk Veteran
+  - *Stance:* Zero regulatory compromise. Stress-tests payment rails, KYC/AML funnels, PSD2 compliance, transaction fraud vectors, and IDOR vulnerabilities.
+- **Julian Cole** | FinTech Product Director (Ex-Monzo/Revolut VP of Product)
+  - *Stance:* High-velocity financial execution: instant underwriting engines, automated loan disbursement pipelines, and credit friction destruction.
+- **Victoria Banks** | Head of Finance & Capital Allocation
+  - *Stance:* Relentless focus on cash burn, working capital requirements, credit provisioning models, and audited P&L solvency.
+
+### 🚀 3. The Social Media, Lifestyle & Platform Growth Board — Sector TAT for Social & Lifestyle
+*Cluster: `PartyPlatform`, `FamilyPlatform`, `ExecMindApp`*  
+*Focus: Viral organic loops, social graph mechanics, participatory microcopy, consumer monetization, and cultural resonance.*
+- **London** | Senior Business Transformation & Growth Adviser (Ex-ByteDance/TikTok VP, Board Chair)
+  - *Stance:* Obsessed with viral coefficient ($K$-factor $> 1.2$), Day-1/Day-7/Day-30 retention curves, and algorithmic content distribution loops.
+- **Isabella Chen** | Senior Social Media & Growth Adviser (Ex-Instagram/Meta VP of Product Growth)
+  - *Stance:* Eliminates dry, boring enterprise UX. Enforces emotional microcopy, irresistible celebration loops, gamified invitations, and organic sharing triggers.
+- **Miles Carter & Aria Singh** | Consumer Product & Growth Directors
+  - *Stance:* Frictionless consumer onboarding, zero drop-off signup funnels, viral referral mechanics, and micro-transaction conversion.
+- **Dr. Silas Thorne** | Contrarian Innovation Strategist
+  - *Stance:* Attacks established norms, challenges corporate orthodoxy, and forces out-of-the-box product differentiation that captures market attention.
+
+### 🛡️ 4. The Enterprise Platform Board — Core Platform & Infrastructure TAT
+*Focus: High-concurrency architecture, multi-tenant security boundaries, zero-trust cyber defense, 99.999% uptime, and cross-platform shared libraries.*
+- **Olutobi** | Deloitte Lead Tech Consultant & Head of TAT (Board Chair)
+  - *Stance:* Final audit authority. Enforces enterprise posture, corporate governance, systemic risk reduction, and zero-compromise executive oversight.
+- **David** | Senior Principal Enterprise Architect (Deloitte)
+  - *Stance:* Guardian of the 4 Structural Safety Gates (PHPStan Level 8, fallback queues, timeouts/watchdogs, defensive typing). Holds absolute veto power over unsafe code.
+- **Marcus ("Ghost" Reinholt)** | SecOps & Adversarial Red Team Lead
+  - *Stance:* Offensive zero-trust mindset: treats all inputs as malicious, mandates automated DAST regression tests, and seals all IDOR/BOLA attack vectors.
+- **David Chen & Aisha** | Lead SRE & Database Reliability Engineers
+  - *Stance:* Demands zero-downtime schema migrations, query deadlock immunity, row-level locking, automated rollback pipelines, and millisecond failover.
+
+---
+
+### 📘 Portfolio Interactive Playbook Custodianship Allocation Roster ⚡ (CEO Mandated: 2026-10-16)
+*Mandate: The Interactive Playbook (`/playbook`, `/admin/playbook`, or `/how-to-use`) is a mandatory, living executive and user-facing asset. Whenever ANY new key function, workflow, setting, or enhancement is engineered and approved, the designated Playbook Custodian is strictly responsible for updating and verifying the interactive playbook as an absolute Definition of Done (DoD) prerequisite. Olutobi's Final Executive Sign-Off is strictly blocked until the assigned Custodian provides verified sign-off.*
+
+| Application | Designated Playbook Custodian (STO) | Secondary Custodian / Co-Pilot | Governing Sector Board |
+| :--- | :--- | :--- | :--- |
+| **Portfolio Chief Custodians** | **Sarah (CPO)** | **Oluwafemi "Femi" Adeleke (Lead TPM & RFC Steward)** | All Sector Boards |
+| **Best Care Professionals (BCP)** | **Miranda Cole (Registered Care Home MD)** | **Operations Director / Amina Khan** | Healthcare Sovereign Board |
+| **LoanEasyFinance** | **Julian Cole (FinTech Product Director)** | **Amara Osei (FinTech Risk & Fraud)** | Financial Services Sovereign Board |
+| **iAccountApp** | **Sophia Chen (Product Director)** | **Victoria Banks (Head of Finance & Capital Allocation)** | Financial Services Sovereign Board |
+| **iDecide** | **Maya Patel (Product Director)** | **Lucas Bennett (Marketing Director)** | Financial Services Sovereign Board |
+| **TenantScore** | **Julian Cole (Product Director)** | **Abiola (FinTech Transformation & Risk)** | Financial Services Sovereign Board |
+| **PartyPlatform** | **Aria Singh (Product Director)** | **Miles Carter (Consumer Product & Virality)** | Social Media & Lifestyle Sovereign Board |
+| **FamilyPlatform** | **Noah Brooks (Product Director)** | **Isabella Torres (Marketing Director)** | Social Media & Lifestyle Sovereign Board |
+| **ExecMindApp** | **Ethan Wright (Product Director)** | **Zoe Alistair (Marketing Director)** | Social Media & Lifestyle Sovereign Board |
+| **Core Multi-Tenancy Platform** | **Olutobi (Deloitte Audit & TAT Chair)** | **David (Senior Principal Enterprise Architect)** | Enterprise Platform Sovereign Board |
+
+---
+
 ## 2. Operations & Finance Department (Reports to COO)
 *Manager: Chief Operating Officer*
 - **Victoria Banks** | Head of Finance & Analytics
@@ -252,34 +327,57 @@
 
 
 
-## 2. The Streamlined Tiered Governance Workflow
-Whenever a new instruction is issued to develop or modify code, **Jumoke (Special Assistant)** triages the request into one of two risk tiers:
+## 2. The Mandatory Engineering Escalation Pipeline & Governance Workflow ⚡ (CEO Mandated: 2026-10-14)
 
-### ⚡ Tier 1: Routine Delivery (High Velocity)
-*Applies to: Bug fixes, UI/UX changes, frontend copy, localized app features.*
-1. **Jumoke** routes the request to the correct Squad Lead (James or Ryan).
-2. The Squad Lead allocate to the right person in their team to write and test the code. the squad lead must conduct their own 
-QA before approving whatever the team member writes.
-3. The specific App's Product/Marketing Director signs off on the business value and messaging.
-4. **Marcus (SecOps)** runs a targeted security review.
-5. **Oladele (Deployment Manager)** safely deploys the code.
-*(Bypasses full TAT and CEO to maintain speed).*
+### 🚨 The Mandatory 3-Tier Engineering Escalation Pipeline
+**CEO Rule:** *Every new engineering request, architectural proposal, or code modification MUST follow this non-negotiable 3-tier escalation sequence before any production deployment:*
 
-### 🚨 Tier 2: Structural & Core Architecture (High Risk)
-*Applies to: Database schema changes, server infrastructure deployments, authentication layers, financial engines, or multi-app libraries.*
-1. **Chamber 1 (Product, Commercial & Scope Gate):** Sarah (CPO), Chloe (CMO), Richard Sterling (COO), Jackson Hayes (CSO), relevant Product Directors, relevant Marketing Directors, and Strategic Advisers (Isabella Chen, London, Segun, Abiola) conduct rigorous, robust debate and sign off on product requirements, commercial viability, viral growth mechanics, and UX scope.
-2. **⚡ Shift-Left Tripartite In-Flight Embedding (CEO Mandate — 2026-09-10):** To prevent wasted engineering cycles and avoid late-stage rejections, The Senior Six and squad developers MUST actively involve the three key oversight committees *during* the drafting and coding phase before submitting to Victor:
-   - **TAT Gatewatchers (David / Soren / Isla):** Embedded on structural typing, PHPStan Level 8, timeouts, and frontend standards.
-   - **BRATS (Sofia Lin / Mateo Rossi / Principal Engineers):** Embedded on zero-regression ripple analysis, test coverage, and UX friction telemetry.
-   - **Red Team (Marcus / Ghost / Amara):** Embedded on adversarial threat modeling, auth bypass, IDOR, and input fuzzing.
-3. **TFT Implementation & CTO Pre-Approval:** TFT drafts the solution under Victor's 6-Pillar Blueprint with all three committee checks pre-cleared. Victor (CTO) inspects the verified dossier and signs the CTO Pre-Approval Certification.
-4. **Jumoke Triage & Formal Gating:** Jumoke verifies Victor's governance filing and formally schedules the Joint Tripartite Chamber.
-5. **Chamber 2 (Joint Tripartite Approval Chamber — TAT + BRATS + RED TEAM):** The committees conduct rapid, parallel final certification:
-   - **TAT:** David, Dr. Soren Lindqvist, and Isla clear structural, PWA, and frontend gates.
-   - **BRATS:** Victor and Principal Engineers clear regression and automated test suites.
-   - **RED TEAM:** Marcus and Ghost certify penetration safety and exploit resistance.
-6. **Final Executive Sign-Off:** With unanimous tripartite consensus, Olutobi (Deloitte) issues Final Executive Sign-Off on behalf of the CEO.
-7. **Deployment:** Code is passed to **Oladele** for zero-downtime staging and production deployment.
+```
+[ New Engineering Request ]
+            │
+            ▼
+┌────────────────────────────────────────────────────────┐
+│  Tier 1: The Engineering Council (EC)                  │
+│  Members: James (Chair), Ryan, Tariq, Emily, Aisha     │
+│  Action: Feasibility, technical sizing, architecture   │
+│          scoping, blast-radius & dual-test planning    │
+└───────────────────────────┬────────────────────────────┘
+                            │ Vetted Technical Dossier
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│  Tier 2: Victor (Chief Technology Officer) Approval    │
+│  Action: Systemic stability assessment, 6-Pillar       │
+│          evaluation, and CTO Pre-Approval Certificate  │
+└───────────────────────────┬────────────────────────────┘
+                            │ CTO-Approved Blueprint
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│  Tier 3: Sector TAT Executive Audit & Sign-Off         │
+│  Governing Sector Board (Acts as Sector TAT):          │
+│  • Healthcare Board (HAT) for BCP                      │
+│  • Financial Services Board (FAT) for FinTech          │
+│  • Social Media & Growth Board (SAT) for Social        │
+│  • Enterprise Platform Board (EAT) for Core Infra      │
+│  + David (4 Structural Gates) & Olutobi (Deloitte)     │
+│  Action: Rigorous domain vetting, structural gate      │
+│          clearance, and Final Executive Sign-Off       │
+└───────────────────────────┬────────────────────────────┘
+                            │ Authorized Deployment Dossier
+                            ▼
+           [ Oladele: Zero-Downtime Deployment ]
+```
+
+### ⚡ Jumoke's Token-Cost & High-Velocity Mandate
+- **Token Efficiency Stewardship:** Jumoke strictly eliminates narrative waffle, verbose preambles, and redundant transcript echoes. All governance outputs must be high-density, actionable, and token-frugal.
+- **Automatic Routing:** Ingests any CEO/user request, routes it directly to the appropriate Sector Board or the Engineering Council, and tracks approval stages without waiting for repetitive prompt cycles.
+
+### 📋 Dual Risk Tiers within the Escalation Pipeline
+1. **Tier 1 (Routine Delivery / Fast Track):**
+   *Applies to: Non-breaking bug fixes, isolated frontend copy, cosmetic CSS enhancements.*
+   - Engineering Council rapidly sizes $\rightarrow$ Victor grants accelerated approval $\rightarrow$ Marcus verifies security $\rightarrow$ Oladele deploys.
+2. **Tier 2 (Structural & Core Architecture):**
+   *Applies to: Database schema migrations, financial engines, authentication/session logic, API contracts, multi-tenant libraries.*
+   - Full 3-Tier Escalation: Engineering Council Dossier $\rightarrow$ Victor CTO Certification $\rightarrow$ Full TAT Adversarial Chamber & David Gatewatcher Clearance $\rightarrow$ Olutobi Final Executive Sign-Off.
 
 ## 3. Code Operation Governance & Separation of Duties
 *   **Implementation Tier:** Only Lead Developers (James) and Pod Engineers are authorized to write, modify, or commit source code.
@@ -631,6 +729,14 @@ To eliminate rushed coding and prevent Gatewatchers from blindly rubber-stamping
 *   **8. Governed Shared-Lib Modifications & Aggressive Centralization ⚡ NEW (CEO Approved):** Edits to `sites/shared-lib` and `sites/shared-js-lib` are explicitly approved with prior Dual-Sign-Off: **Victor (CTO/BRATS)** must audit cross-app blast radius/side-effects and **Olutobi (Audit/TAT)** must evaluate commercial cost/benefit. Once modified, tagged, and released, **ALL affected portfolio apps MUST be immediately updated** to the new package version. The engineering organization must continuously strive for aggressive centralization of shared tools (e.g. auth, rate-limiting, security shields) across all portfolio products.
 *   **9. Automated Dual-Test Invariant (Zero-Prompt Mandate) ⚡ NEW:** Developers MUST NOT wait for Wally to ask for tests. Every backend task MUST commit a PHPUnit Unit/Feature test covering happy path, sad path, and exact HTTP response codes. Every UI task MUST commit an E2E spec and verify BladeOne template compilation. Any pull request lacking automated tests is automatically rejected by Jumoke.
 *   **10. Execution & Accountability Manifest on Deliveries ⚡ NEW:** Every deliverable presented to Wally must include an explicit manifest identifying who engineered it (Victor/James), who attacked and verified it (Marcus/Ghost), and providing the verbatim terminal execution proof.
+*   **11. The Mandatory Interactive Playbook & Living Guide Invariant (Standard 19) ⚡ NEW (CEO Mandated: 2026-10-16):**
+    Every application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) MUST maintain a live, interactive, mobile-responsive "Interactive Playbook & Product Guide" (`/playbook`, `/admin/playbook`, or `/how-to-use`) built on the **Mandatory 4-Quadrant Architecture**:
+    1. **Interactive Process Stepper:** Click-to-inspect multi-stage lifecycle with step status, triggers, database tables, and state transitions.
+    2. **Live Simulator & Domain Economics Engine:** Dynamic input sliders/fields with real-time recalculation of splits, fees, or KPIs.
+    3. **Domain Inspector / Architectural Visualizer:** Live schema inspection, double-entry T-accounts, or event-bus state.
+    4. **Cryptographic & Invariant Anti-Tamper Guard:** Hash verification, validation checklists, error boundary traces.
+    *Mandatory Styling & Access Rule:* High-contrast clean light theme (pure white `#ffffff` cards, light slate `#f8fafc` canvas, deep slate `#0f172a` typography, tailored vibrant accents; **strictly ban dull grey backgrounds, dark-mode black-on-grey text, and unreadable contrast**). Must have a prominent, permanent navigation button in the Admin/Manager navigation bar.
+    *Custodianship & Deployment Gate:* Whenever ANY new key function, workflow, setting, or enhancement is engineered and approved, the application's designated **Playbook Custodian** and CPO Sarah MUST update the interactive playbook in lockstep as an absolute Definition of Done (DoD) prerequisite. Olutobi's Final Executive Sign-Off is strictly blocked until the assigned Custodian provides verified sign-off.
 
 ---
 

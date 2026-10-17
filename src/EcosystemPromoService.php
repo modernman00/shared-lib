@@ -66,7 +66,7 @@ class EcosystemPromoService
             'accent_color' => '#4f46e5', // Indigo
             'gradient' => 'linear-gradient(135deg, #4f46e5 0%, #10b981 100%)',
             'icon' => 'bi-people-fill',
-            'default_url' => 'https://familyplatform.co.uk',
+            'default_url' => 'https://myfamilyplatform.com',
             'env_key' => 'FAMILYPLATFORM_APP_URL',
             'trigger_keywords' => ['family', 'kids', 'birthday', 'anniversary', 'milestone', 'memories', 'vault', 'heritage', 'chores'],
             'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="url(#fam_grad)"/><path d="M16 6C12 6 9 9 9 13C9 17.5 16 26 16 26C16 26 23 17.5 23 13C23 9 20 6 16 6Z" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="12" r="3" fill="#34d399"/><defs><linearGradient id="fam_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#4f46e5"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs></svg>',
@@ -111,7 +111,7 @@ class EcosystemPromoService
             'accent_color' => '#22a06b', // Brand Green
             'gradient' => 'linear-gradient(135deg, #1e3a8a 0%, #22a06b 100%)',
             'icon' => 'bi-cash-coin',
-            'default_url' => 'https://loaneasyfinance.co.uk',
+            'default_url' => 'https://loaneasyfinance.com',
             'env_key' => 'LOANEASYFINANCE_APP_URL',
             'trigger_keywords' => ['finance', 'loan', 'luxury', 'wedding', 'venue_hire', 'high_budget', 'financing', 'funding', 'borrow'],
             'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#1e3a8a"/><path d="M9 16L14 21L23 11" stroke="#22a06b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="16" r="10" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3 3"/></svg>',
@@ -126,7 +126,7 @@ class EcosystemPromoService
             'accent_color' => '#9B5CFB', // Electric Purple
             'gradient' => 'linear-gradient(135deg, #FFE259 0%, #FFA751 100%)',
             'icon' => 'bi-balloon-heart-fill',
-            'default_url' => 'https://partyplatform.co.uk',
+            'default_url' => 'https://mypartyplatform.com',
             'env_key' => 'PARTYPLATFORM_APP_URL',
             'trigger_keywords' => ['party', 'event', 'celebration', 'rsvp', 'tickets', 'guest_list', 'invitation'],
             'svg_icon' => '<svg viewBox="0 0 512 512" width="28" height="28" class="pp-brand-logo-svg" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="spk_g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F43F5E"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient><linearGradient id="spk_g2" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FBBF24"/><stop offset="100%" stop-color="#EF4444"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#1E1035"/><path d="M256 120 L278 220 L378 198 L296 256 L378 314 L278 292 L256 392 L234 292 L134 314 L216 256 L134 198 L234 220 Z" fill="url(#spk_g1)"/><path d="M256 80 Q256 220 120 256 Q256 256 256 432 Q256 256 392 256 Q256 220 256 80 Z" fill="url(#spk_g2)"/><circle cx="256" cy="256" r="32" fill="#FFFFFF"/></svg>',
@@ -203,7 +203,7 @@ class EcosystemPromoService
             }
 
             $score = 0;
-            $triggerWords = (array) ($meta['trigger_keywords'] ?? []);
+            $triggerWords = (array) $meta['trigger_keywords'];
             foreach ($keywords as $kw) {
                 if (in_array($kw, $triggerWords, true)) {
                     $score += 10;
@@ -229,7 +229,7 @@ class EcosystemPromoService
 
         // 5. Tier 2 Fallback: Curated Affiliate partner
         $affiliateKey = in_array('drinks', $keywords, true) ? 'drinks' : 'supplies';
-        $affiliate = self::AFFILIATE_CATALOG[$affiliateKey] ?? self::AFFILIATE_CATALOG['supplies'];
+        $affiliate = self::AFFILIATE_CATALOG[$affiliateKey];
 
         return [
             'id' => 'affiliate_' . $affiliateKey,
@@ -245,7 +245,7 @@ class EcosystemPromoService
             'accent_color' => (string) $affiliate['accent_color'],
             'gradient' => (string) $affiliate['gradient'],
             'icon' => (string) $affiliate['icon'],
-            'svg_icon' => (string) ($affiliate['svg_icon'] ?? ''),
+            'svg_icon' => (string) $affiliate['svg_icon'],
             'disclosure_type' => 'affiliate',
             'disclosure_text' => 'Transparency: PartyPlatform earns a commission on qualifying partner purchases.',
             'dismissible' => true,
@@ -272,10 +272,17 @@ class EcosystemPromoService
             return '/';
         }
 
-        $envKey = (string) ($meta['env_key'] ?? '');
-        $baseUrl = !empty($envKey) && !empty($_ENV[$envKey]) 
-            ? (string) $_ENV[$envKey] 
-            : (string) ($meta['default_url'] ?? '/');
+        $envKey = (string) $meta['env_key'];
+        $baseUrl = '';
+        if (isset($_ENV[$envKey]) && (string) $_ENV[$envKey] !== '') {
+            $baseUrl = (string) $_ENV[$envKey];
+        } elseif ($targetApp === 'familyplatform' && !empty($_ENV['MYFAMILYPLATFORM_APP_URL'])) {
+            $baseUrl = (string) $_ENV['MYFAMILYPLATFORM_APP_URL'];
+        } elseif ($targetApp === 'partyplatform' && !empty($_ENV['MYPARTYPLATFORM_APP_URL'])) {
+            $baseUrl = (string) $_ENV['MYPARTYPLATFORM_APP_URL'];
+        } else {
+            $baseUrl = (string) $meta['default_url'];
+        }
 
         $params = [
             'utm_source' => $sourceApp,
@@ -353,8 +360,8 @@ class EcosystemPromoService
             'type' => 'ecosystem',
             'target_app' => $targetApp,
             'brand_name' => (string) $meta['name'],
-            'badge' => (string) ($meta['badge'] ?? 'ECOSYSTEM PERK'),
-            'title' => (string) ($meta['headline'] ?? $meta['name']),
+            'badge' => (string) $meta['badge'],
+            'title' => (string) $meta['headline'],
             'tagline' => (string) $meta['tagline'],
             'description' => (string) $meta['description'],
             'cta_text' => (string) $meta['cta_text'],
@@ -362,7 +369,7 @@ class EcosystemPromoService
             'accent_color' => (string) $meta['accent_color'],
             'gradient' => (string) $meta['gradient'],
             'icon' => (string) $meta['icon'],
-            'svg_icon' => (string) ($meta['svg_icon'] ?? ''),
+            'svg_icon' => (string) $meta['svg_icon'],
             'disclosure_type' => 'ecosystem',
             'disclosure_text' => 'Proudly crafted by our sister studio — Seamless zero-friction single login.',
             'dismissible' => true,
