@@ -46,7 +46,7 @@ class EmailData
         if (!defined('APP_NAME')) {
             define('APP_NAME', $data['senderName']);
         }
-        if (!defined('TEST_EMAIL')) {
+        if (!defined('TEST_EMAIL') && !empty($data['testEmail'])) {
             define('TEST_EMAIL', $data['testEmail']);
         }
     }

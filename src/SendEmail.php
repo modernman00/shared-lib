@@ -75,9 +75,9 @@ class SendEmail
             //Recipients
             $mail->setFrom(APP_EMAIL, APP_NAME);
             $mail->addAddress($email, $name);
-            if (defined('TEST_EMAIL') && TEST_EMAIL !== '') {
-    $mail->addBCC(TEST_EMAIL);
-}
+            if (defined('TEST_EMAIL') && is_string(TEST_EMAIL) && trim(TEST_EMAIL) !== '' && filter_var(TEST_EMAIL, FILTER_VALIDATE_EMAIL)) {
+                $mail->addBCC(TEST_EMAIL);
+            }
             if ($file && $filename) {
                 // 💡 Determine MIME type dynamically here
                 $mimeType = self::getMimeTypeFromFilename($file);
@@ -127,7 +127,9 @@ class SendEmail
             $mail->setFrom(APP_EMAIL, APP_NAME);
 
             foreach ($emailAddresses as $email) {
-                $mail->addBCC($email);
+                if (is_string($email) && trim($email) !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $mail->addBCC($email);
+                }
             }
 
             if ($file && $filename) {
@@ -167,7 +169,9 @@ class SendEmail
             $mail->Port = 465;
             $mail->setFrom(APP_EMAIL, APP_NAME);
             $mail->addAddress($email, $name);
-            $mail->addBCC(APP_EMAIL);
+            if (defined('APP_EMAIL') && is_string(APP_EMAIL) && trim(APP_EMAIL) !== '' && filter_var(APP_EMAIL, FILTER_VALIDATE_EMAIL)) {
+                $mail->addBCC(APP_EMAIL);
+            }
             $mail->AddStringAttachment($file, $filename, self::ENCODING, self::TYPE);
             //Content
             $mail->isHTML(true);                                  // Set email format to HTML
@@ -223,7 +227,9 @@ class SendEmail
             $mail->Port = 465;
             $mail->setFrom(APP_EMAIL, APP_NAME);
             $mail->addAddress($email, $name);
-            $mail->addBCC(APP_EMAIL);
+            if (defined('APP_EMAIL') && is_string(APP_EMAIL) && trim(APP_EMAIL) !== '' && filter_var(APP_EMAIL, FILTER_VALIDATE_EMAIL)) {
+                $mail->addBCC(APP_EMAIL);
+            }
             //Content
             $mail->isHTML(true);
             $mail->CharSet = 'utf-8';                                   // Set email format to HTML
