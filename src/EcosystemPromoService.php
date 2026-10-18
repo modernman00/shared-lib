@@ -190,6 +190,14 @@ class EcosystemPromoService
     {
         $currentAppKey = strtolower(trim($currentApp));
 
+        // 0. Check Tier 0 Active Dynamic Campaign from Central EcosystemAdManager
+        if (class_exists(EcosystemAdManager::class)) {
+            $customAd = EcosystemAdManager::getAdvertForApp($currentAppKey, $placement, $context);
+            if ($customAd !== null) {
+                return $customAd;
+            }
+        }
+
         // 1. Gather context keywords
         $keywords = $this->extractKeywords($context, $placement);
 

@@ -36,4 +36,5 @@ logs/
 .env.*.local
 
 ADMIN_AUTH_IMPLEMENTATION.md
-
+storage/*.json
+!storage/.gitkeep
