@@ -307,9 +307,17 @@ function showError($th): void
         $GLOBALS['__testError'] = $th;
         return;
     }
-    $error = showError2($th, LoggerFactory::getLogger());
-    if ($error) {
-        echo $error;
+    try {
+        $logger = LoggerFactory::getLogger();
+        $error = showError2($th, $logger);
+        if ($error) {
+            echo $error;
+        }
+    } catch (\Throwable $e) {
+        error_log("Error in showError: " . $e->getMessage() . " | Original error: " . ($th instanceof \Throwable ? $th->getMessage() : var_export($th, true)));
+        if (($_ENV['APP_ENV'] ?? '') === 'local') {
+            echo "<pre style='color:red;padding:20px;background:#18181b;'><strong>Application Error:</strong> " . htmlspecialchars($th instanceof \Throwable ? $th->getMessage() : (string)$th) . "\n" . htmlspecialchars($th instanceof \Throwable ? $th->getTraceAsString() : '') . "</pre>";
+        }
     }
 }
 // FUNCTION TO SEND TEXT TO PHONE
@@ -857,6 +865,30 @@ function setId2(array $postData, string $name, string $table, int $digits = 6): 
     } while ($exists);
 
     return [$id];
+}
+
+if (!function_exists('response_json')) {
+    /**
+     * Return a JSON response with status code and headers.
+     *
+     * @param mixed $data
+     * @param int $statusCode
+     * @param array<string, string> $headers
+     * @return string
+     */
+    function response_json(mixed $data, int $statusCode = 200, array $headers = []): string
+    {
+        if (!headers_sent()) {
+            http_response_code($statusCode);
+            header('Content-Type: application/json; charset=utf-8');
+            foreach ($headers as $key => $val) {
+                header($key . ': ' . $val);
+            }
+        }
+        $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        echo $json ?: '{}';
+        return $json ?: '{}';
+    }
 }
 
 

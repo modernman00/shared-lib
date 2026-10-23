@@ -178,18 +178,45 @@ abstract class BaseAdminAuthController
         return \Src\Utility::adminUrl($path);
     }
 
+    /**
+     * Cache and return existing columns for a database table to avoid querying missing columns.
+     * @return array<int, string>
+     */
+    private function getExistingTableColumns(string $tableName): array
+    {
+        static $columnCache = [];
+        if (!isset($columnCache[$tableName])) {
+            try {
+                $db = Db::connect2();
+                $cleanTable = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+                $stmt = $db->query("SHOW COLUMNS FROM `{$cleanTable}`");
+                $columnCache[$tableName] = $stmt ? $stmt->fetchAll(\PDO::FETCH_COLUMN) : [];
+            } catch (\Throwable) {
+                $columnCache[$tableName] = [];
+            }
+        }
+        return $columnCache[$tableName];
+    }
+
     private function buildAdminSelectQuery(): array
     {
         $columnMap = $this->getAdminColumnMap();
         $tableName = $this->getAdminTableName();
+        $existingCols = $this->getExistingTableColumns($tableName);
 
         $selectParts = [];
         foreach ($columnMap as $alias => $dbColumn) {
-            $selectParts[] = "{$dbColumn} AS {$alias}";
+            // Defensively skip columns that do not exist in the database table
+            if (!empty($existingCols) && !in_array($dbColumn, $existingCols, true)) {
+                continue;
+            }
+            $selectParts[] = "`{$dbColumn}` AS `{$alias}`";
         }
 
         $selectClause = implode(', ', $selectParts);
-        $query = "SELECT {$selectClause} FROM {$tableName} WHERE {$columnMap['email']} = ? LIMIT 1";
+        $cleanTable = preg_replace('/[^a-zA-Z0-9_]/', '', $tableName);
+        $emailCol = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$columnMap['email']);
+        $query = "SELECT {$selectClause} FROM `{$cleanTable}` WHERE `{$emailCol}` = ? LIMIT 1";
 
         return ['query' => $query, 'columnMap' => $columnMap];
     }

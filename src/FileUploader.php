@@ -21,8 +21,8 @@ class FileUploader
     /** Only replace a re-encoded file when it is at least this much smaller (or the format changed). */
     private const MIN_SAVING_RATIO = 0.98;
 
-    /** Hard upload ceiling: 10 MB. */
-    private const MAX_UPLOAD_BYTES = 10_485_760;
+    /** Hard upload ceiling: 25 MB (allowing high quality phone video clips). */
+    private const MAX_UPLOAD_BYTES = 26_214_400;
 
     /** Cloudmersive free tier refuses payloads larger than 3 MB. */
     private const VIRUS_SCAN_MAX_BYTES = 3_145_728;
@@ -37,7 +37,7 @@ class FileUploader
 
     private const ALLOWED_FORMATS = [
         'png', 'jpg', 'jpeg', 'gif', 'heic', 'webp',
-        'pdf', 'doc', 'docx', 'mpeg',
+        'pdf', 'doc', 'docx', 'mpeg', 'mp4', 'webm', 'mov',
     ];
 
     /** Extension => acceptable content-sniffed MIME types. */
@@ -55,6 +55,9 @@ class FileUploader
             'application/zip',
         ],
         'mpeg' => ['video/mpeg', 'audio/mpeg'],
+        'mp4'  => ['video/mp4', 'application/mp4', 'video/x-m4v'],
+        'webm' => ['video/webm'],
+        'mov'  => ['video/quicktime'],
     ];
 
     /** UPLOAD_ERR_* => human-readable message. */
@@ -253,13 +256,13 @@ class FileUploader
     {
         if (!in_array($extension, self::ALLOWED_FORMATS, true)) {
             throw new ValidationException(
-                'IMAGE FORMAT - Format must be PNG, JPG, GIF, WEBP, HEIC, DOC, DOCX, PDF, MPEG or JPEG.'
+                'IMAGE/VIDEO FORMAT - Format must be PNG, JPG, GIF, WEBP, HEIC, DOC, DOCX, PDF, MPEG, MP4, WEBM, MOV or JPEG.'
             );
         }
 
         $actualSize = is_file($fileTemp) ? (int) filesize($fileTemp) : $reportedSize;
         if ($actualSize > self::MAX_UPLOAD_BYTES) {
-            throw new ValidationException('Error Processing Request - File size must not exceed 10MB');
+            throw new ValidationException('Error Processing Request - File size must not exceed 25MB');
         }
 
         // Content-sniff every allowed type so an executable renamed to .jpg/.pdf cannot reach the web root.

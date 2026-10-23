@@ -28,3 +28,10 @@ function csrfField(): string
 {
     return '<input type="hidden" name="token" value="' . csrfToken() . '">';
 }
+
+if (!function_exists('csrf_field')) {
+    function csrf_field(): string
+    {
+        return csrfField();
+    }
+}

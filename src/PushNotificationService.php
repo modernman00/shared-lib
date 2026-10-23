@@ -382,6 +382,12 @@ class PushNotificationService
                                 $stmt2 = $db->prepare("DELETE FROM user_push_subscriptions WHERE endpoint = ?");
                                 $stmt2->execute([$endpoint]);
                             } catch (\Throwable $e) {}
+
+                            // Prune from push_subscriptions (PartyPlatform schema)
+                            try {
+                                $stmt3 = $db->prepare("DELETE FROM push_subscriptions WHERE endpoint = ?");
+                                $stmt3->execute([$endpoint]);
+                            } catch (\Throwable $e) {}
                         } catch (\Throwable $e) {
                             error_log("[PushNotificationService] Prune error: " . $e->getMessage());
                         }
@@ -445,9 +451,191 @@ class PushNotificationService
                 // Table might not exist
             }
 
+            // 3. Try push_subscriptions table (used by PartyPlatform)
+            if (empty($allSubscriptions)) {
+                try {
+                    $stmt3 = $db->prepare('SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ?');
+                    $stmt3->execute([$userId]);
+                    $rows3 = $stmt3->fetchAll(\PDO::FETCH_ASSOC);
+                    if (!empty($rows3)) {
+                        foreach ($rows3 as $row3) {
+                            $allSubscriptions[] = [
+                                'endpoint' => (string)($row3['endpoint'] ?? ''),
+                                'p256dhKey' => (string)($row3['p256dh'] ?? ''),
+                                'authKey'   => (string)($row3['auth'] ?? ''),
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Table might not exist
+                }
+            }
+
             return $allSubscriptions;
         } catch (\Throwable $e) {
             error_log('[PushNotificationService] DB Fetch error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Register or update a user's push subscription with optional device telemetry.
+     *
+     * @param string $userId Target user identifier
+     * @param string $endpoint Browser push service endpoint
+     * @param string $p256dh Public encryption key (RFC 8291)
+     * @param string $auth Authentication secret (RFC 8291)
+     * @param array<string, mixed>|null $deviceInfo Telemetry (device_platform, browser, app_version, user_agent)
+     * @return bool True if registered or updated successfully
+     */
+    public static function registerSubscription(
+        string $userId,
+        string $endpoint,
+        string $p256dh,
+        string $auth,
+        ?array $deviceInfo = null
+    ): bool {
+        $userId = trim($userId);
+        $endpoint = trim($endpoint);
+        $p256dh = trim($p256dh);
+        $auth = trim($auth);
+
+        if ($userId === '' || $endpoint === '' || $p256dh === '' || $auth === '') {
+            return false;
+        }
+
+        // Enforce SSRF allowlist
+        if (!self::isAllowedPushEndpoint($endpoint)) {
+            error_log('[PushNotificationService] Disallowed push endpoint: ' . $endpoint);
+            return false;
+        }
+
+        try {
+            $db = \Src\Db::connect2();
+            $devicePlatform = isset($deviceInfo['device_platform']) && is_string($deviceInfo['device_platform'])
+                ? strtolower(substr(trim($deviceInfo['device_platform']), 0, 32))
+                : null;
+            $browser = isset($deviceInfo['browser']) && is_string($deviceInfo['browser'])
+                ? strtolower(substr(trim($deviceInfo['browser']), 0, 32))
+                : null;
+            $appVersion = isset($deviceInfo['app_version']) && is_string($deviceInfo['app_version'])
+                ? substr(trim($deviceInfo['app_version']), 0, 32)
+                : null;
+            $userAgent = isset($deviceInfo['user_agent']) && is_string($deviceInfo['user_agent'])
+                ? substr(trim($deviceInfo['user_agent']), 0, 500)
+                : null;
+
+            // Check if endpoint already exists for user
+            $checkStmt = $db->prepare('SELECT id FROM user_push_subscriptions WHERE user_id = :uid AND endpoint = :ep');
+            $checkStmt->execute([':uid' => $userId, ':ep' => $endpoint]);
+            $existingId = $checkStmt->fetchColumn();
+
+            if ($existingId !== false) {
+                try {
+                    $updateStmt = $db->prepare("
+                        UPDATE user_push_subscriptions 
+                        SET p256dh = :p256dh, auth_token = :auth, device_platform = :platform, 
+                            browser = :browser, app_version = :ver, user_agent = :ua, 
+                            failure_count = 0, last_seen = datetime('now')
+                        WHERE id = :id
+                    ");
+                    $updateStmt->execute([
+                        ':p256dh'   => $p256dh,
+                        ':auth'     => $auth,
+                        ':platform' => $devicePlatform,
+                        ':browser'  => $browser,
+                        ':ver'      => $appVersion,
+                        ':ua'       => $userAgent,
+                        ':id'       => $existingId,
+                    ]);
+                } catch (\Throwable) {
+                    // Fallback query if extended telemetry columns do not exist
+                    $fallbackUpdate = $db->prepare('
+                        UPDATE user_push_subscriptions 
+                        SET p256dh = :p256dh, auth_token = :auth 
+                        WHERE id = :id
+                    ');
+                    $fallbackUpdate->execute([
+                        ':p256dh' => $p256dh,
+                        ':auth'   => $auth,
+                        ':id'     => $existingId,
+                    ]);
+                }
+            } else {
+                try {
+                    $insertStmt = $db->prepare("
+                        INSERT INTO user_push_subscriptions 
+                        (user_id, endpoint, p256dh, auth_token, device_platform, browser, app_version, user_agent, failure_count, last_seen, created_at)
+                        VALUES (:uid, :ep, :p256dh, :auth, :platform, :browser, :ver, :ua, 0, datetime('now'), datetime('now'))
+                    ");
+                    $insertStmt->execute([
+                        ':uid'      => $userId,
+                        ':ep'       => $endpoint,
+                        ':p256dh'   => $p256dh,
+                        ':auth'     => $auth,
+                        ':platform' => $devicePlatform,
+                        ':browser'  => $browser,
+                        ':ver'      => $appVersion,
+                        ':ua'       => $userAgent,
+                    ]);
+                } catch (\Throwable) {
+                    // Fallback insert if extended telemetry columns do not exist
+                    $fallbackInsert = $db->prepare("
+                        INSERT INTO user_push_subscriptions 
+                        (user_id, endpoint, p256dh, auth_token, created_at)
+                        VALUES (:uid, :ep, :p256dh, :auth, datetime('now'))
+                    ");
+                    $fallbackInsert->execute([
+                        ':uid'    => $userId,
+                        ':ep'     => $endpoint,
+                        ':p256dh' => $p256dh,
+                        ':auth'   => $auth,
+                    ]);
+                }
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[PushNotificationService] registerSubscription error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Retrieve device and telemetry stats for user subscriptions.
+     *
+     * @param string $userId
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getSubscriptionTelemetry(string $userId): array
+    {
+        $userId = trim($userId);
+        if ($userId === '') {
+            return [];
+        }
+
+        try {
+            $db = \Src\Db::connect2();
+            try {
+                $stmt = $db->prepare('
+                    SELECT endpoint, device_platform, browser, app_version, failure_count, last_seen, created_at 
+                    FROM user_push_subscriptions 
+                    WHERE user_id = :uid
+                ');
+                $stmt->execute([':uid' => $userId]);
+                /** @var array<int, array<string, mixed>> $rows */
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                return $rows;
+            } catch (\Throwable) {
+                // Extended columns might not exist; fallback to basic query
+                $stmt2 = $db->prepare('SELECT endpoint, created_at FROM user_push_subscriptions WHERE user_id = :uid');
+                $stmt2->execute([':uid' => $userId]);
+                /** @var array<int, array<string, mixed>> $rows2 */
+                $rows2 = $stmt2->fetchAll(\PDO::FETCH_ASSOC);
+                return $rows2;
+            }
+        } catch (\Throwable $e) {
+            error_log('[PushNotificationService] getSubscriptionTelemetry error: ' . $e->getMessage());
             return [];
         }
     }

@@ -19,12 +19,29 @@ class BroadcastService
         $this->db = $db ?? Db::connect2();
     }
 
+    private function getUserTableName(): string
+    {
+        $configured = trim((string)($_ENV['DB_TABLE_LOGIN'] ?? (getenv('DB_TABLE_LOGIN') ?: '')));
+        if (!empty($configured)) {
+            return preg_replace('/[^a-zA-Z0-9_]/', '', $configured) ?: 'users';
+        }
+
+        try {
+            $stmt = $this->db->query("SHOW TABLES LIKE 'users'");
+            if ($stmt && $stmt->fetchColumn()) {
+                return 'users';
+            }
+        } catch (\Throwable $e) {}
+
+        return 'account';
+    }
+
     /**
      * Estimates target audience count based on filters
      */
     public function calculateAudienceCount(string $targetApp, string $audienceTier, string $channel): int
     {
-        $sql = "SELECT COUNT(*) FROM users";
+        $sql = "SELECT COUNT(*) FROM " . $this->getUserTableName();
         $where = [];
 
         if ($audienceTier === 'active') {
@@ -87,7 +104,7 @@ class BroadcastService
         $failedCount = 0;
 
         // Fetch users to target
-        $usersStmt = $this->db->query("SELECT id, email FROM users LIMIT 100");
+        $usersStmt = $this->db->query("SELECT id, email FROM " . $this->getUserTableName() . " LIMIT 100");
         $users = $usersStmt ? $usersStmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         foreach ($users as $user) {
@@ -181,7 +198,8 @@ class BroadcastService
      */
     public function getBroadcastHistory(?string $appFilter = null, int $limit = 20): array
     {
-        $sql = "SELECT b.*, u.email as admin_email FROM admin_broadcasts b LEFT JOIN users u ON b.sent_by = u.id";
+        $userTable = $this->getUserTableName();
+        $sql = "SELECT b.*, u.email as admin_email FROM admin_broadcasts b LEFT JOIN {$userTable} u ON b.sent_by = u.id";
         $params = [];
 
         if ($appFilter && $appFilter !== 'all') {
@@ -252,7 +270,8 @@ class BroadcastService
      */
     public function getCampaigns(?string $appFilter = null, int $limit = 20): array
     {
-        $sql = "SELECT c.*, u.email as creator_email FROM admin_campaigns c LEFT JOIN users u ON c.created_by = u.id";
+        $userTable = $this->getUserTableName();
+        $sql = "SELECT c.*, u.email as creator_email FROM admin_campaigns c LEFT JOIN {$userTable} u ON c.created_by = u.id";
         $params = [];
 
         if ($appFilter && $appFilter !== 'all') {

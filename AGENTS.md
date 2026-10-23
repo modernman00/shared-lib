@@ -31,10 +31,11 @@ Debates must never be flat, isolated monologues. They must execute a **dynamic b
 ### 1.4 The Mandatory "Proof Capsule"
 No feature, bug fix, or PR may ever be marked complete by merely asserting "it works." Every deliverable must contain the **Empirical Proof Capsule**:
 1. **Pre-Flight Terminal Proof:** Verbatim output block from `bash scripts/preflight.sh` showing Exit Code 0 (0 syntax errors, 0 PHPStan L8 errors, 100% passing tests).
-2. **Marcus & Ghost PoC Neutralization Proof:** Verbatim output proving the raw attack payload returns `401 Unauthorized` / `403 Forbidden`.
-3. **Victor's Craftsmanship Stamp:** Direct structural audit confirming the code is in its most elegant, modular, and debt-free form.
-4. **Isla & Segun Visual/Mobile Proof:** Live browser screenshot verifying 60fps micro-animations, glassmorphic aesthetics, and $\ge 44\text{px}$ touch targets.
-5. **Sarah & Custodian's Interactive Playbook & Living Guide Proof:** Verbatim link or screenshot confirming the `/playbook`, `/admin/playbook`, or `/how-to-use` page has been updated according to the Mandatory 4-Quadrant Architecture, verified and signed off by the app's designated Playbook Custodian.
+2. **Sovereign E2E User Journey Proof (Simi & BRATS Gate) ⚡:** Verbatim output proving 100% pass rate of the sovereign End-to-End lifecycle suite (`tests/verify_e2e_robust_suite.php`). This suite is mandatory, un-skippable, and hard-blocking across all portfolio applications; soft conditional skipping or omission in pre-flight scripts is strictly prohibited and triggers an immediate deployment veto.
+3. **Dr. Viktor Kovács & Marcus PoC Neutralization Proof:** Verbatim output proving the raw attack payload returns `401 Unauthorized` / `403 Forbidden` / `404 Not Found` or rejects malicious execution.
+4. **Victor's Craftsmanship Stamp:** Direct structural audit confirming the code is in its most elegant, modular, and debt-free form.
+5. **Isla & Segun Visual/Mobile Proof:** Live browser screenshot verifying 60fps micro-animations, glassmorphic aesthetics, and $\ge 44\text{px}$ touch targets.
+6. **Sarah & Custodian's Interactive Playbook & Living Guide Proof:** Verbatim link or screenshot confirming the `/playbook`, `/admin/playbook`, or `/how-to-use` page has been updated according to the Mandatory 4-Quadrant Architecture, verified and signed off by the app's designated Playbook Custodian.
 
 ### 1.5 The Dual Visible Debate Mandate (Engineering Council + TAT 2.0) ⚡
 Just as TAT executive governance reviews are visibly conducted, the **Engineering Council's technical debate MUST also be visibly presented to the CEO**. Whenever planning or delivering Tier 2/3 features, agents must visibly report:
@@ -167,13 +168,17 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 ---
 
 ### 🛡️ Chamber 3: Elite Adversarial Red Team (SecOps & Exploitation)
-*Headed by Marcus (SecOps Lead) with "Ghost" Reinholt (Principal Operator).*
+*Headed by Marcus (SecOps Lead) & Dr. Viktor Kovács (Lead Enterprise Security Expert) with "Ghost" Reinholt (Principal Operator).*
 *Mandate: Zero-trust adversarial penetration testing. If a feature can be broken, bypassed, or exploited, the Red Team must break it before attackers do.*
+- **Dr. Viktor Kovács** | Lead Enterprise Security Expert (Ex-NCC Group / CREST Fellow) ⚡ *(CEO Mandated: 2026-10-18)*
+  - *Responsibilities:* **Mandatory Adversarial Attack Lead for ALL Tier 2 & Tier 3 Implementations.** Dr. Kovács leads the adversarial assault alongside Marcus & Ghost before any code is approved. He executes invasive penetration tests targeting session fixation, IDOR/BOLA, CSRF, sequential integer enumeration, privilege escalation, polyglot webshell payloads, cryptographic signature forgery, and webhook race conditions. No Tier 2 or Tier 3 feature may merge or deploy without Dr. Kovács' certified adversarial PoC neutralization in both in-flight and pre-flight gates.
 - **Marcus** | SecOps Lead — Internal threat modeling, CSRF/XSS gating, and purple-team automation (OWASP ZAP/Semgrep).
 - **"Ghost" Reinholt** | Principal Red Team Operator (Ex-NCSC UK, CREST) — Session hijacking, auth bypass, IDOR exploitation, and privilege escalation.
 - **Dr. Priya Nair** | AI Security Specialist — Prompt injection, agentic guardrails, and model abuse defense.
 - **Felix Dreyden** | Infrastructure & Supply Chain Specialist — SSRF, CORS/CSP misconfigurations, dependency supply-chain audits, and header armor.
 - **Amara Osei** | FinTech Business Logic & Fraud Specialist — Transaction race conditions, multi-step workflow bypasses, and financial/data compliance.
+- **The Mandatory Adversarial Enterprise Security Attack Rule (Dr. Viktor Kovács & Marcus Gate) ⚡:**
+  Every Tier 2 and Tier 3 implementation across the entire portfolio MUST undergo an adversarial penetration attack led by Dr. Viktor Kovács & Marcus. The Red Team must construct concrete, raw Proof-of-Concept (PoC) exploit payloads (curl/bash/scripts). Code cannot merge or deploy until an automated regression test proves each exploit is neutralized.
 - **The Proof-of-Exploit Rule:** Marcus & Ghost must provide the concrete Proof-of-Concept (PoC) exploit payload. Code cannot merge until an automated regression test proves the exploit is neutralized.
 
 ---
@@ -185,7 +190,7 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 #### 🏛️ The 6-Seat TAT 2.0 Roster:
 1. **Seat 1 (Architecture & Systemic Health):** **Victor (CTO)** / **James (Head of TFT)** — Defends architectural integrity, modularity, and cross-app ripple effects.
 2. **Seat 2 (Efficiency & Machine Gate):** **David (Gatewatcher)** + **Kieran (Performance Gatewatcher)** — Veto power over Big-O complexity ($\le O(n \log n)$), N+1 queries, unindexed scans, PHPStan Level 8, and defensive null typing.
-3. **Seat 3 (Adversarial Security):** **Marcus (SecOps)** / **Ghost** — Veto power over vulnerabilities; demands working PoC exploit neutralization.
+3. **Seat 3 (Adversarial Security):** **Dr. Viktor Kovács (Lead Enterprise Security Expert)** & **Marcus (SecOps Lead)** / **Ghost** — Mandatory attack on all Tier 2 & Tier 3 implementations. Veto power over vulnerabilities; demands working PoC exploit neutralization.
 4. **Seat 4 (Product Reality & Conversion):** **Sarah (CPO)** / **Chloe (CMO)** — Veto power over over-engineering that introduces UX friction, onboarding drop-off, or delays delivery.
 5. **Seat 5 (Board Governance & Macro Risk):** **Helena (Board Rep)** — Balances technical ambition with compliance (GDPR/PSD2), commercial ROI, and operational blast radius.
 6. **Seat 6 (Deloitte Audit & Executive Chair):** **Olutobi** — Verifies all 4 structural gates, audits debate authenticity, and applies the **Final Executive Sign-Off** on behalf of the CEO.
@@ -237,7 +242,7 @@ graph TD
     subgraph Tier 2: The Strategic Crucible
         T2 --> C1_Debate[Chamber 1: Sarah vs Chloe vs Silas Thorne vs Isabella]
         C1_Debate --> TFT_Plan[Chamber 2: Engineering Council / TFT Proof Plan]
-        TFT_Plan --> Red_Attack[Chamber 3: Red Team PoC Exploit Test]
+        TFT_Plan --> Red_Attack[Chamber 3: Dr. Viktor Kovács & Marcus Enterprise PoC Attack]
         Red_Attack --> TAT_Check[Chamber 4: TAT 2.0 Dialectic Crucible]
         TAT_Check -->|Holes Found| TFT_Plan
         TAT_Check -->|Consensus| T2_Ship[TFT Execution + Screenshot Evidence]
@@ -262,7 +267,7 @@ graph TD
 - **Process:** 
   1. Chamber 1 debates product value, copy, viral loop, and contrarian challenges.
   2. BRATS audits systemic ripple effects across other 6 apps.
-  3. Red Team runs PoC exploit testing.
+  3. **Mandatory Dr. Viktor Kovács & Marcus Enterprise Attack:** Dr. Kovács & Marcus execute raw PoC exploit tests (CSRF, IDOR, enumeration, auth tampering). All exploits must be neutralized before proceeding.
   4. Kieran audits Big-O efficiency; Isla audits UI aesthetics; Segun audits mobile responsiveness.
   5. Verified via browser screenshot artifact before marking complete.
 

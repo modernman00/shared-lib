@@ -100,6 +100,23 @@ class AdminService
         $this->db = $db ?? Db::connect2();
     }
 
+    private function getUserTableName(): string
+    {
+        $configured = trim((string)($_ENV['DB_TABLE_LOGIN'] ?? (getenv('DB_TABLE_LOGIN') ?: '')));
+        if (!empty($configured)) {
+            return preg_replace('/[^a-zA-Z0-9_]/', '', $configured) ?: 'users';
+        }
+
+        try {
+            $stmt = $this->db->query("SHOW TABLES LIKE 'users'");
+            if ($stmt && $stmt->fetchColumn()) {
+                return 'users';
+            }
+        } catch (\Throwable $e) {}
+
+        return 'account';
+    }
+
     /**
      * @return array<string, array<string, string>>
      */
@@ -117,7 +134,7 @@ class AdminService
         // Total Users across ecosystem
         $totalUsers = 0;
         try {
-            $stmt = $this->db->query("SELECT COUNT(*) FROM users");
+            $stmt = $this->db->query("SELECT COUNT(*) FROM " . $this->getUserTableName());
             $totalUsers = (int)($stmt ? $stmt->fetchColumn() : 0);
         } catch (\Throwable $e) {
             $totalUsers = 1250;
@@ -235,7 +252,8 @@ class AdminService
         $limit = min(100, max(10, (int)($filters['limit'] ?? 25)));
         $offset = max(0, (int)($filters['offset'] ?? 0));
 
-        $sql = "SELECT id, email, created_at, status FROM users";
+        $table = $this->getUserTableName();
+        $sql = "SELECT id, email, created_at, status FROM " . $table;
         $params = [];
 
         if (!empty($search)) {
@@ -251,7 +269,7 @@ class AdminService
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Fetch count
-            $baseQuery = 'SELECT COUNT(*) FROM users';
+            $baseQuery = 'SELECT COUNT(*) FROM ' . $table;
             $countSql = $baseQuery . (!empty($search) ? ' WHERE email LIKE ?' : '');
             $countStmt = $this->db->prepare($countSql);
             $countStmt->execute($params);
@@ -287,7 +305,8 @@ class AdminService
         }
 
         try {
-            $stmt = $this->db->prepare("UPDATE users SET status = ? WHERE id = ?");
+            $table = $this->getUserTableName();
+            $stmt = $this->db->prepare("UPDATE " . $table . " SET status = ? WHERE id = ?");
             $result = $stmt->execute([$status, $userId]);
 
             if ($result) {

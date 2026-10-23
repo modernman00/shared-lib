@@ -35,6 +35,7 @@ final class NotificationOrchestrator
      * @param string $tag Coalescing tag (e.g. 'post-94819')
      * @param string|null $scopeCode Optional family/team/workspace scope
      * @param array<string, mixed>|null $metadata Optional JSON payload
+     * @param string|null $scheduledAt Optional release timestamp (e.g. '2026-10-25 12:00:00' or ISO 8601)
      * @return string Generated Notification ID
      */
     public static function dispatch(
@@ -46,7 +47,8 @@ final class NotificationOrchestrator
         string $actionUrl = '/',
         string $tag = 'general',
         ?string $scopeCode = null,
-        ?array $metadata = null
+        ?array $metadata = null,
+        ?string $scheduledAt = null
     ): string {
         $notificationId = 'notif_' . bin2hex(random_bytes(12));
         $userId = trim($userId);
@@ -54,28 +56,85 @@ final class NotificationOrchestrator
             return '';
         }
 
+        $effectiveScheduledAt = $scheduledAt ?? (is_array($metadata) && isset($metadata['scheduled_at']) && is_string($metadata['scheduled_at']) ? $metadata['scheduled_at'] : null);
+        $isScheduled = false;
+        if ($effectiveScheduledAt !== null && trim($effectiveScheduledAt) !== '') {
+            $parsedTime = strtotime($effectiveScheduledAt);
+            if ($parsedTime !== false && $parsedTime > time()) {
+                $isScheduled = true;
+                $effectiveScheduledAt = date('Y-m-d H:i:s', $parsedTime);
+            } else {
+                $effectiveScheduledAt = null;
+            }
+        }
+        $initialStatus = $isScheduled ? 'scheduled' : 'pending';
+
         try {
             $pdo = Db::connect2();
 
             // 1. Insert into notification_orchestration if table exists
             try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO notification_orchestration 
-                    (id, user_id, family_code, category, priority, title, body, action_url, tag, data_payload, status)
-                    VALUES (:id, :uid, :fam, :cat, :pri, :title, :body, :url, :tag, :meta, 'pending')
-                ");
-                $stmt->execute([
-                    ':id'    => $notificationId,
-                    ':uid'   => $userId,
-                    ':fam'   => $scopeCode,
-                    ':cat'   => in_array($category, ['social', 'financial', 'security', 'system'], true) ? $category : 'social',
-                    ':pri'   => in_array($priority, ['low', 'medium', 'high', 'critical'], true) ? $priority : 'medium',
-                    ':title' => strip_tags($title),
-                    ':body'  => strip_tags($body),
-                    ':url'   => $actionUrl !== '' ? $actionUrl : '/',
-                    ':tag'   => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
-                    ':meta'  => $metadata !== null ? json_encode($metadata) : null,
-                ]);
+                if ($isScheduled) {
+                    try {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO notification_orchestration 
+                            (id, user_id, family_code, category, priority, title, body, action_url, tag, data_payload, status, scheduled_at)
+                            VALUES (:id, :uid, :fam, :cat, :pri, :title, :body, :url, :tag, :meta, :status, :sched)
+                        ");
+                        $stmt->execute([
+                            ':id'     => $notificationId,
+                            ':uid'    => $userId,
+                            ':fam'    => $scopeCode,
+                            ':cat'    => in_array($category, ['social', 'financial', 'security', 'system'], true) ? $category : 'social',
+                            ':pri'    => in_array($priority, ['low', 'medium', 'high', 'critical'], true) ? $priority : 'medium',
+                            ':title'  => strip_tags($title),
+                            ':body'   => strip_tags($body),
+                            ':url'    => $actionUrl !== '' ? $actionUrl : '/',
+                            ':tag'    => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                            ':meta'   => $metadata !== null ? json_encode($metadata) : null,
+                            ':status' => $initialStatus,
+                            ':sched'  => $effectiveScheduledAt,
+                        ]);
+                    } catch (\Throwable) {
+                        // Fallback if scheduled_at column does not exist
+                        $stmt = $pdo->prepare("
+                            INSERT INTO notification_orchestration 
+                            (id, user_id, family_code, category, priority, title, body, action_url, tag, data_payload, status)
+                            VALUES (:id, :uid, :fam, :cat, :pri, :title, :body, :url, :tag, :meta, :status)
+                        ");
+                        $stmt->execute([
+                            ':id'     => $notificationId,
+                            ':uid'    => $userId,
+                            ':fam'    => $scopeCode,
+                            ':cat'    => in_array($category, ['social', 'financial', 'security', 'system'], true) ? $category : 'social',
+                            ':pri'    => in_array($priority, ['low', 'medium', 'high', 'critical'], true) ? $priority : 'medium',
+                            ':title'  => strip_tags($title),
+                            ':body'   => strip_tags($body),
+                            ':url'    => $actionUrl !== '' ? $actionUrl : '/',
+                            ':tag'    => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                            ':meta'   => $metadata !== null ? json_encode($metadata) : null,
+                            ':status' => $initialStatus,
+                        ]);
+                    }
+                } else {
+                    $stmt = $pdo->prepare("
+                        INSERT INTO notification_orchestration 
+                        (id, user_id, family_code, category, priority, title, body, action_url, tag, data_payload, status)
+                        VALUES (:id, :uid, :fam, :cat, :pri, :title, :body, :url, :tag, :meta, 'pending')
+                    ");
+                    $stmt->execute([
+                        ':id'    => $notificationId,
+                        ':uid'   => $userId,
+                        ':fam'   => $scopeCode,
+                        ':cat'   => in_array($category, ['social', 'financial', 'security', 'system'], true) ? $category : 'social',
+                        ':pri'   => in_array($priority, ['low', 'medium', 'high', 'critical'], true) ? $priority : 'medium',
+                        ':title' => strip_tags($title),
+                        ':body'  => strip_tags($body),
+                        ':url'   => $actionUrl !== '' ? $actionUrl : '/',
+                        ':tag'   => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                        ':meta'  => $metadata !== null ? json_encode($metadata) : null,
+                    ]);
+                }
             } catch (\Throwable $e) {
                 // Table might not exist yet; fail-safe logging
                 error_log('[NotificationOrchestrator] Orchestration table write skipped: ' . $e->getMessage());
@@ -98,6 +157,12 @@ final class NotificationOrchestrator
                 ]);
             } catch (\Throwable $e) {
                 // Ignore if legacy schema differs
+            }
+
+            // If scheduled for future release, do NOT dispatch to socket, WebPush, or email immediately
+            if ($isScheduled) {
+                self::logDelivery($notificationId, 'scheduler', 'scheduled', 'Scheduled for delivery at ' . (string)$effectiveScheduledAt);
+                return $notificationId;
             }
 
             $unreadCount = self::getUnreadCount($userId);
@@ -548,6 +613,207 @@ final class NotificationOrchestrator
         } catch (\Throwable $e) {
             error_log('[NotificationOrchestrator] getDeliveryLogs failed: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Process and dispatch due scheduled notifications.
+     *
+     * @param int $limit Maximum number of notifications to process per run
+     * @return int Number of notifications successfully dispatched
+     */
+    public static function processScheduled(int $limit = 50): int
+    {
+        $limit = max(1, min($limit, 500));
+        $dispatchedCount = 0;
+
+        try {
+            $pdo = Db::connect2();
+
+            // Select scheduled notifications whose scheduled_at is past or current
+            // Try SQLite datetime('now') first, then MySQL NOW()
+            $rows = [];
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT id, user_id, category, priority, title, body, action_url, tag, family_code, data_payload 
+                    FROM notification_orchestration 
+                    WHERE status = 'scheduled' AND scheduled_at <= datetime('now')
+                    ORDER BY scheduled_at ASC 
+                    LIMIT :limit
+                ");
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (\Throwable) {
+                try {
+                    $stmt = $pdo->prepare("
+                        SELECT id, user_id, category, priority, title, body, action_url, tag, family_code, data_payload 
+                        FROM notification_orchestration 
+                        WHERE status = 'scheduled' AND scheduled_at <= NOW() 
+                        ORDER BY scheduled_at ASC 
+                        LIMIT :limit
+                    ");
+                    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                } catch (\Throwable) {
+                    $rows = [];
+                }
+            }
+
+            if (empty($rows)) {
+                return 0;
+            }
+
+            foreach ($rows as $row) {
+                $notifId = (string)($row['id'] ?? '');
+                $userId = (string)($row['user_id'] ?? '');
+                if ($notifId === '' || $userId === '') {
+                    continue;
+                }
+
+                // Lock-safe atomic update to 'processing' to prevent race conditions across parallel workers
+                $lockStmt = $pdo->prepare("
+                    UPDATE notification_orchestration 
+                    SET status = 'processing' 
+                    WHERE id = :id AND status = 'scheduled'
+                ");
+                $lockStmt->execute([':id' => $notifId]);
+                if ($lockStmt->rowCount() === 0) {
+                    continue; // Another worker claimed this notification
+                }
+
+                $category = (string)($row['category'] ?? 'social');
+                $priority = (string)($row['priority'] ?? 'medium');
+                $title = (string)($row['title'] ?? '');
+                $body = (string)($row['body'] ?? '');
+                $actionUrl = (string)($row['action_url'] ?? '/');
+                $tag = (string)($row['tag'] ?? 'general');
+                $rawPayload = $row['data_payload'] ?? null;
+                $metadata = is_string($rawPayload) ? json_decode($rawPayload, true) : null;
+                if (!is_array($metadata)) {
+                    $metadata = null;
+                }
+
+                $unreadCount = self::getUnreadCount($userId);
+                if ($unreadCount <= 0) {
+                    $unreadCount = 1;
+                }
+
+                // Channel 1: In-App Pusher Socket Broadcast (if active)
+                $isUserOnline = self::isUserOnline($userId);
+                if ($isUserOnline) {
+                    $userChannel = 'private-user-' . preg_replace('/[^A-Za-z0-9_-]/', '', $userId);
+                    self::broadcastPusher($userChannel, 'new-notification', [
+                        'id'           => $notifId,
+                        'title'        => $title,
+                        'body'         => $body,
+                        'action_url'   => $actionUrl,
+                        'tag'          => $tag,
+                        'unread_count' => $unreadCount,
+                        'category'     => $category,
+                        'metadata'     => $metadata ?? []
+                    ]);
+                    self::logDelivery($notifId, 'in_app_socket', 'sent', 'Broadcast to active socket (scheduled)');
+                }
+
+                // Channel 2: High-Priority OS WebPush
+                $hasPushSubscriptions = !empty(PushNotificationService::getUserPushSubscriptions($userId));
+                $pushed = false;
+                if ($hasPushSubscriptions) {
+                    /** @var array<string, mixed> $pushOptions */
+                    $pushOptions = is_array($metadata) ? $metadata : [];
+                    $pushOptions['category'] = $pushOptions['category'] ?? $category;
+                    $pushOptions['notificationId'] = $pushOptions['notificationId'] ?? $notifId;
+                    if (!isset($pushOptions['urgency'])) {
+                        $pushOptions['urgency'] = in_array($priority, ['high', 'critical'], true) ? 'high' : 'normal';
+                    }
+
+                    $pushed = PushNotificationService::sendPush(
+                        userId: $userId,
+                        message: $body,
+                        url: $actionUrl,
+                        title: $title,
+                        tag: $tag,
+                        badgeCount: $unreadCount,
+                        isSilent: false,
+                        syncAction: null,
+                        targetNotificationId: $notifId,
+                        options: $pushOptions
+                    );
+                    self::logDelivery($notifId, 'web_push', $pushed ? 'sent' : 'failed', 'Dispatched OS WebPush (scheduled)');
+                } else {
+                    self::logDelivery($notifId, 'web_push', 'skipped_no_subscription', 'No active push endpoint registered for user');
+                }
+
+                // Channel 3: Email Fallback
+                if (in_array($priority, ['high', 'critical'], true)) {
+                    if (!$hasPushSubscriptions || !$pushed) {
+                        if (!$isUserOnline) {
+                            self::logDelivery($notifId, 'email', 'queued_immediate', 'Queued for immediate delivery (scheduled fallback)');
+                        }
+                    } else if (!$isUserOnline) {
+                        self::logDelivery($notifId, 'email', 'queued', 'Queued for 15-minute fallback (scheduled)');
+                    }
+                }
+
+                // Update final status to sent
+                $updateStmt = $pdo->prepare("UPDATE notification_orchestration SET status = 'sent' WHERE id = :id");
+                $updateStmt->execute([':id' => $notifId]);
+                $dispatchedCount++;
+            }
+
+            return $dispatchedCount;
+        } catch (\Throwable $e) {
+            error_log('[NotificationOrchestrator] processScheduled error: ' . $e->getMessage());
+            return $dispatchedCount;
+        }
+    }
+
+    /**
+     * Record client-side interaction telemetry (delivered, clicked, dismissed).
+     *
+     * @param string $notificationId
+     * @param string $event 'delivered'|'clicked'|'dismissed'
+     * @param array<string, mixed>|null $clientMeta Optional client metadata (user_id, platform, user_agent)
+     * @return bool
+     */
+    public static function recordTelemetry(string $notificationId, string $event, ?array $clientMeta = null): bool
+    {
+        $notificationId = trim($notificationId);
+        $event = strtolower(trim($event));
+        if ($notificationId === '' || !in_array($event, ['delivered', 'clicked', 'dismissed'], true)) {
+            return false;
+        }
+
+        try {
+            $encoded = $clientMeta !== null ? json_encode($clientMeta) : null;
+            $details = is_string($encoded) ? $encoded : null;
+            self::logDelivery($notificationId, 'client_telemetry', $event, $details);
+
+            // If user clicked notification, mark as read if user_id is provided in meta or can be resolved
+            if ($event === 'clicked') {
+                $pdo = Db::connect2();
+                $userId = isset($clientMeta['user_id']) && is_string($clientMeta['user_id']) ? trim($clientMeta['user_id']) : null;
+                if ($userId !== null && $userId !== '') {
+                    self::markAsRead($notificationId, $userId);
+                } else {
+                    // Try to resolve user_id from notification_orchestration
+                    try {
+                        $stmt = $pdo->prepare("SELECT user_id FROM notification_orchestration WHERE id = :id");
+                        $stmt->execute([':id' => $notificationId]);
+                        $foundUid = $stmt->fetchColumn();
+                        if ($foundUid !== false && is_string($foundUid) && $foundUid !== '') {
+                            self::markAsRead($notificationId, $foundUid);
+                        }
+                    } catch (\Throwable) {}
+                }
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[NotificationOrchestrator] recordTelemetry error: ' . $e->getMessage());
+            return false;
         }
     }
 }
