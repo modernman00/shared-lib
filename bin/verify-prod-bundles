@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Usage: vendor/bin/verify-prod-bundles [--staged] [target_directory]
+$autoloads = [__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'];
+foreach ($autoloads as $a) {
+    if (is_file($a)) {
+        require $a;
+        break;
+    }
+}
+
+$args = array_slice($argv, 1);
+$staged = in_array('--staged', $args, true);
+$dir = array_values(array_filter($args, static fn (string $a): bool => $a !== '--staged'))[0] ?? getcwd();
+
+$result = \Src\Quality\ProductionBundles::scan((string) $dir, $staged);
+exit(\Src\Quality\ProductionBundles::report($result, $staged)['exit']);
