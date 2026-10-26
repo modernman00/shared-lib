@@ -21,6 +21,7 @@ class DocumentVisionEngine
     private int $connectTimeout;
     private int $timeout;
     private bool $simulateMode;
+    private ?\Src\Ai\HuggingFaceInferenceGateway $hfGateway = null;
 
     /**
      * @param array{
@@ -28,7 +29,8 @@ class DocumentVisionEngine
      *     model?: string,
      *     connect_timeout?: int,
      *     timeout?: int,
-     *     simulate?: bool
+     *     simulate?: bool,
+     *     hf_gateway?: \Src\Ai\HuggingFaceInferenceGateway
      * } $config
      */
     public function __construct(array $config = [])
@@ -38,6 +40,9 @@ class DocumentVisionEngine
         $this->connectTimeout = (int)($config['connect_timeout'] ?? 5);
         $this->timeout = (int)($config['timeout'] ?? 10);
         $this->simulateMode = (bool)($config['simulate'] ?? ($this->apiKey === '' || $this->apiKey === 'mock_key'));
+        if (isset($config['hf_gateway'])) {
+            $this->hfGateway = $config['hf_gateway'];
+        }
     }
 
     public function isConfigured(): bool
@@ -104,8 +109,20 @@ Extract the following exact fields into strict JSON:
 Output valid JSON matching this schema exactly.";
 
         try {
-            $response = $this->callGeminiVision($filePath, $mimeType, $prompt);
-            $parsed = json_decode($response, true);
+            $response = '';
+            // 1. TIER 1 (First Line): Free Sovereign Hugging Face Serverless Vision (Qwen2-VL)
+            try {
+                $response = $this->callHuggingFaceVision($filePath, $prompt);
+            } catch (\Exception $hfEx) {
+                // 2. TIER 2: Google Gemini Commercial Vision Failover
+                if ($this->isConfigured()) {
+                    $response = $this->callGeminiVision($filePath, $mimeType, $prompt);
+                } else {
+                    $response = '';
+                }
+            }
+
+            $parsed = $this->extractJson($response);
             if (!is_array($parsed)) {
                 return $this->simulatePayslipExtraction($declaredMonthlyIncome);
             }
@@ -198,8 +215,20 @@ Extract:
 Output valid JSON matching this schema exactly.";
 
         try {
-            $response = $this->callGeminiVision($filePath, $mimeType, $prompt);
-            $parsed = json_decode($response, true);
+            $response = '';
+            // 1. TIER 1 (First Line): Free Sovereign Hugging Face Serverless Vision (Qwen2-VL)
+            try {
+                $response = $this->callHuggingFaceVision($filePath, $prompt);
+            } catch (\Exception $hfEx) {
+                // 2. TIER 2: Google Gemini Commercial Vision Failover
+                if ($this->isConfigured()) {
+                    $response = $this->callGeminiVision($filePath, $mimeType, $prompt);
+                } else {
+                    $response = '';
+                }
+            }
+
+            $parsed = $this->extractJson($response);
             if (!is_array($parsed)) {
                 return $this->simulateIdExtraction($expectedApplicantName);
             }
@@ -382,7 +411,9 @@ Output valid JSON matching this schema exactly.";
         $response = curl_exec($ch);
         $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80500) {
+            @curl_close($ch);
+        }
 
         if ($response === false || $curlError !== '') {
             throw new \RuntimeException('Gemini Vision network error: ' . ($curlError ?: 'unknown'));
@@ -399,6 +430,45 @@ Output valid JSON matching this schema exactly.";
 
         $content = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
         return (string)$content;
+    }
+
+    /**
+     * Secondary Failover: Hugging Face Serverless Multimodal Vision (Qwen2-VL / Llama-3.2-Vision)
+     */
+    private function callHuggingFaceVision(string $filePath, string $prompt): string
+    {
+        if ($this->hfGateway === null) {
+            $this->hfGateway = new \Src\Ai\HuggingFaceInferenceGateway([
+                'connect_timeout' => $this->connectTimeout,
+                'timeout' => $this->timeout,
+            ]);
+        }
+
+        $systemPrompt = 'You are an expert UK forensic document examiner. Analyze the document and output ONLY a valid JSON object matching the requested schema without markdown codeblocks or commentary.';
+        $raw = $this->hfGateway->analyzeImageWithPrompt($filePath, $prompt, 'Qwen/Qwen2-VL-7B-Instruct', $systemPrompt);
+
+        if ($raw === null || trim($raw) === '') {
+            throw new \RuntimeException('Hugging Face Vision failover did not return a response.');
+        }
+
+        return $raw;
+    }
+
+    /**
+     * @param string $raw
+     * @return array<string, mixed>|null
+     */
+    private function extractJson(string $raw): ?array
+    {
+        $clean = trim($raw);
+        if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $clean, $matches)) {
+            $clean = trim($matches[1]);
+        } elseif (preg_match('/(\{.*\})/s', $clean, $matches)) {
+            $clean = trim($matches[1]);
+        }
+
+        $decoded = json_decode($clean, true);
+        return is_array($decoded) ? $decoded : null;
     }
 
     /**

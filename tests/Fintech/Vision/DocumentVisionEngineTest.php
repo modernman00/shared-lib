@@ -131,4 +131,36 @@ class DocumentVisionEngineTest extends TestCase
         $this->assertStringContainsString('Income discrepancy', $flagsStr);
         $this->assertStringContainsString('expired', $flagsStr);
     }
+
+    public function testHuggingFaceVisionFailover(): void
+    {
+        $mockGateway = $this->createMock(\Src\Ai\HuggingFaceInferenceGateway::class);
+        $mockGateway->expects($this->once())
+            ->method('analyzeImageWithPrompt')
+            ->willReturn(json_encode([
+                'net_pay' => 3100.50,
+                'gross_pay' => 4100.00,
+                'pay_date' => '2026-10-01',
+                'employer_name' => 'Acme Global Ltd',
+                'employee_name' => 'John Doe',
+                'tax_period' => 'Month 07',
+                'tampering_detected' => false,
+                'tamper_flags' => [],
+                'confidence' => 97,
+            ]));
+
+        $engine = new DocumentVisionEngine([
+            'simulate' => false,
+            'api_key' => '', // Gemini unconfigured -> fails over to HF
+            'hf_gateway' => $mockGateway,
+        ]);
+
+        $result = $engine->analyzePayslip($this->dummyPayslipPath, 'image/png', 3100.50);
+
+        $this->assertTrue($result['success']);
+        $this->assertEquals(3100.50, $result['net_pay']);
+        $this->assertEquals(4100.00, $result['gross_pay']);
+        $this->assertEquals('Acme Global Ltd', $result['employer_name']);
+        $this->assertEquals(97, $result['confidence']);
+    }
 }

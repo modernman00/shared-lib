@@ -54,7 +54,9 @@ class TwilioSms
   $response = curl_exec($ch);
   $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
   $err = curl_error($ch);
-  curl_close($ch);
+   if (PHP_VERSION_ID < 80500) {
+       @curl_close($ch);
+   }
 
   if ($response === false) {
    throw new Exception("Twilio SMS failed: {$err}");

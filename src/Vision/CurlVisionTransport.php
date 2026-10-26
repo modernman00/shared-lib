@@ -30,7 +30,9 @@ final class CurlVisionTransport implements VisionTransport
         $response = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $errno = curl_errno($ch);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80500) {
+            @curl_close($ch);
+        }
 
         if ($errno === CURLE_OPERATION_TIMEDOUT) {
             throw new VisionTimeoutException('The vision service took too long to answer.');

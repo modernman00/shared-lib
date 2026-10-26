@@ -336,7 +336,9 @@ function sendText($message, $numbers, $sender): void
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $result = curl_exec($ch); // This is the result from the API
-    curl_close($ch);
+    if (PHP_VERSION_ID < 80500) {
+        @curl_close($ch);
+    }
     echo $result;
 }
 
@@ -890,5 +892,36 @@ if (!function_exists('response_json')) {
         return $json ?: '{}';
     }
 }
+
+if (!function_exists('__')) {
+    /**
+     * Global I18n translation helper.
+     *
+     * @param string $key Dotted translation key (e.g. 'nav.home', 'auth.submit')
+     * @param string|null $fallback Fallback string if key not found
+     * @param array<string, string|int|float> $replace Replacement pairs
+     * @return string
+     */
+    function __(string $key, ?string $fallback = null, array $replace = []): string
+    {
+        return \Src\I18n::trans($key, $replace, $fallback);
+    }
+}
+
+if (!function_exists('trans')) {
+    /**
+     * Global I18n translation alias.
+     *
+     * @param string $key Dotted translation key
+     * @param array<string, string|int|float> $replace Replacement pairs
+     * @param string|null $fallback Fallback string
+     * @return string
+     */
+    function trans(string $key, array $replace = [], ?string $fallback = null): string
+    {
+        return \Src\I18n::trans($key, $replace, $fallback);
+    }
+}
+
 
 

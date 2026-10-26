@@ -57,7 +57,72 @@ $sanitized = Utility::sanitizeInput($_POST['data']);
 
 ### Available Classes
 
-- `Src\Auth` - Authentication and authorization
+- `Src\Ai\VoiceTranscriptionService` - Whisper audio transcription (£0 HF serverless)
+- `Src\Ai\ContentModerationService` - Photo NSFW safety & toxicity classification
+- `Src\Ai\EmbeddingService` - Vector embeddings & in-memory cosine ranking
+- `Src\Ai\ResilientAiChat` - Resilient multi-tier LLM fallback (DeepSeek -> OpenAI -> HF)
+- `Src\Ai\AiImageGenerationService` - Generative event poster & theme background studio (FLUX.1-schnell / SDXL)
+- `Src\Ai\AiVisionService` - Multimodal vision for receipt / bar bill splitting & fridge meal planning (Qwen2-VL)
+- `Src\Ai\AiEntertainmentService` - AI Best Man speechwriter, comedy roast master & dispute referee (Llama-3.2)
+- `Src\Ai\HuggingFaceInferenceGateway` - Hardened HF API client with SSRF protection
+
+### AI Services Example (£0 Serverless Tier)
+
+```php
+use Src\Ai\AiImageGenerationService;
+use Src\Ai\AiVisionService;
+use Src\Ai\AiEntertainmentService;
+
+// 1. Generative Event Flyer Background Studio
+$imageService = new AiImageGenerationService();
+$flyerBg = $imageService->generatePosterBackground("Liam's 7th Birthday with T-Rex", 'kids_storybook_dino');
+$dataUri = $flyerBg['data_uri']; // Passed to shared-js-lib AiFlyerStudio for crisp Canvas typography
+
+// 2. Bar Tab & Receipt Multimodal Splitter
+$visionService = new AiVisionService();
+$parsedBill = $visionService->parseReceipt($_FILES['receipt']['tmp_name']);
+// returns: ['items' => [['name' => 'Nachos', 'price' => 9.50, 'quantity' => 1]], 'total' => 40.20, ...]
+
+// 3. AI Speechwriter & Roast Master
+$entertainment = new AiEntertainmentService();
+$speech = $entertainment->generateSpeech('Dave', '30th Birthday', ['Ibiza pool dive', 'Sourdough obsessed'], 'humorous_roast');
+// returns: ['title' => '...', 'speech_text' => '...', 'suggested_toast' => '...', 'delivery_tips' => [...]]
+
+// 4. Household Dispute Referee
+$ruling = $entertainment->arbitrateDispute('Liam', 'I unloaded the dishwasher', 'Maya', 'He left all the pots', 'household_chores');
+// returns: ['verdict' => '...', 'compromise_action_plan' => [...], 'penalty_or_chore' => '...', 'closing_quip' => '...']
+```
+
+```php
+use Src\Ai\VoiceTranscriptionService;
+use Src\Ai\ContentModerationService;
+use Src\Ai\EmbeddingService;
+use Src\Ai\ResilientAiChat;
+
+// 1. Voice Transcription (Whisper)
+$transcriber = new VoiceTranscriptionService();
+$result = $transcriber->transcribeFile($_FILES['audio']['tmp_name']);
+$text = $result['text'];
+
+// 2. Photo NSFW Moderation
+$moderator = new ContentModerationService();
+$safety = $moderator->checkPhotoSafety($_FILES['photo']['tmp_name']);
+if ($safety['flagged']) {
+    throw new \Exception('Image rejected: inappropriate content detected.');
+}
+
+// 3. Semantic Search Vector Embeddings & Cosine Ranking
+$embedder = new EmbeddingService();
+$queryVector = $embedder->generateEmbedding("affordable wedding venue in London");
+$rankedEvents = $embedder->rankBySimilarity($queryVector, $allEventsWithVectors, 10);
+
+// 4. Resilient AI Chat (Multi-Tier Outage Protection)
+$chat = new ResilientAiChat();
+$reply = $chat->chat([
+    ['role' => 'system', 'content' => 'You are a helpful assistant.'],
+    ['role' => 'user', 'content' => 'Suggest 3 party themes for a 10th birthday.']
+]);
+```
 - `Src\Db` - Database operations and utilities
 - `Src\Email` - Email sending capabilities
 - `Src\FileUploader` - File upload handling

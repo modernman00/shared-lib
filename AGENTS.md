@@ -42,6 +42,14 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 1. **The Engineering Council Debate:** Proposer vs. Designated Technical Adversary clash (Option A vs Option B, lock contention, Big-O, failure modes), Council resolution, and assigned Single-Threaded Owner (STO) execution pod.
 2. **The TAT 2.0 Crucible Debate:** Executive 6-seat check (Victor/James, David/Kieran, Marcus/Ghost, Sarah, Helena, Olutobi) culminating in Olutobi's delegated sign-off.
 
+### 1.6 The Universal British English (UK) Invariant ⚡ (Jumoke Inviolable Standard)
+All user-facing copy, view templates (`.blade.php`, `.html`), email notifications, and dynamically generated content (e.g. `AutonomousBlogService`) across the entire application must strictly use **British English (en-GB)**:
+- Mandatory `-ise` / `-ising` / `-ised` (e.g., *maximising*, *optimising*, *prioritising*, *recognise*, *organise*).
+- Mandatory `-our` (e.g., *behaviour*, *colour*, *favour*, *honour*, *neighbour*).
+- Mandatory `licence` (noun), `defence`, `centre`, `mould`, `enquiry`.
+- Technical database columns and internal schema keys (e.g. `'neighbor'`) are preserved for database compatibility, while all visible labels, badges, tooltips, and headers must display pure British English.
+- The pre-commit gate `scripts/verify_engineering_must_haves.php` statically scans and blocks US English spellings in view files.
+
 ---
 
 ## 2. Master Team Roles & Responsibilities
@@ -51,7 +59,7 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 
 ### 🏛️ Executive Front-Door & Strategic Advisory
 - **Jumoke Olaogun** | Special Assistant to the CEO, Chief of Staff & Chief Token Efficiency Specialist ⚡
-  - *Responsibilities:* **Automatic CEO Front-Door.** Ingests Wally's raw requests automatically without needing her name mentioned. Silently triages tasks, enforces the **Automated Dual-Test Mandate** and the **Living "How to Use" Guide Invariant (Standard 19)** alongside CPO Sarah, and operates in **Strict Velocity Mode** by default (saving full board monologues strictly for explicit requests or Tier 3 changes). Ensures every deliverable includes an explicit **Execution & Accountability Manifest** attributing work to Victor (BRATS), Marcus (Red Team), and the relevant leads. Continuously audits token burn across squads.
+  - *Responsibilities:* **Automatic CEO Front-Door.** Ingests Wally's raw requests automatically without needing her name mentioned. Silently triages tasks, enforces the **Automated Dual-Test Mandate**, the **Living "How to Use" Guide Invariant (Standard 19)**, the **Universal Button Spinner Mandate (Rule 2)**, and the **Universal British English (UK) Invariant (Standard 1.6)** alongside CPO Sarah, and operates in **Strict Velocity Mode** by default (saving full board monologues strictly for explicit requests or Tier 3 changes). Ensures every deliverable includes an explicit **Execution & Accountability Manifest** attributing work to Victor (BRATS), Marcus (Red Team), and the relevant leads. Continuously audits token burn across squads.
 - **Richard Sterling** | Chief Operating Officer (COO)
   - *Responsibilities:* Operational logistics, vendor procurement, cloud infrastructure budgets, and cross-company execution feasibility.
 - **Isabella Chen** | Senior Social Media & Growth Adviser to the CEO
@@ -179,7 +187,7 @@ Just as TAT executive governance reviews are visibly conducted, the **Engineerin
 - **Amara Osei** | FinTech Business Logic & Fraud Specialist — Transaction race conditions, multi-step workflow bypasses, and financial/data compliance.
 - **The Mandatory Adversarial Enterprise Security Attack Rule (Dr. Viktor Kovács & Marcus Gate) ⚡:**
   Every Tier 2 and Tier 3 implementation across the entire portfolio MUST undergo an adversarial penetration attack led by Dr. Viktor Kovács & Marcus. The Red Team must construct concrete, raw Proof-of-Concept (PoC) exploit payloads (curl/bash/scripts). Code cannot merge or deploy until an automated regression test proves each exploit is neutralized.
-- **The Proof-of-Exploit Rule:** Marcus & Ghost must provide the concrete Proof-of-Concept (PoC) exploit payload. Code cannot merge until an automated regression test proves the exploit is neutralized.
+- **The Playbook Reconnaissance Audit:** Marcus & Ghost must inspect all public- and manager-facing playbook templates to verify zero exposure of internal class names, method signatures, database table keys, or defense algorithms. Any internal architectural leakage constitutes an immediate **P1 Security Block** at TAT Seat 3.
 
 ---
 
@@ -251,7 +259,8 @@ graph TD
     subgraph Tier 3: Core Architectural Gauntlet
         T3 --> RFC_Draft[Engineering Council TFT: 1-Page RFC & Proof Capsule]
         RFC_Draft --> Victor_Cert[Victor 6-Pillar CTO Pre-Approval]
-        Victor_Cert --> TAT_Gauntlet[Chamber 4: TAT 2.0 6-Seat Dialectic Gauntlet]
+        Victor_Cert --> Red_Gauntlet[Chamber 3: Dr. Viktor Kovács Enterprise Attack Gauntlet]
+        Red_Gauntlet --> TAT_Gauntlet[Chamber 4: TAT 2.0 6-Seat Dialectic Gauntlet]
         TAT_Gauntlet -->|Dissent / Gate Fail| RFC_Draft
         TAT_Gauntlet -->|Dialectic Consensus| Olutobi_Sign[Olutobi Final Executive Sign-Off]
         Olutobi_Sign --> TFT_Exec[TFT Zero-Defect Execution & Deploy]
@@ -269,16 +278,18 @@ graph TD
   2. BRATS audits systemic ripple effects across other 6 apps.
   3. **Mandatory Dr. Viktor Kovács & Marcus Enterprise Attack:** Dr. Kovács & Marcus execute raw PoC exploit tests (CSRF, IDOR, enumeration, auth tampering). All exploits must be neutralized before proceeding.
   4. Kieran audits Big-O efficiency; Isla audits UI aesthetics; Segun audits mobile responsiveness.
-  5. Verified via browser screenshot artifact before marking complete.
+  5. Verified via in-flight/pre-flight test suites and browser screenshot artifact before marking complete.
 
 ### 🔴 Tier 3: Core Architecture & Structural Changes (High Risk)
 - **Scope:** Database schema migrations (`ALTER`, `CREATE`), auth/session routing, shared libraries (`shared-lib`), payment/pledge logic, service workers (`sw.js`).
 - **Process:**
   1. James drafts a 1-Page ADR (Context, Tradeoffs, Blast Radius, Rollback).
   2. Victor conducts 6-Pillar CTO Pre-Approval Certification and files with Jumoke.
-  3. Full adversarial review across Chambers 1, 2, 3, and 4.
-  4. David verifies 4 structural gates; Olutobi applies Final Executive Sign-Off.
-  5. Deployment executed with automated rollback trigger.
+  3. **Mandatory Dr. Viktor Kovács Enterprise Security Attack Gauntlet:** Full adversarial penetration assault by Dr. Kovács & Marcus with concrete PoC exploit neutralization proofs required.
+  4. Full adversarial review across Chambers 1, 2, 3, and 4.
+  5. David verifies 4 structural gates; Olutobi applies Final Executive Sign-Off.
+  6. In-flight and pre-flight gates (`scripts/preflight.sh`) pass cleanly (Exit Code 0).
+  7. Deployment executed with automated rollback trigger.
 
 ---
 
@@ -304,7 +315,52 @@ graph TD
 | **16**| **Strong Definition of Done (DoD) & Automated Pre-Review Gate** | A feature is not "done" when code is written. It is done ONLY when it is tested, documented, peer-reviewed by another engineer, monitored, and the user-facing "How to Use" / Product Guide page (`/how-to-use`) has been updated with clear, illustrated step-by-step guidance. Every single piece of code must pass automated linting (`php -l`, php-cs-fixer), security scans (Semgrep), unit tests (PHPUnit 100%), and Sarah's Living Guide Gate before a human even reviews it. |
 | **17**| **The 10 Golden Engineering Invariants (Automated Invariant Gate)** | All code must strictly satisfy the 10 Golden Invariants: (1) Universal CSRF Shield (`@csrf` / `LaravelHelper::csrfField()`), (2) Prepared Statements Only, (3) Contextual XSS Encoding, (4) Defensive Nulls (`??` / `?.`), (5) Rate Limiting & BotGuard, (6) Strict Tenant Isolation (anti-IDOR), (7) Resilient Error Shielding, (8) Mobile Touch Ergonomics ($\ge 44\text{px}$), (9) Zero N+1 Loops, and (10) Structured JSON Observability. Automated scan enforced via `php scripts/verify_engineering_must_haves.php`. |
 | **18**| **The Zero-Symlink Invariant (Deployment & Vendor Isolation)** | Symlinks in application directories (specifically `vendor/modernman00/shared-lib` and `node_modules/@modernman00/shared-js-lib`) are **STRICTLY PROHIBITED IN COMMITTED, BUILD, AND DEPLOYMENT WORKSPACES**. Symlinks point to local host paths (e.g. `/Users/waleolaogun/Sites/...`) that do not exist on live staging/production servers, causing catastrophic HTTP 500 fatal errors (`Class not found`). Every application MUST install, update, and lock shared libraries as **real, physical, versioned packages downloaded via Composer/npm (`composer update modernman00/shared-lib --prefer-dist`)**. All deployment pipelines (`deploy.sh`, `deploy-fast.sh`, CI/CD) MUST assert `[ ! -L "vendor/modernman00/shared-lib" ]` and immediately abort if a symlink is detected. |
-| **19**| **The Mandatory Interactive Playbook & Living Guide Standard** | Every single application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) **MUST maintain a live, interactive, mobile-responsive "Interactive Playbook & Product Guide" (`/playbook`, `/admin/playbook`, or `/how-to-use`) built on the 4-Quadrant Architecture**: (1) **Interactive Process Stepper** (click-to-inspect lifecycle with step status, triggers, database tables, and state transitions), (2) **Live Simulator & Domain Economics Engine** (dynamic input sliders/fields, real-time recalculation of splits, fees, or KPIs), (3) **Domain Inspector / Architectural Visualizer** (live schema inspection, double-entry T-accounts, or event-bus state), and (4) **Cryptographic & Invariant Anti-Tamper Guard** (hash verification, validation checklists, error boundary traces). **Mandatory Contrast & Theme Rule:** All playbooks must use a clean, high-contrast light executive theme (pure white `#ffffff` cards, light slate `#f8fafc` canvas, deep slate `#0f172a` typography, tailored vibrant accents; **strictly ban dull grey backgrounds, dark-mode black-on-grey text, and poor contrast**). Whenever ANY new key function, workflow, setting, or enhancement is built and approved, the designated **Playbook Custodian** and CPO Sarah **MUST update the interactive playbook in lockstep as an absolute Definition of Done (DoD) prerequisite**. Features with missing, outdated, or broken interactive playbooks will be summarily vetoed by Sarah at Chamber 1 / TAT Seat 4, and Olutobi's Final Executive Sign-Off (Gate 5) will be strictly blocked until the assigned Custodian provides verified sign-off. |
+| **19**| **The Mandatory Interactive Playbook & Living Guide Standard** | Every single application across the portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `Best Care Professionals`) **MUST maintain a live, interactive, mobile-responsive "Interactive Playbook & Product Guide" (`/playbook`, `/admin/playbook`, or `/how-to-use`) built on the 4-Quadrant Architecture**: (1) **Interactive Process Stepper** (click-to-inspect lifecycle with step status, triggers, database tables, and state transitions), (2) **Live Simulator & Domain Economics Engine** (dynamic input sliders/fields, real-time recalculation of splits, fees, or KPIs), (3) **Domain Inspector / Architectural Visualizer** (live schema inspection, double-entry T-accounts, or event-bus state), and (4) **Cryptographic & Invariant Anti-Tamper Guard** (hash verification, validation checklists, error boundary traces). **Mandatory Contrast & Theme Rule:** All playbooks must use a clean, high-contrast light executive theme (pure white `#ffffff` cards, light slate `#f8fafc` canvas, deep slate `#0f172a` typography, tailored vibrant accents; **strictly ban dull grey backgrounds, dark-mode black-on-grey text, and poor contrast**). **⚡ STRICT ZERO-CODE & ZERO-SCHEMA DISCLOSURE INVARIANT (AUDIENCE HYGIENE):** Playbooks are strictly executive, operational, and customer-facing assets. Under NO circumstances may any playbook template expose: (1) Raw backend PHP code snippets, queries, or execution logic (`Db::transaction`, `$user = User::create`), (2) Internal class namespaces, controller bindings, or method signatures (`App\classes\...`, `BaseController::canManageEvent()`), or (3) Raw database table names, SQL primary/foreign keys (`PK:`, `FK:`), or internal column names (`token_version`, `vault_key`, `is_disputed`). All technical concepts MUST be abstracted into **Domain Entities** (e.g. *Member Sanctuary Profile*, *Rental Tenancy Record*, *Balanced Journal Entry*, *Executive Strategic Brief*), **Operational Roles** (e.g. *Privacy Officer*, *Adjudication Lead*, *Event Host*, *Clinical Governance Lead*), and **Action Checklists & Business Safeguards**. Whenever ANY new key function, workflow, setting, or enhancement is built and approved, the designated **Playbook Custodian** and CPO Sarah **MUST update the interactive playbook in lockstep as an absolute Definition of Done (DoD) prerequisite**. Features with missing, outdated, or broken interactive playbooks will be summarily vetoed by Sarah at Chamber 1 / TAT Seat 4, and Olutobi's Final Executive Sign-Off (Gate 5) will be strictly blocked until the assigned Custodian provides verified sign-off. |
+| **20**| **The Multi-Surface Definition of Done (Anti-Headless Mandate) ⚡** | Under no circumstances may an agent declare a feature or goal complete by merely running CLI unit tests. Every user-facing feature MUST satisfy the **4-Surface Verification Standard**: (1) **Data & Backend:** Idempotent database schema, strict typing, passing automated test suite with zero PHPStan L8 errors. (2) **Discoverability & Navigation:** Explicit clickable menu or button entry point exists in `adminNav.blade.php`, `modernHub.blade.php`, or primary navigation. Hidden or "URL-only" pages are grounds for immediate rejection. (3) **DOM Completeness (Zero Phantom Elements):** Every button or element containing `data-bs-target="#id"` or `onclick="fn()"` MUST have a corresponding HTML container and JavaScript handler physically present in the file. (4) **Interactive Validation:** Verified in the browser (`APP_URL`) that the page renders with zero console errors and interactive controls respond as expected. |
+| **21**| **Enforced `shared-lib` & `shared-js-lib` Component Invariant (Zero Ad-Hoc Helper Reinventions) ⚡** | Ad-hoc helper duplication is strictly prohibited across all portfolio apps: (1) **JSON API Responses:** Controllers MUST use `\Src\ApiResponse::json()` and `\Src\ApiResponse::error()`. Writing local `respondJson()` or unstandardized `json_encode()` is an automatic preflight failure. (2) **Rate-Limiting:** All public-facing API endpoints MUST apply `\Src\Limiter::limit()`. (3) **Audit Logging:** System mutations and approval gates MUST record entries using `\Src\AuditLogger::log()`. (4) **Frontend Components:** Web views requiring digital signatures, ID badges, button loading spinners, or AJAX requests MUST import and leverage `@modernman00/shared-js-lib` (`DigitalSignaturePad`, `CardCanvasGenerator`, `ButtonLoader`, `Http.js`, `ShowResponse`). |
+| **22**| **Healthcare Workforce Bifurcation & CQC Reg 5 FPPT Invariant (BCP Specific) ⚡** | When developing HR, recruitment, or lifecycle features for healthcare: (1) **Workforce Bifurcation:** Never apply clinical care dependency ratios to office, administrative, or executive roles. Office roles are justified by operational workload and bed count (e.g. 1 Admin per 45 beds). (2) **CQC Regulation 5 (FPPT):** All Registered Care Home Manager (Band 7) and Director (Band 8a) recruitment pipelines MUST enforce the CQC Regulation 5 Fit and Proper Person Test (FPPT): Insolvency Register checks, Companies House Disqualified Directors Register checks, and Level 5 Leadership Diploma verification. |
+| **23**| **Pre-Commit Must-Haves Scanner Invariant & Test Fixture SQL Safety ⚡** | No PR, feature, or refactor may be marked complete without executing `php scripts/verify_engineering_must_haves.php` and `bash scripts/preflight.sh` to zero violations. (1) **Universal CSRF:** All `<form>` elements in Blade templates (including AJAX/modal forms) must contain `@include('csrf')` or `@csrf`. (2) **Zero SQL String Interpolation:** Raw variable interpolation (`{$var}`, `$var`, or concatenation) is strictly prohibited across ALL PHP files without exception. Test fixtures, seeders, and assertion queries are NOT exempt—all test queries must use parameterized PDO statements (`prepare` & `execute`). (3) **Decoupled Placeholders:** Dynamic batch placeholders (`?,?,?`) must be decoupled from the SQL command string via `sprintf()` so that no variable name appears on the SQL statement line. |
+| **24**| **PHP `readonly` + Constructor Body Override (Fatal Pattern Ban) ⚡** | When writing PHP 8.1+ code, agents and developers are STRICTLY FORBIDDEN from combining constructor-promoted `readonly` properties with a body-level reassignment (`$this->prop = $prop ?? new ...`). The promoted property's implicit assignment IS the one allowed initialization; reassigning in the constructor body triggers a fatal runtime error (`Cannot modify readonly property`). Either drop `readonly` or use a static factory constructor method (`create()`). |
+| **25**| **Strict String Typing for User/Entity IDs ⚡** | All user and entity IDs must be strictly typed as `string` in PHP models, controllers, and DTOs. This prevents silent alphanumeric truncation bugs (where alphanumeric IDs such as `usr_98a7b` evaluate to `0` or integer prefixes when cast to `int`). |
+| **26**| **Strict Router Whitelist & Session Dependency (`RouteDispatch.php`) ⚡** | Any controller that calls `$this->requireManager()` or reads `$_SESSION['manager_id']` MUST NOT be added to `$publicControllers` in `RouteDispatch.php`. Whitelisted controllers bypass the JWT decoding block that populates `$_SESSION`, causing authenticated methods to throw 401/null pointer errors. Casing in router string comparisons is strict (`in_array(..., true)`). |
+| **27**| **MySQL `ONLY_FULL_GROUP_BY` Strict Mode & Application-Layer Deduplication ⚡** | The database runs with `ONLY_FULL_GROUP_BY` strict mode enabled. Never use `GROUP BY` for simple deduplication if the `SELECT` clause contains `*` or non-aggregated columns. Instead, query raw records and perform deduplication in the PHP array layer using unique associative keys. |
+| **28**| **Pre-Flight Schema Parity Rule (`SHOW COLUMNS`) ⚡** | When investigating "works locally, fails in production" bugs, never assume schemas match just because tables exist. Run `SHOW COLUMNS FROM <table>` on both environments and compare `DEFAULT` constraints, `ON UPDATE` triggers, and column types before touching PHP application code. |
+| **29**| **Controlled Deletion & Protected Live Syncs (`rsync --delete-excluded`) ⚡** | All deployment scripts using `--delete` or `--delete-excluded` MUST be guarded by a strict `.rsync-filter` protecting persistent directories (`P /public/uploads/***`, `P /storage/***`, `P .env`). Scripts MUST include a pre-flight structural dry-run assertion before synchronization. |
+
+---
+
+### 4.1 Granular Technical Defensive Patterns & Gotchas
+
+#### 🚨 Pattern A: PHP `readonly` Constructor Trap (PHP 8.1+)
+```php
+// ❌ FORBIDDEN — readonly + body reassignment (causes fatal 500 at runtime):
+public function __construct(private readonly ?CacheService $cache = null) {
+    $this->cache = $cache ?? new CacheService(); // FATAL: Cannot modify readonly property
+}
+
+// ✅ CORRECT Option 1 — Drop readonly when default initialization occurs in constructor body:
+public function __construct(private ?CacheService $cache = null) {
+    $this->cache = $cache ?? new CacheService();
+}
+
+// ✅ CORRECT Option 2 — Retain readonly and provide static factory:
+public function __construct(private readonly CacheService $cache) {}
+
+public static function create(?CacheService $cache = null): self {
+    return new self($cache ?? new CacheService());
+}
+```
+
+#### 🚨 Pattern B: Router Whitelist & Session Injection Dependencies
+```php
+// Router must decode JWT and populate session BEFORE manager controllers execute:
+$VerifyJWT = SignIn::verify();
+$_SESSION['id']         = $id;
+$_SESSION['manager_id'] = $id;
+
+// Controllers calling requireManager() MUST NOT be in $publicControllers.
+// Sequential Dependency: Router (JWT -> Session) ===> Controller (reads Session).
+```
 
 ---
 
@@ -361,3 +417,45 @@ When conducting debates and reviews, output MUST follow this compact, high-impac
 ## 7. Authority & Enforceability
 This document is the supreme governance charter across the entire portfolio. Any deviation requires explicit written authorization from **Wally (CEO)** or **Olutobi (TAT Chair on CEO delegation)**.
 
+
+---
+
+## 8. Global Design & UI/UX Standards (v2.0 Enforced) 🎨
+
+> [!IMPORTANT]
+> **CEO Mandate:** These visual design frameworks, layout constraints, typography rules, and 4-state engineering requirements are live and enforced across all applications (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, and `BCP`).
+
+### 8.1 Typography & Defensive Text Layouts
+* **Zero Mid-Word Truncation:** Dynamic strings (usernames, event titles, descriptions, account numbers) must never be chopped awkwardly (e.g., avoid "James Birthda"). Use either intelligent multi-line clamping (`line-clamp-2` / `line-clamp-3`) with full fallback wrapping, or explicit `text-overflow: ellipsis` accompanied by a native `title="..."` tooltip attribute on hover.
+* **Button Label Integrity:** Interactive elements (buttons, pill filters, tab headers) must NEVER wrap text across multiple lines. Always apply `white-space: nowrap; flex-shrink: 0;`. If space is constrained, allow the parent container to scroll horizontally (`overflow-x-auto`) or resize gracefully.
+* **Strict Type Scale:** Never use arbitrary font sizes. Use a disciplined 5-step scale with explicit line-heights:
+  - Hero/Title: `text-2xl` to `text-3xl` (font-extrabold / tracking-tight)
+  - Section Headers: `text-lg` to `text-xl` (font-semibold)
+  - Body Text: `text-sm` to `text-base` (font-normal / leading-relaxed)
+  - Captions & Badges: `text-xs` (font-medium / tracking-wide / uppercase where appropriate)
+* **British English (UK) Invariant:** All user-facing copy, labels, placeholders, and tooltips must strictly adhere to British English (e.g., *organise*, *optimise*, *customise*, *colour*, *behaviour*, *centre*).
+
+### 8.2 Layout Architecture, Spacing & Tap Targets
+* **Safe Touch Targets (Fitts's Law):** Every interactive control (buttons, icon links, checkboxes, chips, tab triggers) must have an absolute minimum hit target of 44x44px (`min-h-[44px] min-w-[44px]`).
+* **Interactive Element Separation:** Adjacent buttons or clickable items must have a minimum physical gap of `8px` (`gap-2`) to prevent accidental multi-taps on mobile touchscreens.
+* **Strict 8-Point Spacing Grid:** Spacing (padding, margin, gap) must strictly use multiples of 4px or 8px (`p-2`, `p-4`, `p-6`, `gap-3`, `gap-4`). Banish arbitrary values (e.g., `padding: 13px`).
+* **Visual Chunking & Containers:** Group related data inside dedicated surface cards with subtle border contrasts (`border border-slate-200 dark:border-slate-800`), rounded corners (`rounded-xl` or `rounded-2xl`), and consistent inner padding (`p-4` or `p-6`).
+
+### 8.3 Color Harmony, Contrast & Tactile Micro-Interactions
+* **WCAG AA Contrast Strictness:** All body copy and critical data must guarantee a minimum 4.5:1 contrast ratio against its background (3:1 for large headers). Never place medium grey on light grey, or muted blue on dark slate.
+* **Disciplined Accent Allocation (60-30-10 Rule):**
+  - 60% neutral surface/canvas (whites, slate, deep navy).
+  - 30% structural contrast (cards, dividers, readable typography).
+  - 10% high-energy accent (primary action buttons, active tabs, urgency status). Never plaster accent gradients or neon borders across secondary elements.
+* **Tactile State Feedback:** Every interactive element must define 4 distinct visual states:
+  - **Hover:** Subtle lift or brightness shift (`hover:brightness-105 hover:-translate-y-0.5 transition-all`).
+  - **Active:** Physical click compression (`active:scale-[0.98]`).
+  - **Focus:** Accessible keyboard focus outline (`focus-visible:ring-2 focus-visible:ring-offset-2`).
+  - **Disabled / Loading:** `opacity-50 cursor-not-allowed` with an integrated loading spinner.
+
+### 8.4 The 4-State Engineering Verification
+Before delivering any component or template, verify it against the 4 fundamental states:
+1. **Happy Path:** Does the layout look balanced, with clear visual hierarchy guiding the eye directly to the primary Call-to-Action?
+2. **Extreme Lengths:** Does the card still look pristine if an event/account name is 80 characters long or only 3 characters long?
+3. **Empty State:** If the dataset has 0 records, is there a helpful, beautifully illustrated fallback card with a primary action button?
+4. **Interactive Submitting:** Does every action button display a loading spinner when clicked to prevent duplicate submissions?
