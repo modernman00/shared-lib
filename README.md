@@ -64,6 +64,7 @@ $sanitized = Utility::sanitizeInput($_POST['data']);
 - `Src\Ai\AiImageGenerationService` - Generative event poster & theme background studio (FLUX.1-schnell / SDXL)
 - `Src\Ai\AiVisionService` - Multimodal vision for receipt / bar bill splitting & fridge meal planning (Qwen2-VL)
 - `Src\Ai\AiEntertainmentService` - AI Best Man speechwriter, comedy roast master & dispute referee (Llama-3.2)
+- `Src\Ai\ResilientWebSearchService` - Grounded web search & safe Markdown fetch across all 8 portfolio apps (72h SHA-256 cache + DeepSeek Search/Fetch `$0.75/1k` + £0 Open-Web fallback)
 - `Src\Ai\HuggingFaceInferenceGateway` - Hardened HF API client with SSRF protection
 
 ### AI Services Example (£0 Serverless Tier)

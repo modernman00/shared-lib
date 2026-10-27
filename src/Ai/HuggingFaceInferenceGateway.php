@@ -34,7 +34,7 @@ class HuggingFaceInferenceGateway
     public function __construct(array $config = [])
     {
         $this->apiToken = (string)($config['api_token'] ?? $_ENV['HF_API_TOKEN'] ?? getenv('HF_API_TOKEN') ?: '');
-        $this->defaultBaseUrl = rtrim((string)($config['base_url'] ?? $_ENV['HF_BASE_URL'] ?? 'https://api-inference.huggingface.co'), '/');
+        $this->defaultBaseUrl = rtrim((string)($config['base_url'] ?? $_ENV['HF_BASE_URL'] ?? 'https://router.huggingface.co/hf-inference'), '/');
         $this->connectTimeout = (int)($config['connect_timeout'] ?? 2);
         $this->timeout = (int)($config['timeout'] ?? 5);
     }

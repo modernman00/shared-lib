@@ -115,6 +115,37 @@ final class ResilientAiChat
     }
 
     /**
+     * Opt-in Web-Grounded Chat Completion via ResilientWebSearchService.
+     * Standard chat() and complete() never invoke billable Search/Fetch APIs unless groundedChat() is explicitly called.
+     *
+     * @param string $searchQuery Live web query to ground the response
+     * @param string $systemInstruction Domain instruction
+     * @param array{
+     *     count?: int,
+     *     min_authority_tier?: int,
+     *     site_filter?: string,
+     *     bypass_cache?: bool,
+     *     max_tokens?: int
+     * } $options
+     * @return array{
+     *     success: bool,
+     *     query_dispatched: string,
+     *     synthesis: string,
+     *     citations: list<array{title: string, url: string, snippet: string, authority_tier: int}>,
+     *     search_provider: string,
+     *     chat_provider: string,
+     *     cache_hit: bool,
+     *     estimated_cost_usd: float,
+     *     error: ?string
+     * }
+     */
+    public function groundedChat(string $searchQuery, string $systemInstruction = 'You are a helpful UK assistant.', array $options = []): array
+    {
+        $webSearch = new ResilientWebSearchService($this);
+        return $webSearch->groundedResearch($searchQuery, $systemInstruction, $options);
+    }
+
+    /**
      * @param array<int, array{role: string, content: string}> $messages
      * @param array<string, mixed> $options
      */

@@ -95,6 +95,22 @@ final class AiHealthCheckService
                 : 'No DEEPSEEK_API_KEY found.',
         ];
 
+        // 5. Inspect Grounded Web Search & Jumoke's Cost Circuit Breaker
+        $webSearch = new ResilientWebSearchService($this->chat);
+        $telemetry = $webSearch->getUsageTelemetry();
+        $subsystems['web_search_grounding'] = [
+            'status' => 'ACTIVE',
+            'latency_ms' => 0,
+            'provider' => $telemetry['deepseek_configured'] ? 'DeepSeek Search + 72h Cache' : 'Sovereign Open-Web (£0 Fallback)',
+            'details' => sprintf(
+                'Daily usage: %d/%d requests ($%.4f USD spent today; %ds SHA-256 cache shield active).',
+                $telemetry['daily_requests_used'],
+                $telemetry['daily_cap'],
+                $telemetry['estimated_daily_spend_usd'],
+                $telemetry['cache_ttl_seconds']
+            ),
+        ];
+
         return [
             'timestamp' => date('Y-m-d H:i:s T'),
             'overall_status' => $overallHealthy ? 'OPERATIONAL' : 'DEGRADED',
