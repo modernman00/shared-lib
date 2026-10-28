@@ -438,8 +438,8 @@ class Utility
             $th instanceof \Src\Exceptions\TooManyRequestsException => Level::Warning, // Input errors
             $th instanceof \Src\Exceptions\ValidationException => Level::Warning, // Input errors
             $th instanceof \Src\Exceptions\CaptchaVerificationException => Level::Warning, // Input errors
+            $th instanceof \Src\Exceptions\RecaptchaFailedException => Level::Warning, // Client CAPTCHA challenge failures
             $th instanceof \Src\Exceptions\RecaptchaCheatingException => Level::Alert,
-            $th instanceof \Src\Exceptions\RecaptchaFailedException || $th instanceof \Src\Exceptions\InvalidArgumentException => Level::Error,
             $th instanceof \Src\Exceptions\RecaptchaBrokenException => Level::Critical,
             default => Level::Error // Default for other exceptions
         };

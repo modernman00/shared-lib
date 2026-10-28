@@ -60,7 +60,11 @@ final class ErrorHandler
 
         // Log via Monolog (file + optional email alert for critical levels).
         try {
-            $level = $statusCode >= 500 ? Level::Critical : Level::Error;
+            $level = match (true) {
+                $statusCode >= 500 => Level::Critical,
+                $statusCode >= 400 => Level::Warning,
+                default => Level::Error,
+            };
             LoggerFactory::getLogger()->log($level, '🚨 Uncaught Exception', [
                 'class'   => get_class($th),
                 'message' => $th->getMessage(),
