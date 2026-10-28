@@ -80,6 +80,7 @@ class Utility
         array $cspOptions = ['enable' => true, 'report_only' => true]
     ) {
         try {
+            $data = function_exists('normalizeViewData') ? \normalizeViewData($data) : $data;
             // ===== 1. CSP SETUP =====
             $cspEnabled = $cspOptions['enable'] ?? true;
             $reportOnly = $cspOptions['report_only'] ?? true;

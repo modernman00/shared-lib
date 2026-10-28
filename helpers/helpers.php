@@ -34,6 +34,55 @@ if (!function_exists('isTestEnv')) {
     }
 }
 
+if (!function_exists('normalizeViewData')) {
+    /**
+     * Recursively normalises view data so that apostrophes and quotation entities
+     * (e.g. &#039;, &apos;, &rsquo;, and double-encoded &amp;#039;) are decoded back
+     * to authentic UTF-8 characters prior to Blade template rendering.
+     *
+     * This ensures names like "Jummy's Birthday" render cleanly in HTML, attributes,
+     * JavaScript/JSON payloads, Canvas flyers, and OpenGraph meta tags, while
+     * preserving full XSS protection via Blade's automatic escaping.
+     */
+    function normalizeViewData(mixed $data): mixed
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = normalizeViewData($value);
+            }
+            return $data;
+        }
+
+        if (!is_string($data) || $data === '' || !str_contains($data, '&')) {
+            return $data;
+        }
+
+        // Decode recursively up to 3 times for multi-encoded entities (&amp;amp;#039; -> &amp;#039; -> &#039; -> ')
+        $current = $data;
+        for ($i = 0; $i < 3; $i++) {
+            if (!str_contains($current, '&')) {
+                break;
+            }
+            $replaced = str_replace(
+                ['&amp;#039;', '&amp;#39;', '&amp;apos;', '&amp;#x27;', '&amp;#x0027;', '&amp;quot;', '&amp;#034;', '&amp;#34;', '&amp;#x22;'],
+                ['&#039;', '&#39;', '&apos;', '&#x27;', '&#x0027;', '&quot;', '&#034;', '&#34;', '&#x22;'],
+                $current
+            );
+            $replaced = str_replace(
+                ['&#039;', '&#39;', '&apos;', '&#x27;', '&#x0027;', '&rsquo;', '&#8217;', '&#x2019;', '&lsquo;', '&#8216;', '&#x2018;', '&quot;', '&#034;', '&#34;', '&#x22;'],
+                ["'", "'", "'", "'", "'", '’', '’', '’', '‘', '‘', '‘', '"', '"', '"', '"'],
+                $replaced
+            );
+            if ($replaced === $current) {
+                break;
+            }
+            $current = $replaced;
+        }
+
+        return $current;
+    }
+}
+
 if (!function_exists('view2')) {
     /**
      * Renders a view with CSP middleware enabled.
@@ -51,6 +100,7 @@ if (!function_exists('viewBuilderWithCSP')) {
     function viewBuilderWithCSP(string $viewFile, array $data = [], array $cspOptions = [])
     {
         try {
+            $data = normalizeViewData($data);
             CSPMiddleware::handle($data);
             if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['token'])) {
                 $domain = parse_url($_ENV['APP_URL'] ?? '', PHP_URL_HOST) ?: '';
@@ -78,6 +128,7 @@ if (!function_exists('view')) {
     function view(string $path, array $data = [])
     {
         $normalizedPath = str_replace(['/', '\\'], '.', $path);
+        $data = normalizeViewData($data);
         if (isTestEnv()) {
             $GLOBALS['__testView'] = ['path' => $normalizedPath, 'data' => $data];
             return;
@@ -455,7 +506,10 @@ function checkInput($data)
         $data = (string)$data;
         $data = trim($data);
         $data = strip_tags($data);
-        $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}\p{Sc}]/u', '', $data);
+        // Emoji support: also keep Fitzpatrick skin-tone modifiers (U+1F3FB-1F3FF, category Sk),
+        // the zero-width joiner (U+200D), variation selector-16 (U+FE0F) and keycap (U+20E3).
+        // Without these, tones/ZWJ sequences are stripped and revert to the default emoji.
+        $data = preg_replace('/[^\p{L}\p{N}\p{P}\p{Z}\p{So}\p{Sc}\x{1F3FB}-\x{1F3FF}\x{200D}\x{FE0F}\x{20E3}]/u', '', $data);
 
         return $data;
     } else {
