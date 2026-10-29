@@ -41,7 +41,7 @@ class BroadcastService
      */
     public function calculateAudienceCount(string $targetApp, string $audienceTier, string $channel): int
     {
-        $sql = "SELECT COUNT(*) FROM " . $this->getUserTableName();
+        $sql = sprintf("SELECT COUNT(*) FROM %s", $this->getUserTableName());
         $where = [];
 
         if ($audienceTier === 'active') {
@@ -104,7 +104,7 @@ class BroadcastService
         $failedCount = 0;
 
         // Fetch users to target
-        $usersStmt = $this->db->query("SELECT id, email FROM " . $this->getUserTableName() . " LIMIT 100");
+        $usersStmt = $this->db->query(sprintf("SELECT id, email FROM %s LIMIT 100", $this->getUserTableName()));
         $users = $usersStmt ? $usersStmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         foreach ($users as $user) {

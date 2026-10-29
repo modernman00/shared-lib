@@ -134,7 +134,7 @@ class AdminService
         // 1. Total Registered Users (100% Empirical)
         $totalUsers = 0;
         try {
-            $stmt = $this->db->query("SELECT COUNT(*) FROM " . $this->getUserTableName());
+            $stmt = $this->db->query(sprintf("SELECT COUNT(*) FROM %s", $this->getUserTableName()));
             $totalUsers = (int)($stmt ? $stmt->fetchColumn() : 0);
         } catch (\Throwable $e) {
             $totalUsers = 0;
@@ -289,7 +289,7 @@ class AdminService
         $totalUsers = 0;
         $pushSubs = 0;
         try {
-            $uStmt = $this->db->query("SELECT COUNT(*) FROM " . $this->getUserTableName());
+            $uStmt = $this->db->query(sprintf("SELECT COUNT(*) FROM %s", $this->getUserTableName()));
             $totalUsers = (int)($uStmt ? $uStmt->fetchColumn() : 0);
             $pStmt = $this->db->query("SELECT COUNT(*) FROM push_subscriptions");
             $pushSubs = (int)($pStmt ? $pStmt->fetchColumn() : 0);
@@ -454,7 +454,7 @@ class AdminService
         $offset = max(0, (int)($filters['offset'] ?? 0));
 
         $table = $this->getUserTableName();
-        $sql = "SELECT id, email, created_at, status FROM " . $table;
+        $sql = sprintf("SELECT id, email, created_at, status FROM %s", $table);
         $params = [];
 
         if (!empty($search)) {
@@ -470,7 +470,7 @@ class AdminService
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Fetch count
-            $baseQuery = 'SELECT COUNT(*) FROM ' . $table;
+            $baseQuery = sprintf("SELECT COUNT(*) FROM %s", $table);
             $countSql = $baseQuery . (!empty($search) ? ' WHERE email LIKE ?' : '');
             $countStmt = $this->db->prepare($countSql);
             $countStmt->execute($params);
