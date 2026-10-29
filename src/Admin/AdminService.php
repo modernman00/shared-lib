@@ -131,42 +131,48 @@ class AdminService
      */
     public function getOverviewMetrics(?string $appFilter = null): array
     {
-        // Total Users across ecosystem
+        // 1. Total Registered Users (100% Empirical)
         $totalUsers = 0;
         try {
             $stmt = $this->db->query("SELECT COUNT(*) FROM " . $this->getUserTableName());
             $totalUsers = (int)($stmt ? $stmt->fetchColumn() : 0);
         } catch (\Throwable $e) {
-            $totalUsers = 1250;
+            $totalUsers = 0;
         }
 
-        // Active push subscribers
+        // 2. Push Subscribers (Real DB Count)
         $pushSubscribers = 0;
         try {
             $stmt = $this->db->query("SELECT COUNT(*) FROM push_subscriptions");
             $pushSubscribers = (int)($stmt ? $stmt->fetchColumn() : 0);
         } catch (\Throwable $e) {
-            $pushSubscribers = 340;
+            $pushSubscribers = 0;
         }
 
-        // Broadcast stats
+        // 3. Broadcasts & Delivered Volume (Real DB Count)
         $totalBroadcasts = 0;
         $totalDelivered = 0;
+        $deliveryRate = 100.0;
         try {
-            $stmt = $this->db->query("SELECT COUNT(*), COALESCE(SUM(recipient_count), 0) FROM admin_broadcasts");
+            $stmt = $this->db->query("SELECT COUNT(*), COALESCE(SUM(recipient_count), 0), SUM(CASE WHEN status IN ('sent', 'delivered', 'completed') THEN 1 ELSE 0 END) FROM admin_broadcasts");
             if ($stmt) {
                 $row = $stmt->fetch(PDO::FETCH_NUM);
                 if (is_array($row)) {
                     $totalBroadcasts = (int)($row[0] ?? 0);
                     $totalDelivered = (int)($row[1] ?? 0);
+                    $successfulBroadcasts = (int)($row[2] ?? 0);
+                    if ($totalBroadcasts > 0) {
+                        $deliveryRate = round(($successfulBroadcasts / $totalBroadcasts) * 100, 1);
+                    }
                 }
             }
         } catch (\Throwable $e) {
             $totalBroadcasts = 0;
             $totalDelivered = 0;
+            $deliveryRate = 100.0;
         }
 
-        // Active Campaigns
+        // 4. Active Scheduled Campaigns
         $activeCampaigns = 0;
         try {
             $stmt = $this->db->query("SELECT COUNT(*) FROM admin_campaigns WHERE status IN ('scheduled', 'sending')");
@@ -175,25 +181,52 @@ class AdminService
             $activeCampaigns = 0;
         }
 
-        // App-specific or global scaling factor for realistic multi-app metrics view
-        $isSpecific = $appFilter && isset(self::APPS[$appFilter]);
-        $appMultiplier = $isSpecific ? 0.22 : 1.0;
+        // 5. Empirical Active Users (Real DAU & MAU from presence and audit telemetry)
+        $activeDau = 0;
+        $activeMtu = 0;
 
-        $displayUsers = (int)max(1, round($totalUsers * $appMultiplier));
-        $displayPush = (int)max(1, round($pushSubscribers * $appMultiplier));
-        $displayMtu = (int)round($displayUsers * 0.68);
-        $displayDau = (int)round($displayUsers * 0.34);
+        // Try presence table first (last 24 hours / last 30 days)
+        try {
+            AdminPresenceService::ensureSchema($this->db);
+            $dauStmt = $this->db->query("SELECT COUNT(DISTINCT COALESCE(user_id, session_id)) FROM admin_presence WHERE last_seen_at >= (NOW() - INTERVAL 24 HOUR)");
+            $activeDau = (int)($dauStmt ? $dauStmt->fetchColumn() : 0);
+
+            $mtuStmt = $this->db->query("SELECT COUNT(DISTINCT COALESCE(user_id, session_id)) FROM admin_presence WHERE last_seen_at >= (NOW() - INTERVAL 30 DAY)");
+            $activeMtu = (int)($mtuStmt ? $mtuStmt->fetchColumn() : 0);
+        } catch (\Throwable) {}
+
+        // Fallback to audit_logs / telemetry if presence is newly instantiated
+        if ($activeDau === 0) {
+            try {
+                $stmt = $this->db->query("SELECT COUNT(DISTINCT user_id) FROM audit_logs WHERE created_at >= (NOW() - INTERVAL 24 HOUR) AND user_id IS NOT NULL AND user_id != '0'");
+                $activeDau = (int)($stmt ? $stmt->fetchColumn() : 0);
+            } catch (\Throwable) {}
+        }
+        if ($activeMtu === 0) {
+            try {
+                $stmt = $this->db->query("SELECT COUNT(DISTINCT user_id) FROM audit_logs WHERE created_at >= (NOW() - INTERVAL 30 DAY) AND user_id IS NOT NULL AND user_id != '0'");
+                $activeMtu = (int)($stmt ? $stmt->fetchColumn() : 0);
+            } catch (\Throwable) {}
+        }
+
+        // System operational status
+        $systemUptime = 100.0;
+        try {
+            $this->db->query("SELECT 1");
+        } catch (\Throwable) {
+            $systemUptime = 0.0;
+        }
 
         return [
-            'total_users' => $displayUsers,
-            'active_mtu' => $displayMtu,
-            'active_dau' => $displayDau,
-            'push_subscribers' => $displayPush,
+            'total_users' => $totalUsers,
+            'active_mtu' => $activeMtu,
+            'active_dau' => $activeDau,
+            'push_subscribers' => $pushSubscribers,
             'total_broadcasts' => $totalBroadcasts,
             'total_delivered_messages' => $totalDelivered,
             'active_campaigns' => $activeCampaigns,
-            'delivery_rate' => 99.4,
-            'system_uptime' => 99.98,
+            'delivery_rate' => $deliveryRate,
+            'system_uptime' => $systemUptime,
             'selected_app' => $appFilter ?? 'all',
         ];
     }
@@ -207,10 +240,86 @@ class AdminService
         $apps = self::APPS;
         $insights = [];
 
+        // 1. Calculate Real 7-day user signup growth rate
+        $recentSignups = 0;
+        $prevSignups = 0;
+        try {
+            $stmt = $this->db->query(
+                "SELECT 
+                    SUM(CASE WHEN created_at >= (NOW() - INTERVAL 7 DAY) THEN 1 ELSE 0 END) as recent_7d,
+                    SUM(CASE WHEN created_at >= (NOW() - INTERVAL 14 DAY) AND created_at < (NOW() - INTERVAL 7 DAY) THEN 1 ELSE 0 END) as prev_7d
+                 FROM " . $this->getUserTableName()
+            );
+            if ($stmt) {
+                $growthRow = $stmt->fetch(PDO::FETCH_ASSOC);
+                $recentSignups = (int)($growthRow['recent_7d'] ?? 0);
+                $prevSignups = (int)($growthRow['prev_7d'] ?? 0);
+            }
+        } catch (\Throwable) {}
+
+        $weeklyGrowthFormatted = '0%';
+        if ($prevSignups > 0) {
+            $diffPct = round((($recentSignups - $prevSignups) / $prevSignups) * 100);
+            $weeklyGrowthFormatted = ($diffPct >= 0 ? '+' : '') . $diffPct . '%';
+        } elseif ($recentSignups > 0) {
+            $weeklyGrowthFormatted = '+' . $recentSignups . ' new';
+        }
+
+        // 2. Real Error Rate from audit_logs
+        $errorRateFormatted = '0.0%';
+        try {
+            $errStmt = $this->db->query(
+                "SELECT 
+                    COUNT(*) as total_logs,
+                    SUM(CASE WHEN action LIKE '%error%' OR action LIKE '%fail%' OR status LIKE '%error%' OR status LIKE '%fail%' THEN 1 ELSE 0 END) as error_logs
+                 FROM audit_logs
+                 WHERE created_at >= (NOW() - INTERVAL 7 DAY)"
+            );
+            if ($errStmt) {
+                $errRow = $errStmt->fetch(PDO::FETCH_ASSOC);
+                $tot = (int)($errRow['total_logs'] ?? 0);
+                $err = (int)($errRow['error_logs'] ?? 0);
+                if ($tot > 0) {
+                    $errorRateFormatted = round(($err / $tot) * 100, 2) . '%';
+                }
+            }
+        } catch (\Throwable) {}
+
+        // 3. Real Push Opt-in rate
+        $totalUsers = 0;
+        $pushSubs = 0;
+        try {
+            $uStmt = $this->db->query("SELECT COUNT(*) FROM " . $this->getUserTableName());
+            $totalUsers = (int)($uStmt ? $uStmt->fetchColumn() : 0);
+            $pStmt = $this->db->query("SELECT COUNT(*) FROM push_subscriptions");
+            $pushSubs = (int)($pStmt ? $pStmt->fetchColumn() : 0);
+        } catch (\Throwable) {}
+
+        $pushOptinFormatted = $totalUsers > 0 ? round(($pushSubs / $totalUsers) * 100, 1) . '%' : '0.0%';
+
+        // 4. Real Active Users by App from presence
+        $activeByApp = [];
+        try {
+            AdminPresenceService::ensureSchema($this->db);
+            $presStmt = $this->db->query(
+                "SELECT app_name, COUNT(DISTINCT COALESCE(user_id, session_id)) as active_cnt
+                 FROM admin_presence
+                 WHERE last_seen_at >= (NOW() - INTERVAL 24 HOUR)
+                 GROUP BY app_name"
+            );
+            if ($presStmt) {
+                while ($pRow = $presStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $activeByApp[$pRow['app_name']] = (int)$pRow['active_cnt'];
+                }
+            }
+        } catch (\Throwable) {}
+
         foreach ($apps as $key => $meta) {
             if ($appFilter && $appFilter !== 'all' && $appFilter !== $key) {
                 continue;
             }
+
+            $appActiveCount = $activeByApp[$key] ?? 0;
 
             $insights[$key] = [
                 'name' => $meta['name'],
@@ -218,28 +327,120 @@ class AdminService
                 'color' => $meta['color'],
                 'icon' => $meta['icon'],
                 'domain' => $meta['domain'],
-                'status' => 'Healthy',
-                'active_users' => rand(150, 480),
-                'weekly_growth' => '+' . rand(8, 24) . '%',
-                'conversion_rate' => (rand(18, 35) / 10) . '%',
-                'push_optin_rate' => rand(62, 88) . '%',
-                'error_rate' => '0.0' . rand(1, 4) . '%',
+                'status' => 'Operational',
+                'active_users' => $appActiveCount,
+                'weekly_growth' => $weeklyGrowthFormatted,
+                'conversion_rate' => $totalUsers > 0 ? round(($recentSignups / $totalUsers) * 100, 1) . '%' : '0.0%',
+                'push_optin_rate' => $pushOptinFormatted,
+                'error_rate' => $errorRateFormatted,
             ];
         }
+
+        // 5. Real 7-day rolling traffic series (Mon - Sun empirical event volume)
+        $trafficLabels = [];
+        $trafficValues = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $targetDate = date('Y-m-d', strtotime("-$i days"));
+            $trafficLabels[] = date('D', strtotime("-$i days"));
+            $dayCount = 0;
+
+            // Query telemetry first
+            try {
+                $tStmt = $this->db->prepare("SELECT COUNT(*) FROM telemetry_events WHERE DATE(created_at) = ?");
+                $tStmt->execute([$targetDate]);
+                $dayCount += (int)$tStmt->fetchColumn();
+            } catch (\Throwable) {}
+
+            // Add presence events
+            try {
+                $pStmt = $this->db->prepare("SELECT COUNT(*) FROM admin_presence WHERE DATE(last_seen_at) = ?");
+                $pStmt->execute([$targetDate]);
+                $dayCount += (int)$pStmt->fetchColumn();
+            } catch (\Throwable) {}
+
+            // Add audit logs
+            try {
+                $aStmt = $this->db->prepare("SELECT COUNT(*) FROM audit_logs WHERE DATE(created_at) = ?");
+                $aStmt->execute([$targetDate]);
+                $dayCount += (int)$aStmt->fetchColumn();
+            } catch (\Throwable) {}
+
+            $trafficValues[] = $dayCount;
+        }
+
+        // 6. Real channel share computed from admin_broadcasts
+        $channelShare = [
+            'Web Push' => 0,
+            'Email' => 0,
+            'In-App' => 0,
+            'SMS' => 0,
+        ];
+        try {
+            $chStmt = $this->db->query("SELECT channel, COUNT(*) as cnt FROM admin_broadcasts GROUP BY channel");
+            if ($chStmt) {
+                $totCh = 0;
+                $rawCh = [];
+                while ($cRow = $chStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $chName = strtolower(trim((string)$cRow['channel']));
+                    $cnt = (int)$cRow['cnt'];
+                    $totCh += $cnt;
+                    if (str_contains($chName, 'push')) $rawCh['Web Push'] = ($rawCh['Web Push'] ?? 0) + $cnt;
+                    elseif (str_contains($chName, 'email')) $rawCh['Email'] = ($rawCh['Email'] ?? 0) + $cnt;
+                    elseif (str_contains($chName, 'sms')) $rawCh['SMS'] = ($rawCh['SMS'] ?? 0) + $cnt;
+                    else $rawCh['In-App'] = ($rawCh['In-App'] ?? 0) + $cnt;
+                }
+                if ($totCh > 0) {
+                    foreach ($rawCh as $k => $c) {
+                        $channelShare[$k] = (int)round(($c / $totCh) * 100);
+                    }
+                } else {
+                    // Reflect real push subscribers vs default if 0 broadcasts sent
+                    if ($pushSubs > 0) {
+                        $channelShare['Web Push'] = 100;
+                    }
+                }
+            }
+        } catch (\Throwable) {}
 
         return [
             'apps' => $insights,
             'traffic_series' => [
-                'labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                'values' => [1240, 1420, 1680, 1590, 1920, 2180, 2450],
+                'labels' => $trafficLabels,
+                'values' => $trafficValues,
             ],
-            'channel_distribution' => [
-                'Web Push' => 48,
-                'Email Digest' => 34,
-                'In-App Center' => 14,
-                'SMS' => 4,
-            ],
+            'channel_distribution' => $channelShare,
         ];
+    }
+
+    /**
+     * Executes the World-Class Executive Decision & Action Algorithm.
+     * 
+     * @return array<string, mixed>
+     */
+    public function getDecisionInsights(?string $appFilter = null): array
+    {
+        $engine = new DecisionEngineService($this->db, $this->getUserTableName());
+        return $engine->evaluate($appFilter);
+    }
+
+    /**
+     * Retrieves real-time active visitors on the site ("Who is on the site and when").
+     * 
+     * @return array<int, array<string, mixed>>
+     */
+    public function getActiveVisitors(int $windowMinutes = 15, int $limit = 50, ?string $appFilter = null): array
+    {
+        return AdminPresenceService::getActiveVisitors($this->db, $windowMinutes, $limit, $appFilter);
+    }
+
+    /**
+     * Retrieves aggregated presence vitals.
+     * 
+     * @return array<string, mixed>
+     */
+    public function getPresenceSummary(int $windowMinutes = 15, ?string $appFilter = null): array
+    {
+        return AdminPresenceService::getPresenceSummary($this->db, $windowMinutes, $appFilter);
     }
 
     /**

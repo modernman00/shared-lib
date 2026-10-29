@@ -313,6 +313,105 @@ class SeoEngine
     }
 
     /**
+     * Resolves the canonical public origin, e.g. "https://example.com" (no trailing slash).
+     * Order of resolution:
+     *   1. GEO_CANONICAL_URL explicit override
+     *   2. APP_URL when it is a real (non-local, non-test) host
+     *   3. APP_URL declared in .env_production / .env-production / .env.production
+     *
+     * @param string|null $projectRoot Root directory of the application
+     * @return string Canonical origin (e.g. "https://loaneasyfinance.com")
+     * @throws \RuntimeException when no production origin can be resolved.
+     */
+    public static function resolveProductionBaseUrl(?string $projectRoot = null): string
+    {
+        $root = $projectRoot ?? (defined('ROOT_DIR') ? (string) constant('ROOT_DIR') : dirname(__DIR__, 4));
+        if (!is_dir($root)) {
+            $root = getcwd() ?: '.';
+        }
+
+        $candidates = [
+            $_ENV['GEO_CANONICAL_URL'] ?? getenv('GEO_CANONICAL_URL') ?: null,
+            $_ENV['APP_URL'] ?? getenv('APP_URL') ?: null,
+            self::readEnvProductionUrl($root),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $origin = self::normaliseOrigin($candidate);
+            if ($origin !== null && !self::isLocalHost((string) parse_url($origin, PHP_URL_HOST))) {
+                return $origin;
+            }
+        }
+
+        throw new \RuntimeException(
+            "Canonical site URL could not be resolved. Set GEO_CANONICAL_URL, a production APP_URL, "
+            . "or provide APP_URL in .env_production."
+        );
+    }
+
+    /**
+     * Normalise a URL string to "scheme://host[:port]" or null if invalid.
+     */
+    public static function normaliseOrigin(?string $url): ?string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        if (!is_array($parts) || empty($parts['host']) || empty($parts['scheme'])) {
+            return null;
+        }
+        if (!in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return null;
+        }
+
+        $origin = strtolower($parts['scheme']) . '://' . strtolower($parts['host']);
+        if (!empty($parts['port'])) {
+            $origin .= ':' . (int) $parts['port'];
+        }
+
+        return $origin;
+    }
+
+    /**
+     * Checks if a hostname is local, test, or loopback.
+     */
+    public static function isLocalHost(string $host): bool
+    {
+        $host = strtolower(trim($host));
+        if ($host === '' || $host === 'localhost' || filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return true;
+        }
+        $suffixes = ['.test', '.local', '.localhost', '.invalid', '.internal'];
+        foreach ($suffixes as $suffix) {
+            if (str_ends_with($host, $suffix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Read only APP_URL from production env files in the specified directory.
+     */
+    private static function readEnvProductionUrl(string $root): ?string
+    {
+        foreach (['.env_production', '.env-production', '.env.production'] as $name) {
+            $file = rtrim($root, '/') . '/' . $name;
+            if (!is_readable($file)) {
+                continue;
+            }
+            $contents = file_get_contents($file);
+            if ($contents !== false && preg_match('/^\s*APP_URL\s*=\s*["\']?([^"\'\s#]+)/m', $contents, $m) === 1) {
+                return $m[1];
+            }
+        }
+        return null;
+    }
+
+    /**
      * Generates a valid XML Sitemap conforming to the sitemaps.org 0.9 protocol.
      * Prevents localhost/.test poisoning by strictly validating canonical hostnames.
      *
