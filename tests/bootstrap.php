@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('PHPUNIT_RUNNING')) {
+    define('PHPUNIT_RUNNING', true);
+}
+
 require __DIR__ . '/../vendor/autoload.php';
 
 

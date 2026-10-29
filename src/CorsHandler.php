@@ -46,8 +46,27 @@ class CorsHandler
 
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(200);
-        exit();
+        if (!defined('PHPUNIT_RUNNING')) {
+            exit();
+        }
+        return;
     }
+}
+
+/**
+ * Configure standard JSON API CORS headers.
+ */
+public static function setApiHeaders(): void
+{
+    self::setHeaders('application/json', 'GET, POST, PUT, DELETE, OPTIONS');
+}
+
+/**
+ * Configure standard Form submission CORS headers.
+ */
+public static function setFormHeaders(): void
+{
+    self::setHeaders('application/x-www-form-urlencoded', 'POST, OPTIONS');
 }
 
 private static function inferResponseType(): string
@@ -166,7 +185,9 @@ private static function inferResponseType(): string
             http_response_code(403);
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Origin not allowed']);
-            exit();
+            if (!defined('PHPUNIT_RUNNING')) {
+                exit();
+            }
         }
     }
 }
