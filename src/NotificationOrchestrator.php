@@ -24,6 +24,30 @@ use PDO;
 final class NotificationOrchestrator
 {
     /**
+     * Sanitizes notification navigation URLs against javascript:, data:, vbscript:, CRLF, and open redirects.
+     */
+    public static function sanitizeActionUrl(string $url): string
+    {
+        $clean = trim(str_replace(["\r", "\n", "\0"], '', $url));
+        if ($clean === '') {
+            return '/';
+        }
+        // Disallow dangerous schemes and protocol-relative open redirects (//evil.com)
+        if (str_starts_with($clean, '//') || preg_match('/^\s*(?:javascript|data|vbscript|file):/i', $clean)) {
+            return '/';
+        }
+        if (str_starts_with($clean, '/')) {
+            return $clean;
+        }
+        $parsed = parse_url($clean);
+        $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
+        if (in_array($scheme, ['http', 'https'], true) && !empty($parsed['host'])) {
+            return $clean;
+        }
+        return '/';
+    }
+
+    /**
      * Dispatch a notification across the intelligent cascade.
      *
      * @param string $userId
@@ -55,6 +79,7 @@ final class NotificationOrchestrator
         if ($userId === '') {
             return '';
         }
+        $actionUrl = self::sanitizeActionUrl($actionUrl);
 
         $effectiveScheduledAt = $scheduledAt ?? (is_array($metadata) && isset($metadata['scheduled_at']) && is_string($metadata['scheduled_at']) ? $metadata['scheduled_at'] : null);
         $isScheduled = false;
@@ -68,12 +93,72 @@ final class NotificationOrchestrator
             }
         }
         $initialStatus = $isScheduled ? 'scheduled' : 'pending';
+        $cleanTag = preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general';
+        $shouldCoalesce = !$isScheduled
+            && $cleanTag !== 'general'
+            && (!empty($metadata['coalesce']) || isset($metadata['coalesce_window_seconds']));
+        $coalesceWindowSeconds = isset($metadata['coalesce_window_seconds']) && is_numeric($metadata['coalesce_window_seconds'])
+            ? max(1, min((int)$metadata['coalesce_window_seconds'], 3600))
+            : 180;
+        $wasCoalesced = false;
 
         try {
             $pdo = Db::connect2();
 
-            // 1. Insert into notification_orchestration if table exists
+            // 1. Insert or Coalesce into notification_orchestration if table exists
             try {
+                if ($shouldCoalesce) {
+                    $cutoffTime = date('Y-m-d H:i:s', time() - $coalesceWindowSeconds);
+                    $findStmt = $pdo->prepare("
+                        SELECT id, data_payload, created_at
+                        FROM notification_orchestration
+                        WHERE user_id = :uid AND tag = :tag AND status = 'pending'
+                        ORDER BY created_at DESC
+                        LIMIT 1
+                    ");
+                    $findStmt->execute([':uid' => $userId, ':tag' => $cleanTag]);
+                    $existingRow = $findStmt->fetch(PDO::FETCH_ASSOC);
+
+                    if (is_array($existingRow) && !empty($existingRow['id'])) {
+                        $rowCreated = isset($existingRow['created_at']) && is_string($existingRow['created_at']) && $existingRow['created_at'] !== ''
+                            ? strtotime($existingRow['created_at'])
+                            : time();
+                        if ($rowCreated === false || $rowCreated >= strtotime($cutoffTime)) {
+                            $notificationId = (string)$existingRow['id'];
+                            $existingMeta = [];
+                            if (!empty($existingRow['data_payload']) && is_string($existingRow['data_payload'])) {
+                                $decoded = json_decode($existingRow['data_payload'], true);
+                                if (is_array($decoded)) {
+                                    $existingMeta = $decoded;
+                                }
+                            }
+                            $prevCount = isset($existingMeta['coalesced_count']) && is_numeric($existingMeta['coalesced_count'])
+                                ? (int)$existingMeta['coalesced_count']
+                                : 1;
+                            $newCount = $prevCount + 1;
+                            $metadata = array_merge($existingMeta, $metadata, [
+                                'coalesced_count' => $newCount,
+                                'renotify'        => false,
+                            ]);
+
+                            $coalesceStmt = $pdo->prepare("
+                                UPDATE notification_orchestration
+                                SET title = :title, body = :body, action_url = :url, data_payload = :meta
+                                WHERE id = :id AND user_id = :uid
+                            ");
+                            $coalesceStmt->execute([
+                                ':title' => strip_tags($title),
+                                ':body'  => strip_tags($body),
+                                ':url'   => $actionUrl !== '' ? $actionUrl : '/',
+                                ':meta'  => json_encode($metadata),
+                                ':id'    => $notificationId,
+                                ':uid'   => $userId,
+                            ]);
+                            $wasCoalesced = true;
+                        }
+                    }
+                }
+
                 if ($isScheduled) {
                     try {
                         $stmt = $pdo->prepare("
@@ -90,7 +175,7 @@ final class NotificationOrchestrator
                             ':title'  => strip_tags($title),
                             ':body'   => strip_tags($body),
                             ':url'    => $actionUrl !== '' ? $actionUrl : '/',
-                            ':tag'    => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                            ':tag'    => $cleanTag,
                             ':meta'   => $metadata !== null ? json_encode($metadata) : null,
                             ':status' => $initialStatus,
                             ':sched'  => $effectiveScheduledAt,
@@ -111,12 +196,12 @@ final class NotificationOrchestrator
                             ':title'  => strip_tags($title),
                             ':body'   => strip_tags($body),
                             ':url'    => $actionUrl !== '' ? $actionUrl : '/',
-                            ':tag'    => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                            ':tag'    => $cleanTag,
                             ':meta'   => $metadata !== null ? json_encode($metadata) : null,
                             ':status' => $initialStatus,
                         ]);
                     }
-                } else {
+                } elseif (!$wasCoalesced) {
                     $stmt = $pdo->prepare("
                         INSERT INTO notification_orchestration 
                         (id, user_id, family_code, category, priority, title, body, action_url, tag, data_payload, status)
@@ -131,7 +216,7 @@ final class NotificationOrchestrator
                         ':title' => strip_tags($title),
                         ':body'  => strip_tags($body),
                         ':url'   => $actionUrl !== '' ? $actionUrl : '/',
-                        ':tag'   => preg_replace('/[^A-Za-z0-9_-]/', '', $tag) ?: 'general',
+                        ':tag'   => $cleanTag,
                         ':meta'  => $metadata !== null ? json_encode($metadata) : null,
                     ]);
                 }
@@ -495,27 +580,49 @@ final class NotificationOrchestrator
      * @param array<string, mixed> $data
      * @return void
      */
-    private static function broadcastPusher(string $channel, string $event, array $data): void
+    /**
+     * Broadcast over Pusher safely with automatic failover to SovereignBroadcaster.
+     *
+     * @param string $channel
+     * @param string $event
+     * @param array<string, mixed> $data
+     * @return bool True if dispatched via Pusher or SovereignBroadcaster
+     */
+    public static function broadcastPusher(string $channel, string $event, array $data): bool
     {
+        $pusherDispatched = false;
+        $sovereignDispatched = false;
         $key = trim((string)($_ENV['MIX_PUSHER_APP_KEY'] ?? $_ENV['PUSHER_APP_KEY'] ?? (getenv('PUSHER_APP_KEY') ?: '')));
         $secret = trim((string)($_ENV['MIX_PUSHER_APP_SECRET'] ?? $_ENV['PUSHER_APP_SECRET'] ?? (getenv('PUSHER_APP_SECRET') ?: '')));
         $appId = trim((string)($_ENV['MIX_PUSHER_APP_ID'] ?? $_ENV['PUSHER_APP_ID'] ?? (getenv('PUSHER_APP_ID') ?: '')));
         $cluster = trim((string)($_ENV['MIX_PUSHER_APP_CLUSTER'] ?? $_ENV['PUSHER_APP_CLUSTER'] ?? (getenv('PUSHER_APP_CLUSTER') ?: 'eu')));
 
-        if ($key === '' || $secret === '' || $appId === '') {
-            return;
+        // 1. Primary Attempt: Pusher (commercial free tier)
+        if ($key !== '' && $secret !== '' && $appId !== '') {
+            try {
+                $pusher = new PusherClient($key, $secret, $appId, [
+                    'cluster' => $cluster !== '' ? $cluster : 'eu',
+                    'useTLS'  => true,
+                    'timeout' => 2,
+                ]);
+                $pusher->trigger($channel, $event, $data);
+                $pusherDispatched = true;
+            } catch (\Throwable $e) {
+                error_log('[NotificationOrchestrator] Pusher broadcast failed: ' . $e->getMessage() . '. Defaulting to SovereignBroadcaster.');
+            }
         }
 
+        // 2. Local Fallback & Synchronisation Rail: SovereignBroadcaster
+        // Dispatches to ensure event delivery if Pusher fails or is unconfigured, and synchronises local SSE clients
         try {
-            $pusher = new PusherClient($key, $secret, $appId, [
-                'cluster' => $cluster !== '' ? $cluster : 'eu',
-                'useTLS'  => true,
-                'timeout' => 2,
-            ]);
-            $pusher->trigger($channel, $event, $data);
+            $broadcaster = new \Src\Realtime\SovereignBroadcaster();
+            $broadcaster->trigger($channel, $event, $data);
+            $sovereignDispatched = true;
         } catch (\Throwable $e) {
-            error_log('[NotificationOrchestrator] Pusher broadcast error: ' . $e->getMessage());
+            error_log('[NotificationOrchestrator] SovereignBroadcaster fallback error: ' . $e->getMessage());
         }
+
+        return $pusherDispatched || $sovereignDispatched;
     }
 
     /**
@@ -529,6 +636,9 @@ final class NotificationOrchestrator
      */
     public static function logDelivery(string $notificationId, string $channel, string $status, ?string $details = null): void
     {
+        if ($details !== null && strlen($details) > 2000) {
+            $details = mb_substr($details, 0, 2000, 'UTF-8');
+        }
         try {
             $pdo = Db::connect2();
             try {
@@ -815,5 +925,114 @@ final class NotificationOrchestrator
             error_log('[NotificationOrchestrator] recordTelemetry error: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Dispatch a notification with automatic 3-minute (180s) tag coalescing so rapid bursts
+     * (e.g., multiple family likes/comments on the same post) bundle into one unread row
+     * and replace the OS lockscreen card silently (`renotify: false`).
+     *
+     * @param string $userId
+     * @param string $category
+     * @param string $priority
+     * @param string $title
+     * @param string $body
+     * @param string $actionUrl
+     * @param string $tag
+     * @param string|null $scopeCode
+     * @param array<string, mixed>|null $metadata
+     * @param int $coalesceWindowSeconds
+     * @return string
+     */
+    public static function dispatchCoalesced(
+        string $userId,
+        string $category,
+        string $priority,
+        string $title,
+        string $body,
+        string $actionUrl = '/',
+        string $tag = 'general',
+        ?string $scopeCode = null,
+        ?array $metadata = null,
+        int $coalesceWindowSeconds = 180
+    ): string {
+        $meta = $metadata ?? [];
+        $meta['coalesce'] = true;
+        $meta['coalesce_window_seconds'] = $coalesceWindowSeconds;
+
+        return self::dispatch(
+            userId: $userId,
+            category: $category,
+            priority: $priority,
+            title: $title,
+            body: $body,
+            actionUrl: $actionUrl,
+            tag: $tag,
+            scopeCode: $scopeCode,
+            metadata: $meta
+        );
+    }
+
+    /**
+     * Non-blocking asynchronous dispatch via PHP shutdown function (flushing HTTP response
+     * immediately via fastcgi_finish_request() when running under PHP-FPM).
+     *
+     * @param string $userId
+     * @param string $category
+     * @param string $priority
+     * @param string $title
+     * @param string $body
+     * @param string $actionUrl
+     * @param string $tag
+     * @param string|null $scopeCode
+     * @param array<string, mixed>|null $metadata
+     * @return void
+     */
+    public static function dispatchAsync(
+        string $userId,
+        string $category,
+        string $priority,
+        string $title,
+        string $body,
+        string $actionUrl = '/',
+        string $tag = 'general',
+        ?string $scopeCode = null,
+        ?array $metadata = null
+    ): void {
+        $userId = trim($userId);
+        if ($userId === '') {
+            return;
+        }
+
+        register_shutdown_function(static function () use (
+            $userId,
+            $category,
+            $priority,
+            $title,
+            $body,
+            $actionUrl,
+            $tag,
+            $scopeCode,
+            $metadata
+        ): void {
+            if (function_exists('fastcgi_finish_request')) {
+                @fastcgi_finish_request();
+            }
+            try {
+                self::dispatch(
+                    userId: $userId,
+                    category: $category,
+                    priority: $priority,
+                    title: $title,
+                    body: $body,
+                    actionUrl: $actionUrl,
+                    tag: $tag,
+                    scopeCode: $scopeCode,
+                    metadata: $metadata
+                );
+            } catch (\Throwable $e) {
+                error_log('[NotificationOrchestrator] dispatchAsync shutdown error: ' . $e->getMessage());
+            }
+        });
     }
 }

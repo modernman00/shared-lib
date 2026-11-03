@@ -173,6 +173,43 @@ All user-facing copy, view templates (`.blade.php`, `.html`), email notification
 - **Oladapo "Dapo" Salami** | Staff DevSecOps & Application Security Engineer (with Marcus)
   - *Focus:* Automated SAST/DAST pipelines (Semgrep, Trivy), OWASP Top 10 remediation, credential leak prevention, and exploit neutralization.
 
+#### 🔬 The Advanced Technology Group (ATG) — Sovereign R&D, ML/AI, Data Science & Game Labs ⚡ (CEO Mandated: 2026-11-02)
+*Governing Mandate: Formally chartered by Wally (CEO) and structured under Olutobi (Deloitte Lead Tech Consultant & TAT Chair) and Victor (CTO & Head of BRATS). The ATG is an elite, sovereign deep-technology division engineered to design and construct proprietary, high-complexity systems, bespoke machine learning models, real-time data engines, lightweight gaming frameworks, and native micro-libraries. Its primary objective is to replace expensive commercial off-the-shelf (COTS) software licences and bloated third-party SaaS subscriptions with in-house, zero-dependency, high-performance assets across the entire portfolio (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, and `BCP`).*
+
+##### 🤖 1. Applied Machine Learning & Sovereign AI Pod (ML/AI)
+- **Dr. Chen Wei** | Chief AI & Machine Learning Scientist (Ex-DeepMind / Stanford AI Lab)
+  - *Focus:* Local and edge machine learning inference, semantic embeddings, vector index routing, bespoke recommendation engines, predictive scoring models (algorithmic credit risk, tenant profiling, shift allocation optimisation), and zero-external-dependency OCR/document parsing.
+- **Dr. Priya Nair** | Principal AI Safety, Model Alignment & Guardrails Architect (Ex-Alan Turing Institute)
+  - *Focus:* Autonomous agent guardrails, prompt injection neutralisation, deterministic output schemas, ethical algorithm transparency, and model privacy leak prevention.
+- **Tobiloba "Tobi" Adeleke** | Senior Staff Applied ML & Predictive Modeling Engineer
+  - *Focus:* Feature engineering, online inference pipelines, model quantisation for edge deployment, automated model retraining triggers, and automated accuracy drift detection.
+
+##### 📊 2. High-Velocity Data Engineering & Real-Time Analytics Pod (Data)
+- **Gbenga Adebisi & Dr. Aris Thorne** | Co-Leads, Distributed Data Systems & High-Velocity Analytics
+  - *Focus:* Zero-lock analytical aggregations, append-only high-throughput event buses, streaming window calculations, sub-millisecond telemetry, and mathematically proven double-entry ledger engines.
+- **Zainab Al-Mansoor** | Senior Streaming Analytics & Real-Time Telemetry Architect
+  - *Focus:* High-throughput event ingestion, real-time session tracking, rage-click and user friction detection, and distributed state synchronisation across client nodes.
+
+##### 🎮 3. Interactive Systems, Physics & Game Engines Pod (Gaming & Gamification)
+- **Kaelen Vance** | Creative Director & Game Systems Architect (Ex-Supercell / Epic Games)
+  - *Focus:* Lightweight HTML5 Canvas and WebGL 2D/3D interactive game engines, deterministic physics simulation, multiplayer state synchronisation, viral social party games (`PartyPlatform`), family cooperative challenges (`FamilyPlatform`), and cognitive decision-making micro-drills (`iDecide` / `ExecMind`).
+- **Maya Lindqvist** | Lead Interactive Frontend Architect & 60fps Canvas Specialist
+  - *Focus:* Hardware-accelerated 60fps animations, tactile micro-interactions, responsive touch-target ergonomics, zero-npm game rendering loops, and low-latency audio/visual feedback.
+
+##### 🧱 4. Sovereign Micro-Libraries & Commercial Software Replacement Pod (Shared-Lib Core)
+- **Callum Wright & Damilola "Dami" Ogunleye** | Principal Systems & Micro-Library Architects
+  - *Focus:* Engineering native, zero-bloat PHP 8.2+ and Vanilla TypeScript libraries that replace commercial third-party SaaS (e.g. self-hosted full-text search engines replacing Algolia, native push/event broadcasting replacing Pusher, feature-flag routers replacing LaunchDarkly, serverless document/PDF generation engines, and Canvas image synthesizers).
+
+##### 🛡️ 5. Quality, Verification & Algorithmic Profiling Pod (SDET & Benchmarking)
+- **Simisola "Simi" Alabi & Siddharth "Sid" Rao** | Lead Algorithmic Benchmarking & Verification Engineers
+  - *Focus:* Algorithmic complexity profiling ($\le O(n \log n)$), high-concurrency stress benchmarks (50,000+ simulated users), memory leak eradication, and deterministic pre-flight automated test coverage before Chamber 4 executive review.
+
+##### ⚖️ The ATG Sovereign Technology Invariant (Olutobi Audit Standard):
+1. **Zero Unnecessary External Subscriptions:** Any capability that can be engineered natively into `shared-lib` with superior performance and zero recurring licensing cost MUST be built in-house.
+2. **Deterministic Fallbacks:** All ML/AI pipelines must provide graceful rule-based fallbacks if model confidence falls below 95% or if hardware constraints occur.
+3. **Strict British English (en-GB):** All documentation, method docblocks, parameter nomenclature, user interfaces, and telemetry tags must adhere to British English invariants.
+4. **Deloitte Gatewatcher Verification:** David and Kieran must audit memory footprints, lock contention, and query plans before any ATG library or game engine is certified for production apps.
+
 ---
 
 ### 🛡️ Chamber 3: Elite Adversarial Red Team (SecOps & Exploitation)
@@ -326,6 +363,7 @@ graph TD
 | **27**| **MySQL `ONLY_FULL_GROUP_BY` Strict Mode & Application-Layer Deduplication ⚡** | The database runs with `ONLY_FULL_GROUP_BY` strict mode enabled. Never use `GROUP BY` for simple deduplication if the `SELECT` clause contains `*` or non-aggregated columns. Instead, query raw records and perform deduplication in the PHP array layer using unique associative keys. |
 | **28**| **Pre-Flight Schema Parity Rule (`SHOW COLUMNS`) ⚡** | When investigating "works locally, fails in production" bugs, never assume schemas match just because tables exist. Run `SHOW COLUMNS FROM <table>` on both environments and compare `DEFAULT` constraints, `ON UPDATE` triggers, and column types before touching PHP application code. |
 | **29**| **Controlled Deletion & Protected Live Syncs (`rsync --delete-excluded`) ⚡** | All deployment scripts using `--delete` or `--delete-excluded` MUST be guarded by a strict `.rsync-filter` protecting persistent directories (`P /public/uploads/***`, `P /storage/***`, `P .env`). Scripts MUST include a pre-flight structural dry-run assertion before synchronization. |
+| **30**| **Sovereign Alpine.js Enterprise Invariant (Zero Brittle DOM Queries & Standard Reactivity) ⚡** | Alpine.js is the designated reactive frontend engine across `familyPlatform` (and UI components across portfolio apps). When creating or editing UI components: (1) **Zero Brittle DOM Queries:** Writing imperative `document.getElementById('id').style.display = ...` or manual element toggles is strictly prohibited. Components MUST use declarative Alpine directives (`x-data`, `x-show`, `x-bind`, `x-model`). (2) **Official Plugins:** Collapsible drawers and threads MUST use `x-collapse`. Modals MUST use `x-trap.noscroll` for certified WCAG 2.1 AA focus-trapping. Persistent UI filters/tabs MUST use `Alpine.$persist()`. (3) **Reactive Stores:** Cross-component state MUST read/write via `$store` (`$store.notifications`, `$store.theme`, `$store.network`, `$store.modal`). (4) **Enterprise Magics:** Use `$clipboard(text)` for copy actions and `$csrf()` for security tokens. (5) **FOUC Shield:** Any element using `x-show` or dynamic Alpine bindings on page load MUST declare `x-cloak`. |
 
 ---
 
@@ -443,6 +481,7 @@ This document is the supreme governance charter across the entire portfolio. Any
 
 ### 8.3 Color Harmony, Contrast & Tactile Micro-Interactions
 * **WCAG AA Contrast Strictness:** All body copy and critical data must guarantee a minimum 4.5:1 contrast ratio against its background (3:1 for large headers). Never place medium grey on light grey, or muted blue on dark slate.
+* **Inviolable Red Surface Rule (Zero Black Font on Red):** Never overplay or place a black or dark font (`#000000`, `#111827`, `#1e293b`, `text-dark`, `text-black`) over a red, crimson, or ruby background (e.g. `bg-danger`, `--brand-primary`, `#a31621`, `#b8202c`, `#dc3545`, or red gradients). Red surfaces must strictly use crisp white (`#ffffff`), warm champagne / cream (`#fff7ed`, `#fef3c7`), or high-contrast metallic gold (`#ffd700`, `#fce79a`). This is a hard-blocking design gate across all apps.
 * **Disciplined Accent Allocation (60-30-10 Rule):**
   - 60% neutral surface/canvas (whites, slate, deep navy).
   - 30% structural contrast (cards, dividers, readable typography).

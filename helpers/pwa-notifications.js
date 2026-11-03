@@ -1,36 +1,125 @@
 /**
- * Universal PWA Real-Time Synchronized Notification & Badging Client
+ * Universal PWA Real-Time Synchronized Notification & Badging Client — Meta/Facebook Tier-1 Standard
  *
- * Connects to Service Worker BroadcastChannel & Pusher Socket:
- * - Renders non-intrusive on-app floating toasts when app is open in foreground
- * - Elects single active tab leader to avoid duplicate UI toasts
- * - Resets Home Screen red badge icon upon opening app
- * - Transmits heartbeat to backend presence cache on tab focus
+ * Implements:
+ * 1. True Home Screen App Icon Badging (Reconciled with server unread count, NEVER blindly wiped)
+ * 2. In-App Notification Tab Counter live updates via Service Worker & socket events
+ * 3. Bi-directional Mark-As-Read listeners (synchronously decrements OS badge and in-app tab badge)
+ * 4. Client-side Leader Election & Floating In-App Toasts when foregrounded
+ * 5. Presence heartbeat + Unread Count sync on tab focus and visibility change
  */
 (function () {
   'use strict';
 
-  // 1. Clear Home Screen Badge upon opening the app
-  if ('clearAppBadge' in navigator) {
-    navigator.clearAppBadge().catch(function () {});
+  let currentUnreadCount = 0;
+  let syncDebounceTimer = null;
+
+  // 1. Badging API Wrappers
+  function updateAppBadge(count) {
+    if (!('setAppBadge' in navigator)) return;
+    const safeCount = Math.max(0, Math.floor(Number(count) || 0));
+    currentUnreadCount = safeCount;
+
+    try {
+      if (safeCount > 0) {
+        navigator.setAppBadge(safeCount).catch(function () {});
+      } else {
+        navigator.clearAppBadge().catch(function () {});
+      }
+    } catch (e) {}
   }
 
-  // 2. Client-Side Leader Election (Only 1 focused tab displays floating toasts)
-  let syncChannel = null;
+  // 2. In-App Notification Tab Badge Sync
+  function updateInAppTabBadge(count) {
+    const safeCount = Math.max(0, Math.floor(Number(count) || 0));
+    currentUnreadCount = safeCount;
 
+    const selectors = [
+      '.nav-notification-badge',
+      '[data-notification-counter]',
+      '#notification-counter',
+      '.notification-badge',
+      '.notification-count'
+    ];
+
+    const badges = document.querySelectorAll(selectors.join(', '));
+    badges.forEach(function (badge) {
+      if (safeCount > 0) {
+        badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
+        badge.classList.remove('d-none', 'hidden');
+        badge.style.display = '';
+      } else {
+        badge.textContent = '0';
+        badge.classList.add('d-none');
+        badge.style.display = 'none';
+      }
+    });
+  }
+
+  // 3. Reconcile with Server (Fetches real unread count, never zeroes blindly)
+  function syncWithServer() {
+    clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = setTimeout(function () {
+      if (document.visibilityState !== 'visible') return;
+
+      // Primary check: unread-count endpoint, fallback to presence response
+      fetch('/api/notifications/unread-count', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Unread count fetch failed');
+        return res.json();
+      })
+      .then(function (json) {
+        const count = json.unread_count ?? json.data?.unread_count ?? json.data?.count;
+        if (typeof count !== 'undefined' && count !== null) {
+          updateAppBadge(count);
+          updateInAppTabBadge(count);
+        }
+      })
+      .catch(function () {
+        // Fallback: presence ping which also returns unread count
+        sendPresenceHeartbeat();
+      });
+    }, 150);
+  }
+
+  // 4. Bi-Directional Event Listeners for In-App Mark-As-Read & New Items
+  window.addEventListener('notification:read', function (e) {
+    let newCount = 0;
+    if (typeof e.detail?.unreadCount === 'number') {
+      newCount = e.detail.unreadCount;
+    } else if (typeof e.detail?.remaining === 'number') {
+      newCount = e.detail.remaining;
+    } else {
+      newCount = Math.max(0, currentUnreadCount - 1);
+    }
+    updateAppBadge(newCount);
+    updateInAppTabBadge(newCount);
+  });
+
+  window.addEventListener('notification:received', function (e) {
+    const newCount = typeof e.detail?.unreadCount === 'number'
+      ? e.detail.unreadCount
+      : currentUnreadCount + 1;
+    updateAppBadge(newCount);
+    updateInAppTabBadge(newCount);
+  });
+
+  // 5. Client-Side Leader Election (Only 1 focused tab displays floating toasts)
+  let syncChannel = null;
   try {
     if (typeof BroadcastChannel !== 'undefined') {
       syncChannel = new BroadcastChannel('fp_notification_sync');
     }
-  } catch (e) {
-    console.warn('[PWA Notification] BroadcastChannel not available');
-  }
+  } catch (e) {}
 
-  // 3. Floating In-App Toast Renderer
+  // 6. Floating In-App Toast Renderer
   function showFloatingToast(payload) {
     if (!payload || !payload.title) return;
 
-    // Remove existing toast if any
     const existing = document.getElementById('pwa-notification-toast');
     if (existing) {
       existing.remove();
@@ -65,7 +154,7 @@
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
     `;
 
-    const iconSrc = payload.icon || '/public/img/favicon/android-chrome-192x192.png';
+    const iconSrc = escapeHtml(sanitizeSafeUrl(payload.icon, '/public/img/favicon/android-chrome-192x192.png'));
     toast.innerHTML = `
       <img src="${iconSrc}" alt="Icon" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; flex-shrink: 0;" />
       <div style="flex: 1; min-width: 0;">
@@ -76,44 +165,60 @@
           ${escapeHtml(payload.body || '')}
         </div>
       </div>
-      <button type="button" id="pwa-toast-close" style="background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1;" aria-label="Close">
+      <button type="button" id="pwa-toast-close" style="min-width: 44px; min-height: 44px; background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Close">
         &times;
       </button>
     `;
 
     document.body.appendChild(toast);
 
-    // Smooth Entrance Animation
-    requestAnimationFrame(() => {
+    requestAnimationFrame(function () {
       toast.style.transform = 'translateY(0)';
       toast.style.opacity = '1';
     });
 
-    // Auto-dismiss after 6 seconds
-    const autoDismissTimer = setTimeout(() => {
+    const autoDismissTimer = setTimeout(function () {
       dismissToast(toast);
     }, 6000);
 
-    // Toast Click Navigation
-    toast.addEventListener('click', (e) => {
+    toast.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'pwa-toast-close') {
         clearTimeout(autoDismissTimer);
         dismissToast(toast);
         return;
       }
       clearTimeout(autoDismissTimer);
-      const targetUrl = payload.url || payload.data?.url || '/';
-      if (targetUrl) {
-        window.location.href = targetUrl;
+      const rawTargetUrl = payload.url || payload.data?.url || '/';
+      const safeTargetUrl = sanitizeSafeUrl(rawTargetUrl, '/');
+      if (safeTargetUrl) {
+        window.location.href = safeTargetUrl;
       }
     });
+  }
+
+  function sanitizeSafeUrl(rawUrl, fallback) {
+    if (!rawUrl || typeof rawUrl !== 'string') return fallback;
+    const trimmed = rawUrl.trim();
+    if (trimmed === '' || trimmed.startsWith('//') || /^(?:javascript|data|vbscript|file):/i.test(trimmed)) {
+      return fallback;
+    }
+    if (trimmed.startsWith('/')) {
+      return trimmed;
+    }
+    try {
+      const parsed = new URL(trimmed, window.location.origin);
+      if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.origin === window.location.origin) {
+        return parsed.href;
+      }
+    } catch (e) {}
+    return fallback;
   }
 
   function dismissToast(toastEl) {
     if (!toastEl) return;
     toastEl.style.transform = 'translateY(-40px)';
     toastEl.style.opacity = '0';
-    setTimeout(() => {
+    setTimeout(function () {
       if (toastEl.parentNode) {
         toastEl.parentNode.removeChild(toastEl);
       }
@@ -129,12 +234,21 @@
       .replace(/'/g, '&#039;');
   }
 
-  // 4. Handle Inbound Message from Service Worker / BroadcastChannel
+  // 7. Handle Inbound Notification Message from Service Worker
   function handleIncomingNotification(data) {
-    if (!document.hasFocus() && document.visibilityState !== 'visible') {
-      return; // Tab is not in active focus
+    if (!data) return;
+
+    // Update Badges Immediately
+    const count = data.unread_count ?? data.unreadCount ?? data.badgeCount;
+    if (typeof count !== 'undefined' && count !== null) {
+      updateAppBadge(count);
+      updateInAppTabBadge(count);
     }
-    showFloatingToast(data);
+
+    // Only render floating toast if tab is in foreground focus
+    if (document.hasFocus() || document.visibilityState === 'visible') {
+      showFloatingToast(data);
+    }
   }
 
   if (syncChannel) {
@@ -153,22 +267,58 @@
     });
   }
 
-  // 5. Real-Time Presence Heartbeat (Informs server tab is active)
+  // 8. Presence Heartbeat with Synchronized Unread Count Response
   function sendPresenceHeartbeat() {
     if (document.visibilityState === 'visible') {
       try {
+        const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta && csrfMeta.content) {
+          headers['X-CSRF-TOKEN'] = csrfMeta.content;
+        }
         fetch('/api/notifications/presence', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
+          credentials: 'same-origin',
           keepalive: true
-        }).catch(function () {});
+        })
+        .then(function (res) {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then(function (json) {
+          if (json && typeof (json.unread_count ?? json.data?.unread_count) !== 'undefined') {
+            const count = json.unread_count ?? json.data?.unread_count;
+            updateAppBadge(count);
+            updateInAppTabBadge(count);
+          }
+        })
+        .catch(function () {});
       } catch (e) {}
     }
   }
 
-  document.addEventListener('visibilitychange', sendPresenceHeartbeat);
-  window.addEventListener('focus', sendPresenceHeartbeat);
+  // 9. Lifecycle Triggers
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      syncWithServer();
+    }
+  });
+
+  window.addEventListener('focus', function () {
+    syncWithServer();
+  });
+
+  window.addEventListener('online', function () {
+    syncWithServer();
+  });
+
   setInterval(sendPresenceHeartbeat, 60000);
 
-  sendPresenceHeartbeat();
+  // Initial Boot Sync
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    syncWithServer();
+  } else {
+    document.addEventListener('DOMContentLoaded', syncWithServer);
+  }
 })();

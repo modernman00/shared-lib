@@ -977,5 +977,21 @@ if (!function_exists('trans')) {
     }
 }
 
+if (!function_exists('renderBiometricPasskeyPrompt')) {
+    /**
+     * Renders the Universal Biometric Passkey Activation Prompt for authenticated users
+     * who have not yet activated a biometric passkey on their account/device.
+     */
+    function renderBiometricPasskeyPrompt(?string $nonce = null): string
+    {
+        try {
+            return \Src\functionality\WebAuthnFunctionality::renderActivationPrompt($nonce);
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+}
+
+
 
 

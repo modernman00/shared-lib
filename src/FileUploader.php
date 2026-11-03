@@ -110,10 +110,12 @@ class FileUploader
 
             self::assertValidUpload($fileTemp, $extension, (int) $_FILES[$formInputName]['size'][$i]);
 
-            // Shrink oversized images before scanning so they can fit under the virus-scan size cap.
-            if (self::isProcessableImage($extension) && filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
-                self::optimiseImageFile($fileTemp, $extension);
-                
+            // Shrink oversized images before scanning only if virus scan is active and required
+            $wasPreOptimised = false;
+            if (self::shouldVirusScan($fileTemp) && self::isProcessableImage($extension) && filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
+                $fileTemp = self::optimiseImageFile($fileTemp, $extension);
+                $wasPreOptimised = true;
+
                 // Red Team Fix: Abort if it's still too large to be scanned
                 clearstatcache(true, $fileTemp);
                 if (filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
@@ -126,28 +128,46 @@ class FileUploader
                     $cloudmersiveKey = $_ENV['FILE_UPLOAD_CLOUDMERSIVE'] ?? getenv('FILE_UPLOAD_CLOUDMERSIVE') ?: null;
                     new ScanVirus($fileTemp, is_string($cloudmersiveKey) ? $cloudmersiveKey : null);
                 } catch (ValidationException $e) {
+                    if (is_file($fileTemp)) {
+                        @unlink($fileTemp);
+                    }
                     $saveFiles['errors'][] = "File {$originalName}: " . $e->getMessage();
                     continue; // virus found - skip this file
                 }
             }
 
             $validFiles[] = [
-                'temp'      => $fileTemp,
-                'name'      => $fileName,
-                'extension' => $extension,
+                'temp'         => $fileTemp,
+                'name'         => $fileName,
+                'extension'    => $extension,
+                'preOptimised' => $wasPreOptimised,
             ];
         }
 
-        // Pass 2: Move and finalise
+        // Pass 2: Move and finalise (Single-pass guarantee: avoid redundant re-encoding)
         foreach ($validFiles as $fileData) {
             $pathToImage = $fileLocation . $fileData['name'];
 
-            if (!move_uploaded_file($fileData['temp'], $pathToImage)) {
+            $moved = move_uploaded_file($fileData['temp'], $pathToImage);
+            if (!$moved) {
+                // If the file was pre-optimised in-place in /tmp, is_uploaded_file() might be false
+                if (!is_uploaded_file($fileData['temp']) && file_exists($fileData['temp'])) {
+                    $moved = copy($fileData['temp'], $pathToImage);
+                    if ($moved) {
+                        @unlink($fileData['temp']);
+                    }
+                }
+            }
+
+            if (!$moved) {
                 $_SESSION['imageUploadOutcome'] = "File {$fileData['name']} failed to save";
                 throw new ValidationException("Error Processing Request - post files - File {$fileData['name']} failed to save");
             }
 
-            $pathToImage = self::finaliseImage($pathToImage, $fileData['extension']);
+            // Only run finaliseImage if the image was NOT already downscaled/optimised in Pass 1
+            if (empty($fileData['preOptimised'])) {
+                $pathToImage = self::finaliseImage($pathToImage, $fileData['extension']);
+            }
             $finalName = basename($pathToImage);
 
             $saveFiles['fileName'][] = $finalName;
@@ -176,10 +196,12 @@ class FileUploader
 
         self::assertValidUpload($fileTemp, $extension, (int) $_FILES[$formInputName]['size']);
 
-        // Shrink oversized images before scanning so they can fit under the virus-scan size cap.
-        if (self::isProcessableImage($extension) && filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
-            self::optimiseImageFile($fileTemp, $extension);
-            
+        // Shrink oversized images before scanning only if virus scan is active and required
+        $wasPreOptimised = false;
+        if (self::shouldVirusScan($fileTemp) && self::isProcessableImage($extension) && filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
+            $fileTemp = self::optimiseImageFile($fileTemp, $extension);
+            $wasPreOptimised = true;
+
             // Red Team Fix: Abort if it's still too large to be scanned
             clearstatcache(true, $fileTemp);
             if (filesize($fileTemp) > self::VIRUS_SCAN_MAX_BYTES) {
@@ -194,12 +216,24 @@ class FileUploader
 
         $pathToImage = $fileLocation . $fileName;
 
-        if (!move_uploaded_file($fileTemp, $pathToImage)) {
+        $moved = move_uploaded_file($fileTemp, $pathToImage);
+        if (!$moved) {
+            if (!is_uploaded_file($fileTemp) && file_exists($fileTemp)) {
+                $moved = copy($fileTemp, $pathToImage);
+                if ($moved) {
+                    @unlink($fileTemp);
+                }
+            }
+        }
+
+        if (!$moved) {
             $_SESSION['imageUploadOutcome'] = 'Image was not successfully uploaded';
             throw new ValidationException('Error Processing Request - Image was not successfully uploaded');
         }
 
-        $pathToImage = self::finaliseImage($pathToImage, $extension);
+        if (!$wasPreOptimised) {
+            $pathToImage = self::finaliseImage($pathToImage, $extension);
+        }
 
         $_SESSION['imageUploadOutcome'] = 'Image was successfully uploaded';
 
@@ -270,6 +304,13 @@ class FileUploader
             $mime = self::sniffMime($fileTemp);
             if ($mime !== null && !in_array($mime, self::MIME_MAP[$extension], true)) {
                 throw new ValidationException('FILE FORMAT - File contents do not match its extension.');
+            }
+
+            // Red Team Polyglot Guard: Reject files embedding raw server-side PHP tags or script shells
+            $headChunk = (string) @file_get_contents($fileTemp, false, null, 0, 65536);
+            if ($headChunk !== '' && preg_match('/<\?(?:php|=)|\b__HALT_COMPILER\s*\(|<script\s+[^>]*language\s*=\s*["\']?php/i', $headChunk)) {
+                @unlink($fileTemp);
+                throw new ValidationException('SECURITY VIOLATION - Malicious executable polyglot payload detected in file.');
             }
         }
     }
@@ -392,6 +433,11 @@ class FileUploader
 
     private static function runBinaryOptimizer(string $path): void
     {
+        $disableOptimizer = (string)($_ENV['DISABLE_BINARY_IMAGE_OPTIMIZER'] ?? getenv('DISABLE_BINARY_IMAGE_OPTIMIZER') ?: '');
+        if ($disableOptimizer === 'true' || $disableOptimizer === '1') {
+            return;
+        }
+
         try {
             ImgOptimizer::create()->optimize($path);
         } catch (Throwable $e) {

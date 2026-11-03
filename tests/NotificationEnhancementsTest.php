@@ -343,4 +343,67 @@ class NotificationEnhancementsTest extends TestCase
         ]);
         $this->assertFalse($prefersHtml);
     }
+
+    public function testCryptographicPushKeysValidationRfc8291(): void
+    {
+        // Valid 65-byte uncompressed P-256 public key (0x04 + 64 bytes) and 16-byte auth secret
+        $validP256dh = base64_encode("\x04" . str_repeat('A', 64));
+        $validAuth = base64_encode(str_repeat('B', 16));
+
+        $this->assertTrue(PushNotificationService::isValidPushKeys($validP256dh, $validAuth));
+
+        // Dr. Viktor Kovács PoC malformed key payload ("AAAA")
+        $this->assertFalse(PushNotificationService::isValidPushKeys('AAAA', 'AAAA'));
+        $this->assertFalse(PushNotificationService::isValidPushKeys('', $validAuth));
+        $this->assertFalse(PushNotificationService::isValidPushKeys('not-base64-!!!', $validAuth));
+    }
+
+    public function testSmartTagCoalescingBundlesRapidBurstsIntoSingleUnreadRow(): void
+    {
+        $userId = 'coalesce_user_99';
+
+        $firstId = NotificationOrchestrator::dispatchCoalesced(
+            userId: $userId,
+            category: 'social',
+            priority: 'medium',
+            title: 'New Comment',
+            body: 'Ayo commented on your family photo.',
+            actionUrl: '/profilePage?post_no=42',
+            tag: 'post_42_comments'
+        );
+
+        $secondId = NotificationOrchestrator::dispatchCoalesced(
+            userId: $userId,
+            category: 'social',
+            priority: 'medium',
+            title: '2 New Comments',
+            body: 'Ayo and Funmi commented on your family photo.',
+            actionUrl: '/profilePage?post_no=42',
+            tag: 'post_42_comments'
+        );
+
+        // Must coalesce into the exact same notification row
+        $this->assertSame($firstId, $secondId);
+        $this->assertSame(1, NotificationOrchestrator::getUnreadCount($userId));
+
+        $stmt = $this->pdo->prepare('SELECT title, body, data_payload FROM notification_orchestration WHERE id = ?');
+        $stmt->execute([$firstId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $this->assertIsArray($row);
+        $this->assertSame('2 New Comments', $row['title']);
+        $meta = json_decode((string)$row['data_payload'], true);
+        $this->assertIsArray($meta);
+        $this->assertSame(2, $meta['coalesced_count']);
+        $this->assertFalse($meta['renotify']);
+    }
+
+    public function testSanitizeActionUrlNeutralizesJavascriptAndProtocolRelativeRedirects(): void
+    {
+        $this->assertSame('/', NotificationOrchestrator::sanitizeActionUrl('javascript:alert(document.cookie)'));
+        $this->assertSame('/', NotificationOrchestrator::sanitizeActionUrl('   data:text/html,<script>alert(1)</script>'));
+        $this->assertSame('/', NotificationOrchestrator::sanitizeActionUrl('//evil-attacker.com/phishing'));
+        $this->assertSame('/dashboard/alerts', NotificationOrchestrator::sanitizeActionUrl('/dashboard/alerts'));
+        $this->assertSame('https://example.com/party/12', NotificationOrchestrator::sanitizeActionUrl('https://example.com/party/12'));
+    }
 }

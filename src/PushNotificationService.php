@@ -97,6 +97,52 @@ class PushNotificationService
     }
 
     /**
+     * Cryptographic Key Hygiene Validator (RFC 8291 / Dr. Viktor Kovács Red Team Gate)
+     *
+     * Verifies that client-supplied Web Push keys are valid base64/base64url-encoded
+     * P-256 ECDH public keys (65 bytes uncompressed point starting with 0x04) and
+     * 16-byte authentication secrets, neutralizing worker-exhaustion DoS via garbage keys.
+     *
+     * @param string $p256dh
+     * @param string $auth
+     * @return bool
+     */
+    public static function isValidPushKeys(string $p256dh, string $auth): bool
+    {
+        $p256dh = trim($p256dh);
+        $auth = trim($auth);
+
+        if ($p256dh === '' || $auth === '') {
+            return false;
+        }
+
+        if (!preg_match('/^[A-Za-z0-9+\/_=-]+$/', $p256dh) || !preg_match('/^[A-Za-z0-9+\/_=-]+$/', $auth)) {
+            return false;
+        }
+
+        $decodedP256dh = base64_decode(strtr($p256dh, '-_', '+/'), true);
+        $decodedAuth = base64_decode(strtr($auth, '-_', '+/'), true);
+
+        if ($decodedP256dh === false || $decodedAuth === false) {
+            return false;
+        }
+
+        $p256dhLen = strlen($decodedP256dh);
+        $authLen = strlen($decodedAuth);
+
+        // RFC 8291: P-256 uncompressed public key is 65 bytes (0x04 || X || Y); auth secret is 16 bytes
+        if ($p256dhLen !== 65 || ord($decodedP256dh[0]) !== 0x04) {
+            return false;
+        }
+
+        if ($authLen < 12 || $authLen > 32) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Send rich PWA Web Push notification to user(s) with native Chromium and WebKit parity.
      *
      * @param string|int|array<int, string|int>|null $userId Target user ID or array of user IDs
@@ -160,7 +206,10 @@ class PushNotificationService
             $webPush->setReuseVAPIDHeaders(true);
 
             // Extract & normalize rich options
-            $effectiveUrl = $url ?: (string)($options['url'] ?? '/');
+            $rawUrl = $url ?: (string)($options['url'] ?? '/');
+            $effectiveUrl = class_exists('\\Src\\NotificationOrchestrator')
+                ? \Src\NotificationOrchestrator::sanitizeActionUrl($rawUrl)
+                : (preg_match('/^\s*(?:javascript|data|vbscript|file):/i', $rawUrl) || str_starts_with(trim($rawUrl), '//') ? '/' : $rawUrl);
             $rawTag = (string)($options['tag'] ?? $tag);
             $cleanedTag = preg_replace('/[^A-Za-z0-9_-]/', '', $rawTag) ?? '';
             $sanitizedTag = substr($cleanedTag, 0, 32);
@@ -493,7 +542,8 @@ class PushNotificationService
         string $endpoint,
         string $p256dh,
         string $auth,
-        ?array $deviceInfo = null
+        ?array $deviceInfo = null,
+        bool $strictKeyValidation = false
     ): bool {
         $userId = trim($userId);
         $endpoint = trim($endpoint);
@@ -501,6 +551,11 @@ class PushNotificationService
         $auth = trim($auth);
 
         if ($userId === '' || $endpoint === '' || $p256dh === '' || $auth === '') {
+            return false;
+        }
+
+        if ($strictKeyValidation && !self::isValidPushKeys($p256dh, $auth)) {
+            error_log('[PushNotificationService] Invalid cryptographic push keys rejected.');
             return false;
         }
 
