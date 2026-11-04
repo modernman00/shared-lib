@@ -119,4 +119,27 @@ class SovereignSearchEngineTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         VectorEngine::cosineSimilarity([1.0, NAN, 0.5], [1.0, 0.2, 0.5]);
     }
+
+    public function testLocalEmbeddingAndTurnkeySearchCorpus(): void
+    {
+        $vec1 = VectorEngine::generateLocalEmbedding('Burna Boy Last Last Afrobeats DJ Soundstage', 64);
+        $vec2 = VectorEngine::generateLocalEmbedding('Burnaboy LastLast Afrobeat track request', 64);
+        $vecUnrelated = VectorEngine::generateLocalEmbedding('HMRC Corporation Tax Self Assessment Return', 64);
+
+        $this->assertCount(64, $vec1);
+        $simClose = VectorEngine::cosineSimilarity($vec1, $vec2);
+        $simFar = VectorEngine::cosineSimilarity($vec1, $vecUnrelated);
+        $this->assertGreaterThan($simFar, $simClose);
+
+        $engine = new SovereignSearchEngine(new VectorEngine());
+        $corpus = [
+            ['id' => 'trk_1', 'title' => 'Burna Boy - Last Last', 'body' => 'High-energy Afrobeats floor filler for wedding reception.', 'category' => 'Afrobeats'],
+            ['id' => 'trk_2', 'title' => 'ABBA - Dancing Queen', 'body' => 'Classic disco celebration anthem for all generations.', 'category' => 'Disco'],
+        ];
+
+        $results = $engine->searchCorpus('Burnaboy Afrobeat', $corpus, 5);
+        $this->assertNotEmpty($results);
+        $this->assertSame('trk_1', $results[0]['id']);
+        $this->assertArrayHasKey('rrf_score', $results[0]);
+    }
 }

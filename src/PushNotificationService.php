@@ -585,15 +585,22 @@ class PushNotificationService
             $checkStmt->execute([':uid' => $userId, ':ep' => $endpoint]);
             $existingId = $checkStmt->fetchColumn();
 
+            $isSqlite = ($db->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite');
+
             if ($existingId !== false) {
                 try {
-                    $updateStmt = $db->prepare("
-                        UPDATE user_push_subscriptions 
-                        SET p256dh = :p256dh, auth_token = :auth, device_platform = :platform, 
-                            browser = :browser, app_version = :ver, user_agent = :ua, 
-                            failure_count = 0, last_seen = datetime('now')
-                        WHERE id = :id
-                    ");
+                    $updateSql = $isSqlite
+                        ? "UPDATE user_push_subscriptions 
+                           SET p256dh = :p256dh, auth_token = :auth, device_platform = :platform, 
+                               browser = :browser, app_version = :ver, user_agent = :ua, 
+                               failure_count = 0, last_seen = datetime('now')
+                           WHERE id = :id"
+                        : "UPDATE user_push_subscriptions 
+                           SET p256dh = :p256dh, auth_token = :auth, device_platform = :platform, 
+                               browser = :browser, app_version = :ver, user_agent = :ua, 
+                               failure_count = 0, last_seen = NOW()
+                           WHERE id = :id";
+                    $updateStmt = $db->prepare($updateSql);
                     $updateStmt->execute([
                         ':p256dh'   => $p256dh,
                         ':auth'     => $auth,
@@ -618,11 +625,14 @@ class PushNotificationService
                 }
             } else {
                 try {
-                    $insertStmt = $db->prepare("
-                        INSERT INTO user_push_subscriptions 
-                        (user_id, endpoint, p256dh, auth_token, device_platform, browser, app_version, user_agent, failure_count, last_seen, created_at)
-                        VALUES (:uid, :ep, :p256dh, :auth, :platform, :browser, :ver, :ua, 0, datetime('now'), datetime('now'))
-                    ");
+                    $insertSql = $isSqlite
+                        ? "INSERT INTO user_push_subscriptions 
+                           (user_id, endpoint, p256dh, auth_token, device_platform, browser, app_version, user_agent, failure_count, last_seen, created_at)
+                           VALUES (:uid, :ep, :p256dh, :auth, :platform, :browser, :ver, :ua, 0, datetime('now'), datetime('now'))"
+                        : "INSERT INTO user_push_subscriptions 
+                           (user_id, endpoint, p256dh, auth_token, device_platform, browser, app_version, user_agent, failure_count, last_seen, created_at)
+                           VALUES (:uid, :ep, :p256dh, :auth, :platform, :browser, :ver, :ua, 0, NOW(), NOW())";
+                    $insertStmt = $db->prepare($insertSql);
                     $insertStmt->execute([
                         ':uid'      => $userId,
                         ':ep'       => $endpoint,
@@ -635,11 +645,14 @@ class PushNotificationService
                     ]);
                 } catch (\Throwable) {
                     // Fallback insert if extended telemetry columns do not exist
-                    $fallbackInsert = $db->prepare("
-                        INSERT INTO user_push_subscriptions 
-                        (user_id, endpoint, p256dh, auth_token, created_at)
-                        VALUES (:uid, :ep, :p256dh, :auth, datetime('now'))
-                    ");
+                    $fallbackSql = $isSqlite
+                        ? "INSERT INTO user_push_subscriptions 
+                           (user_id, endpoint, p256dh, auth_token, created_at)
+                           VALUES (:uid, :ep, :p256dh, :auth, datetime('now'))"
+                        : "INSERT INTO user_push_subscriptions 
+                           (user_id, endpoint, p256dh, auth_token, created_at)
+                           VALUES (:uid, :ep, :p256dh, :auth, NOW())";
+                    $fallbackInsert = $db->prepare($fallbackSql);
                     $fallbackInsert->execute([
                         ':uid'    => $userId,
                         ':ep'     => $endpoint,

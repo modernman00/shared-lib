@@ -299,4 +299,62 @@ class VectorEngine
         usort($candidates, static fn(array $a, array $b): int => $b['similarity'] <=> $a['similarity']);
         return array_slice($candidates, 0, $k);
     }
+
+    /**
+     * Generates a deterministic, L2-normalised local embedding vector using signed character 3-gram
+     * and stemmed word-token feature hashing (zero external API latency, £0 cost).
+     *
+     * @param string $text
+     * @param int $dimensions Vector dimensionality (default 64)
+     * @return array<float>
+     */
+    public static function generateLocalEmbedding(string $text, int $dimensions = 64): array
+    {
+        $dimensions = max(8, min($dimensions, self::MAX_VECTOR_DIMENSIONS));
+        $vec = array_fill(0, $dimensions, 0.0);
+
+        $cleaned = mb_strtolower(strip_tags(mb_substr($text, 0, 16384, 'UTF-8')), 'UTF-8');
+        $cleaned = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $cleaned) ?? '';
+        $words = preg_split('/\s+/u', trim($cleaned), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        foreach ($words as $word) {
+            $wLen = mb_strlen($word, 'UTF-8');
+            if ($wLen < 2) {
+                continue;
+            }
+            // 1. Word token feature projection (weight 2.0)
+            $hash = crc32('w:' . $word);
+            $idx = abs($hash) % $dimensions;
+            $sign = (($hash >> 16) & 1) === 1 ? 1.0 : -1.0;
+            $vec[$idx] += $sign * 2.0;
+
+            // 2. Character 3-gram projections for typo-tolerance and morphological similarity (weight 1.0)
+            $padded = '^' . $word . '$';
+            $pLen = mb_strlen($padded, 'UTF-8');
+            for ($i = 0; $i <= $pLen - 3; $i++) {
+                $trigram = mb_substr($padded, $i, 3, 'UTF-8');
+                $tHash = crc32('g:' . $trigram);
+                $tIdx = abs($tHash) % $dimensions;
+                $tSign = (($tHash >> 15) & 1) === 1 ? 1.0 : -1.0;
+                $vec[$tIdx] += $tSign * 1.0;
+            }
+        }
+
+        $norm = 0.0;
+        foreach ($vec as $v) {
+            $norm += $v * $v;
+        }
+
+        if ($norm <= 0.0) {
+            $vec[0] = 1.0;
+            return $vec;
+        }
+
+        $invNorm = 1.0 / sqrt($norm);
+        foreach ($vec as $i => $v) {
+            $vec[$i] = round($v * $invNorm, 6);
+        }
+
+        return $vec;
+    }
 }

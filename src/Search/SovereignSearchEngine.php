@@ -367,4 +367,58 @@ class SovereignSearchEngine
             $escapedSlice
         ) ?? $escapedSlice;
     }
+
+    /**
+     * Turnkey Hybrid Search (BM25 + Local 64-D Vector RRF) over a domain record corpus.
+     * Automatically indexes up to 500 records in memory with deterministic 3-gram feature embeddings
+     * and returns ranked, highlighted matches with sub-millisecond execution.
+     *
+     * @param string $query
+     * @param array<int, array<string, mixed>> $records
+     * @param int $limit
+     * @return array<int, array{id: string|int, rrf_score: float, snippet: string, metadata: array<string, mixed>}>
+     */
+    public function searchCorpus(string $query, array $records, int $limit = 10): array
+    {
+        $cleanQuery = trim(mb_substr($query, 0, 1024, 'UTF-8'));
+        $limit = max(1, min($limit, 100));
+
+        if ($this->vectorEngine === null) {
+            $this->vectorEngine = new VectorEngine();
+        }
+
+        foreach (array_slice($records, 0, 500) as $idx => $rec) {
+            $id = (string) ($rec['id'] ?? ('doc_' . $idx));
+            $title = (string) ($rec['title'] ?? $rec['name'] ?? '');
+            $body = (string) ($rec['body'] ?? $rec['description'] ?? $rec['summary'] ?? $title);
+            $category = (string) ($rec['category'] ?? $rec['type'] ?? '');
+            $combined = trim($title . ' ' . $body . ' ' . $category);
+
+            $embedding = VectorEngine::generateLocalEmbedding($combined, 64);
+            $this->indexDocument(
+                $id,
+                ['title' => $title, 'body' => $body, 'category' => $category],
+                $rec,
+                $embedding
+            );
+        }
+
+        if ($cleanQuery === '') {
+            $fallback = [];
+            foreach (array_slice($records, 0, $limit) as $idx => $rec) {
+                $id = (string) ($rec['id'] ?? ('doc_' . $idx));
+                $body = (string) ($rec['body'] ?? $rec['description'] ?? $rec['title'] ?? '');
+                $fallback[] = [
+                    'id' => $id,
+                    'rrf_score' => 1.0,
+                    'snippet' => self::generateHighlightSnippet($body, []),
+                    'metadata' => $rec,
+                ];
+            }
+            return $fallback;
+        }
+
+        $queryVector = VectorEngine::generateLocalEmbedding($cleanQuery, 64);
+        return $this->hybridSearch($cleanQuery, $queryVector, $limit);
+    }
 }

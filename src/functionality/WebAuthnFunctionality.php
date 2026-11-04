@@ -670,8 +670,7 @@ class WebAuthnFunctionality
 
     function detectBiometricLabel() {
         const ua = navigator.userAgent || '';
-        if (/iPhone|iPad|iPod/i.test(ua)) return 'Face ID or Touch ID';
-        if (/Macintosh|Mac OS X/i.test(ua)) return 'Touch ID';
+        if (/iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua)) return 'Face ID or Touch ID';
         if (/Android/i.test(ua)) return 'Fingerprint or Face Unlock';
         if (/Windows/i.test(ua)) return 'Windows Hello';
         return 'Biometric Passkey';
