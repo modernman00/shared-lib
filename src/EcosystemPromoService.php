@@ -88,11 +88,11 @@ class EcosystemPromoService
         ],
         'execmind' => [
             'name' => 'ExecMind',
-            'headline' => 'ExecMind — Your Private AI Advisor',
-            'tagline' => 'Executive Intelligence Platform',
-            'description' => 'Automates intelligence gathering, executive decision frameworks, career scaling, and document synthesis on autopilot.',
-            'cta_text' => 'Launch AI Advisor',
-            'badge' => 'AI ADVISOR',
+            'headline' => 'ExecMind: run your meetings and strategy in one place',
+            'tagline' => 'Built for executives, founders and boards',
+            'description' => 'Turn meeting notes into board action items, track who owes what, and get a short daily market briefing.',
+            'cta_text' => 'Explore ExecMind',
+            'badge' => 'FOR LEADERS',
             'accent_color' => '#8b5cf6', // Violet
             'gradient' => 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
             'icon' => 'bi-lightbulb-fill',
