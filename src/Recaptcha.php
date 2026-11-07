@@ -54,7 +54,8 @@ class Recaptcha
             throw new RecaptchaBrokenException('🔐 Our guard is asleep! Tell the admin!');
         }
 
-        if (!str_starts_with($secret, $_ENV['SECRET_RECAPTCHA_KEY_TWO_START_LETTER'])) {
+        $expectedPrefix = (string) ($_ENV['SECRET_RECAPTCHA_KEY_TWO_START_LETTER'] ?? '');
+        if ($expectedPrefix !== '' && !str_starts_with($secret, $expectedPrefix)) {
             throw new RecaptchaBrokenException('Invalid reCAPTCHA secret key format');
         }
 

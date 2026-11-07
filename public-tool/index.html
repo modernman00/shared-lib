@@ -1,0 +1,3965 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Statement Assessment &amp; Gap-Detection Engine</title>
+  <style>
+    :root {
+      /* 60-30-10 Disciplined Palette — WCAG AA/AAA Compliant */
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-elevated: #0f172a;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #475569;
+      --text-inverse: #ffffff;
+
+      --accent-primary: #0369a1;
+      --accent-primary-hover: #075985;
+      --accent-soft: #e0f2fe;
+
+      --status-ok-bg: #dcfce7;
+      --status-ok-border: #86efac;
+      --status-ok-text: #14532d;
+      --status-ok-bar: #16a34a;
+
+      --status-gap-bg: #fee2e2;
+      --status-gap-border: #fca5a5;
+      --status-gap-text: #7f1d1d;
+      --status-gap-bar: #dc2626;
+
+      --status-warn-bg: #fef3c7;
+      --status-warn-border: #fcd34d;
+      --status-warn-text: #78350f;
+      --status-warn-bar: #d97706;
+
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Header Banner */
+    .app-header {
+      background: var(--bg-elevated);
+      color: var(--text-inverse);
+      padding: 16px 24px;
+      border-bottom: 4px solid var(--accent-primary);
+    }
+
+    .header-inner {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0 0;
+      font-size: 0.875rem;
+      color: #cbd5e1;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Layout Grid */
+    .app-container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 1080px) {
+      .app-container {
+        grid-template-columns: 420px 1fr;
+        align-items: start;
+      }
+    }
+
+    /* Surface Cards */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card + .card {
+      margin-top: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Form Controls */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    select,
+    textarea {
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.25);
+    }
+
+    /* Quick Bank Chips */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .bank-chip {
+      min-height: 36px;
+      padding: 4px 12px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .bank-chip:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .bank-chip:active {
+      transform: scale(0.98);
+    }
+
+    /* Interactive Buttons (Fitts's Law >= 44px, 4-State Tactile Feedback) */
+    .btn {
+      min-height: 44px;
+      min-width: 44px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      border: 1px solid transparent;
+      transition: filter 0.15s ease, transform 0.1s ease, background-color 0.15s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: var(--text-inverse);
+    }
+
+    .btn-secondary {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+    }
+
+    .btn-outline-light {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-inverse);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-outline-light:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-danger-ghost {
+      background: transparent;
+      color: var(--status-gap-bar);
+      border-color: var(--status-gap-border);
+      padding: 4px 12px;
+      min-height: 44px;
+    }
+
+    .btn-danger-ghost:hover:not(:disabled) {
+      background: var(--status-gap-bg);
+    }
+
+    .btn-sm {
+      min-height: 44px;
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      display: none;
+    }
+
+    .btn.is-loading .spinner {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Checkboxes / Toggle Pills */
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .check-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: var(--bg-subtle);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .check-pill input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--accent-primary);
+    }
+
+    /* Executive KPI Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-top: 4px;
+      color: var(--text-primary);
+    }
+
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Status Banner */
+    .overall-banner {
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid;
+    }
+
+    .overall-banner.status-compliant {
+      background: var(--status-ok-bg);
+      border-color: var(--status-ok-border);
+      color: var(--status-ok-text);
+    }
+
+    .overall-banner.status-gaps {
+      background: var(--status-gap-bg);
+      border-color: var(--status-gap-border);
+      color: var(--status-gap-text);
+    }
+
+    .overall-banner.status-empty {
+      background: var(--status-warn-bg);
+      border-color: var(--status-warn-border);
+      color: var(--status-warn-text);
+    }
+
+    /* Visual Timeline Gantt Tracks */
+    .account-track {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      background: var(--bg-surface);
+      margin-bottom: 16px;
+    }
+
+    .account-track-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .account-title-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .account-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-current {
+      background: #e0e7ff;
+      color: #1e3a8a;
+    }
+
+    .badge-savings {
+      background: #fae8ff;
+      color: #701a75;
+    }
+
+    .badge-ok {
+      background: var(--status-ok-bg);
+      color: var(--status-ok-text);
+      border: 1px solid var(--status-ok-border);
+    }
+
+    .badge-gap {
+      background: var(--status-gap-bg);
+      color: var(--status-gap-text);
+      border: 1px solid var(--status-gap-border);
+    }
+
+    /* Ruler & Gantt Bar */
+    .timeline-ruler {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .timeline-bar {
+      position: relative;
+      height: 32px;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--border-strong);
+    }
+
+    .timeline-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-inverse);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 4px;
+      transition: opacity 0.15s ease;
+    }
+
+    .timeline-segment.seg-covered {
+      background: var(--status-ok-bar);
+    }
+
+    .timeline-segment.seg-gap {
+      background: repeating-linear-gradient(
+        -45deg,
+        #dc2626,
+        #dc2626 8px,
+        #b91c1c 8px,
+        #b91c1c 16px
+      );
+    }
+
+    .gap-callout-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .gap-callout {
+      background: var(--status-gap-bg);
+      border: 1px solid var(--status-gap-border);
+      color: var(--status-gap-text);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Prioritised Task Queue */
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-subtle);
+    }
+
+    .task-item.priority-critical {
+      background: var(--status-gap-bg);
+      border-color: var(--status-gap-border);
+    }
+
+    .task-item.priority-warn {
+      background: var(--status-warn-bg);
+      border-color: var(--status-warn-border);
+    }
+
+    .task-item.priority-ok {
+      background: var(--status-ok-bg);
+      border-color: var(--status-ok-border);
+    }
+
+    /* Responsive Table (modern-web-guidance: responsive-table) */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: min(460px, 75vh);
+      container-type: inline-size;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.875rem;
+      --label-1: "Bank & Account";
+      --label-2: "Type";
+      --label-3: "Statement Period";
+      --label-4: "Assessment Overlap";
+      --label-5: "Continuity Status";
+      --label-6: "Action";
+    }
+
+    caption {
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
+      background: var(--bg-subtle);
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    thead th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      background: var(--bg-surface);
+      font-weight: 700;
+      color: var(--text-primary);
+      z-index: 1;
+    }
+
+    tbody tr:hover td,
+    tbody tr:hover th {
+      background: #f8fafc;
+    }
+
+    @container (width < 640px) {
+      table, thead, tbody, tr, th, td {
+        display: block;
+      }
+
+      thead {
+        /* MANDATORY: Hide column header from layout and screen readers on narrow container */
+        display: none;
+      }
+
+      tr {
+        margin-block-end: 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+      }
+
+      tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        background: var(--bg-subtle);
+      }
+
+      td:nth-child(2)::before { content: var(--label-2) ": "; font-weight: 700; }
+      td:nth-child(3)::before { content: var(--label-3) ": "; font-weight: 700; }
+      td:nth-child(4)::before { content: var(--label-4) ": "; font-weight: 700; }
+      td:nth-child(5)::before { content: var(--label-5) ": "; font-weight: 700; }
+      td:nth-child(6)::before { content: var(--label-6) ": "; font-weight: 700; }
+    }
+
+    /* Email Draft Box */
+    .email-box {
+      width: 100%;
+      min-height: 280px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.84375rem;
+      line-height: 1.6;
+      background: #f8fafc;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      resize: vertical;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      color: var(--text-secondary);
+    }
+
+    .toast-feedback {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--status-ok-bar);
+      min-height: 20px;
+    }
+
+    .record-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .record-card:hover {
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Segmented View Tabs (3 Views) */
+    .view-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: var(--bg-subtle);
+      padding: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-strong);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1 1 140px;
+      min-height: 44px;
+      min-width: 140px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--bg-surface);
+      color: var(--accent-primary);
+      border-color: var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .tab-btn.active {
+        background: #1e293b;
+        color: #38bdf8;
+        border-color: #334155;
+      }
+      .tab-btn:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.06);
+        color: #f8fafc;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div>
+        <div class="brand-title">
+          <span class="brand-badge">Assessment Review Tool</span>
+          <h1>Bank Statement Assessment &amp; Gap-Detection Engine</h1>
+        </div>
+        <p class="brand-subtitle">
+          Automatically sorts rolling bank statement periods, verifies continuous coverage across the Assessment Period, pinpoints missing dates, and drafts the claimant email.
+        </p>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="btnClearAll" class="btn btn-outline-light" title="Reset all fields to a blank slate">
+          <span>New / Blank Assessment</span>
+        </button>
+        <button type="button" id="btnLoadPaperExample" class="btn btn-outline-light" title="Loads a demo dataset to see gap detection in action">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Load Demo Sample (Gap Detection)</span>
+        </button>
+        <button type="button" id="btnLoadCompliantExample" class="btn btn-outline-light" title="Loads a 100% compliant Current and Savings statement set">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Load Demo Sample (100% Covered)</span>
+        </button>
+        <a href="#emailSection" id="btnHeaderStoredNotes" class="btn btn-outline-light" style="text-decoration: none;" title="Jump to your personal stored assessment action notes">
+          <span>Stored Notes (<span id="headerRecordsCount">0</span>)</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-container">
+    <!-- LEFT COLUMN: Assessment Configuration & Fast Statement Entry -->
+    <section aria-label="Assessment Setup and Statement Entry">
+      <!-- STEP 1: Assessment Period & 4-Month Review Window -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="step-pill">1</span>
+            <span>Assessment Period &amp; 4-Month Review Window</span>
+          </h2>
+          <span id="assessmentDaysBadge" class="badge badge-current">—</span>
+        </div>
+
+        <div style="background: var(--accent-soft); border: 1px solid var(--accent-primary); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 16px; font-size: 0.8125rem; color: var(--text-primary);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong>4-Month Review Rule:</strong>
+              <span>Enter the Assessment Period End Date. The required 4-month statement window is automatically counted backward. Both periods will appear in your drafted email.</span>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="btnRecalc4Months" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 4px 10px; font-size: 0.75rem;">
+                Sync 4-Month Window
+              </button>
+              <button type="button" id="btnClearDates" class="btn btn-danger-ghost btn-sm" style="min-height: 36px; padding: 4px 10px; font-size: 0.75rem;" title="Clear assessment period and review window dates if entered incorrectly">
+                Clear Dates
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <!-- Assessment Period -->
+          <div class="form-group full-width">
+            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em;">Assessment Period (Current Claim Window)</span>
+          </div>
+
+          <div class="form-group">
+            <label for="apStart">Assessment Period Start Date</label>
+            <input type="date" id="apStart" value="" placeholder="YYYY-MM-DD" />
+          </div>
+
+          <div class="form-group">
+            <label for="apEnd">Assessment Period End Date (Primary)</label>
+            <input type="date" id="apEnd" value="" placeholder="YYYY-MM-DD" />
+          </div>
+
+          <!-- 4-Month Statement Review Window -->
+          <div class="form-group full-width" style="margin-top: 8px; border-top: 1px dashed var(--border-strong); padding-top: 12px;">
+            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.04em;">Required 4-Month Bank Statement Review Window</span>
+          </div>
+
+          <div class="form-group">
+            <label for="reviewStart">Review Window Start Date (4 Months Back)</label>
+            <input type="date" id="reviewStart" value="" placeholder="YYYY-MM-DD" />
+          </div>
+
+          <div class="form-group">
+            <label for="reviewEnd">Review Window End Date</label>
+            <input type="date" id="reviewEnd" value="" placeholder="YYYY-MM-DD" />
+          </div>
+
+          <div class="form-group full-width" style="margin-top: 8px;">
+            <label>Expected Account Types to Verify</label>
+            <div class="checkbox-row">
+              <label class="check-pill">
+                <input type="checkbox" id="reqCurrent" checked />
+                <span>Require Current Account</span>
+              </label>
+              <label class="check-pill">
+                <input type="checkbox" id="reqSavings" checked />
+                <span>Require Savings Account</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Fast Manual Statement Entry -->
+      <div class="card" id="step2Card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="step-pill">2</span>
+            <span id="step2Title">Add Bank Statement</span>
+          </h2>
+        </div>
+
+        <div id="editingBanner" style="display:none; background: #fef3c7; border: 1px solid #f59e0b; border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 14px; font-size: 0.8125rem; color: #92400e;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong>Editing Statement:</strong>
+              <span id="editingStatementDetails">...</span>
+            </div>
+            <button type="button" id="btnCancelEdit" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 4px 10px; font-size: 0.75rem;" title="Cancel editing and restore add mode">
+              Cancel Edit
+            </button>
+          </div>
+        </div>
+
+        <form id="statementForm" novalidate>
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="bankName">Bank / Building Society Name</label>
+              <input type="text" id="bankName" list="ukBanksList" placeholder="e.g. Starling, Monzo, Revolut, Chase, NatWest" required />
+              <datalist id="ukBanksList">
+                <option value="Starling Bank"></option>
+                <option value="Monzo"></option>
+                <option value="Revolut"></option>
+                <option value="Chase UK"></option>
+                <option value="Kroo"></option>
+                <option value="First Direct"></option>
+                <option value="Metro Bank"></option>
+                <option value="NatWest"></option>
+                <option value="Barclays"></option>
+                <option value="Lloyds"></option>
+                <option value="HSBC"></option>
+                <option value="Halifax"></option>
+                <option value="Santander"></option>
+                <option value="Nationwide"></option>
+                <option value="TSB"></option>
+                <option value="Virgin Money"></option>
+                <option value="Co-operative Bank"></option>
+              </datalist>
+
+              <div class="chip-row" role="group" aria-label="Quick select UK bank">
+                <button type="button" class="bank-chip" data-bank="Starling Bank">Starling</button>
+                <button type="button" class="bank-chip" data-bank="Monzo">Monzo</button>
+                <button type="button" class="bank-chip" data-bank="Revolut">Revolut</button>
+                <button type="button" class="bank-chip" data-bank="Chase UK">Chase</button>
+                <button type="button" class="bank-chip" data-bank="Kroo">Kroo</button>
+                <button type="button" class="bank-chip" data-bank="First Direct">First Direct</button>
+                <button type="button" class="bank-chip" data-bank="NatWest">NatWest</button>
+                <button type="button" class="bank-chip" data-bank="Barclays">Barclays</button>
+                <button type="button" class="bank-chip" data-bank="Lloyds">Lloyds</button>
+                <button type="button" class="bank-chip" data-bank="HSBC">HSBC</button>
+                <button type="button" class="bank-chip" data-bank="Halifax">Halifax</button>
+                <button type="button" class="bank-chip" data-bank="Santander">Santander</button>
+                <button type="button" class="bank-chip" data-bank="Nationwide">Nationwide</button>
+                <button type="button" class="bank-chip" data-bank="Metro Bank">Metro Bank</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="accountType">Account Type</label>
+              <select id="accountType">
+                <option value="Current">Current Account</option>
+                <option value="Savings">Savings Account</option>
+                <option value="ISA">ISA / Saver Account</option>
+                <option value="Joint Current">Joint Current Account</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="accountRef">Last 4 Digits (Optional)</label>
+              <input type="text" id="accountRef" maxlength="12" placeholder="e.g. 4821" />
+            </div>
+
+            <div class="form-group">
+              <label for="stmtStart">Statement Start Date</label>
+              <input type="date" id="stmtStart" value="" required />
+            </div>
+
+            <div class="form-group">
+              <label for="stmtEnd">Statement End Date</label>
+              <input type="date" id="stmtEnd" value="" required />
+            </div>
+
+            <div class="form-group full-width" id="formErrorBox" style="display:none; color: var(--status-gap-bar); font-weight: 600; font-size: 0.8125rem;"></div>
+
+            <div class="form-group full-width" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+              <button type="submit" id="btnAddStatement" class="btn btn-primary" style="flex: 2; min-width: 150px;">
+                <span class="spinner" aria-hidden="true"></span>
+                <span id="btnAddStatementText">+ Add Statement</span>
+              </button>
+              <button type="button" id="btnAddAndAdvance" class="btn btn-secondary" title="Adds this statement and automatically advances dates to the next monthly cycle" style="flex: 1.5; min-width: 160px;">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>+ Add &amp; Roll to Next Month</span>
+              </button>
+              <button type="button" id="btnClearForm" class="btn btn-secondary" title="Clear all statement input fields above if entered by mistake" style="flex: 1; min-width: 110px;">
+                <span>Clear Input</span>
+              </button>
+              <button type="button" id="btnCancelEditRow" class="btn btn-danger-ghost" title="Discard edits and exit edit mode" style="display: none; min-width: 110px;">
+                <span>Cancel Edit</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Visual Timeline, Task Planner, Sorted Table & Email Generator -->
+    <section aria-label="Assessment Analysis, Timeline, and Claimant Email">
+      <!-- Executive Summary Banner -->
+      <div id="overallBanner" class="overall-banner status-gaps" role="status" aria-live="polite">
+        <div>
+          <strong id="bannerTitle" style="font-size: 1.0625rem; display: block;">Gaps Detected in Assessment Period</strong>
+          <span id="bannerSub" style="font-size: 0.875rem;">Some accounts have missing date intervals between 26 Jun 2026 and 26 Oct 2026.</span>
+        </div>
+        <a href="#emailSection" class="btn btn-primary btn-sm" style="text-decoration: none;">Jump to Journal Message</a>
+      </div>
+
+      <!-- KPI Metrics -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Assessment Window</div>
+          <div class="kpi-value" id="kpiWindowDays">123 Days</div>
+          <div class="kpi-sub" id="kpiWindowRange">26 Jun 2026 – 26 Oct 2026</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Accounts Audited</div>
+          <div class="kpi-value" id="kpiAccountsCount">2</div>
+          <div class="kpi-sub" id="kpiStatementsCount">8 statements sorted</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Coverage Completeness</div>
+          <div class="kpi-value" id="kpiCoveragePct">93.9%</div>
+          <div class="kpi-sub" id="kpiCoverageDetail">Across all declared accounts</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Unfulfilled Gaps</div>
+          <div class="kpi-value" id="kpiGapCount">3 Gaps</div>
+          <div class="kpi-sub" id="kpiMissingDaysTotal">15 missing account-days</div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Visual Coverage Timeline (Replaces Paper Month Grid) -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="step-pill">3</span>
+            <span>Visual Assessment Period Coverage &amp; Gap Map</span>
+          </h2>
+          <span style="font-size: 0.8125rem; color: var(--text-muted);">Green = Covered | Red Striped = Missing Gap</span>
+        </div>
+        <div id="timelineContainer"></div>
+      </div>
+
+      <!-- STEP 4: Prioritised Caseworker Action Plan (Task Sorting Algorithm) -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="step-pill">4</span>
+            <span>Prioritised Caseworker Task Plan</span>
+          </h2>
+          <span id="taskCountBadge" class="badge badge-gap">3 Action Items</span>
+        </div>
+        <ul id="taskList" class="task-list"></ul>
+      </div>
+
+      <!-- STEP 5: Sorted Statement Ledger -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="step-pill">5</span>
+            <span>Chronologically Sorted Statements Ledger</span>
+          </h2>
+        </div>
+
+        <div tabindex="0" role="region" aria-labelledby="statements-table-caption" class="table-wrapper">
+          <table>
+            <caption id="statements-table-caption">Statements automatically grouped by account and sorted chronologically</caption>
+            <thead>
+              <tr>
+                <th scope="col">Bank &amp; Account</th>
+                <th scope="col">Type</th>
+                <th scope="col">Statement Period</th>
+                <th scope="col">Assessment Overlap</th>
+                <th scope="col">Continuity Status</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="statementTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- STEP 6: Assessment Output & Records (Two Views: Message to Customer & My Audit Note) -->
+      <div class="card" id="emailSection">
+        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+          <h2 class="card-title" style="margin: 0;">
+            <span class="step-pill">6</span>
+            <span>Assessment Output &amp; Records</span>
+          </h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="savedRecordsBadge" class="badge badge-current">0 Records Stored</span>
+          </div>
+        </div>
+
+        <!-- 3-View Segmented Tab Switcher -->
+        <div class="view-tabs" role="tablist" aria-label="Assessment Output Views">
+          <button type="button" role="tab" id="tabViewCustomer" aria-selected="true" aria-controls="panelCustomerMessage" class="tab-btn active">
+            <span>💬 Message to Customer</span>
+          </button>
+          <button type="button" role="tab" id="tabViewReply" aria-selected="false" aria-controls="panelReplyAssistant" class="tab-btn">
+            <span>↩️ Respond to Message</span>
+          </button>
+          <button type="button" role="tab" id="tabViewAudit" aria-selected="false" aria-controls="panelAuditNote" class="tab-btn">
+            <span>📋 My Audit Note</span>
+          </button>
+        </div>
+
+        <!-- VIEW 1: Message to Customer -->
+        <div id="panelCustomerMessage" role="tabpanel" aria-labelledby="tabViewCustomer">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; background: var(--bg-subtle); padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label for="messageFormat" style="font-size: 0.75rem; font-weight: 700;">Format:</label>
+              <select id="messageFormat" style="min-height: 44px; padding: 4px 8px;">
+                <option value="journal" selected>Slim Journal Message (Action-Focused)</option>
+                <option value="detailed">Detailed Letter / Email</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label for="deadlineDays" style="font-size: 0.75rem; font-weight: 700;">Reply Deadline:</label>
+              <select id="deadlineDays" style="min-height: 44px; padding: 4px 8px;">
+                <option value="7">7 Calendar Days</option>
+                <option value="14" selected>14 Calendar Days</option>
+                <option value="28">28 Calendar Days</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="emailSubject">Draft Subject / Journal Heading</label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <input type="text" id="emailSubject" readonly style="flex: 1; background: #f8fafc; font-weight: 600;" />
+              <button type="button" id="btnCopySubject" class="btn btn-secondary btn-sm">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Copy Subject</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="emailBody">Draft Journal Message (Editable)</label>
+            <textarea id="emailBody" class="email-box"></textarea>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <button type="button" id="btnCopyEmail" class="btn btn-primary">
+                <span class="spinner" aria-hidden="true"></span>
+                <span id="btnCopyEmailText">Copy Journal Message to Clipboard</span>
+              </button>
+              <button type="button" id="btnSwitchToReply" class="btn btn-secondary">
+                <span>Respond to Customer &rarr;</span>
+              </button>
+              <button type="button" id="btnSwitchToAudit" class="btn btn-secondary">
+                <span>View My Audit Note &rarr;</span>
+              </button>
+            </div>
+            <span id="copyFeedback" class="toast-feedback" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Respond to Message / Reply Assistant -->
+        <div id="panelReplyAssistant" role="tabpanel" aria-labelledby="tabViewReply" style="display: none;">
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; font-size: 0.8125rem; color: var(--text-secondary);">
+            <span><strong>Customer Message Intelligence:</strong> Paste any message or email received from a customer below. The tool will automatically analyse what they are asking (e.g. closed accounts, delays, branch printouts, or missing dates) and draft an ultra-concise, policy-compliant response.</span>
+          </div>
+
+          <!-- Customer Message Paste Input Area -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <label for="pastedCustomerMessage" style="font-weight: 700; color: var(--text-primary); margin: 0;">
+                📩 Paste Customer Message / Journal Entry Here:
+              </label>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Try Demo Text:</span>
+                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="closed" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Account Closed</button>
+                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="extension" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Need Extension</button>
+                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="dispute" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Already Sent All</button>
+                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="branch" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">No Online Banking</button>
+              </div>
+            </div>
+            <textarea id="pastedCustomerMessage" placeholder="Paste the customer's journal message or email here (e.g. 'I do not use this NatWest account anymore it was closed months ago' or 'I need more time to get my Barclays statement')..." style="min-height: 90px; width: 100%; border-color: var(--accent-primary);"></textarea>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="btnAnalyzeCustomerMsg" class="btn btn-primary" style="min-height: 44px;">
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span>✨ Analyse Message &amp; Draft Response</span>
+                </button>
+                <button type="button" id="btnClearPastedMsg" class="btn btn-secondary btn-sm" style="min-height: 38px; padding: 4px 10px;">
+                  Clear Message
+                </button>
+              </div>
+              <div id="detectedIntentBadge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 700; color: var(--accent-primary);">
+                <!-- e.g. Detected: Closed Account Query (NatWest) -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Customisation & Override Controls -->
+          <details style="margin-bottom: 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 8px 12px;">
+            <summary style="font-size: 0.8125rem; font-weight: 700; cursor: pointer; color: var(--text-secondary);">
+              ⚙️ Fine-Tune Template &amp; Deadline Options (Optional)
+            </summary>
+            <div style="padding-top: 10px;">
+              <div class="form-grid" style="margin-bottom: 10px;">
+                <div class="form-group">
+                  <label for="replyScenario">Detected / Selected Intent</label>
+                  <select id="replyScenario">
+                    <option value="unreadable">📸 Unreadable or Cropped Screenshot / Photo</option>
+                    <option value="closed">🔒 Account Closed or Dormant</option>
+                    <option value="clarification">⚠️ Clarification: Missing Dates Still Required</option>
+                    <option value="extension">⏳ Extension Request Granted</option>
+                    <option value="branch">🏦 Online Banking Unavailable / Branch Advice</option>
+                    <option value="compliant">✓ Statements Complete (Verification Confirmed)</option>
+                    <option value="custom">✍️ Custom Points / Free-Form Response</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="replyAccountTarget">Target Bank Account</label>
+                  <select id="replyAccountTarget">
+                    <option value="all">All Accounts / General Response</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <label for="replyFormat" style="font-size: 0.75rem; font-weight: 700;">Format:</label>
+                  <select id="replyFormat" style="min-height: 44px; padding: 4px 8px;">
+                    <option value="journal" selected>Slim Journal Message (Action-Focused)</option>
+                    <option value="detailed">Detailed Letter / Email</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <label for="replyExtensionDays" style="font-size: 0.75rem; font-weight: 700;">Reply Deadline / Extension:</label>
+                  <select id="replyExtensionDays" style="min-height: 44px; padding: 4px 8px;">
+                    <option value="7">7 Calendar Days</option>
+                    <option value="14" selected>14 Calendar Days</option>
+                    <option value="28">28 Calendar Days</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 12px; border-top: 1px dashed var(--border-strong); padding-top: 10px;">
+                <label for="geminiApiKey" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">
+                  Optional Free Gemini API Key (Stored 100% locally in your browser):
+                </label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <input type="password" id="geminiApiKey" placeholder="AIzaSy... (Get free key from aistudio.google.com)" style="flex: 1; font-size: 0.8125rem; min-height: 44px;" />
+                  <button type="button" id="btnSaveApiKey" class="btn btn-secondary btn-sm" style="min-height: 44px;">Save Key</button>
+                  <button type="button" id="btnClearApiKey" class="btn btn-secondary btn-sm" style="min-height: 44px;">Clear</button>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                  100% free with no credit card required. If omitted, the tool automatically uses on-device Chrome AI (Gemini Nano) or the built-in intelligent NLP rules engine.
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- Drafted Response Output -->
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="replySubject">Drafted Response Subject / Journal Heading</label>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <input type="text" id="replySubject" readonly style="flex: 1; background: #f8fafc; font-weight: 600;" />
+              <button type="button" id="btnCopyReplySubject" class="btn btn-secondary btn-sm">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Copy Subject</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="replyBody">Drafted Response (Editable &amp; Ready to Paste into Journal)</label>
+            <textarea id="replyBody" class="email-box" style="min-height: 200px;"></textarea>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <button type="button" id="btnCopyReply" class="btn btn-primary">
+                <span class="spinner" aria-hidden="true"></span>
+                <span id="btnCopyReplyText">Copy Response to Clipboard</span>
+              </button>
+              <button type="button" id="btnAppendReplyToAudit" class="btn btn-secondary" title="Appends a record of this response to your caseworker audit note">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Append to My Audit Note</span>
+              </button>
+              <button type="button" id="btnSwitchFromReplyToCustomer" class="btn btn-secondary">
+                <span>&larr; Message to Customer</span>
+              </button>
+              <button type="button" id="btnSwitchFromReplyToAudit" class="btn btn-secondary">
+                <span>View My Audit Note &rarr;</span>
+              </button>
+            </div>
+            <span id="replyFeedback" class="toast-feedback" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- VIEW 3: My Audit Note -->
+        <div id="panelAuditNote" role="tabpanel" aria-labelledby="tabViewAudit" style="display: none;">
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; font-size: 0.8125rem; color: var(--text-secondary);">
+            <span>Store a concise record of what you completed on this assessment for your own records so you can always remember the update. Notes are stored in your browser so you can quickly review history, reload previous case inputs, or copy action summaries.</span>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label for="recordLabel">Optional Reference / Tag (Anonymous, e.g. Review #1)</label>
+              <input type="text" id="recordLabel" placeholder="e.g. Assessment Review Oct 2026" maxlength="50" />
+            </div>
+            <div class="form-group">
+              <label for="recordActionType">Action Outcome</label>
+              <select id="recordActionType">
+                <option value="Requested Missing Statements">Requested Missing Statements (Gaps Found)</option>
+                <option value="Fully Verified (Compliant)">Fully Verified (100% Compliant / Ready for Decision)</option>
+                <option value="Awaiting Statements">Awaiting Initial Statements</option>
+                <option value="Escalated / Query">Escalated / Query</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="assessorActionNote">Concise Action Note (Auto-Generated &amp; Editable)</label>
+            <textarea id="assessorActionNote" style="min-height: 140px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.8125rem; line-height: 1.5;" class="email-box"></textarea>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button type="button" id="btnSaveRecord" class="btn btn-primary">
+              <span class="spinner" aria-hidden="true"></span>
+              <span>💾 Save Note to My Records</span>
+            </button>
+            <button type="button" id="btnCopyRecordNote" class="btn btn-secondary">
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Copy Note</span>
+            </button>
+            <button type="button" id="btnExportRecords" class="btn btn-secondary" title="Export all stored notes as a text file">
+              <span>Export Notes (.txt)</span>
+            </button>
+            <button type="button" id="btnSwitchToCustomer" class="btn btn-secondary">
+              <span>&larr; Message to Customer</span>
+            </button>
+            <button type="button" id="btnSwitchAuditToReply" class="btn btn-secondary">
+              <span>Respond to Customer &rarr;</span>
+            </button>
+          </div>
+
+          <!-- Stored Records History Accordion / List -->
+          <div id="recordsSection">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-top: 1px dashed var(--border-strong); padding-top: 14px;">
+              <strong style="font-size: 0.875rem; color: var(--text-primary);">Stored Assessment Records (<span id="storedRecordsCount">0</span>)</strong>
+              <button type="button" id="btnClearAllRecords" class="btn btn-danger-ghost btn-sm" style="min-height: 32px; padding: 2px 10px; font-size: 0.75rem;" title="Clear all stored notes">
+                Clear All Stored
+              </button>
+            </div>
+            <div id="savedRecordsList" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Undo & Action Toast Notification (Tactile Feedback for deletions & edits) -->
+  <aside id="undoToastContainer" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 1000; background: #0f172a; color: #f8fafc; border: 1px solid #334155; padding: 12px 18px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); font-size: 0.875rem; align-items: center; gap: 12px; max-width: 480px;" role="status" aria-live="assertive">
+    <span id="undoToastMessage" style="font-weight: 500; flex: 1;">Statement deleted.</span>
+    <button type="button" id="btnUndoDelete" class="btn btn-secondary btn-sm" style="min-height: 36px; padding: 4px 12px; font-weight: 700; color: var(--accent-primary); background: #ffffff;">
+      Undo
+    </button>
+    <button type="button" id="btnCloseUndoToast" style="background:none; border:none; color:#94a3b8; font-size:1.25rem; cursor:pointer; line-height:1; padding: 0 4px;" title="Dismiss">&times;</button>
+  </aside>
+
+  <script>
+    /**
+     * ============================================================================
+     * 1. LOCATION-AGNOSTIC CALENDAR DATE ENGINE (Temporal.PlainDate + Safe Fallback)
+     * ============================================================================
+     * Why this matters:
+     * In the UK, British Summer Time (BST) reverts to GMT on the last Sunday of
+     * October (e.g. 25 October 2026 — right inside the 26 June 2026 to 26 Oct 2026
+     * Assessment Period!). Naive local `new Date()` millisecond division produces
+     * a 25-hour day on 25 Oct 2026 and causes off-by-one day bugs.
+     *
+     * We use `Temporal.PlainDate` when available (and conditionally load
+     * `temporal-polyfill`), backed by deterministic UTC calendar-day ordinals
+     * (`Math.floor(Date.UTC(y, m - 1, d) / 86400000)`) so the algorithm runs
+     * synchronously and 100% offline in restricted browser environments.
+     */
+    (async () => {
+      if (typeof Temporal === 'undefined') {
+        try {
+          const mod = await import('https://esm.sh/temporal-polyfill');
+          globalThis.Temporal = mod.Temporal;
+        } catch (_) {
+          // Offline environment: deterministic UTC ordinal engine handles all operations.
+        }
+      }
+    })();
+
+    const CalendarEngine = {
+      /**
+       * Converts an ISO 'YYYY-MM-DD' string into an integer Epoch Day ordinal.
+       */
+      toOrdinal(isoDateStr) {
+        if (!isoDateStr || typeof isoDateStr !== 'string') return NaN;
+        const parts = isoDateStr.trim().split('-').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return NaN;
+        const [year, month, day] = parts;
+        return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+      },
+
+      /**
+       * Converts an integer Epoch Day ordinal back into 'YYYY-MM-DD'.
+       */
+      fromOrdinal(ordinal) {
+        const dt = new Date(ordinal * 86400000);
+        const y = dt.getUTCFullYear();
+        const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(dt.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      },
+
+      /**
+       * Adds `days` to an ISO 'YYYY-MM-DD' string using Temporal.PlainDate if available.
+       */
+      addDays(isoDateStr, days) {
+        if (typeof Temporal !== 'undefined' && Temporal.PlainDate) {
+          return Temporal.PlainDate.from(isoDateStr).add({ days }).toString();
+        }
+        return this.fromOrdinal(this.toOrdinal(isoDateStr) + days);
+      },
+
+      /**
+       * Adds 1 calendar month with overflow: 'constrain' (using Temporal.PlainDate if available).
+       */
+      addOneMonthCycleEnd(nextStartIso) {
+        if (typeof Temporal !== 'undefined' && Temporal.PlainDate) {
+          return Temporal.PlainDate.from(nextStartIso)
+            .add({ months: 1 }, { overflow: 'constrain' })
+            .subtract({ days: 1 })
+            .toString();
+        }
+        const [y, m, d] = nextStartIso.split('-').map(Number);
+        const targetMonth = m === 12 ? 1 : m + 1;
+        const targetYear = m === 12 ? y + 1 : y;
+        const maxDayInTarget = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+        const clampedDay = Math.min(d, maxDayInTarget);
+        const plusOneMonthOrd = Math.floor(Date.UTC(targetYear, targetMonth - 1, clampedDay) / 86400000);
+        return this.fromOrdinal(plusOneMonthOrd - 1);
+      },
+
+      /**
+       * Formats an ISO 'YYYY-MM-DD' string in British English (e.g., "26 Jun 2026" or "26 June 2026").
+       */
+      formatUK(isoDateStr, monthStyle = 'short') {
+        const ord = this.toOrdinal(isoDateStr);
+        if (Number.isNaN(ord)) return isoDateStr;
+        const dt = new Date(ord * 86400000);
+        return new Intl.DateTimeFormat('en-GB', {
+          day: 'numeric',
+          month: monthStyle,
+          year: 'numeric',
+          timeZone: 'UTC'
+        }).format(dt);
+      },
+
+      /**
+       * Inclusive day count between two ISO dates.
+       */
+      inclusiveDays(startIso, endIso) {
+        return (this.toOrdinal(endIso) - this.toOrdinal(startIso)) + 1;
+      },
+
+      /**
+       * Subtracts calendar months with overflow: 'constrain' (4 months backward rule).
+       */
+      subtractMonths(endIso, monthsCount = 4) {
+        if (!endIso) return '';
+        if (typeof Temporal !== 'undefined' && Temporal.PlainDate) {
+          try {
+            return Temporal.PlainDate.from(endIso)
+              .subtract({ months: monthsCount }, { overflow: 'constrain' })
+              .toString();
+          } catch (_) {}
+        }
+        const parts = endIso.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) return '';
+        let [y, m, d] = parts;
+        let targetMonth = m - monthsCount;
+        let targetYear = y;
+        while (targetMonth <= 0) {
+          targetMonth += 12;
+          targetYear -= 1;
+        }
+        const maxDayInTarget = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+        const clampedDay = Math.min(d, maxDayInTarget);
+        const dt = new Date(Date.UTC(targetYear, targetMonth - 1, clampedDay));
+        const yStr = dt.getUTCFullYear();
+        const mStr = String(dt.getUTCMonth() + 1).padStart(2, '0');
+        const dStr = String(dt.getUTCDate()).padStart(2, '0');
+        return `${yStr}-${mStr}-${dStr}`;
+      }
+    };
+
+    /**
+     * Strict HTML Escaper to prevent DOM XSS (Marcus SecOps Gate).
+     */
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * ============================================================================
+     * 2. CORE TASK PLANNING, SORTING & GAP-DETECTION ALGORITHM
+     * ============================================================================
+     * Complexity: O(N log N) sorting per account stream + O(N) interval coalescing.
+     * Continuity Rule: Adjacent calendar days (s2 <= e1 + 1) form continuous coverage.
+     */
+    function evaluateStatementsAssessment(config, rawStatements) {
+      const targetStartIso = config.reviewStart || config.assessmentStart;
+      const targetEndIso = config.reviewEnd || config.assessmentEnd;
+
+      const aStartOrd = CalendarEngine.toOrdinal(targetStartIso);
+      const aEndOrd = CalendarEngine.toOrdinal(targetEndIso);
+      const hasValidAssessmentPeriod = !Number.isNaN(aStartOrd) && !Number.isNaN(aEndOrd) && aStartOrd <= aEndOrd;
+
+      if (!hasValidAssessmentPeriod) {
+        return {
+          hasValidAssessmentPeriod: false,
+          totalAssessmentDays: 0,
+          targetStartIso,
+          targetEndIso,
+          accountAnalyses: [],
+          sortedFlatStatements: [],
+          missingAccountTypes: [],
+          tasks: []
+        };
+      }
+
+      const totalAssessmentDays = Math.max(1, (aEndOrd - aStartOrd) + 1);
+
+      // Step 1: Partition statements by unique Account Key (Bank + AccountType + Ref)
+      const groupsMap = new Map();
+
+      for (const stmt of rawStatements) {
+        const cleanBank = (stmt.bankName || 'Unknown Bank').trim();
+        const cleanType = (stmt.accountType || 'Current').trim();
+        const cleanRef = (stmt.accountRef || '').trim();
+        const groupKey = `${cleanBank.toLowerCase()}__${cleanType.toLowerCase()}__${cleanRef.toLowerCase()}`;
+
+        if (!groupsMap.has(groupKey)) {
+          groupsMap.set(groupKey, {
+            key: groupKey,
+            bankName: cleanBank,
+            accountType: cleanType,
+            accountRef: cleanRef,
+            displayLabel: cleanRef
+              ? `${cleanBank} ${cleanType} (•••• ${cleanRef})`
+              : `${cleanBank} (${cleanType} Account)`,
+            statements: []
+          });
+        }
+
+        const sOrd = CalendarEngine.toOrdinal(stmt.startDate);
+        const eOrd = CalendarEngine.toOrdinal(stmt.endDate);
+
+        groupsMap.get(groupKey).statements.push({
+          ...stmt,
+          sOrd,
+          eOrd,
+          isInvalidRange: sOrd > eOrd
+        });
+      }
+
+      // Step 2: Sort statements chronologically within each account group:
+      // Primary: startDate ascending; Secondary: endDate descending (longest coverage first)
+      const accountAnalyses = [];
+      const sortedFlatStatements = [];
+
+      for (const group of groupsMap.values()) {
+        group.statements.sort((a, b) => {
+          if (a.sOrd !== b.sOrd) return a.sOrd - b.sOrd;
+          return b.eOrd - a.eOrd;
+        });
+
+        // Annotate continuity between consecutive statements in this account
+        const validStatements = [];
+        for (let i = 0; i < group.statements.length; i++) {
+          const cur = group.statements[i];
+          let continuityBadge = { type: 'ok', text: 'First in Stream' };
+
+          if (cur.isInvalidRange) {
+            continuityBadge = { type: 'gap', text: 'Invalid: Start > End' };
+          } else {
+            validStatements.push(cur);
+          }
+
+          if (i > 0 && !cur.isInvalidRange) {
+            // Compare against maximum end ordinal seen so far in this account
+            let maxPrevEnd = -Infinity;
+            for (let j = 0; j < i; j++) {
+              if (!group.statements[j].isInvalidRange) {
+                maxPrevEnd = Math.max(maxPrevEnd, group.statements[j].eOrd);
+              }
+            }
+            if (maxPrevEnd !== -Infinity) {
+              if (cur.sOrd === maxPrevEnd + 1) {
+                continuityBadge = { type: 'ok', text: 'Continuous (Next Day)' };
+              } else if (cur.sOrd <= maxPrevEnd) {
+                continuityBadge = { type: 'ok', text: 'Continuous (Overlaps)' };
+              } else {
+                const gapDays = cur.sOrd - maxPrevEnd - 1;
+                continuityBadge = {
+                  type: 'gap',
+                  text: `Gap Before (${gapDays} ${gapDays === 1 ? 'day' : 'days'})`
+                };
+              }
+            }
+          }
+
+          // Calculate how many days of the target Assessment Period this single statement covers
+          const overlapStart = Math.max(cur.sOrd, aStartOrd);
+          const overlapEnd = Math.min(cur.eOrd, aEndOrd);
+          const overlapDays = (!cur.isInvalidRange && overlapStart <= overlapEnd)
+            ? (overlapEnd - overlapStart + 1)
+            : 0;
+
+          const enriched = {
+            ...cur,
+            groupLabel: group.displayLabel,
+            continuityBadge,
+            overlapDays
+          };
+          group.statements[i] = enriched;
+          sortedFlatStatements.push(enriched);
+        }
+
+        // Step 3: Coalesce adjacent or overlapping intervals (s2 <= e1 + 1)
+        const mergedIntervals = [];
+        for (const st of validStatements) {
+          if (mergedIntervals.length === 0) {
+            mergedIntervals.push({ startOrd: st.sOrd, endOrd: st.eOrd });
+          } else {
+            const last = mergedIntervals[mergedIntervals.length - 1];
+            if (st.sOrd <= last.endOrd + 1) {
+              last.endOrd = Math.max(last.endOrd, st.eOrd);
+            } else {
+              mergedIntervals.push({ startOrd: st.sOrd, endOrd: st.eOrd });
+            }
+          }
+        }
+
+        // Step 4: Clamp merged intervals to [aStartOrd, aEndOrd] and extract exact Gaps & Timeline Segments
+        const clampedCovered = [];
+        for (const iv of mergedIntervals) {
+          const cs = Math.max(iv.startOrd, aStartOrd);
+          const ce = Math.min(iv.endOrd, aEndOrd);
+          if (cs <= ce) {
+            clampedCovered.push({ startOrd: cs, endOrd: ce });
+          }
+        }
+
+        const gaps = [];
+        const timelineSegments = []; // Ordered segments across [aStartOrd, aEndOrd]
+        let cursor = aStartOrd;
+
+        for (const cov of clampedCovered) {
+          if (cov.startOrd > cursor) {
+            const gapStart = cursor;
+            const gapEnd = cov.startOrd - 1;
+            const days = (gapEnd - gapStart) + 1;
+            const gapObj = {
+              startOrd: gapStart,
+              endOrd: gapEnd,
+              startIso: CalendarEngine.fromOrdinal(gapStart),
+              endIso: CalendarEngine.fromOrdinal(gapEnd),
+              days,
+              reason: gapStart === aStartOrd ? 'Start of Assessment Period Missing' : 'Mid-Cycle Continuity Gap'
+            };
+            gaps.push(gapObj);
+            timelineSegments.push({ kind: 'gap', ...gapObj, widthPct: (days / totalAssessmentDays) * 100 });
+          }
+
+          const covDays = (cov.endOrd - cov.startOrd) + 1;
+          timelineSegments.push({
+            kind: 'covered',
+            startOrd: cov.startOrd,
+            endOrd: cov.endOrd,
+            startIso: CalendarEngine.fromOrdinal(cov.startOrd),
+            endIso: CalendarEngine.fromOrdinal(cov.endOrd),
+            days: covDays,
+            widthPct: (covDays / totalAssessmentDays) * 100
+          });
+
+          cursor = cov.endOrd + 1;
+        }
+
+        // Check Tail Gap (up to aEndOrd)
+        if (cursor <= aEndOrd) {
+          const gapStart = cursor;
+          const gapEnd = aEndOrd;
+          const days = (gapEnd - gapStart) + 1;
+          const gapObj = {
+            startOrd: gapStart,
+            endOrd: gapEnd,
+            startIso: CalendarEngine.fromOrdinal(gapStart),
+            endIso: CalendarEngine.fromOrdinal(gapEnd),
+            days,
+            reason: clampedCovered.length === 0
+              ? 'Entire Assessment Period Missing'
+              : 'End of Assessment Period Missing'
+          };
+          gaps.push(gapObj);
+          timelineSegments.push({ kind: 'gap', ...gapObj, widthPct: (days / totalAssessmentDays) * 100 });
+        }
+
+        const coveredDays = clampedCovered.reduce((acc, c) => acc + ((c.endOrd - c.startOrd) + 1), 0);
+        const missingDays = totalAssessmentDays - coveredDays;
+        const coveragePct = Math.round((coveredDays / totalAssessmentDays) * 1000) / 10;
+
+        // Determine recommended next statement start date for "+ Add Next Cycle" helper
+        const maxEndOrdOverall = validStatements.length > 0
+          ? Math.max(...validStatements.map(s => s.eOrd))
+          : aStartOrd - 1;
+        const suggestedNextStartIso = CalendarEngine.fromOrdinal(maxEndOrdOverall + 1);
+
+        accountAnalyses.push({
+          ...group,
+          coveredDays,
+          missingDays,
+          coveragePct,
+          gaps,
+          timelineSegments,
+          isFullyCovered: gaps.length === 0,
+          suggestedNextStartIso
+        });
+      }
+
+      // Step 5: Check Required Account Types (e.g. Current or Savings completely omitted)
+      const missingAccountTypes = [];
+      const hasCurrent = accountAnalyses.some(a =>
+        a.accountType.toLowerCase().includes('current')
+      );
+      const hasSavings = accountAnalyses.some(a =>
+        a.accountType.toLowerCase().includes('saving') || a.accountType.toLowerCase().includes('isa')
+      );
+
+      if (config.reqCurrent && !hasCurrent) {
+        missingAccountTypes.push('Current Account');
+      }
+      if (config.reqSavings && !hasSavings) {
+        missingAccountTypes.push('Savings Account');
+      }
+
+      // Step 6: Build Prioritised Caseworker Task Queue
+      const tasks = [];
+
+      for (const missingType of missingAccountTypes) {
+        tasks.push({
+          priorityRank: 1,
+          severity: 'critical',
+          badgeText: 'CRITICAL • MISSING ACCOUNT TYPE',
+          title: `Request all ${missingType} statements (${CalendarEngine.formatUK(config.assessmentStart)} – ${CalendarEngine.formatUK(config.assessmentEnd)})`,
+          detail: `Claimant is required to provide ${missingType} coverage, but 0 statements of this type have been logged.`
+        });
+      }
+
+      for (const acc of accountAnalyses) {
+        for (const gap of acc.gaps) {
+          const isSingleDay = gap.days === 1;
+          const dateRangeLabel = isSingleDay
+            ? CalendarEngine.formatUK(gap.startIso, 'long')
+            : `${CalendarEngine.formatUK(gap.startIso, 'long')} to ${CalendarEngine.formatUK(gap.endIso, 'long')}`;
+
+          tasks.push({
+            priorityRank: isSingleDay ? 3 : 2,
+            severity: isSingleDay ? 'warn' : 'critical',
+            badgeText: isSingleDay ? `1-DAY BOUNDARY GAP` : `${gap.days}-DAY COVERAGE GAP`,
+            title: `${acc.displayLabel}: Obtain statement covering ${dateRangeLabel}`,
+            detail: `${gap.reason} (${gap.days} ${gap.days === 1 ? 'day' : 'days'} uncovered within the assessment window).`,
+            quickFill: {
+              bankName: acc.bankName,
+              accountType: acc.accountType,
+              accountRef: acc.accountRef,
+              startDate: gap.startIso,
+              endDate: gap.endIso
+            }
+          });
+        }
+      }
+
+      // Sort tasks by priorityRank ascending, then by missing days descending
+      tasks.sort((a, b) => a.priorityRank - b.priorityRank);
+
+      if (tasks.length === 0 && accountAnalyses.length > 0) {
+        tasks.push({
+          priorityRank: 4,
+          severity: 'ok',
+          badgeText: 'VERIFIED • READY FOR DECISION',
+          title: 'All declared bank accounts have 100% continuous coverage across the 4-Month Review Window',
+          detail: `Verified ${totalAssessmentDays} days (${CalendarEngine.formatUK(targetStartIso)} – ${CalendarEngine.formatUK(targetEndIso)}) with zero date gaps.`
+        });
+      }
+
+      return {
+        hasValidAssessmentPeriod: true,
+        totalAssessmentDays,
+        targetStartIso,
+        targetEndIso,
+        accountAnalyses,
+        sortedFlatStatements,
+        missingAccountTypes,
+        tasks
+      };
+    }
+
+    /**
+     * ============================================================================
+     * 3. DETERMINISTIC BRITISH ENGLISH EMAIL & JOURNAL DRAFT GENERATOR
+     * ============================================================================
+     * Optimized for Benefit Journal entries:
+     * - Default 'journal' mode is slimmed-down, zero-fluff, and laser-focused on
+     *   what further information is required from the customer.
+     * - Optional 'detailed' mode provides formal letter/email formatting.
+     */
+    function generateClaimantCommunication(config, result) {
+      if (!result.hasValidAssessmentPeriod) {
+        return {
+          subject: '',
+          body: 'Please enter your Assessment Period and 4-Month Review Window in Step 1 to generate the journal message.',
+          caseNote: 'CASE AUDIT NOTE: Assessment period pending configuration.'
+        };
+      }
+
+      const isJournalFormat = (config.messageFormat || 'journal') === 'journal';
+      const targetStartIso = config.reviewStart || config.assessmentStart;
+      const targetEndIso = config.reviewEnd || config.assessmentEnd;
+      const reviewPeriodStr = `${CalendarEngine.formatUK(targetStartIso, 'long')} to ${CalendarEngine.formatUK(targetEndIso, 'long')}`;
+
+      const apPeriodStr = config.apStart && config.apEnd
+        ? `${CalendarEngine.formatUK(config.apStart, 'long')} to ${CalendarEngine.formatUK(config.apEnd, 'long')}`
+        : (config.apEnd ? `Period ending ${CalendarEngine.formatUK(config.apEnd, 'long')}` : reviewPeriodStr);
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const deadlineIso = CalendarEngine.addDays(todayIso, Number(config.deadlineDays || 14));
+      const deadlineFormatted = CalendarEngine.formatUK(deadlineIso, 'long');
+
+      // 1. Zero Statements Logged
+      if (result.accountAnalyses.length === 0) {
+        const subject = isJournalFormat
+          ? `Action Required: Bank Statements Needed`
+          : `Action Required: Bank Statements Required for Assessment Review (${apPeriodStr})`;
+
+        const body = isJournalFormat ? [
+          `Please upload 4 months of bank statements (${reviewPeriodStr}) for all accounts you hold (both Current and Savings accounts) to your journal by ${deadlineFormatted}.`
+        ].join('\n') : [
+          `Dear Customer,`,
+          ``,
+          `Assessment Period: ${apPeriodStr}`,
+          `Required 4-Month Statement Review Window: ${reviewPeriodStr}`,
+          ``,
+          `We are reviewing your claim and require bank statements covering the 4-month period counted backward from the end date of your assessment period (${reviewPeriodStr}) for all accounts you hold (both Current and Savings accounts).`,
+          ``,
+          `Please provide complete bank statements showing your account name, sort code, account number, and transaction history for this period by ${deadlineFormatted}.`,
+          ``,
+          `Kind regards,`,
+          `Assessment Review Team`
+        ].join('\n');
+
+        const caseNote = `CASE AUDIT NOTE: Assessment Period ${apPeriodStr} | 4-Month Review ${reviewPeriodStr}. 0 statements logged. Awaiting customer submission.`;
+        return { subject, body, caseNote };
+      }
+
+      // 2. 100% Compliant (0 Gaps)
+      const totalGaps = result.accountAnalyses.reduce((sum, a) => sum + a.gaps.length, 0);
+      const isCompliant = totalGaps === 0 && result.missingAccountTypes.length === 0 && result.accountAnalyses.length > 0;
+
+      if (isCompliant) {
+        const subject = isJournalFormat
+          ? `Bank Statement Review Complete`
+          : `Bank Statement Review Complete – Assessment Period (${apPeriodStr})`;
+
+        const body = isJournalFormat ? [
+          `Thank you. Your bank statements have been verified with full continuous coverage across the 4-month review period. No further statements are needed.`
+        ].join('\n') : [
+          `Dear Customer,`,
+          ``,
+          `Assessment Period: ${apPeriodStr}`,
+          `4-Month Statement Review Period: ${reviewPeriodStr}`,
+          ``,
+          `Thank you for submitting your bank statements for your assessment review.`,
+          ``,
+          `We have completed our verification of your bank statements across the full 4-month review period (${reviewPeriodStr}) for your assessment period ending ${CalendarEngine.formatUK(targetEndIso, 'long')}, and can confirm that all required continuous coverage has been fulfilled with no missing dates:`,
+          ``,
+          result.accountAnalyses.map(acc => `• ${acc.displayLabel}: Full continuous coverage verified (${CalendarEngine.formatUK(targetStartIso)} to ${CalendarEngine.formatUK(targetEndIso)})`).join('\n'),
+          ``,
+          `No further bank statements are required from you for this assessment period review. Your assessment has now been progressed for final decision.`,
+          ``,
+          `Kind regards,`,
+          `Assessment Review Team`
+        ].join('\n');
+
+        const caseNote = `CASE AUDIT NOTE: Assessment Period ${apPeriodStr} | 4-Month Review ${reviewPeriodStr} (${result.totalAssessmentDays} days). Verified ${result.accountAnalyses.length} account(s) (${result.sortedFlatStatements.length} statements). 100% continuous coverage confirmed. 0 gaps.`;
+        return { subject, body, caseNote };
+      }
+
+      // 3. Gaps or Missing Account Types Exist: Straight to the point for the DWP Journal
+      const subject = isJournalFormat
+        ? `Action Required: Missing Bank Statements`
+        : `Action Required: Missing Bank Statement Dates for Assessment Review (${apPeriodStr})`;
+
+      const missingBulletsSlim = [];
+      const missingBulletsDetailed = [];
+
+      for (const missingType of result.missingAccountTypes) {
+        missingBulletsSlim.push(
+          `• ${missingType}:\n  - Statements for the last 4 months required (${reviewPeriodStr}). If you do not hold a ${missingType}, please reply to confirm this.`
+        );
+        missingBulletsDetailed.push(
+          `• ${missingType}: Please provide all statements covering the full 4-month review period from ${reviewPeriodStr}. (If you do not hold a ${missingType}, please reply to confirm this in writing.)`
+        );
+      }
+
+      for (const acc of result.accountAnalyses) {
+        if (acc.gaps.length > 0) {
+          const gapLines = acc.gaps.map(g => {
+            if (g.days === 1) {
+              return `  - ${CalendarEngine.formatUK(g.startIso, 'long')} (1 missing day)`;
+            }
+            return `  - ${CalendarEngine.formatUK(g.startIso, 'long')} to ${CalendarEngine.formatUK(g.endIso, 'long')}`;
+          }).join('\n');
+
+          const accountLabel = acc.accountRef
+            ? `${acc.bankName} (${acc.accountType}, •••• ${acc.accountRef})`
+            : `${acc.bankName} (${acc.accountType})`;
+
+          missingBulletsSlim.push(
+            `• ${accountLabel}:\n${gapLines}`
+          );
+
+          missingBulletsDetailed.push(
+            `• ${acc.displayLabel} – Missing date coverage required:\n${gapLines}`
+          );
+        }
+      }
+
+      let body = '';
+      if (isJournalFormat) {
+        // Ultra-concise DWP Journal format (straight to the point)
+        body = [
+          `Please upload bank statements covering the following missing dates by ${deadlineFormatted}:`,
+          ``,
+          missingBulletsSlim.join('\n\n')
+        ].join('\n');
+      } else {
+        // Detailed letter / email format
+        let receivedSection = '';
+        if (result.accountAnalyses.length > 0) {
+          const receivedBullets = result.accountAnalyses.map(acc => {
+            const ranges = acc.statements
+              .filter(s => !s.isInvalidRange)
+              .map(s => `${CalendarEngine.formatUK(s.startDate)} to ${CalendarEngine.formatUK(s.endDate)}`)
+              .join('; ');
+            return `• ${acc.displayLabel}: Received (${ranges || 'None'})`;
+          }).join('\n');
+
+          receivedSection = [
+            `1. STATEMENTS ALREADY RECEIVED`,
+            `We have already received and logged the following statements (you do NOT need to re-send these):`,
+            receivedBullets,
+            ``
+          ].join('\n');
+        }
+
+        body = [
+          `Dear Customer,`,
+          ``,
+          `Assessment Period: ${apPeriodStr}`,
+          `Required 4-Month Statement Review Window: ${reviewPeriodStr}`,
+          ``,
+          `Thank you for sending your bank statements for your assessment review.`,
+          ``,
+          `For your assessment period ending ${CalendarEngine.formatUK(targetEndIso, 'long')}, we are required to review continuous bank statements over a 4-month period counted backward from your assessment period end date (${reviewPeriodStr}) for all accounts you hold (both Current and Savings accounts).`,
+          ``,
+          receivedSection,
+          `2. WHAT WE STILL NEED FROM YOU (MISSING DATES)`,
+          `When aligning your statements against the required 4-month review window (${reviewPeriodStr}), there are still gaps in coverage. Please provide bank statements or official transaction summaries covering the exact dates below:`,
+          ``,
+          missingBulletsDetailed.join('\n\n'),
+          ``,
+          `HOW TO PROVIDE THESE DATES:`,
+          `• If a missing period falls after your latest monthly statement (or on a single boundary day between statements), you can download an interim PDF statement or custom date-range transaction statement from your online banking app showing your account name, sort code, account number, and running balance.`,
+          `• Please upload the missing statement(s) by ${deadlineFormatted} so we can finalise your assessment without delay.`,
+          ``,
+          `Kind regards,`,
+          `Assessment Review Team`
+        ].join('\n');
+      }
+
+      // Concise Caseworker Internal Audit Note
+      const gapSummaryCompact = result.accountAnalyses
+        .filter(a => a.gaps.length > 0)
+        .map(a => `${a.displayLabel}: missing ` + a.gaps.map(g => g.days === 1 ? CalendarEngine.formatUK(g.startIso) : `${CalendarEngine.formatUK(g.startIso)}–${CalendarEngine.formatUK(g.endIso)} (${g.days}d)`).join(', '))
+        .concat(result.missingAccountTypes.map(t => `Missing entire ${t}`))
+        .join(' | ');
+
+      const caseNote = `CASE AUDIT NOTE: Assessment Period ${apPeriodStr} | 4-Month Review ${reviewPeriodStr} (${result.totalAssessmentDays}d). Statements checked: ${result.sortedFlatStatements.length}. Outstanding gaps: ${gapSummaryCompact}. Journal message drafted with deadline ${deadlineFormatted}.`;
+
+      return { subject, body, caseNote };
+    }
+
+    /**
+     * ============================================================================
+     * 3B. CONCISE ASSESSOR ACTION NOTE GENERATOR (Straight to the Point)
+     * ============================================================================
+     */
+    function generateAssessorActionNote(config, result) {
+      if (!result.hasValidAssessmentPeriod) {
+        return 'Awaiting Assessment Period and 4-Month Review Window configuration.';
+      }
+
+      const targetStartIso = config.reviewStart || config.assessmentStart;
+      const targetEndIso = config.reviewEnd || config.assessmentEnd;
+      const reviewPeriodStr = `${CalendarEngine.formatUK(targetStartIso)} – ${CalendarEngine.formatUK(targetEndIso)}`;
+      const apPeriodStr = config.apStart && config.apEnd
+        ? `${CalendarEngine.formatUK(config.apStart)} – ${CalendarEngine.formatUK(config.apEnd)}`
+        : `Period ending ${CalendarEngine.formatUK(targetEndIso)}`;
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const deadlineIso = CalendarEngine.addDays(todayIso, Number(config.deadlineDays || 14));
+      const deadlineFormatted = CalendarEngine.formatUK(deadlineIso);
+
+      const totalGaps = result.accountAnalyses.reduce((sum, a) => sum + a.gaps.length, 0);
+      const totalMissingDays = result.accountAnalyses.reduce((sum, a) => sum + a.missingDays, 0);
+      const isCompliant = totalGaps === 0 && result.missingAccountTypes.length === 0 && result.accountAnalyses.length > 0;
+
+      if (result.accountAnalyses.length === 0) {
+        return [
+          `ASSESSMENT AUDIT RECORD [${CalendarEngine.formatUK(todayIso)}]`,
+          `• PERIOD: AP ${apPeriodStr} | 4M Review: ${reviewPeriodStr} (${result.totalAssessmentDays}d)`,
+          `• STATUS: 0 statements logged. Both Current and Savings accounts required.`,
+          `• ACTION TAKEN: Posted journal request for complete 4-month statements.`,
+          `• NEXT ACTION & DEADLINE: Review customer uploads upon submission by ${deadlineFormatted}.`
+        ].join('\n');
+      }
+
+      if (isCompliant) {
+        const banks = result.accountAnalyses.map(a => a.bankName).filter((v, i, s) => s.indexOf(v) === i).join(', ');
+        return [
+          `ASSESSMENT AUDIT RECORD [${CalendarEngine.formatUK(todayIso)}]`,
+          `• PERIOD: AP ${apPeriodStr} | 4M Review: ${reviewPeriodStr} (${result.totalAssessmentDays}d)`,
+          `• STATUS: 100% Continuous Coverage Verified (${result.sortedFlatStatements.length} statements sorted across ${banks}). Zero gaps.`,
+          `• ACTION TAKEN: Confirmed continuous coverage in customer journal. Audit passed.`,
+          `• NEXT ACTION: Progress claim calculation. No further statements required.`
+        ].join('\n');
+      }
+
+      // When gaps exist
+      const gapSummaries = [];
+      for (const acc of result.accountAnalyses) {
+        if (acc.gaps.length > 0) {
+          const gStr = acc.gaps.map(g => g.days === 1 ? CalendarEngine.formatUK(g.startIso) : `${CalendarEngine.formatUK(g.startIso)}–${CalendarEngine.formatUK(g.endIso)} (${g.days}d)`).join(', ');
+          gapSummaries.push(`${acc.displayLabel} (missing ${gStr})`);
+        }
+      }
+      for (const m of result.missingAccountTypes) {
+        gapSummaries.push(`Missing entire ${m}`);
+      }
+
+      return [
+        `ASSESSMENT AUDIT RECORD [${CalendarEngine.formatUK(todayIso)}]`,
+        `• PERIOD: AP ${apPeriodStr} | 4M Review: ${reviewPeriodStr} (${result.totalAssessmentDays}d)`,
+        `• STATUS: ${totalGaps} Gap${totalGaps === 1 ? '' : 's'} (${totalMissingDays} uncovered days). ${gapSummaries.join('; ')}.`,
+        `• ACTION TAKEN: Posted slim journal request for missing dates. Set ${config.deadlineDays || 14}d reply deadline (${deadlineFormatted}).`,
+        `• NEXT ACTION & DEADLINE: Check journal response by ${deadlineFormatted}. If unfulfilled, escalate for decision.`
+      ].join('\n');
+    }
+
+    /**
+     * ============================================================================
+     * 3C. INTERACTIVE CUSTOMER RESPONSE & MESSAGE DRAFTING ASSISTANT
+     * ============================================================================
+     * Generates instant, targeted British English journal replies and emails for
+     * frequent caseworker enquiries (unreadable uploads, closed accounts,
+     * extensions, branch advice, boundary clarifications, and custom notes).
+     */
+    function generateCustomerResponse(replyConfig, appConfig, result) {
+      const isJournal = (replyConfig.format || 'journal') === 'journal';
+      const targetStartIso = appConfig.reviewStart || appConfig.assessmentStart || '';
+      const targetEndIso = appConfig.reviewEnd || appConfig.assessmentEnd || '';
+      const reviewPeriodStr = targetStartIso && targetEndIso
+        ? `${CalendarEngine.formatUK(targetStartIso, 'long')} to ${CalendarEngine.formatUK(targetEndIso, 'long')}`
+        : 'your 4-month review window';
+
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const extDays = Number(replyConfig.extensionDays || 14);
+      const deadlineIso = CalendarEngine.addDays(todayIso, extDays);
+      const deadlineFormatted = CalendarEngine.formatUK(deadlineIso, 'long');
+
+      // Identify target account label
+      let targetAccountLabel = 'your bank account';
+      if (replyConfig.targetAccountKey && replyConfig.targetAccountKey !== 'all' && result.accountAnalyses) {
+        const found = result.accountAnalyses.find(a => {
+          const k = `${(a.bankName || '').toLowerCase()}__${(a.accountType || '').toLowerCase()}__${(a.accountRef || '').toLowerCase()}`;
+          return k === replyConfig.targetAccountKey;
+        });
+        if (found) {
+          targetAccountLabel = found.displayLabel;
+        }
+      }
+
+      // Build missing dates summary if needed
+      let missingSummary = '';
+      if (result.accountAnalyses && result.accountAnalyses.length > 0) {
+        const lines = [];
+        for (const acc of result.accountAnalyses) {
+          if (acc.gaps.length > 0) {
+            const gapList = acc.gaps.map(g => g.days === 1
+              ? `  - ${CalendarEngine.formatUK(g.startIso, 'long')} (1 missing day)`
+              : `  - ${CalendarEngine.formatUK(g.startIso, 'long')} to ${CalendarEngine.formatUK(g.endIso, 'long')}`
+            ).join('\n');
+            lines.push(`• ${acc.displayLabel}:\n${gapList}`);
+          }
+        }
+        for (const m of result.missingAccountTypes || []) {
+          lines.push(`• ${m}: All 4 months required (${reviewPeriodStr})`);
+        }
+        missingSummary = lines.join('\n\n');
+      }
+
+      let subject = '';
+      let body = '';
+      let auditSummary = '';
+
+      const scenario = replyConfig.scenario || 'unreadable';
+
+      switch (scenario) {
+        case 'unreadable':
+          subject = isJournal
+            ? `Action Required: Re-upload Clear Bank Statement`
+            : `Action Required: Re-upload Clear Bank Statement for Assessment Review`;
+          body = isJournal ? [
+            `The bank statement you provided for ${targetAccountLabel} is unreadable, cropped, or missing key details.`,
+            ``,
+            `Please upload a clear, full-page statement or official transaction summary by ${deadlineFormatted} showing:`,
+            `• Your full name as the account holder`,
+            `• Sort code and account number`,
+            `• Complete transaction dates and running balance`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for uploading your documents. However, the statement image or document received for ${targetAccountLabel} is cropped, blurry, or missing key verification details.`,
+            ``,
+            `To verify your claim, statements must clearly display:`,
+            `• Your full name as the account holder`,
+            `• Your sort code and account number`,
+            `• The complete dates of transactions and running balance`,
+            ``,
+            `Please upload a clear PDF download or full-page copy to your journal by ${deadlineFormatted}.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Requested clear/uncropped statement for ${targetAccountLabel}. Deadline ${deadlineFormatted}.`;
+          break;
+
+        case 'closed':
+          subject = isJournal
+            ? `Action Required: Closed Account Confirmation`
+            : `Action Required: Verification for Closed Account (${targetAccountLabel})`;
+          body = isJournal ? [
+            `Regarding ${targetAccountLabel}:`,
+            ``,
+            `If this account is closed or no longer in use, please provide one of the following by ${deadlineFormatted}:`,
+            `• An official bank closure letter confirming the date the account was closed, or`,
+            `• The final bank statement showing the account closed with a £0.00 balance.`,
+            ``,
+            `If you cannot obtain either document, please reply in your journal confirming the approximate date the account was closed and with which bank.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for your update regarding ${targetAccountLabel}.`,
+            ``,
+            `If this account has been closed, we require official confirmation for our audit records. Please provide one of the following:`,
+            `• An official bank closure letter or confirmation showing the date the account was closed, or`,
+            `• The final bank statement showing the account closed with a £0.00 balance.`,
+            ``,
+            `Please upload this document to your journal by ${deadlineFormatted}. If you do not have either document, please reply confirming the approximate date the account was closed.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Requested closure letter or final £0.00 statement for ${targetAccountLabel}. Deadline ${deadlineFormatted}.`;
+          break;
+
+        case 'clarification':
+          subject = isJournal
+            ? `Update: Missing Bank Statement Dates`
+            : `Clarification: Bank Statement Dates Still Required`;
+          body = isJournal ? [
+            `Thank you for your message. We have checked your uploaded statements, but there are still dates that we are required to verify:`,
+            ``,
+            missingSummary || `• Statements covering ${reviewPeriodStr}`,
+            ``,
+            `Please upload statements covering these specific dates by ${deadlineFormatted}.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for your message regarding your bank statements.`,
+            ``,
+            `We have re-checked the statements you have submitted so far. While we have logged your submissions, we are required by regulation to review continuous statements across your full 4-month review window (${reviewPeriodStr}).`,
+            ``,
+            `The following dates are still unverified and must be provided:`,
+            ``,
+            missingSummary || `• Statements covering ${reviewPeriodStr}`,
+            ``,
+            `Please upload statements covering these dates by ${deadlineFormatted} so we can complete your assessment review.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Clarified outstanding missing dates to customer. Set deadline ${deadlineFormatted}.`;
+          break;
+
+        case 'extension':
+          subject = isJournal
+            ? `Extension Granted: Bank Statements Deadline`
+            : `Extension Granted: Bank Statements for Assessment Review`;
+          body = isJournal ? [
+            `We have noted your message and granted an extension of ${extDays} calendar days to submit your bank statements.`,
+            ``,
+            `Your new deadline to upload the required statements is ${deadlineFormatted}.`,
+            ``,
+            `Please upload your statements as soon as you receive them to avoid delays to your assessment.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for contacting us regarding your bank statements.`,
+            ``,
+            `We have agreed to your request for additional time. Your deadline to upload the required bank statements has been extended by ${extDays} days to ${deadlineFormatted}.`,
+            ``,
+            `Please ensure all required statements covering the 4-month review window (${reviewPeriodStr}) are uploaded by this date so your assessment can be finalized.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Granted ${extDays}d deadline extension to ${deadlineFormatted}.`;
+          break;
+
+        case 'branch':
+          subject = isJournal
+            ? `Advice: Obtaining Bank Statements via Branch`
+            : `Guidance: Obtaining Bank Statements Without Online Banking`;
+          body = isJournal ? [
+            `If you cannot download statements from online banking, you can visit any local branch of your bank and ask for an interim transaction printout covering ${reviewPeriodStr}.`,
+            ``,
+            `The branch printout must show your name, sort code, account number, and transaction history.`,
+            ``,
+            `Please upload photos or scans of the printout by ${deadlineFormatted}.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for contacting us regarding access to your bank statements.`,
+            ``,
+            `If you do not use online banking or are experiencing technical difficulties, you can obtain the required statements by visiting any local branch of your bank.`,
+            ``,
+            `Please ask the branch staff for an interim statement or stamped transaction history printout covering the period from ${reviewPeriodStr}. Ensure the printout includes:`,
+            `• Your full name`,
+            `• Sort code and account number`,
+            `• Complete transaction history and balances`,
+            ``,
+            `Please upload the printout to your journal by ${deadlineFormatted}.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Advised customer on obtaining branch printout for ${reviewPeriodStr}. Deadline ${deadlineFormatted}.`;
+          break;
+
+        case 'compliant':
+          subject = isJournal
+            ? `Bank Statement Verification Complete`
+            : `Bank Statement Verification Complete – Assessment Review`;
+          body = isJournal ? [
+            `Thank you for submitting your bank statements. All required statements across your 4-month review period have now been received and verified. No further statements are needed.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for providing the remaining bank statements for your assessment review.`,
+            ``,
+            `We can confirm that all statements across your 4-month review period (${reviewPeriodStr}) have been successfully received and verified with full continuous coverage.`,
+            ``,
+            `No further bank statements are required from you at this stage. Your assessment has now been passed to the decision team.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Confirmed 100% statement compliance to customer. No further statements needed.`;
+          break;
+
+        case 'custom':
+        default:
+          const customNotes = (replyConfig.customNotes || '').trim();
+          subject = isJournal
+            ? `Assessment Review Update: Bank Statements`
+            : `Assessment Review Update: Bank Statement Enquiry`;
+          body = isJournal ? [
+            `Thank you for your message regarding your bank statements.`,
+            ``,
+            customNotes ? `${customNotes}\n` : `Please ensure all required statements covering ${reviewPeriodStr} are uploaded.\n`,
+            `Please provide this information by ${deadlineFormatted}.`
+          ].join('\n') : [
+            `Dear Customer,`,
+            ``,
+            `Thank you for your message regarding your assessment review.`,
+            ``,
+            customNotes ? `${customNotes}\n` : `For your assessment review, we require complete bank statements covering the 4-month period from ${reviewPeriodStr}.\n`,
+            `Please upload the requested information by ${deadlineFormatted} so we can finalise your assessment.`,
+            ``,
+            `Kind regards,`,
+            `Assessment Review Team`
+          ].join('\n');
+          auditSummary = `Sent custom response${customNotes ? ' (' + customNotes.slice(0, 50) + '...)' : ''}. Deadline ${deadlineFormatted}.`;
+          break;
+      }
+
+      if (scenario !== 'custom' && replyConfig.customNotes && replyConfig.customNotes.trim()) {
+        body += `\n\nNote: ${replyConfig.customNotes.trim()}`;
+      }
+
+      return { subject, body, auditSummary };
+    }
+
+    /**
+     * ============================================================================
+     * 4. APPLICATION STATE & PRESETS (INCLUDING EXACT HANDWRITTEN WORKSHEET)
+     * ============================================================================
+     */
+    let statementsState = [];
+    let latestCaseNoteText = '';
+    let latestReplyAuditSummary = '';
+    let editingStatementId = null;
+    let lastDeletedStatement = null;
+    let undoToastTimeout = null;
+    let memorySavedRecords = [];
+
+    // Exact preset matching the user's uploaded handwritten worksheet (26 June 2026 to 26 Oct 2026)
+    const PAPER_WORKSHEET_PRESET = [
+      // NatWest Savings row from paper: 13th June -> 12th July, 14th July -> 13th Aug, 14th Aug -> 11th Sept, 12th Sept -> 13th Oct
+      { id: 'nw-1', bankName: 'NatWest', accountType: 'Savings', accountRef: '', startDate: '2026-06-13', endDate: '2026-07-12' },
+      { id: 'nw-2', bankName: 'NatWest', accountType: 'Savings', accountRef: '', startDate: '2026-07-14', endDate: '2026-08-13' },
+      { id: 'nw-3', bankName: 'NatWest', accountType: 'Savings', accountRef: '', startDate: '2026-08-14', endDate: '2026-09-11' },
+      { id: 'nw-4', bankName: 'NatWest', accountType: 'Savings', accountRef: '', startDate: '2026-09-12', endDate: '2026-10-13' },
+
+      // Barclays Current row from paper: 27th June -> 28th July, 28th July -> 28th Aug, 29th Aug -> 28th Sept, 28th Sept -> 28th Oct
+      { id: 'bc-1', bankName: 'Barclays', accountType: 'Current', accountRef: '', startDate: '2026-06-27', endDate: '2026-07-28' },
+      { id: 'bc-2', bankName: 'Barclays', accountType: 'Current', accountRef: '', startDate: '2026-07-28', endDate: '2026-08-28' },
+      { id: 'bc-3', bankName: 'Barclays', accountType: 'Current', accountRef: '', startDate: '2026-08-29', endDate: '2026-09-28' },
+      { id: 'bc-4', bankName: 'Barclays', accountType: 'Current', accountRef: '', startDate: '2026-09-28', endDate: '2026-10-28' }
+    ];
+
+    const COMPLIANT_PRESET = [
+      { id: 'c-1', bankName: 'NatWest', accountType: 'Savings', accountRef: '8821', startDate: '2026-06-13', endDate: '2026-07-13' },
+      { id: 'c-2', bankName: 'NatWest', accountType: 'Savings', accountRef: '8821', startDate: '2026-07-14', endDate: '2026-08-13' },
+      { id: 'c-3', bankName: 'NatWest', accountType: 'Savings', accountRef: '8821', startDate: '2026-08-14', endDate: '2026-09-13' },
+      { id: 'c-4', bankName: 'NatWest', accountType: 'Savings', accountRef: '8821', startDate: '2026-09-14', endDate: '2026-10-26' },
+      { id: 'c-5', bankName: 'Barclays', accountType: 'Current', accountRef: '1049', startDate: '2026-06-20', endDate: '2026-07-28' },
+      { id: 'c-6', bankName: 'Barclays', accountType: 'Current', accountRef: '1049', startDate: '2026-07-29', endDate: '2026-08-28' },
+      { id: 'c-7', bankName: 'Barclays', accountType: 'Current', accountRef: '1049', startDate: '2026-08-29', endDate: '2026-09-28' },
+      { id: 'c-8', bankName: 'Barclays', accountType: 'Current', accountRef: '1049', startDate: '2026-09-29', endDate: '2026-10-28' }
+    ];
+
+    /**
+     * ============================================================================
+     * 5. UI RENDERING & INTERACTION CONTROLLER
+     * ============================================================================
+     */
+    function getConfig() {
+      const apStart = (document.getElementById('apStart')?.value || '').trim();
+      const apEnd = (document.getElementById('apEnd')?.value || '').trim();
+      const reviewStart = (document.getElementById('reviewStart')?.value || '').trim();
+      const reviewEnd = (document.getElementById('reviewEnd')?.value || '').trim();
+
+      const effectiveReviewEnd = reviewEnd || apEnd;
+      const effectiveReviewStart = reviewStart || (effectiveReviewEnd ? CalendarEngine.subtractMonths(effectiveReviewEnd, 4) : '');
+
+      return {
+        apStart,
+        apEnd,
+        reviewStart: effectiveReviewStart,
+        reviewEnd: effectiveReviewEnd,
+        assessmentStart: effectiveReviewStart,
+        assessmentEnd: effectiveReviewEnd,
+        reqCurrent: document.getElementById('reqCurrent').checked,
+        reqSavings: document.getElementById('reqSavings').checked,
+        deadlineDays: document.getElementById('deadlineDays').value || '14',
+        messageFormat: document.getElementById('messageFormat')?.value || 'journal'
+      };
+    }
+
+    function renderStatementTable(statements) {
+      const tbody = document.getElementById('statementTableBody');
+      if (!statements || statements.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <th scope="row" colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              No statements added yet.
+            </th>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = statements.map(st => {
+        const badgeClass = st.continuityBadge?.type === 'ok' ? 'badge-ok' : 'badge-gap';
+        const typeBadgeClass = (st.accountType || '').toLowerCase().includes('saving') || (st.accountType || '').toLowerCase().includes('isa')
+          ? 'badge-savings'
+          : 'badge-current';
+
+        return `
+          <tr data-stmt-id="${escapeHtml(st.id)}">
+            <th scope="row">
+              ${escapeHtml(st.bankName)}
+              ${st.accountRef ? `<span style="color: var(--text-muted); font-weight: 500;">(•••• ${escapeHtml(st.accountRef)})</span>` : ''}
+            </th>
+            <td><span class="badge ${typeBadgeClass}">${escapeHtml(st.accountType)}</span></td>
+            <td>
+              <strong>${escapeHtml(CalendarEngine.formatUK(st.startDate))}</strong>
+              &rarr;
+              <strong>${escapeHtml(CalendarEngine.formatUK(st.endDate))}</strong>
+            </td>
+            <td>${st.overlapDays || 0} ${st.overlapDays === 1 ? 'day' : 'days'} in window</td>
+            <td><span class="badge ${badgeClass}">${escapeHtml(st.continuityBadge?.text || 'Logged')}</span></td>
+            <td style="white-space: nowrap;">
+              <div style="display: inline-flex; gap: 6px; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-sm js-edit-stmt" data-id="${escapeHtml(st.id)}" title="Edit this statement (populate form in Step 2)">
+                  <span>Edit</span>
+                </button>
+                <button type="button" class="btn btn-danger-ghost btn-sm js-delete-stmt" data-id="${escapeHtml(st.id)}" title="Delete this statement">
+                  <span>Delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderAll() {
+      const config = getConfig();
+      const result = evaluateStatementsAssessment(config, statementsState);
+
+      // 1. Initial Bland / Unset Assessment Period State
+      if (!result.hasValidAssessmentPeriod) {
+        document.getElementById('assessmentDaysBadge').textContent = '—';
+        document.getElementById('kpiWindowDays').textContent = '—';
+        document.getElementById('kpiWindowRange').textContent = 'Select assessment end date';
+
+        document.getElementById('kpiAccountsCount').textContent = '0';
+        document.getElementById('kpiStatementsCount').textContent = `${statementsState.length} statement${statementsState.length === 1 ? '' : 's'} logged`;
+        document.getElementById('kpiCoveragePct').textContent = '—';
+        document.getElementById('kpiGapCount').textContent = '—';
+        document.getElementById('kpiMissingDaysTotal').textContent = 'Awaiting review dates';
+
+        const bannerEl = document.getElementById('overallBanner');
+        bannerEl.className = 'overall-banner status-empty';
+        document.getElementById('bannerTitle').textContent = 'Assessment Period & Review Window Not Set';
+        document.getElementById('bannerSub').textContent = 'Please choose your Assessment Period End Date in Step 1 to auto-calculate the 4-month statement window.';
+
+        document.getElementById('timelineContainer').innerHTML = `
+          <div class="empty-state">
+            <p style="margin: 0; font-weight: 600;">Please set an Assessment Period End Date above to display the 4-month coverage timeline.</p>
+          </div>
+        `;
+
+        document.getElementById('taskCountBadge').className = 'badge badge-ok';
+        document.getElementById('taskCountBadge').textContent = '0 Action Items';
+        document.getElementById('taskList').innerHTML = `
+          <li class="task-item priority-ok">
+            <div>
+              <div style="font-weight: 700; color: var(--text-primary);">Awaiting Assessment Period</div>
+              <div style="font-size: 0.8125rem; color: var(--text-secondary);">Enter the Assessment Period End Date in Step 1 to detect continuity gaps.</div>
+            </div>
+          </li>
+        `;
+
+        renderStatementTable(result.sortedFlatStatements);
+
+        const comms = generateClaimantCommunication(config, result);
+        document.getElementById('emailSubject').value = comms.subject;
+        document.getElementById('emailBody').value = comms.body;
+        latestCaseNoteText = comms.caseNote;
+        renderCustomerResponse(config, result);
+        renderSavedRecords();
+        return;
+      }
+
+      // 2. Review Window is Configured
+      const targetStartIso = config.reviewStart;
+      const targetEndIso = config.reviewEnd;
+
+      document.getElementById('assessmentDaysBadge').textContent = `${result.totalAssessmentDays} Days Review`;
+      document.getElementById('kpiWindowDays').textContent = `${result.totalAssessmentDays} Days`;
+      const apLabel = config.apStart && config.apEnd
+        ? `AP: ${CalendarEngine.formatUK(config.apStart)} – ${CalendarEngine.formatUK(config.apEnd)}`
+        : `AP End: ${CalendarEngine.formatUK(config.apEnd || targetEndIso)}`;
+      document.getElementById('kpiWindowRange').textContent = `${CalendarEngine.formatUK(targetStartIso)} – ${CalendarEngine.formatUK(targetEndIso)} (${apLabel})`;
+
+      document.getElementById('kpiAccountsCount').textContent = `${result.accountAnalyses.length}`;
+      document.getElementById('kpiStatementsCount').textContent = `${result.sortedFlatStatements.length} statement${result.sortedFlatStatements.length === 1 ? '' : 's'} sorted`;
+
+      const totalExpectedStreams = Math.max(1, result.accountAnalyses.length + result.missingAccountTypes.length);
+      const sumCoveragePct = result.accountAnalyses.reduce((acc, a) => acc + a.coveragePct, 0);
+      const avgCoveragePct = result.accountAnalyses.length === 0
+        ? 0
+        : Math.round((sumCoveragePct / totalExpectedStreams) * 10) / 10;
+
+      document.getElementById('kpiCoveragePct').textContent = `${avgCoveragePct}%`;
+
+      const totalGapsCount = result.accountAnalyses.reduce((acc, a) => acc + a.gaps.length, 0) + result.missingAccountTypes.length;
+      const totalMissingDays = result.accountAnalyses.reduce((acc, a) => acc + a.missingDays, 0)
+        + (result.missingAccountTypes.length * result.totalAssessmentDays);
+
+      document.getElementById('kpiGapCount').textContent = `${totalGapsCount} ${totalGapsCount === 1 ? 'Gap' : 'Gaps'}`;
+      document.getElementById('kpiMissingDaysTotal').textContent = `${totalMissingDays} missing account-days`;
+
+      // Update Overall Banner
+      const bannerEl = document.getElementById('overallBanner');
+      const bannerTitle = document.getElementById('bannerTitle');
+      const bannerSub = document.getElementById('bannerSub');
+
+      bannerEl.className = 'overall-banner';
+      if (result.accountAnalyses.length === 0) {
+        bannerEl.classList.add('status-empty');
+        bannerTitle.textContent = '4-Month Review Window Configured — 0 Statements Added';
+        bannerSub.textContent = `Reviewing 4 months (${CalendarEngine.formatUK(targetStartIso)} to ${CalendarEngine.formatUK(targetEndIso)}) for Assessment Period (${apLabel}). Add statements in Step 2 to audit coverage.`;
+      } else if (totalGapsCount === 0) {
+        bannerEl.classList.add('status-compliant');
+        bannerTitle.textContent = 'All Bank Statement Requests Fulfilled (100% Continuous Coverage)';
+        bannerSub.textContent = `Every declared account covers the 4-month review window (${CalendarEngine.formatUK(targetStartIso)} to ${CalendarEngine.formatUK(targetEndIso)}) with zero gaps.`;
+      } else {
+        bannerEl.classList.add('status-gaps');
+        bannerTitle.textContent = `Action Required: ${totalGapsCount} Coverage ${totalGapsCount === 1 ? 'Gap' : 'Gaps'} Identified`;
+        bannerSub.textContent = `There are ${totalMissingDays} uncovered account-days across the 4-month review window (${CalendarEngine.formatUK(targetStartIso)} – ${CalendarEngine.formatUK(targetEndIso)}).`;
+      }
+
+      // Render Visual Timeline Tracks
+      const timelineContainer = document.getElementById('timelineContainer');
+      if (result.accountAnalyses.length === 0) {
+        timelineContainer.innerHTML = `
+          <div class="empty-state">
+            <p style="margin: 0; font-weight: 600;">No bank statements added yet. Add statements in Step 2 to map coverage against ${CalendarEngine.formatUK(targetStartIso)} – ${CalendarEngine.formatUK(targetEndIso)}.</p>
+          </div>
+        `;
+      } else {
+        timelineContainer.innerHTML = result.accountAnalyses.map((acc, idx) => {
+          const typeBadgeClass = acc.accountType.toLowerCase().includes('saving') || acc.accountType.toLowerCase().includes('isa')
+            ? 'badge-savings'
+            : 'badge-current';
+          const statusBadge = acc.isFullyCovered
+            ? `<span class="badge badge-ok">✓ 100% Covered (${acc.coveredDays}/${result.totalAssessmentDays}d)</span>`
+            : `<span class="badge badge-gap">⚠ ${acc.gaps.length} ${acc.gaps.length === 1 ? 'Gap' : 'Gaps'} (${acc.missingDays}d missing)</span>`;
+
+          const segmentsHtml = acc.timelineSegments.map(seg => {
+            const label = seg.days >= 8
+              ? (seg.kind === 'gap' ? `GAP (${seg.days}d)` : `${seg.days}d`)
+              : (seg.kind === 'gap' ? '!' : '');
+            const tooltip = seg.kind === 'gap'
+              ? `MISSING GAP: ${CalendarEngine.formatUK(seg.startIso)} to ${CalendarEngine.formatUK(seg.endIso)} (${seg.days} days)`
+              : `COVERED: ${CalendarEngine.formatUK(seg.startIso)} to ${CalendarEngine.formatUK(seg.endIso)} (${seg.days} days)`;
+
+            return `<div class="timeline-segment ${seg.kind === 'gap' ? 'seg-gap' : 'seg-covered'}"
+                         style="width: ${seg.widthPct.toFixed(3)}%;"
+                         title="${escapeHtml(tooltip)}">${escapeHtml(label)}</div>`;
+          }).join('');
+
+          const gapCalloutsHtml = acc.gaps.map(g => {
+            const rangeText = g.days === 1
+              ? `${CalendarEngine.formatUK(g.startIso, 'long')} (1 day missing)`
+              : `${CalendarEngine.formatUK(g.startIso, 'long')} – ${CalendarEngine.formatUK(g.endIso, 'long')} (${g.days} days missing)`;
+            return `
+              <div class="gap-callout">
+                <span><strong>Missing Dates:</strong> ${escapeHtml(rangeText)} — <em>${escapeHtml(g.reason)}</em></span>
+                <button type="button" class="btn btn-secondary btn-sm js-fill-gap"
+                        data-bank="${escapeHtml(acc.bankName)}"
+                        data-type="${escapeHtml(acc.accountType)}"
+                        data-ref="${escapeHtml(acc.accountRef)}"
+                        data-start="${escapeHtml(g.startIso)}"
+                        data-end="${escapeHtml(g.endIso)}"
+                        title="Pre-fill the Add Statement form with these exact missing dates">
+                  <span>Fill Form for Gap</span>
+                </button>
+              </div>
+            `;
+          }).join('');
+
+          const statementsChipsHtml = acc.statements.map(st => `
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: var(--bg-subtle); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 4px 10px; font-size: 0.75rem;">
+              <span style="font-weight: 600;">${escapeHtml(CalendarEngine.formatUK(st.startDate))} &rarr; ${escapeHtml(CalendarEngine.formatUK(st.endDate))}</span>
+              <button type="button" class="btn btn-secondary btn-sm js-edit-stmt" data-id="${escapeHtml(st.id)}" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem;" title="Edit this statement (populate form in Step 2)">
+                Edit
+              </button>
+              <button type="button" class="btn btn-danger-ghost btn-sm js-delete-stmt" data-id="${escapeHtml(st.id)}" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem;" title="Delete this statement">
+                Delete
+              </button>
+            </div>
+          `).join('');
+
+          return `
+            <div class="account-track">
+              <div class="account-track-header">
+                <div class="account-title-group">
+                  <span class="account-name">${escapeHtml(acc.bankName)}</span>
+                  <span class="badge ${typeBadgeClass}">${escapeHtml(acc.accountType)}</span>
+                  ${acc.accountRef ? `<span class="badge badge-current">•••• ${escapeHtml(acc.accountRef)}</span>` : ''}
+                  ${statusBadge}
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-secondary btn-sm js-next-cycle"
+                          data-idx="${idx}"
+                          title="Pre-fill the form with the next sequential statement cycle starting ${CalendarEngine.formatUK(acc.suggestedNextStartIso)}">
+                    <span>+ Next Cycle (${escapeHtml(CalendarEngine.formatUK(acc.suggestedNextStartIso))})</span>
+                  </button>
+                  <button type="button" class="btn btn-danger-ghost btn-sm js-delete-account"
+                          data-key="${escapeHtml(acc.key)}"
+                          data-label="${escapeHtml(acc.displayLabel)}"
+                          data-count="${acc.statements.length}"
+                          title="Delete all statements entered for this account stream">
+                    <span>Delete Account (${acc.statements.length})</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="timeline-ruler">
+                <span>Assessment Start: ${escapeHtml(CalendarEngine.formatUK(config.assessmentStart))}</span>
+                <span>Coverage: ${acc.coveragePct}%</span>
+                <span>Assessment End: ${escapeHtml(CalendarEngine.formatUK(config.assessmentEnd))}</span>
+              </div>
+
+              <div class="timeline-bar" role="img" aria-label="Coverage bar for ${escapeHtml(acc.displayLabel)}">
+                ${segmentsHtml}
+              </div>
+
+              ${gapCalloutsHtml ? `<div class="gap-callout-list">${gapCalloutsHtml}</div>` : ''}
+
+              <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-subtle); display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-right: 4px;">Logged Statements (${acc.statements.length}):</span>
+                ${statementsChipsHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Bind "+ Next Cycle Statement" buttons
+        timelineContainer.querySelectorAll('.js-next-cycle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const acc = result.accountAnalyses[Number(btn.dataset.idx)];
+            if (!acc) return;
+            document.getElementById('bankName').value = acc.bankName;
+            document.getElementById('accountType').value = acc.accountType;
+            document.getElementById('accountRef').value = acc.accountRef;
+            document.getElementById('stmtStart').value = acc.suggestedNextStartIso;
+            document.getElementById('stmtEnd').value = CalendarEngine.addOneMonthCycleEnd(acc.suggestedNextStartIso);
+            document.getElementById('stmtStart').focus();
+          });
+        });
+
+        // Bind "Fill Form for Gap" buttons
+        timelineContainer.querySelectorAll('.js-fill-gap').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('bankName').value = btn.dataset.bank || '';
+            document.getElementById('accountType').value = btn.dataset.type || 'Current';
+            document.getElementById('accountRef').value = btn.dataset.ref || '';
+            document.getElementById('stmtStart').value = btn.dataset.start || '';
+            document.getElementById('stmtEnd').value = btn.dataset.end || '';
+            document.getElementById('stmtStart').focus();
+          });
+        });
+      }
+
+      // Render Prioritised Caseworker Tasks
+      const taskListEl = document.getElementById('taskList');
+      const taskCountBadge = document.getElementById('taskCountBadge');
+      const actionableTasksCount = result.tasks.filter(t => t.severity !== 'ok').length;
+
+      taskCountBadge.className = actionableTasksCount === 0 ? 'badge badge-ok' : 'badge badge-gap';
+      taskCountBadge.textContent = actionableTasksCount === 0
+        ? '0 Action Items (Complete)'
+        : `${actionableTasksCount} Action ${actionableTasksCount === 1 ? 'Item' : 'Items'}`;
+
+      taskListEl.innerHTML = result.tasks.map(t => `
+        <li class="task-item priority-${escapeHtml(t.severity)}">
+          <div>
+            <span class="badge ${t.severity === 'ok' ? 'badge-ok' : 'badge-gap'}" style="margin-bottom: 4px;">
+              ${escapeHtml(t.badgeText)}
+            </span>
+            <div style="font-weight: 700; color: var(--text-primary);">${escapeHtml(t.title)}</div>
+            <div style="font-size: 0.8125rem; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(t.detail)}</div>
+          </div>
+        </li>
+      `).join('');
+
+      // Render Chronologically Sorted Statements Table
+      renderStatementTable(result.sortedFlatStatements);
+
+      // Generate & Render Claimant Journal / Email Draft
+      const comms = generateClaimantCommunication(config, result);
+      document.getElementById('emailSubject').value = comms.subject;
+      document.getElementById('emailBody').value = comms.body;
+      latestCaseNoteText = comms.caseNote;
+
+      const copyBtnText = document.getElementById('btnCopyEmailText');
+      if (copyBtnText) {
+        copyBtnText.textContent = (config.messageFormat || 'journal') === 'journal'
+          ? 'Copy Journal Message to Clipboard'
+          : 'Copy Full Email to Clipboard';
+      }
+
+      // Generate & Render Concise Assessor Action Note
+      const actionNote = generateAssessorActionNote(config, result);
+      const noteEl = document.getElementById('assessorActionNote');
+      if (noteEl && (!noteEl.dataset.userEdited || noteEl.dataset.userEdited === 'false')) {
+        noteEl.value = actionNote;
+      }
+
+      // Automatically sync Action Outcome dropdown
+      const outcomeSelect = document.getElementById('recordActionType');
+      if (outcomeSelect && (!outcomeSelect.dataset.userChanged || outcomeSelect.dataset.userChanged === 'false')) {
+        const totalGaps = result.accountAnalyses.reduce((sum, a) => sum + a.gaps.length, 0);
+        if (result.accountAnalyses.length === 0) {
+          outcomeSelect.value = 'Awaiting Statements';
+        } else if (totalGaps === 0 && result.missingAccountTypes.length === 0) {
+          outcomeSelect.value = 'Fully Verified (Compliant)';
+        } else {
+          outcomeSelect.value = 'Requested Missing Statements';
+        }
+      }
+
+      // Populate target accounts in reply assistant
+      const replyAccountSelect = document.getElementById('replyAccountTarget');
+      if (replyAccountSelect) {
+        const currentVal = replyAccountSelect.value || 'all';
+        replyAccountSelect.innerHTML = '<option value="all">All Accounts / General Response</option>';
+        for (const acc of result.accountAnalyses) {
+          const k = `${(acc.bankName || '').toLowerCase()}__${(acc.accountType || '').toLowerCase()}__${(acc.accountRef || '').toLowerCase()}`;
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = acc.displayLabel;
+          if (k === currentVal) opt.selected = true;
+          replyAccountSelect.appendChild(opt);
+        }
+      }
+
+      // Generate & Render Customer Reply Assistant Draft
+      renderCustomerResponse(config, result);
+
+      // Render Stored Records
+      renderSavedRecords();
+    }
+
+    /**
+     * Tactile Spinner Helper (4-State Engineering Verification)
+     */
+    function withButtonSpinner(btnEl, actionFn) {
+      if (!btnEl) return;
+      btnEl.classList.add('is-loading');
+      btnEl.disabled = true;
+      setTimeout(() => {
+        try {
+          actionFn();
+        } finally {
+          btnEl.classList.remove('is-loading');
+          btnEl.disabled = false;
+        }
+      }, 140);
+    }
+
+    function showFeedback(msg) {
+      const el = document.getElementById('copyFeedback');
+      el.textContent = msg;
+      setTimeout(() => {
+        if (el.textContent === msg) el.textContent = '';
+      }, 3500);
+    }
+
+    function showReplyFeedback(msg) {
+      const el = document.getElementById('replyFeedback');
+      if (!el) return;
+      el.textContent = msg;
+      setTimeout(() => {
+        if (el.textContent === msg) el.textContent = '';
+      }, 3500);
+    }
+
+    const DEMO_CUSTOMER_MESSAGES = {
+      closed: "I don't have this NatWest account anymore. It was closed last year so I cannot download statements.",
+      extension: "I spoke with my bank and they said my paper statements will take 7 to 10 days to arrive by post. Can I please have an extension?",
+      dispute: "I have already uploaded all my statements from Barclays for the 4 months, why are you asking for more?",
+      branch: "I don't use online banking or mobile apps. Can I go to my local branch to get the transaction printout?"
+    };
+
+    /**
+     * Client-side NLP Intent Classifier for Pasted Customer Correspondence
+     */
+    function analyzePastedCustomerMessage(text, accountsList) {
+      if (!text || typeof text !== 'string') return { scenario: 'custom', accountKey: 'all', label: 'General Enquiry' };
+      const lower = text.toLowerCase();
+
+      // Detect mentioned bank accounts
+      let matchedAccountKey = 'all';
+      let matchedBankName = '';
+
+      const knownBanks = ['natwest', 'barclays', 'lloyds', 'santander', 'hsbc', 'monzo', 'revolut', 'nationwide', 'halifax', 'tsb', 'chase', 'starling', 'virgin'];
+      for (const b of knownBanks) {
+        if (lower.includes(b)) {
+          matchedBankName = b.charAt(0).toUpperCase() + b.slice(1);
+          if (accountsList && accountsList.length > 0) {
+            const found = accountsList.find(a => (a.bankName || '').toLowerCase().includes(b));
+            if (found) {
+              matchedAccountKey = `${(found.bankName || '').toLowerCase()}__${(found.accountType || '').toLowerCase()}__${(found.accountRef || '').toLowerCase()}`;
+            }
+          }
+          break;
+        }
+      }
+
+      // 1. Extension Request (check early for explicit deadline / extension appeals)
+      if (/\b(extension|extend|more time|extra days|extra time|need more days|delay|waiting for bank)\b/.test(lower)) {
+        return {
+          scenario: 'extension',
+          accountKey: matchedAccountKey,
+          label: 'Extension Request'
+        };
+      }
+
+      // 2. Branch / Paper Statement Guidance (check before closed account so "don't use online banking" isn't misclassified)
+      if (/\b(online banking|don'?t have online|can'?t access (the )?app|no app|paper statement|branch|visit.*bank|by post|order.*statement)\b/.test(lower)) {
+        return {
+          scenario: 'branch',
+          accountKey: matchedAccountKey,
+          label: matchedBankName ? `Branch / Paper Guidance (${matchedBankName})` : 'Branch / Paper Guidance'
+        };
+      }
+
+      // 3. Closed / Dormant Account
+      if (/\b(closed|shut|close|dormant|cancelled|canceled|no longer have|not open|deleted|terminated)\b|\bdon'?t use (this|the|my)?\s*(account|bank)\b/.test(lower)) {
+        return {
+          scenario: 'closed',
+          accountKey: matchedAccountKey,
+          label: matchedBankName ? `Closed Account (${matchedBankName})` : 'Closed Account Query'
+        };
+      }
+
+      // 4. Unreadable / Cropped Document
+      if (/\b(blurry|blury|unreadable|cropped|cut off|screenshot|photo|picture|screen shot|can'?t read|image)\b/.test(lower)) {
+        return {
+          scenario: 'unreadable',
+          accountKey: matchedAccountKey,
+          label: matchedBankName ? `Unreadable Document (${matchedBankName})` : 'Unreadable / Cropped Document'
+        };
+      }
+
+      // 5. Dispute / Missing Dates Clarification
+      if (/\b(already (sent|uploaded|provided)|sent (all|everything)|uploaded (all|everything)|why are you (asking|requesting)|provided these|sent them all)\b/.test(lower)) {
+        return {
+          scenario: 'clarification',
+          accountKey: matchedAccountKey,
+          label: 'Missing Dates Clarification'
+        };
+      }
+
+      // 6. Compliant Statements
+      if (/\b(uploaded|done|provided|sent|here are|attached)\b/.test(lower)) {
+        return {
+          scenario: 'compliant',
+          accountKey: matchedAccountKey,
+          label: 'Uploaded Statements'
+        };
+      }
+
+      return {
+        scenario: 'custom',
+        accountKey: matchedAccountKey,
+        label: 'General Customer Enquiry'
+      };
+    }
+
+    /**
+     * Multi-Tier AI Drafting Engine (Gemini Free Tier, Chrome Gemini Nano window.ai, or Local NLP)
+     */
+    async function generateAIDraftResponse(pastedText, config, result) {
+      const apiKey = (localStorage.getItem('gemini_api_key_v1') || document.getElementById('geminiApiKey')?.value || '').trim();
+      const format = document.getElementById('replyFormat')?.value || 'journal';
+      const deadlineDays = document.getElementById('replyExtensionDays')?.value || '14';
+      const targetStartIso = config.reviewStart || config.assessmentStart || '';
+      const targetEndIso = config.reviewEnd || config.assessmentEnd || '';
+      const reviewPeriodStr = targetStartIso && targetEndIso
+        ? `${CalendarEngine.formatUK(targetStartIso, 'long')} to ${CalendarEngine.formatUK(targetEndIso, 'long')}`
+        : 'the 4-month review window';
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const deadlineFormatted = CalendarEngine.formatUK(CalendarEngine.addDays(todayIso, Number(deadlineDays)), 'long');
+
+      const analysis = analyzePastedCustomerMessage(pastedText, result.accountAnalyses);
+
+      const promptInstructions = `You are a UK Universal Credit DWP Caseworker. Draft an ultra-concise, professional ${format === 'journal' ? 'journal response' : 'formal email'} to a customer enquiry.
+Customer Message: "${pastedText}"
+
+Context:
+- 4-Month Statement Review Window: ${reviewPeriodStr}
+- Reply Deadline: ${deadlineFormatted}
+- Key Rules: Continuous 4-month statements needed. If closed, require official bank letter or £0.00 final statement. If photo blurry/cropped, require full statement with name, sort code, account number, and balance.
+- Tone: Polite, direct, strictly British English (e.g. organise, colour, behaviour).
+- Constraints: Keep to 2-3 sentences maximum for journal. No bureaucratic filler. Output ONLY the drafted message text.`;
+
+      // Tier 1: User-supplied Free Gemini API Key
+      if (apiKey) {
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptInstructions }] }]
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (aiText && aiText.trim()) {
+              return {
+                text: aiText.trim(),
+                provider: 'Gemini 1.5 Flash (AI)',
+                scenario: analysis.scenario,
+                accountKey: analysis.accountKey,
+                label: analysis.label,
+                subject: format === 'journal' ? `Update: Bank Statement Enquiry` : `Assessment Review: Bank Statement Response`
+              };
+            }
+          }
+        } catch (_) {}
+      }
+
+      // Tier 2: Chrome Built-in AI (window.ai.languageModel / Gemini Nano)
+      if (typeof window !== 'undefined' && window.ai?.languageModel) {
+        try {
+          const session = await window.ai.languageModel.create();
+          const aiText = await session.prompt(promptInstructions);
+          if (aiText && aiText.trim()) {
+            return {
+              text: aiText.trim(),
+              provider: 'Chrome Built-in AI (Gemini Nano)',
+              scenario: analysis.scenario,
+              accountKey: analysis.accountKey,
+              label: analysis.label,
+              subject: format === 'journal' ? `Update: Bank Statement Enquiry` : `Assessment Review: Bank Statement Response`
+            };
+          }
+        } catch (_) {}
+      }
+
+      // Tier 3: Zero-latency deterministic NLP Caseworker Engine (100% reliable fallback)
+      const resp = generateCustomerResponse({
+        scenario: analysis.scenario,
+        targetAccountKey: analysis.accountKey,
+        format: format,
+        extensionDays: deadlineDays,
+        customNotes: ''
+      }, config, result);
+
+      return {
+        text: resp.body,
+        provider: 'Built-in Intelligent Engine',
+        scenario: analysis.scenario,
+        accountKey: analysis.accountKey,
+        label: analysis.label,
+        subject: resp.subject
+      };
+    }
+
+    function renderCustomerResponse(config, result) {
+      if (!config) config = getConfig();
+      if (!result) result = evaluateStatementsAssessment(config, statementsState);
+
+      const replyScenario = document.getElementById('replyScenario')?.value || 'unreadable';
+      const replyAccountTarget = document.getElementById('replyAccountTarget')?.value || 'all';
+      const replyFormat = document.getElementById('replyFormat')?.value || 'journal';
+      const replyExtensionDays = document.getElementById('replyExtensionDays')?.value || '14';
+      const replyCustomNotes = document.getElementById('replyCustomNotes')?.value || '';
+
+      const resp = generateCustomerResponse({
+        scenario: replyScenario,
+        targetAccountKey: replyAccountTarget,
+        format: replyFormat,
+        extensionDays: replyExtensionDays,
+        customNotes: replyCustomNotes
+      }, config, result);
+
+      const subjectEl = document.getElementById('replySubject');
+      if (subjectEl) subjectEl.value = resp.subject;
+
+      const bodyEl = document.getElementById('replyBody');
+      if (bodyEl && (!bodyEl.dataset.userEdited || bodyEl.dataset.userEdited === 'false')) {
+        bodyEl.value = resp.body;
+      }
+
+      latestReplyAuditSummary = resp.auditSummary;
+
+      const copyReplyText = document.getElementById('btnCopyReplyText');
+      if (copyReplyText) {
+        copyReplyText.textContent = replyFormat === 'journal'
+          ? 'Copy Response to Clipboard'
+          : 'Copy Full Email to Clipboard';
+      }
+    }
+
+    /* Undo Toast Controller */
+    function showUndoToast(msg) {
+      const container = document.getElementById('undoToastContainer');
+      const textEl = document.getElementById('undoToastMessage');
+      if (!container || !textEl) return;
+      textEl.textContent = msg;
+      container.style.display = 'inline-flex';
+
+      if (undoToastTimeout) clearTimeout(undoToastTimeout);
+      undoToastTimeout = setTimeout(() => {
+        hideUndoToast();
+      }, 8000);
+    }
+
+    function hideUndoToast() {
+      const container = document.getElementById('undoToastContainer');
+      if (container) container.style.display = 'none';
+      if (undoToastTimeout) {
+        clearTimeout(undoToastTimeout);
+        undoToastTimeout = null;
+      }
+    }
+
+    function restoreLastDeleted() {
+      if (!lastDeletedStatement) return;
+      const { item, index } = lastDeletedStatement;
+      statementsState.splice(Math.min(index, statementsState.length), 0, item);
+      const restoredName = item.bankName;
+      lastDeletedStatement = null;
+      hideUndoToast();
+      renderAll();
+      showFeedback(`✓ Restored statement for ${restoredName}`);
+    }
+
+    /* Edit Mode Controller */
+    function exitEditMode() {
+      editingStatementId = null;
+      const banner = document.getElementById('editingBanner');
+      if (banner) banner.style.display = 'none';
+      const btnText = document.getElementById('btnAddStatementText');
+      if (btnText) btnText.textContent = '+ Add Statement';
+      const addAdvanceBtn = document.getElementById('btnAddAndAdvance');
+      if (addAdvanceBtn) addAdvanceBtn.style.display = 'inline-flex';
+      const cancelRowBtn = document.getElementById('btnCancelEditRow');
+      if (cancelRowBtn) cancelRowBtn.style.display = 'none';
+      const errBox = document.getElementById('formErrorBox');
+      if (errBox) errBox.style.display = 'none';
+
+      // Reset form fields
+      document.getElementById('bankName').value = '';
+      document.getElementById('accountRef').value = '';
+      document.getElementById('stmtStart').value = '';
+      document.getElementById('stmtEnd').value = '';
+    }
+
+    function startEditStatement(statementId) {
+      const stmt = statementsState.find(s => s.id === statementId);
+      if (!stmt) return;
+      editingStatementId = statementId;
+
+      document.getElementById('bankName').value = stmt.bankName;
+      document.getElementById('accountType').value = stmt.accountType;
+      document.getElementById('accountRef').value = stmt.accountRef || '';
+      document.getElementById('stmtStart').value = stmt.startDate;
+      document.getElementById('stmtEnd').value = stmt.endDate;
+
+      const banner = document.getElementById('editingBanner');
+      if (banner) banner.style.display = 'block';
+      const detailsEl = document.getElementById('editingStatementDetails');
+      if (detailsEl) {
+        detailsEl.textContent = `${stmt.bankName} (${stmt.accountType}) • ${CalendarEngine.formatUK(stmt.startDate)} to ${CalendarEngine.formatUK(stmt.endDate)}`;
+      }
+
+      const btnText = document.getElementById('btnAddStatementText');
+      if (btnText) btnText.textContent = '✓ Save / Update Statement';
+      const addAdvanceBtn = document.getElementById('btnAddAndAdvance');
+      if (addAdvanceBtn) addAdvanceBtn.style.display = 'none';
+      const cancelRowBtn = document.getElementById('btnCancelEditRow');
+      if (cancelRowBtn) cancelRowBtn.style.display = 'inline-flex';
+      const errBox = document.getElementById('formErrorBox');
+      if (errBox) errBox.style.display = 'none';
+
+      // Smooth scroll to form so the assessor can see and edit the values
+      document.getElementById('step2Card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('stmtStart')?.focus();
+    }
+
+    /* Single Statement Deletion with Undo */
+    function deleteStatementWithUndo(statementId) {
+      const idx = statementsState.findIndex(s => s.id === statementId);
+      if (idx === -1) return;
+      const [removed] = statementsState.splice(idx, 1);
+      lastDeletedStatement = { item: removed, index: idx };
+
+      if (editingStatementId === statementId) {
+        exitEditMode();
+      }
+
+      renderAll();
+      showUndoToast(`Deleted statement: ${removed.bankName} (${CalendarEngine.formatUK(removed.startDate)} – ${CalendarEngine.formatUK(removed.endDate)})`);
+    }
+
+    /* Entire Account Stream Deletion */
+    function deleteAccountStream(accountKey, accountLabel, count) {
+      if (!window.confirm(`Delete all ${count} statements for ${accountLabel}?\n\nThis will remove the entire account stream from your assessment.`)) {
+        return;
+      }
+
+      const removedList = statementsState.filter(s => {
+        const k = `${(s.bankName || '').toLowerCase()}__${(s.accountType || '').toLowerCase()}__${(s.accountRef || '').toLowerCase()}`;
+        return k === accountKey;
+      });
+
+      statementsState = statementsState.filter(s => {
+        const k = `${(s.bankName || '').toLowerCase()}__${(s.accountType || '').toLowerCase()}__${(s.accountRef || '').toLowerCase()}`;
+        return k !== accountKey;
+      });
+
+      if (editingStatementId && removedList.some(r => r.id === editingStatementId)) {
+        exitEditMode();
+      }
+
+      renderAll();
+      showFeedback(`✓ Deleted all ${count} statements for ${accountLabel}`);
+    }
+
+    function loadPreset(presetArray) {
+      document.getElementById('apStart').value = '2026-09-27';
+      document.getElementById('apEnd').value = '2026-10-26';
+      document.getElementById('reviewStart').value = '2026-06-26';
+      document.getElementById('reviewEnd').value = '2026-10-26';
+      document.getElementById('reqCurrent').checked = true;
+      document.getElementById('reqSavings').checked = true;
+      statementsState = presetArray.map(item => ({ ...item }));
+      exitEditMode();
+      renderAll();
+    }
+
+    function handleAddStatement(advanceToNextMonth = false) {
+      const errorBox = document.getElementById('formErrorBox');
+      errorBox.style.display = 'none';
+
+      const bankName = document.getElementById('bankName').value.trim();
+      const accountType = document.getElementById('accountType').value;
+      const accountRef = document.getElementById('accountRef').value.trim();
+      const startDate = document.getElementById('stmtStart').value;
+      const endDate = document.getElementById('stmtEnd').value;
+
+      if (!bankName) {
+        errorBox.textContent = 'Please enter or select a Bank Name (e.g. Starling, Monzo, NatWest, Barclays).';
+        errorBox.style.display = 'block';
+        document.getElementById('bankName').focus();
+        return;
+      }
+
+      if (!startDate || !endDate) {
+        errorBox.textContent = 'Please provide both the Statement Start Date and Statement End Date.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      if (CalendarEngine.toOrdinal(startDate) > CalendarEngine.toOrdinal(endDate)) {
+        errorBox.textContent = 'Statement Start Date cannot be later than Statement End Date.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      if (editingStatementId) {
+        // Update existing statement in-place
+        const idx = statementsState.findIndex(s => s.id === editingStatementId);
+        if (idx !== -1) {
+          statementsState[idx] = {
+            ...statementsState[idx],
+            bankName,
+            accountType,
+            accountRef,
+            startDate,
+            endDate
+          };
+        }
+        exitEditMode();
+        renderAll();
+        showFeedback(`✓ Updated statement for ${bankName}`);
+        return;
+      }
+
+      // Add new statement
+      statementsState.push({
+        id: 'stmt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        bankName,
+        accountType,
+        accountRef,
+        startDate,
+        endDate
+      });
+
+      if (advanceToNextMonth) {
+        const nextStart = CalendarEngine.addDays(endDate, 1);
+        const nextEnd = CalendarEngine.addOneMonthCycleEnd(nextStart);
+        document.getElementById('stmtStart').value = nextStart;
+        document.getElementById('stmtEnd').value = nextEnd;
+      }
+
+      renderAll();
+      showFeedback(`✓ Added statement for ${bankName}`);
+    }
+
+    /**
+     * ============================================================================
+     * 6. ASSESSOR PERSONAL RECORD & ACTION NOTE STORAGE CONTROLLER
+     * ============================================================================
+     */
+    function loadSavedRecordsFromStorage() {
+      try {
+        const raw = localStorage.getItem('bank_assessment_records_v1');
+        return raw ? JSON.parse(raw) : [];
+      } catch (_) {
+        return memorySavedRecords;
+      }
+    }
+
+    function saveRecordsToStorage(records) {
+      try {
+        localStorage.setItem('bank_assessment_records_v1', JSON.stringify(records));
+      } catch (_) {
+        memorySavedRecords = records;
+      }
+    }
+
+    function renderSavedRecords() {
+      const records = loadSavedRecordsFromStorage();
+      const countEl = document.getElementById('storedRecordsCount');
+      const badgeEl = document.getElementById('savedRecordsBadge');
+      const headerCountEl = document.getElementById('headerRecordsCount');
+      if (countEl) countEl.textContent = records.length;
+      if (badgeEl) badgeEl.textContent = `${records.length} Record${records.length === 1 ? '' : 's'} Stored`;
+      if (headerCountEl) headerCountEl.textContent = records.length;
+
+      const listEl = document.getElementById('savedRecordsList');
+      if (!listEl) return;
+
+      if (records.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.8125rem; border: 1px dashed var(--border-strong); border-radius: var(--radius-md);">
+            No records stored yet. Click "Save Note to My Records" above to keep a personal log of this assessment.
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = records.map(rec => {
+        const isVerified = (rec.actionOutcome || '').includes('Verified');
+        const badgeClass = isVerified ? 'badge-ok' : 'badge-gap';
+
+        return `
+          <div class="record-card" data-rec-id="${escapeHtml(rec.id)}">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <strong style="font-size: 0.875rem; color: var(--text-primary);">${escapeHtml(rec.label || 'Assessment Update')}</strong>
+                <span class="badge ${badgeClass}" style="margin-left: 6px;">${escapeHtml(rec.actionOutcome || 'Logged')}</span>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Saved on ${escapeHtml(rec.displayDate)}</div>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm js-copy-saved-note" data-id="${escapeHtml(rec.id)}" style="min-height: 32px; padding: 2px 8px; font-size: 0.75rem;" title="Copy this note to clipboard">
+                  <span>Copy Note</span>
+                </button>
+                ${rec.snapshotConfig ? `
+                <button type="button" class="btn btn-secondary btn-sm js-restore-saved-rec" data-id="${escapeHtml(rec.id)}" style="min-height: 32px; padding: 2px 8px; font-size: 0.75rem;" title="Restore this assessment dates and statements into the tool">
+                  <span>Restore Case</span>
+                </button>` : ''}
+                <button type="button" class="btn btn-danger-ghost btn-sm js-delete-saved-rec" data-id="${escapeHtml(rec.id)}" style="min-height: 32px; padding: 2px 8px; font-size: 0.75rem;" title="Delete this saved record">
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+            <pre style="margin: 0; background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.75rem; line-height: 1.5; white-space: pre-wrap; color: var(--text-primary);">${escapeHtml(rec.noteText)}</pre>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleSaveCurrentRecord() {
+      const config = getConfig();
+      const noteText = (document.getElementById('assessorActionNote')?.value || '').trim();
+      const labelInput = (document.getElementById('recordLabel')?.value || '').trim();
+      const actionOutcome = document.getElementById('recordActionType')?.value || 'Requested Missing Statements';
+
+      if (!noteText) {
+        showFeedback('Please write or generate an action note before saving');
+        return;
+      }
+
+      const apPeriodStr = config.apStart && config.apEnd
+        ? `${CalendarEngine.formatUK(config.apStart)} – ${CalendarEngine.formatUK(config.apEnd)}`
+        : (config.apEnd ? `Period ending ${CalendarEngine.formatUK(config.apEnd)}` : 'Review Window');
+
+      const now = new Date();
+      const displayDate = new Intl.DateTimeFormat('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'UTC'
+      }).format(now);
+
+      const newRecord = {
+        id: 'rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        createdAt: now.toISOString(),
+        displayDate,
+        label: labelInput || `Assessment (${apPeriodStr})`,
+        actionOutcome,
+        noteText,
+        snapshotConfig: { ...config },
+        snapshotStatements: statementsState.map(s => ({ ...s }))
+      };
+
+      const records = loadSavedRecordsFromStorage();
+      records.unshift(newRecord);
+      saveRecordsToStorage(records);
+
+      renderSavedRecords();
+      showFeedback('✓ Note saved to your personal records');
+      document.getElementById('recordLabel').value = '';
+    }
+
+    function handleExportRecords() {
+      const records = loadSavedRecordsFromStorage();
+      if (records.length === 0) {
+        showFeedback('No stored records to export');
+        return;
+      }
+
+      const content = [
+        `========================================================================`,
+        `ASSESSMENT REVIEW LOG - PERSONAL CASEWORKER AUDIT NOTES`,
+        `Exported: ${new Date().toISOString().slice(0, 10)}`,
+        `Total Records: ${records.length}`,
+        `========================================================================\n`
+      ].concat(records.map((r, i) => [
+        `------------------------------------------------------------------------`,
+        `RECORD #${records.length - i}: ${r.label}`,
+        `Date: ${r.displayDate} | Outcome: ${r.actionOutcome}`,
+        `------------------------------------------------------------------------`,
+        r.noteText,
+        ``
+      ].join('\n'))).join('\n');
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Assessment_Notes_Export_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showFeedback('✓ Exported notes to text file');
+    }
+
+    function restoreRecordAssessment(recId) {
+      const records = loadSavedRecordsFromStorage();
+      const rec = records.find(r => r.id === recId);
+      if (!rec || !rec.snapshotConfig) return;
+
+      if (!window.confirm(`Load this saved assessment into the checker?\n\nThis will restore the statement inputs for ${rec.label}.`)) {
+        return;
+      }
+
+      const c = rec.snapshotConfig;
+      document.getElementById('apStart').value = c.apStart || '';
+      document.getElementById('apEnd').value = c.apEnd || '';
+      document.getElementById('reviewStart').value = c.reviewStart || '';
+      document.getElementById('reviewEnd').value = c.reviewEnd || '';
+      document.getElementById('reqCurrent').checked = !!c.reqCurrent;
+      document.getElementById('reqSavings').checked = !!c.reqSavings;
+      document.getElementById('deadlineDays').value = c.deadlineDays || '14';
+
+      statementsState = (rec.snapshotStatements || []).map(s => ({ ...s }));
+      exitEditMode();
+      renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showFeedback(`✓ Restored case: ${rec.label}`);
+    }
+
+    function deleteStoredRecord(recId) {
+      if (!window.confirm('Delete this stored assessment record?')) return;
+      let records = loadSavedRecordsFromStorage();
+      records = records.filter(r => r.id !== recId);
+      saveRecordsToStorage(records);
+      renderSavedRecords();
+      showFeedback('✓ Deleted stored record');
+    }
+
+    function handleClearAllRecords() {
+      const records = loadSavedRecordsFromStorage();
+      if (records.length === 0) return;
+      if (!window.confirm(`Delete all ${records.length} stored assessment records? This action cannot be undone.`)) return;
+      saveRecordsToStorage([]);
+      renderSavedRecords();
+      showFeedback('✓ Cleared all stored records');
+    }
+
+    /**
+     * View Switcher: Three Views for Message to Customer, Respond to Message, and My Audit Note
+     */
+    function switchOutputView(viewName) {
+      const tabCustomer = document.getElementById('tabViewCustomer');
+      const tabReply = document.getElementById('tabViewReply');
+      const tabAudit = document.getElementById('tabViewAudit');
+      const panelCustomer = document.getElementById('panelCustomerMessage');
+      const panelReply = document.getElementById('panelReplyAssistant');
+      const panelAudit = document.getElementById('panelAuditNote');
+
+      if (!tabCustomer || !tabReply || !tabAudit || !panelCustomer || !panelReply || !panelAudit) return;
+
+      // Reset all tabs
+      [tabCustomer, tabReply, tabAudit].forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      // Hide all panels
+      panelCustomer.style.display = 'none';
+      panelReply.style.display = 'none';
+      panelAudit.style.display = 'none';
+
+      if (viewName === 'audit') {
+        tabAudit.classList.add('active');
+        tabAudit.setAttribute('aria-selected', 'true');
+        panelAudit.style.display = 'block';
+      } else if (viewName === 'reply') {
+        tabReply.classList.add('active');
+        tabReply.setAttribute('aria-selected', 'true');
+        panelReply.style.display = 'block';
+      } else {
+        tabCustomer.classList.add('active');
+        tabCustomer.setAttribute('aria-selected', 'true');
+        panelCustomer.style.display = 'block';
+      }
+    }
+
+    // Wire up DOM events
+    function initApp() {
+      // Global event delegation for Edit, Delete, Account and Stored Record buttons
+      document.addEventListener('click', e => {
+        const editBtn = e.target.closest('.js-edit-stmt');
+        if (editBtn) {
+          startEditStatement(editBtn.dataset.id);
+          return;
+        }
+
+        const deleteBtn = e.target.closest('.js-delete-stmt');
+        if (deleteBtn) {
+          deleteStatementWithUndo(deleteBtn.dataset.id);
+          return;
+        }
+
+        const deleteAccBtn = e.target.closest('.js-delete-account');
+        if (deleteAccBtn) {
+          deleteAccountStream(deleteAccBtn.dataset.key, deleteAccBtn.dataset.label, Number(deleteAccBtn.dataset.count || 0));
+          return;
+        }
+
+        const copySavedBtn = e.target.closest('.js-copy-saved-note');
+        if (copySavedBtn) {
+          const recId = copySavedBtn.dataset.id;
+          const records = loadSavedRecordsFromStorage();
+          const rec = records.find(r => r.id === recId);
+          if (rec) {
+            navigator.clipboard?.writeText(rec.noteText);
+            showFeedback('✓ Stored note copied to clipboard');
+          }
+          return;
+        }
+
+        const restoreRecBtn = e.target.closest('.js-restore-saved-rec');
+        if (restoreRecBtn) {
+          restoreRecordAssessment(restoreRecBtn.dataset.id);
+          return;
+        }
+
+        const deleteRecBtn = e.target.closest('.js-delete-saved-rec');
+        if (deleteRecBtn) {
+          deleteStoredRecord(deleteRecBtn.dataset.id);
+          return;
+        }
+      });
+
+      // Quick Bank selection chips
+      document.querySelectorAll('.bank-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          document.getElementById('bankName').value = chip.dataset.bank || '';
+        });
+      });
+
+      // Form submission
+      document.getElementById('statementForm').addEventListener('submit', e => {
+        e.preventDefault();
+        withButtonSpinner(document.getElementById('btnAddStatement'), () => {
+          handleAddStatement(false);
+        });
+      });
+
+      document.getElementById('btnAddAndAdvance').addEventListener('click', () => {
+        withButtonSpinner(document.getElementById('btnAddAndAdvance'), () => {
+          handleAddStatement(true);
+        });
+      });
+
+      // Clear Form button (Step 2)
+      document.getElementById('btnClearForm')?.addEventListener('click', () => {
+        exitEditMode();
+        showFeedback('✓ Cleared statement input fields');
+      });
+
+      // Cancel Edit buttons
+      document.getElementById('btnCancelEdit')?.addEventListener('click', () => {
+        exitEditMode();
+        showFeedback('Cancelled editing mode');
+      });
+
+      document.getElementById('btnCancelEditRow')?.addEventListener('click', () => {
+        exitEditMode();
+        showFeedback('Cancelled editing mode');
+      });
+
+      // Clear Dates button (Step 1)
+      document.getElementById('btnClearDates')?.addEventListener('click', () => {
+        document.getElementById('apStart').value = '';
+        document.getElementById('apEnd').value = '';
+        document.getElementById('reviewStart').value = '';
+        document.getElementById('reviewEnd').value = '';
+        renderAll();
+        showFeedback('✓ Cleared assessment and review dates');
+      });
+
+      // Undo deletion button
+      document.getElementById('btnUndoDelete')?.addEventListener('click', () => {
+        restoreLastDeleted();
+      });
+
+      document.getElementById('btnCloseUndoToast')?.addEventListener('click', () => {
+        hideUndoToast();
+      });
+
+      // When Assessment Period End Date (apEnd) is entered/changed:
+      document.getElementById('apEnd').addEventListener('input', e => {
+        const apEndVal = e.target.value;
+        if (apEndVal) {
+          // 1. Sync Review Window End Date
+          document.getElementById('reviewEnd').value = apEndVal;
+          // 2. Count 4 months backward for Review Window Start Date
+          const autoReviewStart = CalendarEngine.subtractMonths(apEndVal, 4);
+          document.getElementById('reviewStart').value = autoReviewStart;
+          // 3. Auto-suggest 1-month Assessment Period Start if blank
+          if (!document.getElementById('apStart').value) {
+            document.getElementById('apStart').value = CalendarEngine.addDays(CalendarEngine.subtractMonths(apEndVal, 1), 1);
+          }
+        }
+        renderAll();
+      });
+
+      // When Review Window End Date is edited directly:
+      document.getElementById('reviewEnd').addEventListener('input', e => {
+        const endVal = e.target.value;
+        if (endVal && !document.getElementById('reviewStart').value) {
+          document.getElementById('reviewStart').value = CalendarEngine.subtractMonths(endVal, 4);
+        }
+        renderAll();
+      });
+
+      // Quick sync button: "Sync 4-Month Window"
+      document.getElementById('btnRecalc4Months').addEventListener('click', () => {
+        const baseEnd = document.getElementById('apEnd').value || document.getElementById('reviewEnd').value;
+        if (!baseEnd) {
+          showFeedback('Please select an Assessment Period End Date first');
+          document.getElementById('apEnd').focus();
+          return;
+        }
+        document.getElementById('apEnd').value = baseEnd;
+        document.getElementById('reviewEnd').value = baseEnd;
+        const autoStart = CalendarEngine.subtractMonths(baseEnd, 4);
+        document.getElementById('reviewStart').value = autoStart;
+        if (!document.getElementById('apStart').value) {
+          document.getElementById('apStart').value = CalendarEngine.addDays(CalendarEngine.subtractMonths(baseEnd, 1), 1);
+        }
+        renderAll();
+        showFeedback(`✓ Synced 4-month review window: ${CalendarEngine.formatUK(autoStart)} – ${CalendarEngine.formatUK(baseEnd)}`);
+      });
+
+      // Live recalculation when Assessment Period config changes
+      ['apStart', 'apEnd', 'reviewStart', 'reviewEnd', 'reqCurrent', 'reqSavings', 'deadlineDays', 'messageFormat'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', renderAll);
+          el.addEventListener('change', renderAll);
+        }
+      });
+
+      // Preset buttons (Optional Demos)
+      document.getElementById('btnLoadPaperExample').addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          loadPreset(PAPER_WORKSHEET_PRESET);
+          showFeedback('✓ Loaded Demo Sample with gap detection (26 Jun – 26 Oct 2026)');
+        });
+      });
+
+      document.getElementById('btnLoadCompliantExample').addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          loadPreset(COMPLIANT_PRESET);
+          showFeedback('✓ Loaded Demo Sample (100% Fulfilled)');
+        });
+      });
+
+      document.getElementById('btnClearAll').addEventListener('click', () => {
+        statementsState = [];
+        exitEditMode();
+        document.getElementById('apStart').value = '';
+        document.getElementById('apEnd').value = '';
+        document.getElementById('reviewStart').value = '';
+        document.getElementById('reviewEnd').value = '';
+        renderAll();
+        showFeedback('✓ Reset to clean blank assessment');
+      });
+
+      // Copy buttons
+      document.getElementById('btnCopySubject').addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const text = document.getElementById('emailSubject').value;
+          navigator.clipboard?.writeText(text);
+          showFeedback('✓ Subject line copied to clipboard');
+        });
+      });
+
+      document.getElementById('btnCopyEmail').addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const text = document.getElementById('emailBody').value;
+          navigator.clipboard?.writeText(text);
+          const isDetailed = document.getElementById('messageFormat')?.value === 'detailed';
+          showFeedback(isDetailed ? '✓ Detailed email copied to clipboard' : '✓ Journal message copied to clipboard');
+        });
+      });
+
+      document.getElementById('btnCopyCaseNote')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          navigator.clipboard?.writeText(latestCaseNoteText);
+          showFeedback('✓ Audit note copied to clipboard');
+        });
+      });
+
+      // Assessor Stored Records buttons & listeners
+      document.getElementById('btnSaveRecord')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          handleSaveCurrentRecord();
+        });
+      });
+
+      document.getElementById('btnCopyRecordNote')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const text = document.getElementById('assessorActionNote').value;
+          navigator.clipboard?.writeText(text);
+          showFeedback('✓ Action note copied to clipboard');
+        });
+      });
+
+      document.getElementById('btnExportRecords')?.addEventListener('click', () => {
+        handleExportRecords();
+      });
+
+      document.getElementById('btnClearAllRecords')?.addEventListener('click', () => {
+        handleClearAllRecords();
+      });
+
+      // 3-View Tab & Cross-Link Listeners
+      document.getElementById('tabViewCustomer')?.addEventListener('click', () => {
+        switchOutputView('customer');
+      });
+
+      document.getElementById('tabViewReply')?.addEventListener('click', () => {
+        switchOutputView('reply');
+      });
+
+      document.getElementById('tabViewAudit')?.addEventListener('click', () => {
+        switchOutputView('audit');
+      });
+
+      document.getElementById('btnSwitchToReply')?.addEventListener('click', () => {
+        switchOutputView('reply');
+      });
+
+      document.getElementById('btnSwitchToAudit')?.addEventListener('click', () => {
+        switchOutputView('audit');
+      });
+
+      document.getElementById('btnSwitchFromReplyToCustomer')?.addEventListener('click', () => {
+        switchOutputView('customer');
+      });
+
+      document.getElementById('btnSwitchFromReplyToAudit')?.addEventListener('click', () => {
+        switchOutputView('audit');
+      });
+
+      document.getElementById('btnSwitchAuditToReply')?.addEventListener('click', () => {
+        switchOutputView('reply');
+      });
+
+      document.getElementById('btnSwitchToCustomer')?.addEventListener('click', () => {
+        switchOutputView('customer');
+      });
+
+      document.getElementById('btnHeaderStoredNotes')?.addEventListener('click', e => {
+        e.preventDefault();
+        switchOutputView('audit');
+        document.getElementById('emailSection')?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      // Paste & Analyze Customer Message Action Handlers
+      async function executeCustomerMessageAnalysis() {
+        const text = (document.getElementById('pastedCustomerMessage')?.value || '').trim();
+        if (!text) {
+          showReplyFeedback('Please paste a customer message or click a demo sample first');
+          document.getElementById('pastedCustomerMessage')?.focus();
+          return;
+        }
+
+        const config = getConfig();
+        const result = evaluateStatementsAssessment(config, statementsState);
+        
+        const badgeEl = document.getElementById('detectedIntentBadge');
+        if (badgeEl) badgeEl.innerHTML = '<span class="badge badge-current">🤖 AI Drafting Response...</span>';
+
+        const aiDraft = await generateAIDraftResponse(text, config, result);
+
+        const scenSelect = document.getElementById('replyScenario');
+        if (scenSelect && aiDraft.scenario) scenSelect.value = aiDraft.scenario;
+
+        const accSelect = document.getElementById('replyAccountTarget');
+        if (accSelect && aiDraft.accountKey && aiDraft.accountKey !== 'all') {
+          accSelect.value = aiDraft.accountKey;
+        }
+
+        if (badgeEl) {
+          const providerText = aiDraft.provider ? ` • ${aiDraft.provider}` : '';
+          badgeEl.innerHTML = `<span class="badge badge-ok">✓ ${escapeHtml((aiDraft.label || 'Intent Detected') + providerText)}</span>`;
+        }
+
+        const subjectEl = document.getElementById('replySubject');
+        if (subjectEl && aiDraft.subject) subjectEl.value = aiDraft.subject;
+
+        const bodyEl = document.getElementById('replyBody');
+        if (bodyEl) {
+          bodyEl.value = aiDraft.text;
+          bodyEl.dataset.userEdited = 'false';
+        }
+
+        latestReplyAuditSummary = `Sent AI response to enquiry regarding ${aiDraft.label || 'customer enquiry'}.`;
+        showReplyFeedback(`✓ Response drafted via ${aiDraft.provider || 'AI Engine'}`);
+      }
+
+      document.getElementById('btnAnalyzeCustomerMsg')?.addEventListener('click', async e => {
+        const btn = e.currentTarget;
+        btn.classList.add('is-loading');
+        btn.disabled = true;
+        try {
+          await executeCustomerMessageAnalysis();
+        } finally {
+          btn.classList.remove('is-loading');
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById('btnClearPastedMsg')?.addEventListener('click', () => {
+        const pasteBox = document.getElementById('pastedCustomerMessage');
+        if (pasteBox) pasteBox.value = '';
+        const badgeEl = document.getElementById('detectedIntentBadge');
+        if (badgeEl) badgeEl.innerHTML = '';
+        const bodyEl = document.getElementById('replyBody');
+        if (bodyEl) bodyEl.dataset.userEdited = 'false';
+        renderCustomerResponse();
+        showReplyFeedback('Cleared customer message input');
+      });
+
+      // Quick Demo Sample buttons
+      document.querySelectorAll('.js-sample-msg').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const sampleKey = btn.dataset.sample;
+          const msg = DEMO_CUSTOMER_MESSAGES[sampleKey];
+          const pasteBox = document.getElementById('pastedCustomerMessage');
+          if (pasteBox && msg) {
+            pasteBox.value = msg;
+            await executeCustomerMessageAnalysis();
+          }
+        });
+      });
+
+      // Load saved Gemini API Key if present
+      const savedApiKey = localStorage.getItem('gemini_api_key_v1') || '';
+      const apiKeyInput = document.getElementById('geminiApiKey');
+      if (apiKeyInput && savedApiKey) {
+        apiKeyInput.value = savedApiKey;
+      }
+
+      document.getElementById('btnSaveApiKey')?.addEventListener('click', () => {
+        const key = (document.getElementById('geminiApiKey')?.value || '').trim();
+        if (key) {
+          localStorage.setItem('gemini_api_key_v1', key);
+          showReplyFeedback('✓ Gemini API key saved locally in browser');
+        } else {
+          localStorage.removeItem('gemini_api_key_v1');
+          showReplyFeedback('Cleared saved API key');
+        }
+      });
+
+      document.getElementById('btnClearApiKey')?.addEventListener('click', () => {
+        localStorage.removeItem('gemini_api_key_v1');
+        const keyInput = document.getElementById('geminiApiKey');
+        if (keyInput) keyInput.value = '';
+        showReplyFeedback('Cleared saved API key');
+      });
+
+      // Reply Assistant controls listeners
+      ['replyScenario', 'replyAccountTarget', 'replyFormat', 'replyExtensionDays'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+          const bodyEl = document.getElementById('replyBody');
+          if (bodyEl) bodyEl.dataset.userEdited = 'false';
+          renderCustomerResponse();
+        });
+      });
+
+      document.getElementById('replyCustomNotes')?.addEventListener('input', () => {
+        const bodyEl = document.getElementById('replyBody');
+        if (bodyEl) bodyEl.dataset.userEdited = 'false';
+        renderCustomerResponse();
+      });
+
+      document.getElementById('replyBody')?.addEventListener('input', e => {
+        e.target.dataset.userEdited = 'true';
+      });
+
+      document.getElementById('btnCopyReplySubject')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const text = document.getElementById('replySubject').value;
+          navigator.clipboard?.writeText(text);
+          showReplyFeedback('✓ Subject line copied to clipboard');
+        });
+      });
+
+      document.getElementById('btnCopyReply')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const text = document.getElementById('replyBody').value;
+          navigator.clipboard?.writeText(text);
+          const isDetailed = document.getElementById('replyFormat')?.value === 'detailed';
+          showReplyFeedback(isDetailed ? '✓ Detailed email copied to clipboard' : '✓ Journal message copied to clipboard');
+        });
+      });
+
+      document.getElementById('btnAppendReplyToAudit')?.addEventListener('click', e => {
+        withButtonSpinner(e.currentTarget, () => {
+          const noteEl = document.getElementById('assessorActionNote');
+          if (noteEl) {
+            const todayIso = new Date().toISOString().slice(0, 10);
+            const stamp = CalendarEngine.formatUK(todayIso);
+            const appendLine = `• RESPONSE SENT [${stamp}]: ${latestReplyAuditSummary || 'Sent response to customer enquiry.'}`;
+            noteEl.value = (noteEl.value.trim() ? noteEl.value.trim() + '\n' : '') + appendLine;
+            noteEl.dataset.userEdited = 'true';
+            showReplyFeedback('✓ Appended response to caseworker audit note');
+          }
+        });
+      });
+
+      // Track manual edits on assessor note so user changes are preserved
+      document.getElementById('assessorActionNote')?.addEventListener('input', e => {
+        e.target.dataset.userEdited = 'true';
+      });
+
+      document.getElementById('recordActionType')?.addEventListener('change', e => {
+        e.target.dataset.userChanged = 'true';
+      });
+
+      // Initialise in clean/blank state (zero hardcoded pre-population)
+      renderAll();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>

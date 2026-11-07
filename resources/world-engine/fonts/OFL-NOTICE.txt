@@ -1,0 +1,6 @@
+These font files are bundled for self-hosting by the ATG World Engine.
+All are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org)
+and were obtained from Google Fonts:
+Caveat, Fredoka, Luckiest Guy, Anton, Bricolage Grotesque, Fraunces, Space Mono,
+Monoton, Shrikhand, Bungee, Permanent Marker, DM Serif Display, Syne, Pacifico, Inter.
+Latin subset only. Copyright remains with their respective authors.

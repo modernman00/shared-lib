@@ -28,7 +28,7 @@ class LoginUtility
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
-            LoginUtility::logAudit($id, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+            LoginUtility::logAudit($id, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
             LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
 
@@ -72,9 +72,9 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-            LoginUtility::logAudit($id, $email, 'failed', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+            LoginUtility::logAudit($id, $email, 'failed', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
-            LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR']);
+            LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR'] ?? '');
 
             throw new UnauthorisedException('We do not recognise your account');
         }
@@ -178,6 +178,16 @@ class LoginUtility
 
     public static function getSanitisedInputData(array $data, ?array $limitData = null, ?array $optionalFields = null): array
 {
+    // Fields are sanitised one at a time below, so Sanitise's own password-confirmation
+    // check never sees both values together. Enforce the cross-field match here.
+    if (isset($data['password']) && is_string($data['password'])) {
+        foreach (['confirm_password', 'password_confirmation', 'password_confirm', 'confirmPassword'] as $confirmKey) {
+            if (isset($data[$confirmKey]) && is_string($data[$confirmKey]) && trim($data['password']) !== trim($data[$confirmKey])) {
+                throw new BadRequestException('There is a problem with your input<br>Passwords do not match');
+            }
+        }
+    }
+
     $clean = [];
 
     foreach ($data as $key => $value) {
@@ -234,8 +244,12 @@ class LoginUtility
     /**
      * Log login attempts (success or failure).
      */
-    public static function logAudit(mixed $userId, string $email, string $status, string $ip, string $userAgent): void
+    public static function logAudit(mixed $userId, string $email, string $status, ?string $ip = null, ?string $userAgent = null): void
     {
+        // Requests without a User-Agent header (curl, some API clients/bots) used to hit a
+        // TypeError here, turning a failed login into a 500. Store safe, bounded values instead.
+        $ip = (string) ($ip ?? '');
+        $userAgent = mb_substr((string) ($userAgent ?? ''), 0, 255);
         $data = [
             'user_id'    => $userId,
             'email'      => $email,
@@ -245,7 +259,8 @@ class LoginUtility
         ];
 
         // 1. Log to local database for fast UI retrieval
-        SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'], $data);
+        // Same table checkIpBan() reads from; defaulting avoids a TypeError when the env var is unset.
+        SubmitForm::submitForm($_ENV['DB_TABLE_LOGIN_AUDIT'] ?? 'audit_logs', $data);
 
         // 2. Push to Immutable Remote Audit Log (ISO 27001 Compliance)
         \Src\AuditLogger::log('login_attempt', $data);

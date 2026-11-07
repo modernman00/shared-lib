@@ -347,7 +347,7 @@ class CorsHandlerTest extends TestCase
     /**
      * Data provider for various CORS scenarios
      */
-    public function corsScenarioProvider(): array
+    public static function corsScenarioProvider(): array
     {
         return [
             'development_localhost' => [

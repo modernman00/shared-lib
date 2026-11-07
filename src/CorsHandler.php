@@ -44,7 +44,7 @@ class CorsHandler
 
     self::applySecurityHeaders();
 
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
         http_response_code(200);
         if (!defined('PHPUNIT_RUNNING')) {
             exit();

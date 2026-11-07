@@ -94,6 +94,11 @@ class PasswordRecoveryService
                 // this is reCAPTCHA v2
                 Recaptcha::verifyCaptcha($input);
             }
+            // A missing/non-string email used to reach Limiter::limit(null) and surface as a
+            // TypeError (HTTP 500). Reject it as a normal 400 instead.
+            if (!isset($input['email']) || !is_string($input['email']) || trim($input['email']) === '') {
+                throw new \Src\Exceptions\BadRequestException('Please enter your email address');
+            }
             Limiter::limit($input['email']);         // Rate limit by email address
 
             if (empty($input)) {

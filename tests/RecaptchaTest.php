@@ -6,98 +6,77 @@ use PHPUnit\Framework\TestCase;
 use Src\Recaptcha;
 use Src\Exceptions\RecaptchaFailedException;
 use Src\Exceptions\RecaptchaBrokenException;
-use Src\Exceptions\RecaptchaException;
-use Src\Exceptions\RecaptchaCheatingException;
 
+/**
+ * Recaptcha guard-path tests. No network calls: every case fails before Google is contacted.
+ * verifyCaptcha() / verifyCaptchaEnterprise() take the request input array (the old
+ * string-action signature was removed), and globals are restored after each test.
+ */
 class RecaptchaTest extends TestCase
 {
+    private array $env;
+    private array $server;
+
     protected function setUp(): void
     {
-        // Clear POST and ENV data before each test
-        $_POST = [];
-        $_ENV = [];
-        $_SERVER = [];
+        $this->env = $_ENV;
+        $this->server = $_SERVER;
+        $_ENV = ['APP_ENV' => 'production'];
+        $_SERVER = ['REMOTE_ADDR' => '127.0.0.1', 'HTTP_HOST' => 'example.com'];
     }
 
     protected function tearDown(): void
     {
-        // Clean up after each test
-        $_POST = [];
-        $_ENV = [];
-        $_SERVER = [];
+        $_ENV = $this->env;
+        $_SERVER = $this->server;
     }
 
-    public function testVerifyCaptchaThrowsExceptionWhenTokenMissing()
+    public function testVerifyCaptchaThrowsExceptionWhenTokenMissing(): void
     {
         $this->expectException(RecaptchaFailedException::class);
         $this->expectExceptionMessage("🚨 Oops! Forgot the 'I'm not a robot' box!");
-
-        $_POST = []; // No g-recaptcha-response
-        Recaptcha::verifyCaptcha('login');
+        Recaptcha::verifyCaptcha([]);
     }
 
-    public function testVerifyCaptchaThrowsExceptionWhenSecretMissing()
+    public function testVerifyCaptchaThrowsExceptionWhenSecretMissing(): void
     {
         $this->expectException(RecaptchaBrokenException::class);
         $this->expectExceptionMessage('🔐 Our guard is asleep! Tell the admin!');
-
-        $_POST = ['g-recaptcha-response' => 'test-token'];
-        $_ENV = []; // No SECRET_RECAPTCHA_KEY
-        
-        Recaptcha::verifyCaptcha('login');
+        Recaptcha::verifyCaptcha(['g-recaptcha-response' => 'test-token']);
     }
 
-    public function testVerifyCaptchaThrowsExceptionWhenSecretFormatInvalid()
+    public function testVerifyCaptchaThrowsExceptionWhenSecretFormatInvalid(): void
     {
+        $_ENV['SECRET_RECAPTCHA_KEY'] = 'invalid-secret-key';
+        $_ENV['SECRET_RECAPTCHA_KEY_TWO_START_LETTER'] = '6L';
+
         $this->expectException(RecaptchaBrokenException::class);
         $this->expectExceptionMessage('Invalid reCAPTCHA secret key format');
-
-        $_POST = ['g-recaptcha-response' => 'test-token'];
-        $_ENV = [
-            'SECRET_RECAPTCHA_KEY' => 'invalid-secret',
-            'SECRET_RECAPTCHA_KEY_TWO_START_LETTER' => '6L'
-        ];
-        
-        Recaptcha::verifyCaptcha('login');
+        Recaptcha::verifyCaptcha(['g-recaptcha-response' => 'test-token']);
     }
 
-    public function testVerifyCaptchaThrowsExceptionWhenActionEmpty()
+    public function testEnterpriseThrowsWhenSiteKeyMissing(): void
     {
-        $this->expectException(RecaptchaException::class);
-        $this->expectExceptionMessage('Action parameter cannot be empty');
-
-        $_POST = ['g-recaptcha-response' => 'test-token'];
-        $_ENV = [
-            'SECRET_RECAPTCHA_KEY' => '6Ltest-secret-key',
-            'SECRET_RECAPTCHA_KEY_TWO_START_LETTER' => '6L'
-        ];
-        
-        Recaptcha::verifyCaptcha('');
+        $this->expectException(RecaptchaFailedException::class);
+        $this->expectExceptionMessage('Missing reCAPTCHA SiteKey');
+        Recaptcha::verifyCaptchaEnterprise(['action' => 'LOGIN'], 'LOGIN');
     }
 
-    public function testVerifyCaptchaMethodExists()
+    public function testEnterpriseThrowsWhenConfigurationMissing(): void
+    {
+        $this->expectException(RecaptchaBrokenException::class);
+        $this->expectExceptionMessage('Missing reCAPTCHA Enterprise configuration');
+        Recaptcha::verifyCaptchaEnterprise(['siteKey' => 'client-token'], 'LOGIN');
+    }
+
+    public function testEnterpriseIsSkippedInLocalDevelopment(): void
+    {
+        $_ENV['APP_ENV'] = 'local';
+        $this->assertTrue(Recaptcha::verifyCaptchaEnterprise([], 'LOGIN'));
+    }
+
+    public function testVerifyCaptchaMethodExists(): void
     {
         $this->assertTrue(method_exists(Recaptcha::class, 'verifyCaptcha'));
-    }
-
-    public function testVerifyCaptchaWithValidInputStructure()
-    {
-        $_POST = ['g-recaptcha-response' => 'test-token'];
-        $_ENV = [
-            'SECRET_RECAPTCHA_KEY' => '6Ltest-secret-key',
-            'SECRET_RECAPTCHA_KEY_TWO_START_LETTER' => '6L',
-            'DOMAIN_NAME' => 'example.com'
-        ];
-        $_SERVER = ['REMOTE_ADDR' => '127.0.0.1'];
-
-        // This would require mocking the sendPostRequest function
-        // For now, we just test that the method can be called with proper structure
-        try {
-            Recaptcha::verifyCaptcha('login');
-            $this->fail('Expected an exception due to missing sendPostRequest function');
-        } catch (\Error $e) {
-            // Expected since sendPostRequest function doesn't exist in test environment
-            $this->assertTrue(true);
-        }
     }
 }

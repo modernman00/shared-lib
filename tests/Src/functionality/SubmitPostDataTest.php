@@ -4,398 +4,164 @@ declare(strict_types=1);
 
 namespace Tests\Src\functionality;
 
-use PHPUnit\Framework\TestCase;
-use Src\functionality\SubmitPostData;
-use Src\{
-    CorsHandler,
-    Db,
-    LoginUtility,
-    FileUploader,
-    Recaptcha,
-    SubmitForm,
-    Transaction,
-    Utility
-};
-use Src\functionality\middleware\GetRequestData;
 use PDO;
-use RuntimeException;
-use Mockery;
+use PDOStatement;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\TestCase;
+use Src\Db;
+use Src\functionality\SubmitPostData;
 
-class SubmitPostDataTest extends TestCase
+/**
+ * SubmitPostData::submitToOneTablenImage() / submitToMultipleTable() against the real
+ * sanitiser, BotGuard and SubmitForm, with a recording PDO in place of MySQL.
+ *
+ * Replaces two obsolete files that targeted removed methods (submit(), submitImgDataSingle(),
+ * submitImgDataMultiple()) through process-wide Mockery alias mocks of core classes.
+ * Separate process: defines TESTING_ENV (rate limiter + CAPTCHA become no-ops).
+ */
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState(false)]
+final class SubmitPostDataTest extends TestCase
 {
-    private $pdoMock;
+    /** @var list<array{sql: string, params: array<string, mixed>}> */
+    public array $queries = [];
+    public array $tx = ['begin' => 0, 'commit' => 0, 'rollback' => 0, 'active' => false];
 
     protected function setUp(): void
     {
-        // Mock PDO for database interactions
-        $this->pdoMock = Mockery::mock(PDO::class);
+        if (!defined('TESTING_ENV')) {
+            define('TESTING_ENV', true);
+        }
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded';
+        $_POST = [];
+        $_SESSION = [];
     }
 
     protected function tearDown(): void
     {
-        // Clean up Mockery and environment variables
-        Mockery::close();
-        putenv('FILE_UPLOAD_CLOUDMERSIVE');
+        Db::clearMockConnection();
     }
 
-    /**
-     * Test submitToOneTablenImage with valid input and no file upload.
-     */
-    public function testSubmitToOneTablenImageSuccessNoFile(): void
+    private function db(bool $failInsert = false): void
     {
-        // Mock static methods with Mockery
-        Mockery::mock('alias:Src\CorsHandler')
-            ->shouldReceive('setHeaders')
-            ->once();
-
-        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
-            ->shouldReceive('getRequestData')
-            ->once()
-            ->andReturn(['captcha' => 'valid_token', 'data' => 'test']);
-
-        Mockery::mock('alias:Src\Recaptcha')
-            ->shouldReceive('verifyCaptcha')
-            ->once();
-
-        Mockery::mock('alias:Src\LoginUtility')
-            ->shouldReceive('getSanitisedInputData')
-            ->with(['captcha' => 'valid_token', 'data' => 'test'], null)
-            ->once()
-            ->andReturn(['data' => 'sanitized_test']);
-
-        Mockery::mock('alias:Src\Db')
-            ->shouldReceive('connect2')
-            ->once()
-            ->andReturn($this->pdoMock);
-
-        $transactionMock = Mockery::mock('alias:Src\Transaction');
-        $transactionMock->shouldReceive('beginTransaction')->once();
-        $transactionMock->shouldReceive('commit')->once();
-        $transactionMock->shouldReceive('rollback')->never();
-
-        Mockery::mock('alias:Src\SubmitForm')
-            ->shouldReceive('submitForm')
-            ->with('test_table', ['data' => 'sanitized_test'], $this->pdoMock)
-            ->once()
-            ->andReturn(true);
-
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('msgSuccess')
-            ->with(201, 'Record created successfully')
-            ->once();
-
-        // Set environment variable
-        putenv('FILE_UPLOAD_CLOUDMERSIVE=cloudmersive_key');
-
-        // Execute
-        SubmitPostData::submitToOneTablenImage('test_table');
-    }
-
-    /**
-     * Test submitToOneTablenImage with file upload.
-     */
-    public function testSubmitToOneTablenImageWithFile(): void
-    {
-        // Mock static methods with Mockery
-        Mockery::mock('alias:Src\CorsHandler')
-            ->shouldReceive('setHeaders')
-            ->once();
-
-        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
-            ->shouldReceive('getRequestData')
-            ->once()
-            ->andReturn([
-                'captcha' => 'valid_token',
-                'data' => 'test',
-                'files' => ['name' => 'test.jpg']
-            ]);
-
-        Mockery::mock('alias:Src\Recaptcha')
-            ->shouldReceive('verifyCaptcha')
-            ->once();
-
-        Mockery::mock('alias:Src\LoginUtility')
-            ->shouldReceive('getSanitisedInputData')
-            ->with(['captcha' => 'valid_token', 'data' => 'test', 'files' => ['name' => 'test.jpg']], null)
-            ->once()
-            ->andReturn(['data' => 'sanitized_test']);
-
-        Mockery::mock('alias:Src\Db')
-            ->shouldReceive('connect2')
-            ->once()
-            ->andReturn($this->pdoMock);
-
-        $transactionMock = Mockery::mock('alias:Src\Transaction');
-        $transactionMock->shouldReceive('beginTransaction')->once();
-        $transactionMock->shouldReceive('commit')->once();
-        $transactionMock->shouldReceive('rollback')->never();
-
-        Mockery::mock('alias:Src\FileUploader')
-            ->shouldReceive('fileUploadSingle')
-            ->with('uploads/', 'image', 'cloudmersive_key', ['name' => 'test.jpg'])
-            ->once()
-            ->andReturn('test.jpg');
-
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('checkInputImage')
-            ->with('test.jpg')
-            ->once()
-            ->andReturn('sanitized_test.jpg');
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('msgSuccess')
-            ->with(201, 'Record created successfully')
-            ->once();
-
-        Mockery::mock('alias:Src\SubmitForm')
-            ->shouldReceive('submitForm')
-            ->with('test_table', ['data' => 'sanitized_test', 'image' => 'sanitized_test.jpg'], $this->pdoMock)
-            ->once()
-            ->andReturn(true);
-
-        // Set environment variable
-        putenv('FILE_UPLOAD_CLOUDMERSIVE=cloudmersive_key');
-
-        // Execute
-        SubmitPostData::submitToOneTablenImage('test_table', null, 'image', 'uploads/');
-    }
-
-    /**
-     * Test submitToOneTablenImage with exception handling.
-     */
-    public function testSubmitToOneTablenImageException(): void
-    {
-        // Mock static methods with Mockery
-        Mockery::mock('alias:Src\CorsHandler')
-            ->shouldReceive('setHeaders')
-            ->once();
-
-        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
-            ->shouldReceive('getRequestData')
-            ->once()
-            ->andReturn(['captcha' => 'invalid_token']);
-
-        Mockery::mock('alias:Src\Recaptcha')
-            ->shouldReceive('verifyCaptcha')
-            ->once()
-            ->andThrow(new RuntimeException('Invalid CAPTCHA'));
-
-        $transactionMock = Mockery::mock('alias:Src\Transaction');
-        $transactionMock->shouldReceive('beginTransaction')->once();
-        $transactionMock->shouldReceive('rollback')->once();
-
-        // Expect exception
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid CAPTCHA');
-
-        // Execute
-        SubmitPostData::submitToOneTablenImage('test_table');
-    }
-
-    /**
-     * Test submitToMultipleTable with valid input and no files.
-     */
-    public function testSubmitToMultipleTableSuccessNoFiles(): void
-    {
-        // Mock static methods with Mockery
-        Mockery::mock('alias:Src\CorsHandler')
-            ->shouldReceive('setHeaders')
-            ->once();
-
-        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
-            ->shouldReceive('getRequestData')
-            ->once()
-            ->andReturn([
-                'captcha' => 'valid_token',
-                'table1' => ['data' => 'test1'],
-                'table2' => ['data' => 'test2']
-            ]);
-
-        Mockery::mock('alias:Src\Recaptcha')
-            ->shouldReceive('verifyCaptcha')
-            ->once();
-
-        Mockery::mock('alias:Src\LoginUtility')
-            ->shouldReceive('getSanitisedInputData')
-            ->with(['captcha' => 'valid_token', 'table1' => ['data' => 'test1'], 'table2' => ['data' => 'test2']], null)
-            ->once()
-            ->andReturn([
-                'table1' => ['data' => 'sanitized_test1'],
-                'table2' => ['data' => 'sanitized_test2']
-            ]);
-
-        Mockery::mock('alias:Src\Db')
-            ->shouldReceive('connect2')
-            ->once()
-            ->andReturn($this->pdoMock);
-
-        $transactionMock = Mockery::mock('alias:Src\Transaction');
-        $transactionMock->shouldReceive('beginTransaction')->once();
-        $transactionMock->shouldReceive('commit')->once();
-        $transactionMock->shouldReceive('rollback')->never();
-
-        $submitFormMock = Mockery::mock('alias:Src\SubmitForm');
-        $callCount = 0;
-        $submitFormMock->shouldReceive('submitForm')
-            ->times(2)
-            ->andReturnUsing(function ($table, $data, $pdo) use (&$callCount) {
-                if ($callCount === 0) {
-                    $this->assertEquals('table1', $table);
-                    $this->assertEquals(['data' => 'sanitized_test1'], $data);
-                    $this->assertSame($this->pdoMock, $pdo);
-                } elseif ($callCount === 1) {
-                    $this->assertEquals('table2', $table);
-                    $this->assertEquals(['data' => 'sanitized_test2'], $data);
-                    $this->assertSame($this->pdoMock, $pdo);
+        $t = $this;
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('inTransaction')->willReturnCallback(fn () => $t->tx['active']);
+        $pdo->method('beginTransaction')->willReturnCallback(function () use ($t) { $t->tx['begin']++; $t->tx['active'] = true; return true; });
+        $pdo->method('commit')->willReturnCallback(function () use ($t) { $t->tx['commit']++; $t->tx['active'] = false; return true; });
+        $pdo->method('rollBack')->willReturnCallback(function () use ($t) { $t->tx['rollback']++; $t->tx['active'] = false; return true; });
+        $pdo->method('lastInsertId')->willReturn('42');
+        $pdo->method('prepare')->willReturnCallback(function (string $sql) use ($t, $failInsert) {
+            $i = count($t->queries);
+            $t->queries[$i] = ['sql' => $sql, 'params' => []];
+            $stmt = $t->createMock(PDOStatement::class);
+            $stmt->method('bindValue')->willReturnCallback(function ($k, $v) use ($t, $i) { $t->queries[$i]['params'][$k] = $v; return true; });
+            $stmt->method('execute')->willReturnCallback(function () use ($failInsert) {
+                if ($failInsert) {
+                    throw new \PDOException('SQLSTATE[23000]: Integrity constraint violation');
                 }
-                $callCount++;
                 return true;
             });
-
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('msgSuccess')
-            ->with(201, 'Record created successfully')
-            ->once();
-
-        // Execute
-        SubmitPostData::submitToMultipleTable(['table1', 'table2']);
+            return $stmt;
+        });
+        Db::setMockConnection($pdo);
     }
 
-    /**
-     * Test submitToMultipleTable with a single upload field and a multiple upload field.
-     */
-    public function testSubmitToMultipleTableWithMultipleFileFields(): void
+    /** @return array{0: mixed, 1: string} */
+    private function call(callable $fn): array
     {
-        $originalFiles = $_FILES;
+        ob_start();
+        $r = $fn();
+        return [$r, (string) ob_get_clean()];
+    }
 
-        Mockery::mock('alias:Src\CorsHandler')
-            ->shouldReceive('setHeaders')
-            ->once();
+    private function inserts(): array
+    {
+        return array_values(array_filter($this->queries, static fn ($q) => str_starts_with($q['sql'], 'INSERT')));
+    }
 
-        Mockery::mock('alias:Src\functionality\middleware\GetRequestData')
-            ->shouldReceive('getRequestData')
-            ->once()
-            ->andReturn([
-                'captcha' => 'valid_token',
-                'table1' => ['data' => 'test1'],
-                'table2' => ['data' => 'test2']
-            ]);
+    public function testInsertsSanitisedDataAndReturnsTheNewId(): void
+    {
+        $this->db();
+        $_POST = ['name' => '  Ada <b>Lovelace</b> ', 'email' => 'ada@example.com', 'submit' => 'Send', 'website_hp' => ''];
 
-        Mockery::mock('alias:Src\Recaptcha')
-            ->shouldReceive('verifyCaptcha')
-            ->once();
+        [$id, $out] = $this->call(fn () => SubmitPostData::submitToOneTablenImage('contacts'));
 
-        Mockery::mock('alias:Src\LoginUtility')
-            ->shouldReceive('getSanitisedInputData')
-            ->with(['captcha' => 'valid_token', 'table1' => ['data' => 'test1'], 'table2' => ['data' => 'test2']], null)
-            ->once()
-            ->andReturn([
-                'table1' => ['data' => 'sanitized_test1'],
-                'table2' => ['data' => 'sanitized_test2']
-            ]);
+        $this->assertSame('42', $id, $out);
+        $insert = $this->inserts()[0];
+        $this->assertSame('INSERT INTO contacts (name, email) VALUES (:name, :email)', $insert['sql'], 'control + honeypot keys stripped');
+        $this->assertStringNotContainsString('<b>', $insert['params'][':name']);
+        $this->assertSame('ada@example.com', $insert['params'][':email']);
+        $this->assertSame(['begin' => 1, 'commit' => 1, 'rollback' => 0, 'active' => false], $this->tx);
+    }
 
-        $_FILES = [
-            'identity_doc' => [
-                'name' => 'invitation letter DADDY.pdf',
-                'type' => 'application/pdf',
-                'tmp_name' => '/tmp/php_identity_doc.tmp',
-                'error' => 0,
-                'size' => 254550,
-            ],
-            'bank_statements' => [
-                'name' => ['Joseph_Isibor.pdf'],
-                'type' => ['application/pdf'],
-                'tmp_name' => ['/tmp/php_bank_statements.tmp'],
-                'error' => [0],
-                'size' => [595939],
-            ],
+    public function testPasswordsAreHashedBeforeStorage(): void
+    {
+        $this->db();
+        $_POST = ['email' => 'ada@example.com', 'password' => 'CorrectHorse9', 'confirm_password' => 'CorrectHorse9'];
+
+        [$id, $out] = $this->call(fn () => SubmitPostData::submitToOneTablenImage('account', null, ['confirm_password', 'submit', 'token']));
+
+        $this->assertSame('42', $id, $out);
+        $params = $this->inserts()[0]['params'];
+        $this->assertArrayNotHasKey(':confirm_password', $params);
+        $this->assertNotSame('CorrectHorse9', $params[':password']);
+        $this->assertTrue(password_verify('CorrectHorse9', $params[':password']));
+    }
+
+    public function testMismatchedPasswordConfirmationIsRejectedWithoutWriting(): void
+    {
+        $this->db();
+        $_POST = ['email' => 'ada@example.com', 'password' => 'CorrectHorse9', 'confirm_password' => 'Different9'];
+
+        [$r, $out] = $this->call(fn () => SubmitPostData::submitToOneTablenImage('account'));
+
+        $this->assertFalse($r);
+        // In test mode the global showError() helper captures the error instead of printing it.
+        $this->assertStringContainsString('Passwords do not match', $GLOBALS['__testError']->getMessage(), $out);
+        $this->assertSame([], $this->inserts());
+    }
+
+    public function testInvalidEmailIsRejectedWithoutWriting(): void
+    {
+        $this->db();
+        $_POST = ['name' => 'Ada', 'email' => 'not-an-email'];
+
+        [$r, $out] = $this->call(fn () => SubmitPostData::submitToOneTablenImage('contacts'));
+
+        $this->assertFalse($r);
+        // In test mode the global showError() helper captures the error instead of printing it.
+        $this->assertStringContainsString('valid permanent email', $GLOBALS['__testError']->getMessage(), $out);
+        $this->assertSame([], $this->inserts());
+    }
+
+    public function testDatabaseFailureRollsBack(): void
+    {
+        $this->db(failInsert: true);
+        $_POST = ['name' => 'Ada', 'email' => 'ada@example.com'];
+
+        [$r] = $this->call(fn () => SubmitPostData::submitToOneTablenImage('contacts'));
+
+        $this->assertFalse($r);
+        $this->assertSame(1, $this->tx['rollback']);
+        $this->assertSame(0, $this->tx['commit']);
+    }
+
+    public function testMultipleTablesOnlyWritesAllowedTables(): void
+    {
+        $this->db();
+        $post = [
+            'profile' => ['first_name' => 'Ada', 'last_name' => 'Lovelace'],
+            'address' => ['city' => 'London'],
+            'admin_flags' => ['is_admin' => '1'], // not allow-listed: must be ignored
         ];
 
-        Mockery::mock('alias:Src\functionality\middleware\FileUploadProcess')
-            ->shouldReceive('process')
-            ->twice()
-            ->andReturnUsing(function ($sanitisedData, $fileTable, $fileName, $imgPath, $generalFileTable, $nested) {
-                $sanitisedData[$fileName] = $fileName . '_saved';
-                return ['sanitisedData' => $sanitisedData, 'filePath' => '/tmp/' . $fileName];
-            });
+        [$r, $out] = $this->call(fn () => SubmitPostData::submitToMultipleTable(['profile', 'address'], null, null, null, null, null, $post, false, false, 'SUBMIT', 'images', 'array'));
 
-        Mockery::mock('alias:Src\Db')
-            ->shouldReceive('connect2')
-            ->once()
-            ->andReturn($this->pdoMock);
-
-        $transactionMock = Mockery::mock('alias:Src\Transaction');
-        $transactionMock->shouldReceive('beginTransaction')->once();
-        $transactionMock->shouldReceive('commit')->once();
-        $transactionMock->shouldReceive('rollback')->never();
-
-        Mockery::mock('alias:Src\SubmitForm')
-            ->shouldReceive('submitForm')
-            ->times(2)
-            ->andReturn(true);
-
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('msgSuccess')
-            ->with(201, 'Records created successfully')
-            ->once();
-
-        SubmitPostData::submitToMultipleTable(
-            ['table1', 'table2'],
-            null,
-            null,
-            ['identity_doc', 'bank_statements'],
-            'uploads/',
-            'table1'
-        );
-
-        $_FILES = $originalFiles;
-    }
-
-    /**
-     * Test submitImgDataSingle with valid file.
-     */
-    public function testSubmitImgDataSingle(): void
-    {
-        Mockery::mock('alias:Src\FileUploader')
-            ->shouldReceive('fileUploadSingle')
-            ->with('uploads/', 'image', 'cloudmersive_key', ['name' => 'test.jpg'])
-            ->once()
-            ->andReturn('test.jpg');
-
-        Mockery::mock('alias:Src\Utility')
-            ->shouldReceive('checkInputImage')
-            ->with('test.jpg')
-            ->once()
-            ->andReturn('sanitized_test.jpg');
-
-        putenv('FILE_UPLOAD_CLOUDMERSIVE=cloudmersive_key');
-
-        $result = SubmitPostData::submitImgDataSingle('image', 'uploads/', ['name' => 'test.jpg']);
-        $this->assertEquals('sanitized_test.jpg', $result);
-    }
-
-    /**
-     * Test submitImgDataMultiple with valid files.
-     */
-    public function testSubmitImgDataMultiple(): void
-    {
-        Mockery::mock('alias:Src\FileUploader')
-            ->shouldReceive('fileUploadMultiple')
-            ->with('uploads/', 'images', 'cloudmersive_key', ['images' => ['name' => ['test1.jpg', 'test2.jpg']]])
-            ->once()
-            ->andReturn(['sanitized_test1.jpg', 'sanitized_test2.jpg']);
-
-        putenv('FILE_UPLOAD_CLOUDMERSIVE=cloudmersive_key');
-
-        $result = SubmitPostData::submitImgDataMultiple('images', 'uploads/', ['images' => ['name' => ['test1.jpg', 'test2.jpg']]]);
-        $this->assertEquals(['sanitized_test1.jpg', 'sanitized_test2.jpg'], $result);
-    }
-
-    /**
-     * Test submitImgDataMultiple with no files.
-     */
-    public function testSubmitImgDataMultipleNoFiles(): void
-    {
-        $result = SubmitPostData::submitImgDataMultiple('images', 'uploads/', ['images' => ['name' => []]]);
-        $this->assertNull($result);
+        $this->assertSame(['message' => 'Records created successfully'], $r, $out);
+        $tables = array_map(static fn ($q) => preg_replace('/^INSERT INTO (\w+).*/', '$1', $q['sql']), $this->inserts());
+        $this->assertSame(['profile', 'address'], $tables);
     }
 }

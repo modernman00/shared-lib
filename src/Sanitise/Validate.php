@@ -46,12 +46,21 @@ class Validate
             }
         }
 
-        // Special case: check if passwords match in 'createAccount' group
-        if (
-            isset($array['createAccount']['password'], $array['createAccount']['confirm_password']) &&
-            ($_POST[$array['createAccount']['password']] !== $_POST[$array['createAccount']['confirm_password']])
-        ) {
-            $error .= 'Your passwords do not match';
+        // Special case: check if passwords match in 'createAccount' group.
+        // The group is normally a list (['password', 'confirm_password']); the previous check
+        // looked for string keys that never exist, so mismatched passwords were never caught.
+        // An associative form (['password' => 'pwd', 'confirm_password' => 'pwd2']) is also supported.
+        $group = $array['createAccount'] ?? null;
+        if (is_array($group)) {
+            $pwdField = $group['password'] ?? (in_array('password', $group, true) ? 'password' : null);
+            $confirmField = $group['confirm_password'] ?? (in_array('confirm_password', $group, true) ? 'confirm_password' : null);
+            if (
+                is_string($pwdField) && is_string($confirmField) &&
+                isset($_POST[$pwdField], $_POST[$confirmField]) &&
+                (string) $_POST[$pwdField] !== (string) $_POST[$confirmField]
+            ) {
+                $error .= 'Your passwords do not match';
+            }
         }
 
         return $error;

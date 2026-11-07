@@ -52,7 +52,7 @@ final class RoleMiddleware
 
             // Decode and verify JWT using HS256 algorithm
             try {
-                $decoded = JWT::decode($token, new Key($_ENV['JWT_KEY'], 'HS256'));
+                $decoded = JWT::decode($token, new Key((string) ($_ENV['JWT_KEY'] ?? ''), 'HS256'));
             } catch (\Throwable $e) {
                 if (!empty($_ENV['JWT_KEY_PREVIOUS'])) {
                     try {

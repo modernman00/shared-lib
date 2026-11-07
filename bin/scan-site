@@ -1,0 +1,211 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Sovereign Whole-Site Quality, CWV, Accessibility, SEO & Design v2.1 CLI Scanner
+ * Usage:
+ *   vendor/bin/scan-site [options]
+ *
+ * Options:
+ *   --dir=<path>          Target application directory (defaults to current working directory)
+ *   --base-url=<url>      Override base URL (defaults to .env APP_URL)
+ *   --url=<url>           Scan specific URL(s) (can be passed multiple times or comma-separated)
+ *   --cookie="<k=v>"      Inject session cookie for authenticated routes (e.g. PHPSESSID=...)
+ *   --auth-routes         Include default authenticated routes (/home, /dashboard, /playbook, /how-to-use)
+ *   --chrome              Enable live Headless Chrome CDP probe (FCP, runtime console errors, RGB contrast)
+ *   --max-urls=<int>      Maximum URLs to scan from sitemap.xml (default: 50)
+ *   --min-score=<int>     Minimum overall score threshold to pass CI gate (default: 80)
+ *   --production          Do not rewrite sitemap.xml <loc> URLs to local .env APP_URL
+ *   --all-apps            Scan all 8 portfolio applications in sequence
+ *   --json                Print raw JSON report to stdout
+ */
+
+$autoloads = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+foreach ($autoloads as $a) {
+    if (is_file($a)) {
+        require_once $a;
+        break;
+    }
+}
+
+if (!class_exists(\Src\Quality\WholeSiteScanner::class)) {
+    require_once __DIR__ . '/../src/Quality/WholeSiteScanner.php';
+}
+
+use Src\Quality\WholeSiteScanner;
+
+$args = array_slice($argv, 1);
+$appDir = (string) getcwd();
+$baseUrl = null;
+$extraUrls = [];
+$cookie = '';
+$includeAuth = false;
+$useChrome = false;
+$useLighthouse = false;
+$maxUrls = 50;
+$minScore = 80;
+$concurrency = 2;
+$rewriteOrigin = true;
+$withSitemap = false;
+$allApps = false;
+$jsonOnly = false;
+
+foreach ($args as $arg) {
+    if ($arg === '--help' || $arg === '-h') {
+        echo <<<HELP
+⚡ Sovereign Whole-Site Quality, CWV, A11y, SEO & v2.1 Scanner (modernman00/shared-lib)
+
+Usage:
+  vendor/bin/scan-site [options]
+
+Options:
+  --dir=<path>          Target application directory (default: cwd)
+  --base-url=<url>      Override base origin URL (default: .env APP_URL)
+  --url=<url>           Scan explicit URL or path (repeatable or comma-separated)
+  --cookie="<k=v>"      Session cookie header for protected routes
+  --auth-routes         Include protected routes (/home, /dashboard, /playbook, /how-to-use)
+  --chrome              Run live Headless Chrome CDP probe (runtime console errors, FCP, contrast)
+  --lighthouse          Run official Google Lighthouse engine with mobile 4x CPU & 4G emulation
+  --max-urls=<int>      Max URLs to scan per app (default: 50)
+  --min-score=<int>     Minimum overall score (0-100) for exit code 0 (default: 80)
+  --production          Audit canonical production URLs from sitemap.xml without rewriting
+  --all-apps            Sweep all 8 portfolio applications sequentially
+  --json                Output raw JSON to stdout
+
+HELP;
+        exit(0);
+    }
+    if (str_starts_with($arg, '--dir=')) {
+        $appDir = substr($arg, 6);
+    } elseif (str_starts_with($arg, '--base-url=')) {
+        $baseUrl = substr($arg, 11);
+    } elseif (str_starts_with($arg, '--url=')) {
+        $parts = explode(',', substr($arg, 6));
+        foreach ($parts as $p) {
+            if (trim($p) !== '') {
+                $extraUrls[] = trim($p);
+            }
+        }
+    } elseif (str_starts_with($arg, '--cookie=')) {
+        $cookie = substr($arg, 9);
+    } elseif ($arg === '--auth-routes') {
+        $includeAuth = true;
+    } elseif ($arg === '--chrome') {
+        $useChrome = true;
+    } elseif ($arg === '--lighthouse') {
+        $useLighthouse = true;
+    } elseif (str_starts_with($arg, '--max-urls=')) {
+        $maxUrls = (int) substr($arg, 11);
+    } elseif (str_starts_with($arg, '--min-score=')) {
+        $minScore = (int) substr($arg, 12);
+    } elseif (str_starts_with($arg, '--concurrency=')) {
+        $concurrency = (int) substr($arg, 14);
+    } elseif ($arg === '--with-sitemap') {
+        $withSitemap = true;
+    } elseif ($arg === '--production') {
+        $rewriteOrigin = false;
+    } elseif ($arg === '--all-apps') {
+        $allApps = true;
+    } elseif ($arg === '--json') {
+        $jsonOnly = true;
+    }
+}
+
+$targetDirs = [];
+if ($allApps) {
+    $sitesRoot = '/Users/waleolaogun/Sites';
+    foreach (WholeSiteScanner::PORTFOLIO_APPS as $app) {
+        if (is_dir($sitesRoot . '/' . $app)) {
+            $targetDirs[] = $sitesRoot . '/' . $app;
+        }
+    }
+} else {
+    $targetDirs[] = $appDir;
+}
+
+$allReports = [];
+$overallExit = 0;
+
+foreach ($targetDirs as $dir) {
+    $report = WholeSiteScanner::scanSite([
+        'app_dir' => $dir,
+        'base_url' => $allApps ? null : $baseUrl,
+        'rewrite_origin' => $rewriteOrigin,
+        'urls' => $extraUrls,
+        'include_sitemap' => $withSitemap,
+        'include_auth_routes' => $includeAuth,
+        'cookie' => $cookie,
+        'max_urls' => $maxUrls,
+        'concurrency' => $concurrency,
+        'use_chrome' => $useChrome,
+        'use_lighthouse' => $useLighthouse,
+        'min_score' => $minScore,
+    ]);
+
+    $saved = WholeSiteScanner::saveReports($report);
+    $report['report_files'] = $saved;
+    $allReports[] = $report;
+
+    if (!$report['passed_gate']) {
+        $overallExit = 1;
+    }
+
+    if (!$jsonOnly) {
+        $s = $report['summary'];
+        $avg = $s['avg_scores'];
+        echo "========================================================================\n";
+        echo " ⚡ SOVEREIGN WHOLE-SITE AUDIT: {$report['app_name']} ({$report['base_url']})\n";
+        echo "========================================================================\n";
+        echo sprintf(
+            " URLs Audited: %d/%d reachable | Duration: %dms | Chrome CDP: %s\n",
+            $s['reachable_urls'],
+            $s['total_urls'],
+            $report['duration_ms'],
+            $report['chrome_available'] ? 'ACTIVE' : 'STATIC+HTTP'
+        );
+        if ($s['rejected_unsafe_urls'] > 0) {
+            echo sprintf(" 🛡️ Blocked Unsafe/SSRF URLs: %d\n", $s['rejected_unsafe_urls']);
+        }
+        echo sprintf(
+            " Scores -> Overall: %d | Perf: %d | A11y: %d | Best: %d | SEO: %d | v2.1: %d\n",
+            $avg['overall'],
+            $avg['performance'],
+            $avg['accessibility'],
+            $avg['best_practices'],
+            $avg['seo'],
+            $avg['design_v21']
+        );
+        echo "------------------------------------------------------------------------\n";
+        foreach ($report['pages'] as $p) {
+            $status = $p['status_code'] > 0 ? (string) $p['status_code'] : 'ERR';
+            $issueCount = count($p['issues']);
+            echo sprintf(
+                " [%3s] Score: %3d (%4dms) | %-45s | Issues: %d\n",
+                $status,
+                $p['scores']['overall'],
+                $p['ttfb_ms'],
+                $p['url'],
+                $issueCount
+            );
+        }
+        echo "------------------------------------------------------------------------\n";
+        echo " 📄 HTML Dashboard : {$saved['html_path']}\n";
+        echo " 📊 JSON Report    : {$saved['json_path']}\n";
+        echo sprintf(
+            " 🎯 Gate Status    : %s (Threshold >= %d)\n\n",
+            $report['passed_gate'] ? 'PASSED (EXIT 0)' : 'ATTENTION REQUIRED (EXIT 1)',
+            $report['min_score_threshold']
+        );
+    }
+}
+
+if ($jsonOnly) {
+    echo json_encode($allApps ? $allReports : ($allReports[0] ?? []), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+}
+
+exit($overallExit);

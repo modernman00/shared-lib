@@ -3,141 +3,50 @@
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
-use Src\functionality\LogoutController;
+use Src\functionality\LogoutFunctionality;
 
+/**
+ * LogoutFunctionality (formerly LogoutController). signout() ends in a Location header +
+ * exit(), so these tests cover its public contract and the redirect validation it applies.
+ */
 class LogoutFunctionalityTest extends TestCase
 {
-    protected function setUp(): void
+    public function testClassAndSignoutMethodExist(): void
     {
-        // Clear environment and global variables
-        $_ENV = [];
-        $_SESSION = [];
+        $this->assertTrue(class_exists(LogoutFunctionality::class));
+        $this->assertTrue(method_exists(LogoutFunctionality::class, 'signout'));
     }
 
-    protected function tearDown(): void
+    public function testSignoutMethodSignature(): void
     {
-        // Clean up after each test
-        $_ENV = [];
-        $_SESSION = [];
-    }
-
-    public function testSignoutWithDefaultRedirect()
-    {
-        $input = []; // No redirect specified
-        
-        try {
-            LogoutController::signout($input);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // Expected due to missing dependencies like CorsHandler, LoggedOut, etc.
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testSignoutWithSpecifiedRedirect()
-    {
-        $input = ['redirect' => '/dashboard'];
-        
-        try {
-            LogoutController::signout($input);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // Expected due to missing dependencies
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testSignoutWithInvalidRedirect()
-    {
-        $input = ['redirect' => '<script>alert("xss")</script>'];
-        
-        try {
-            LogoutController::signout($input);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // Expected due to missing dependencies or input validation
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testSignoutWithEmptyStringRedirect()
-    {
-        $input = ['redirect' => ''];
-        
-        try {
-            LogoutController::signout($input);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // Expected due to missing dependencies
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testClassExists()
-    {
-        $this->assertTrue(class_exists(LogoutController::class));
-    }
-
-    public function testSignoutMethodExists()
-    {
-        $this->assertTrue(method_exists(LogoutController::class, 'signout'));
-    }
-
-    public function testSignoutMethodSignature()
-    {
-        $reflection = new ReflectionMethod(LogoutController::class, 'signout');
+        $reflection = new ReflectionMethod(LogoutFunctionality::class, 'signout');
         $this->assertTrue($reflection->isStatic());
         $this->assertTrue($reflection->isPublic());
-        $this->assertEquals(1, $reflection->getNumberOfParameters());
-        
-        // Check parameter type
-        $parameters = $reflection->getParameters();
-        $this->assertEquals('array', $parameters[0]->getType()->getName());
+        $this->assertSame(1, $reflection->getNumberOfParameters());
+        $this->assertSame('array', (string) $reflection->getParameters()[0]->getType());
     }
 
-    public function testSignoutHandlesThrowableExceptions()
+    /** @return array<string, array{mixed, string}> */
+    public static function redirects(): array
     {
-        // This test verifies that the method has proper exception handling structure
-        $input = ['redirect' => '/test'];
-        
-        // The method should catch \Throwable and call Utility::showError
-        try {
-            LogoutController::signout($input);
-        } catch (\Throwable $e) {
-            // Any exception here indicates the try-catch structure is working
-            $this->assertTrue(true);
-        }
-        
-        // If no exception is thrown, that's also valid (dependencies might be mocked)
-        $this->assertTrue(true);
+        return [
+            'default' => ['/', '/'],
+            'simple path' => ['/dashboard', '/dashboard'],
+            'missing slash added' => ['login', '/login'],
+            'query string kept' => ['/login?next=home', '/login?next=home'],
+            'empty string' => ['', '/'],
+            'absolute url' => ['https://evil.example/phish', '/'],
+            'protocol-relative' => ['//evil.example', '/'],
+            'backslash trick' => ['/\\evil.example', '/'],
+            'script' => ['<script>alert("xss")</script>', '/'],
+            'header injection' => ["/ok\r\nSet-Cookie: x=1", '/'],
+            'non-string' => [['/array'], '/'],
+        ];
     }
 
-    public function testRedirectDefaultValue()
+    #[\PHPUnit\Framework\Attributes\DataProvider('redirects')]
+    public function testSafeRedirectPath(mixed $input, string $expected): void
     {
-        // Test that the method handles missing redirect key with default '/'
-        $input = []; // No 'redirect' key
-        
-        try {
-            LogoutController::signout($input);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // The method should set redirect to '/' as default
-            // We can't directly test this without mocking, but the structure is correct
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testLoggerSetupStructure()
-    {
-        // Test that the method attempts to set up logging
-        $_ENV['LOGGER_PATH'] = '/test/path.log';
-        
-        try {
-            LogoutController::signout(['redirect' => '/home']);
-            $this->fail('Expected an exception due to missing dependencies');
-        } catch (\Throwable $e) {
-            // Expected due to logger setup or other dependencies
-            $this->assertTrue(true);
-        }
+        $this->assertSame($expected, LogoutFunctionality::safeRedirectPath($input));
     }
 }

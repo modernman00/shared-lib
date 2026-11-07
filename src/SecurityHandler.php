@@ -64,6 +64,12 @@ class SecurityHandler
             return;
         }
 
+        // Exempt stateless synthesis and streaming render APIs
+        $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+        if (str_starts_with($requestPath, '/api/poster-studio/render')) {
+            return;
+        }
+
         $sessionToken = $_SESSION['token'] ?? null;
         if (!$sessionToken) {
             self::abortCsrf();

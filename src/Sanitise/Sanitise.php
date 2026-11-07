@@ -16,7 +16,7 @@ use Src\Exceptions\UnauthorisedException;
  * Notes:
  * - Designed for modular use across various forms.
  * - Handles CSRF token validation, email format, password matching, and input sanitization.
- * - Throws exceptions for validation errors.
+ * - Collects validation errors in $errors (check getErrors()); throws only for a bad CSRF token.
  */
 class Sanitise
 {
@@ -224,9 +224,13 @@ class Sanitise
     /**
      * Returns sanitized data if no errors occurred.
      *
+     * Validation problems do NOT throw: they are collected in $errors. Always check
+     * getErrors() (or ->errors) after calling this — LoginUtility::setSanitisedData() does,
+     * and turns them into a BadRequestException.
+     *
      * @return array<string, mixed>
      *
-     * @throws RuntimeException If validation errors occurred
+     * @throws UnauthorisedException If a submitted CSRF token does not match the session
      */
     public function getCleanData(): array
     {

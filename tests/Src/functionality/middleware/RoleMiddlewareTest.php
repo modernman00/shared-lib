@@ -154,31 +154,31 @@ class RoleMiddlewareTest extends TestCase
         $reflection = new ReflectionMethod(RoleMiddleware::class, 'handle');
         $this->assertTrue($reflection->isPublic());
         $this->assertEquals(0, $reflection->getNumberOfParameters());
-        
-        // Check return type
-        $returnType = $reflection->getReturnType();
-        $this->assertEquals('array', $returnType->getName());
+        $this->assertSame('mixed', (string) $reflection->getReturnType());
     }
 
     public function testFetchUserMethodExists()
     {
         $reflection = new ReflectionClass(RoleMiddleware::class);
         $this->assertTrue($reflection->hasMethod('fetchUser'));
-        
+
         $method = $reflection->getMethod('fetchUser');
         $this->assertTrue($method->isProtected());
-        $this->assertEquals(1, $method->getNumberOfParameters());
+        // fetchUser(int|string $user_id, int $tokenVersion = 1)
+        $this->assertEquals(2, $method->getNumberOfParameters());
+        $this->assertEquals(1, $method->getNumberOfRequiredParameters());
     }
 
     public function testFetchUserMethodSignature()
     {
         $reflection = new ReflectionMethod(RoleMiddleware::class, 'fetchUser');
         $this->assertTrue($reflection->isProtected());
-        
-        $parameters = $reflection->getParameters();
-        $this->assertEquals('int', $parameters[0]->getType()->getName());
-        
-        // Check return type
+
+        // Standard 21: IDs may be alphanumeric strings, so the ID accepts int|string.
+        $idType = $reflection->getParameters()[0]->getType();
+        $this->assertInstanceOf(ReflectionUnionType::class, $idType);
+        $this->assertEqualsCanonicalizing(['int', 'string'], array_map(static fn ($t) => $t->getName(), $idType->getTypes()));
+
         $returnType = $reflection->getReturnType();
         $this->assertTrue($returnType->allowsNull());
         $this->assertEquals('string', $returnType->getName());
@@ -187,15 +187,8 @@ class RoleMiddlewareTest extends TestCase
     public function testPrivatePropertiesExist()
     {
         $reflection = new ReflectionClass(RoleMiddleware::class);
-        
         $this->assertTrue($reflection->hasProperty('allowedRoles'));
-        $this->assertTrue($reflection->hasProperty('publicKey'));
-        
-        $allowedRolesProperty = $reflection->getProperty('allowedRoles');
-        $this->assertTrue($allowedRolesProperty->isPrivate());
-        
-        $publicKeyProperty = $reflection->getProperty('publicKey');
-        $this->assertTrue($publicKeyProperty->isPrivate());
+        $this->assertTrue($reflection->getProperty('allowedRoles')->isPrivate());
     }
 
     public function testHandleReturnsEmptyArrayOnError()

@@ -62,17 +62,34 @@ class JwtHandlerTest extends TestCase
 
     public function testAuthenticateThrowsExceptionOnInvalidCredentials()
     {
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage('Oops! Wrong email or password.');
+        // Unknown account: the attempt is audit-logged, then rejected.
+        $this->expectException(\Src\Exceptions\UnauthorisedException::class);
+        $this->expectExceptionMessage('We do not recognise your account');
 
-        // This will fail because CheckSanitise methods would need to be mocked
-        // For now, we test that the exception is thrown
+        // No live MySQL: the IP-ban check sees 0 failures and the user lookup finds nobody.
+        $stmt = $this->createMock(\PDOStatement::class);
+        $stmt->method('execute')->willReturn(true);
+        $stmt->method('fetchColumn')->willReturn(0);
+        $stmt->method('fetch')->willReturn(false);
+        $stmt->method('fetchAll')->willReturn([]);
+        $stmt->method('bindValue')->willReturn(true);
+        $stmt->method('bindParam')->willReturn(true);
+        $pdo = $this->createMock(\PDO::class);
+        $pdo->method('prepare')->willReturn($stmt);
+        $pdo->method('lastInsertId')->willReturn('1'); // audit-log insert
+        \Src\Db::setMockConnection($pdo);
+        $_SERVER['REMOTE_ADDR'] = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
         $input = [
             'email' => 'invalid@test.com',
             'password' => 'wrongpassword'
         ];
 
-        $this->jwtHandler->authenticate($input);
+        try {
+            $this->jwtHandler->authenticate($input);
+        } finally {
+            \Src\Db::clearMockConnection();
+        }
     }
 
     public function testJwtEncodeDataUsesCorrectPayloadStructure()

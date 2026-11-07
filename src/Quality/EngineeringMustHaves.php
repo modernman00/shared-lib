@@ -28,7 +28,12 @@ final class EngineeringMustHaves
         'bootstrap', 'public', 'build', 'dist', 'test-results', 'playwright-report', '.php_tmp', 'gen_class', 'php-uk',
     ];
 
-    private const SQL_INTERPOLATION = '/\b(SELECT\s+.*?\s+FROM|INSERT\s+INTO\s+.*?\s+VALUES|UPDATE\s+.*?\s+SET|DELETE\s+FROM)\b.*?(?:"[^"]*\$[a-zA-Z_\x7f-\xff][^"]*"|[\'"]\s*\.\s*\$)/i';
+    // Matches (a) a variable concatenated or quoted after a SQL verb, and (b) a VALUE
+    // interpolated inside the same double-quoted SQL string in single quotes, e.g.
+    // "SELECT … WHERE id = '$id'" or "… LIKE '%$q%'" (previously missed — the classic
+    // injection shape). Bare identifiers like FROM $table are not flagged by (b): they
+    // cannot be bound as parameters and need whitelisting instead.
+    private const SQL_INTERPOLATION = '/\b(SELECT\s+.*?\s+FROM|INSERT\s+INTO\s+.*?\s+VALUES|UPDATE\s+.*?\s+SET|DELETE\s+FROM)\b.*?(?:"[^"]*\$[a-zA-Z_\x7f-\xff][^"]*"|[\'"]\s*\.\s*\$)|"[^"]*\b(?:SELECT\s+[^"]*?\s+FROM|INSERT\s+INTO|UPDATE\s+[^"]*?\s+SET|DELETE\s+FROM)\b[^"]*\'%?\{?\$[a-zA-Z_\x7f-\xff][^"]*"/i';
 
     private const CSRF_MARKERS = '/(name=[\'"]_token[\'"]|name=[\'"]token[\'"]|@csrf|\bcsrf_token\b|\bcsrf_field\b|\bcsrfField\b|\bcsrfToken\b|@include\([\'"][^\'"]*csrf[^\'"]*[\'"]\)|LaravelHelper::csrfField|LaravelHelper::csrfToken|BuildFormBStrap|BuildFormBulma|FormBuilder)/i';
 

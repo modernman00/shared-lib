@@ -49,17 +49,18 @@ class LoginUtilityTest extends TestCase
 
     public function testGenerateAuthToken()
     {
-        $token = LoginUtility::generateAuthToken();
-        
+        // generateAuthToken() lives on Src\Token (moved from LoginUtility).
+        $token = \Src\Token::generateAuthToken();
+
         $this->assertIsString($token);
-        $this->assertEquals(8, strlen($token)); // 4 bytes = 8 hex characters
+        $this->assertEquals(6, strlen($token)); // 3 random bytes = 6 hex characters
         $this->assertMatchesRegularExpression('/^[A-F0-9]+$/', $token);
     }
 
     public function testGenerateAuthTokenIsUnique()
     {
-        $token1 = LoginUtility::generateAuthToken();
-        $token2 = LoginUtility::generateAuthToken();
+        $token1 = \Src\Token::generateAuthToken();
+        $token2 = \Src\Token::generateAuthToken();
         
         $this->assertNotEquals($token1, $token2);
     }
@@ -71,6 +72,6 @@ class LoginUtilityTest extends TestCase
         $this->assertTrue(method_exists(LoginUtility::class, 'checkIfEmailExist'));
         $this->assertTrue(method_exists(LoginUtility::class, 'findTwoColUsingEmail'));
         $this->assertTrue(method_exists(LoginUtility::class, 'findOneColUsingEmail'));
-        $this->assertTrue(method_exists(LoginUtility::class, 'generateUpdateTableWithToken'));
+        $this->assertTrue(method_exists(\Src\Token::class, 'generateUpdateTableWithToken')); // moved from LoginUtility
     }
 }

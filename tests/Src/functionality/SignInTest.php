@@ -4,90 +4,115 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Functionality;
 
-use Src\functionality\SignIn;
-use Src\functionality\middleware\RoleMiddleware;
-use Src\Exceptions\UnauthorisedException;
-use Mockery;
-use Mockery\MockInterface;
+use Firebase\JWT\JWT;
+use PDO;
+use PDOStatement;
 use PHPUnit\Framework\TestCase;
+use Src\Db;
+use Src\Exceptions\UnauthorisedException;
+use Src\functionality\SignIn;
 
 /**
- * Unit tests for the SignIn class.
+ * SignIn::verify() / isLoggedIn() exercised through the real (final) RoleMiddleware,
+ * with real HS256 JWTs and a mocked PDO for the user lookup. The previous version tried
+ * to Mockery-mock the final RoleMiddleware class, which is impossible.
+ *
+ * Contract: verify() THROWS UnauthorisedException when access is denied;
+ * isLoggedIn() is the non-throwing wrapper that returns false.
  */
-class SignInTest extends TestCase
+final class SignInTest extends TestCase
 {
-    private MockInterface $roleMiddlewareMock;
+    private const KEY = 'test-signing-key-for-signin-tests-0123456789';
+    private array $env;
+    private array $cookie;
+    private array $session;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        // Initialize mocks
-        $this->roleMiddlewareMock = Mockery::mock(RoleMiddleware::class);
-
-        // Set up environment variables
-        $_ENV['APP_ENV'] = 'testing';
-        $_ENV['LOGGER_NAME'] = 'app';
-        $_ENV['LOGGER_PATH'] = '/../../bootstrap/log/idecide.log';
-
-        // Set up server and session
-        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
-        $_SERVER['HTTP_ORIGIN'] = 'http://idecide.test';
-        $_SESSION = [];
+        $this->env = $_ENV;
+        $this->cookie = $_COOKIE;
+        $this->session = $_SESSION ?? [];
+        $_ENV['JWT_KEY'] = self::KEY;
+        unset($_ENV['JWT_KEY_PREVIOUS']);
+        $_ENV['COOKIE_TOKEN_LOGIN'] = 'auth_token';
+        $_ENV['DB_TABLE_LOGIN'] = 'users';
         $_COOKIE = [];
+        $_SESSION = [];
     }
 
     protected function tearDown(): void
     {
-        $_SESSION = [];
-        $_SERVER = [];
-        $_COOKIE = [];
-        Mockery::close();
+        Db::clearMockConnection();
+        $_ENV = $this->env;
+        $_COOKIE = $this->cookie;
+        $_SESSION = $this->session;
         parent::tearDown();
     }
 
-    /**
-     * Tests verify with valid role and authentication.
-     */
-    public function testVerifyWithValidRoleReturnsUserData(): void
+    private function issue(array $data, string $key = self::KEY): void
     {
-        // Arrange
-        $role = 'users';
-        $userData = ['id' => 1, 'email' => 'test@example.com', 'role' => 'users'];
-
-        $this->roleMiddlewareMock->shouldReceive('__construct')
-            ->once()
-            ->with([$role]);
-        $this->roleMiddlewareMock->shouldReceive('handle')
-            ->once()
-            ->andReturn($userData);
-
-        // Act
-        $result = SignIn::verify($role);
-
-        // Assert
-        $this->assertEquals($userData, $result);
+        $_COOKIE['auth_token'] = JWT::encode(['iat' => time(), 'exp' => time() + 600, 'data' => $data], $key, 'HS256');
     }
 
-    /**
-     * Tests verify with unauthorized access.
-     */
-    public function testVerifyThrowsUnauthorisedException(): void
+    /** User lookup returns $row (or false for "not found"). */
+    private function userRow(array|false $row): void
     {
-        // Arrange
-        $role = 'admin';
+        $stmt = $this->createMock(PDOStatement::class);
+        $stmt->method('execute')->willReturn(true);
+        $stmt->method('fetch')->willReturn($row);
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('prepare')->willReturn($stmt);
+        Db::setMockConnection($pdo);
+    }
 
-        $this->roleMiddlewareMock->shouldReceive('__construct')
-            ->once()
-            ->with([$role]);
-        $this->roleMiddlewareMock->shouldReceive('handle')
-            ->once()
-            ->andThrow(new UnauthorisedException('Invalid role'));
+    public function testVerifyWithValidRoleReturnsUserData(): void
+    {
+        $this->issue(['id' => 'U123', 'email' => 'test@example.com', 'role' => 'users', 'token_version' => 1]);
+        $this->userRow(['email' => 'test@example.com', 'token_version' => 1]);
 
-        // Act
-        $result = SignIn::verify($role);
+        $result = SignIn::verify('users');
 
-        // Assert
-        $this->assertEquals([], $result);
+        $this->assertSame(['id' => 'U123', 'email' => 'test@example.com', 'role' => 'users'], $result);
+        $this->assertSame('U123', $_SESSION['id']);
+    }
+
+    public function testVerifyThrowsWhenRoleIsNotAllowed(): void
+    {
+        $this->issue(['id' => 'U123', 'email' => 'test@example.com', 'role' => 'users']);
+        $this->userRow(['email' => 'test@example.com', 'token_version' => 1]);
+
+        $this->expectException(UnauthorisedException::class);
+        $this->expectExceptionMessage('Access denied for role: users');
+        SignIn::verify('admin');
+    }
+
+    public function testVerifyThrowsWithoutCookie(): void
+    {
+        $this->expectException(UnauthorisedException::class);
+        SignIn::verify('users');
+    }
+
+    public function testVerifyRejectsATokenSignedWithAnotherKey(): void
+    {
+        $this->issue(['id' => 'U123', 'role' => 'users'], 'attacker-controlled-key-0123456789abcdef');
+
+        $this->expectException(UnauthorisedException::class);
+        $this->expectExceptionMessage('Invalid JWT signature');
+        SignIn::verify('users');
+    }
+
+    public function testVerifyThrowsWhenUserNoLongerExists(): void
+    {
+        $this->issue(['id' => 'U123', 'role' => 'users']);
+        $this->userRow(false);
+
+        $this->expectException(UnauthorisedException::class);
+        SignIn::verify('users');
+    }
+
+    public function testIsLoggedInReturnsFalseInsteadOfThrowing(): void
+    {
+        $this->assertFalse(SignIn::isLoggedIn('users'));
     }
 }

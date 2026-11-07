@@ -6,7 +6,10 @@ class CSP
 {
     public static function apply(array $options = []): string
     {
-        $nonce = bin2hex(random_bytes(16));
+        $nonce = defined('CSP_NONCE') ? (string) CSP_NONCE : bin2hex(random_bytes(16));
+        if (!defined('CSP_NONCE')) {
+            define('CSP_NONCE', $nonce);
+        }
 
         $directives = [
             "default-src 'self'",

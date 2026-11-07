@@ -84,7 +84,7 @@ class JwtHandler
 
         $userId = $user['id'];
 
-        LoginUtility::logAudit($userId, $user['email'], 'success', $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT']);
+        LoginUtility::logAudit($userId, $user['email'], 'success', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
         // remove password from user data
         unset($user['password']);
@@ -305,7 +305,13 @@ class JwtHandler
 
             return 'SUCCESSFUL';
         } catch (\PDOException $e) {
-            Utility::showError($e);
+            // Log only: the caller turns null into an UnauthorisedException that is reported to
+            // the client. Echoing here as well produced two JSON documents in one response.
+            try {
+                \Src\LoggerFactory::getLogger()->error('JwtHandler::fetchUser database error: ' . $e->getMessage());
+            } catch (\Throwable) {
+                error_log('JwtHandler::fetchUser database error: ' . $e->getMessage());
+            }
 
             return null;
         }

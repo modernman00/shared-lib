@@ -37,6 +37,13 @@ class WebAuthnFunctionality
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 INDEX (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            // Structural migration: guarantee user_id is VARCHAR(64) to support alphanumeric IDs (e.g. 'S80CM')
+            try {
+                $db->exec("ALTER TABLE user_passkeys MODIFY COLUMN user_id VARCHAR(64) NOT NULL");
+            } catch (\Throwable) {
+                // Ignore if already VARCHAR or permission restricted
+            }
             self::$schemaEnsured = true;
         } catch (\Throwable) {
             // Ignore DDL errors on restricted connections; queries will handle fallback gracefully
@@ -870,7 +877,18 @@ class WebAuthnFunctionality
                     activateBtn.innerHTML = origHTML;
                     const lbl = activateBtn.querySelector('#universal-passkey-activate-label');
                     if (lbl) lbl.textContent = 'Activate ' + bioLabel;
-                    showFeedback('Biometric verification was cancelled or did not complete. Tap Activate whenever you are ready to try again.', false);
+
+                    let msg = 'Biometric verification was cancelled or did not complete. Tap Activate whenever you are ready to try again.';
+                    if (err) {
+                        if (err.name === 'SecurityError' || err.code === 'SecurityError') {
+                            msg = 'Passkey registration requires HTTPS or a valid domain origin.';
+                        } else if (err.name === 'NotSupportedError' || err.code === 'NotSupportedError') {
+                            msg = 'Biometric authentication is not supported or enabled on this browser.';
+                        } else if (err.message && err.name !== 'NotAllowedError' && err.code !== 'NotAllowedError') {
+                            msg = err.message + '. Tap Activate to try again.';
+                        }
+                    }
+                    showFeedback(msg, false);
                 }
             });
         }

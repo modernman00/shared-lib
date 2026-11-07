@@ -15,10 +15,9 @@ class LogoutFunctionality
 {
     public static function signout(array $redirect): void
     {
-        // printArr($redirect);
-        $redirect = $redirect['redirect'] ?? '/'; // Default to 'home' if not provided
-
-        Utility::checkInput($redirect);
+        // Previously Utility::checkInput($redirect) was called and its result discarded, so the
+        // value was never validated. Only same-site relative paths are accepted now.
+        $redirect = self::safeRedirectPath($redirect['redirect'] ?? '/');
 
         try {
             CorsHandler::setHeaders();
@@ -35,5 +34,28 @@ class LogoutFunctionality
         } catch (\Throwable $e) {
             Utility::showError($e);
         }
+    }
+
+    /**
+     * Normalise a post-logout redirect to a safe, same-site relative path.
+     * Anything else (absolute URLs, protocol-relative "//host", backslashes, control
+     * characters, scripts) falls back to "/".
+     */
+    public static function safeRedirectPath(mixed $value): string
+    {
+        if (!is_string($value)) {
+            return '/';
+        }
+        $path = trim($value);
+        if ($path === '') {
+            return '/';
+        }
+        if (!str_starts_with($path, '/')) {
+            $path = '/' . $path;
+        }
+        if (str_starts_with($path, '//') || preg_match('#^/[A-Za-z0-9/_\-.~?=&%+]*$#', $path) !== 1) {
+            return '/';
+        }
+        return $path;
     }
 }

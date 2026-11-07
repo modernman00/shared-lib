@@ -28,16 +28,17 @@ class SendEmailBccDefenseTest extends TestCase
 
     public function testEmailValidationGuardsAgainstNullAndEmpty(): void
     {
+        // Pairs, not keys: a null array key silently became '', so null was never actually tested.
         $testCases = [
-            null => false,
-            '' => false,
-            '   ' => false,
-            'invalid-email' => false,
-            '@missing-user.com' => false,
-            'valid.user@example.com' => true,
+            [null, false],
+            ['', false],
+            ['   ', false],
+            ['invalid-email', false],
+            ['@missing-user.com', false],
+            ['valid.user@example.com', true],
         ];
 
-        foreach ($testCases as $candidate => $expected) {
+        foreach ($testCases as [$candidate, $expected]) {
             $isValid = is_string($candidate) && trim($candidate) !== '' && filter_var($candidate, FILTER_VALIDATE_EMAIL) !== false;
             $this->assertSame($expected, $isValid, "Failed validation assertion for: " . var_export($candidate, true));
         }
