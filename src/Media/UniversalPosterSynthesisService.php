@@ -34,6 +34,7 @@ class UniversalPosterSynthesisService
     public const THEME_PARTY_POOL_TROPICAL = 'party_pool_tropical';
     public const THEME_PARTY_FLORAL_CHROME = 'party_floral_chrome';
     public const THEME_PARTY_PYRO_CLUB = 'party_pyro_club';
+    public const THEME_PARTY_ACRYLIC_CRYSTAL = 'party_acrylic_crystal';
     public const THEME_FAMILY_HEIRLOOM_GOLD = 'family_heirloom_gold';
     public const THEME_FAMILY_BOTANICAL = 'family_botanical';
     public const THEME_FAMILY_REUNION_FESTIVAL = 'family_reunion_festival';
@@ -54,6 +55,7 @@ class UniversalPosterSynthesisService
     public const ARCHETYPE_VIP_BLACK_GOLD = 'vip_black_gold';
     public const ARCHETYPE_FLORAL_CHROME_OVERLAP = 'floral_chrome_overlap';
     public const ARCHETYPE_KINETIC_CLUB_TUNNEL = 'kinetic_club_tunnel';
+    public const ARCHETYPE_ACRYLIC_KEEPSAKE_BLOCK = 'acrylic_keepsake_block';
     public const ARCHETYPE_SECTOR_AUTHORITY_GRID = 'sector_authority_grid';
     public const ARCHETYPE_CLINICAL_SHIFT_SURGE = 'clinical_shift_surge';
     public const ARCHETYPE_CLINICAL_RECRUITMENT = 'clinical_recruitment_day';
@@ -246,6 +248,7 @@ class UniversalPosterSynthesisService
             self::THEME_PARTY_NEON => 'bg_tropical_purple.jpg',
             self::THEME_PARTY_FLORAL_CHROME, self::THEME_FAMILY_BOTANICAL => 'bg_crimson_velvet_floral.jpg',
             self::THEME_PARTY_PYRO_CLUB => 'bg_club_tunnel.jpg',
+            self::THEME_PARTY_ACRYLIC_CRYSTAL => 'bg_acrylic_crystal_block.jpg',
             default => null,
         };
 
@@ -684,6 +687,7 @@ class UniversalPosterSynthesisService
             self::THEME_PARTY_BLACK_GOLD, self::THEME_FAMILY_HEIRLOOM_GOLD => self::ARCHETYPE_VIP_BLACK_GOLD,
             self::THEME_PARTY_FLORAL_CHROME, self::THEME_FAMILY_BOTANICAL => self::ARCHETYPE_FLORAL_CHROME_OVERLAP,
             self::THEME_PARTY_PYRO_CLUB, self::THEME_FAMILY_REUNION_FESTIVAL => self::ARCHETYPE_KINETIC_CLUB_TUNNEL,
+            self::THEME_PARTY_ACRYLIC_CRYSTAL => self::ARCHETYPE_ACRYLIC_KEEPSAKE_BLOCK,
             self::THEME_BCP_URGENT_SHIFT => self::ARCHETYPE_CLINICAL_SHIFT_SURGE,
             self::THEME_BCP_CLINICAL_EXCELLENCE => self::ARCHETYPE_CLINICAL_RECRUITMENT,
             self::THEME_FINTECH_SME_CAPITAL => self::ARCHETYPE_FINTECH_FACILITY,
@@ -741,6 +745,13 @@ class UniversalPosterSynthesisService
                 'subtitle' => 'Perspective tunnel, stacked gold block letters behind subject',
                 'reference' => 'Sample #5: Friday Party Night',
                 'sector' => 'party',
+            ],
+            self::ARCHETYPE_ACRYLIC_KEEPSAKE_BLOCK => [
+                'id' => self::ARCHETYPE_ACRYLIC_KEEPSAKE_BLOCK,
+                'name' => 'Illuminated Acrylic Block (3D Keepsake)',
+                'subtitle' => 'Photorealistic frosted crystal block with floating 3D subject and watercolor flora',
+                'reference' => 'Keepsake Edition: 3D Acrylic Birthday Plaque',
+                'sector' => 'party_family',
             ],
             self::ARCHETYPE_CLINICAL_SHIFT_SURGE => [
                 'id' => self::ARCHETYPE_CLINICAL_SHIFT_SURGE,

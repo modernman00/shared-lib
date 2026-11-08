@@ -32,8 +32,13 @@ class UniversalPosterStudioController
      * @return array<string, array{
      *   app_key: string,
      *   app_name: string,
+     *   sector_name?: string,
+     *   studio_title?: string,
+     *   studio_subtitle?: string,
      *   badge_colour: string,
      *   default_preset: string,
+     *   subject_label?: string,
+     *   field_labels?: array<string, string>,
      *   presets: array<string, array<string, mixed>>
      * }>
      */
@@ -171,6 +176,28 @@ class UniversalPosterStudioController
                             'venue' => 'MAYFAIR BOULEVARD, LONDON',
                             'rsvpContact' => '020 7946 0888',
                             'qrUrl' => 'https://partyplatform.com/e/friday-party-night',
+                        ],
+                    ],
+                    'acrylic_crystal_keepsake' => [
+                        'label' => 'Illuminated Acrylic Block (3D Keepsake)',
+                        'theme' => UniversalPosterSynthesisService::THEME_PARTY_ACRYLIC_CRYSTAL,
+                        'archetype' => UniversalPosterSynthesisService::ARCHETYPE_ACRYLIC_KEEPSAKE_BLOCK,
+                        'aspectRatio' => 'story',
+                        'data' => [
+                            'tenant' => 'partyplatform',
+                            'badge' => 'HANDCRAFTED 3D KEEPSAKE',
+                            'kicker' => 'Happy 1st Birthday',
+                            'title' => 'ISABELLE',
+                            'titleSecondary' => 'KEEPSAKE PLAQUE',
+                            'subtitle' => 'Illuminated Frosted Crystal Block',
+                            'date' => 'SATURDAY 24TH OCTOBER 2026',
+                            'time' => '2:00 PM',
+                            'hosts' => 'THE OLAOGUN FAMILY',
+                            'venue' => 'THE KEEPSAKE PAVILION',
+                            'address' => 'London & Kent, United Kingdom',
+                            'rsvpContact' => 'partyplatform.test/card/vault',
+                            'regulatoryNotice' => 'PartyPlatform • Handcrafted 3D Acrylic Keepsake Edition • Studio Quality Proof',
+                            'qrUrl' => 'https://partyplatform.test/manager/celebratory-cards',
                         ],
                     ],
                 ],

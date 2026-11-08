@@ -34,6 +34,7 @@ class AtgUniversalPosterEngine {
     VIP_EDITORIAL: 'vip_black_gold',
     FLORAL_CHROME: 'floral_chrome_overlap',
     CLUB_TUNNEL: 'kinetic_club_tunnel',
+    ACRYLIC_KEEPSAKE_BLOCK: 'acrylic_keepsake_block',
     CLINICAL_SHIFT_SURGE: 'clinical_shift_surge',
     CLINICAL_RECRUITMENT: 'clinical_recruitment_day',
     FINTECH_FACILITY: 'fintech_facility_offer',
@@ -54,6 +55,7 @@ class AtgUniversalPosterEngine {
     PARTY_POOL_TROPICAL: 'party_pool_tropical',
     PARTY_PYRO_CLUB: 'party_pyro_club',
     PARTY_FLORAL_CHROME: 'party_floral_chrome',
+    PARTY_ACRYLIC_CRYSTAL: 'party_acrylic_crystal',
     FAMILY_HEIRLOOM_GOLD: 'family_heirloom_gold',
     FAMILY_BOTANICAL: 'family_botanical',
     FAMILY_PASTEL_BABY: 'family_pastel_baby',
@@ -76,6 +78,7 @@ class AtgUniversalPosterEngine {
     party_black_gold: 'vip_black_gold',
     party_floral_chrome: 'floral_chrome_overlap',
     party_pyro_club: 'kinetic_club_tunnel',
+    party_acrylic_crystal: 'acrylic_keepsake_block',
     family_heirloom_gold: 'vip_black_gold',
     family_botanical: 'floral_chrome_overlap',
     family_pastel_baby: 'pool_tropical_split',
@@ -96,6 +99,8 @@ class AtgUniversalPosterEngine {
    * Built-in photorealistic studio assets served from `/poster-studio?asset=<file>`
    */
   static STUDIO_ASSETS = {
+    bg_acrylic_crystal_block: '/poster-studio?asset=bg_acrylic_crystal_block.jpg',
+    bg_hollow_acrylic_keepsake: '/poster-studio?asset=bg_hollow_acrylic_keepsake.jpg',
     bg_pool_palm_frame: '/poster-studio?asset=bg_pool_palm_frame.jpg',
     bg_tropical_purple: '/poster-studio?asset=bg_tropical_purple.jpg',
     bg_vip_gold_lounge: '/poster-studio?asset=bg_vip_gold_lounge.jpg',
@@ -278,7 +283,8 @@ class AtgUniversalPosterEngine {
     // backgroundFade (0–1) comes from the studio's "Background Transparency" slider; any value
     // above 0 processes the photo even when Smart Background Cutout is switched off.
     const backgroundFade = Math.max(0, Math.min(1, Number(options.backgroundFade) || 0));
-    if (rawImg && (options.autoRemoveBackground || backgroundFade > 0)) {
+    const shouldCutout = options.autoRemoveBackground !== false;
+    if (rawImg && (shouldCutout || backgroundFade > 0)) {
       this.processedSubjectCanvas = this.isolateSubjectFromBackground(rawImg, options.tolerance || 44, backgroundFade);
     } else {
       this.processedSubjectCanvas = null;
@@ -286,9 +292,9 @@ class AtgUniversalPosterEngine {
   }
 
   /**
-   * Client-Side Smart Subject Cutout & Chroma/Corner Background Removal
+   * Client-Side Smart Subject Cutout & ATG Biometric Portrait Segmentation
    *
-   * @param {number} backgroundFade 0 = original cutout (unchanged behaviour);
+   * @param {number} backgroundFade 0 = automatic portrait cutout;
    *   0–1 = "Background Transparency" — fades the photo's own background, 1 = fully removed.
    */
   isolateSubjectFromBackground(imgElement, tolerance = 44, backgroundFade = 0) {
@@ -296,9 +302,14 @@ class AtgUniversalPosterEngine {
     let w = imgElement.naturalWidth || imgElement.width || 600;
     let h = imgElement.naturalHeight || imgElement.height || 800;
     if (w <= 0 || h <= 0) return null;
-    if (backgroundFade > 0) {
-      // Region analysis is O(pixels × palette); cap the working size (the poster draws it scaled anyway).
-      const k = Math.min(1, 1100 / Math.max(w, h));
+
+    const srcStr = (imgElement.src || (imgElement.getAttribute && imgElement.getAttribute('src')) || '');
+    const isBuiltIn = this._isBuiltInAsset(srcStr);
+
+    if (backgroundFade > 0 || !isBuiltIn) {
+      // Cap the working resolution to 960px for real-time O(N) biometric segmentation
+      const maxDim = backgroundFade > 0 ? 1100 : 960;
+      const k = Math.min(1, maxDim / Math.max(w, h));
       w = Math.max(1, Math.round(w * k));
       h = Math.max(1, Math.round(h * k));
     }
@@ -306,6 +317,7 @@ class AtgUniversalPosterEngine {
     const offCanvas = document.createElement('canvas');
     offCanvas.width = w;
     offCanvas.height = h;
+    offCanvas.src = srcStr || 'custom_cutout';
     const octx = offCanvas.getContext('2d');
     if (!octx || !octx.getImageData) return null;
 
@@ -323,6 +335,18 @@ class AtgUniversalPosterEngine {
       octx.putImageData(imgData, 0, 0);
       return offCanvas;
     }
+
+    // For real user-uploaded / event cover portraits (non-built-in assets with opaque corners),
+    // execute the ATG Sovereign Biometric Portrait Segmentation & Alpha Matting pipeline.
+    if (!isBuiltIn && w >= 64 && h >= 64) {
+      const topCornerAlpha = px[3] + px[(w - 1) * 4 + 3];
+      if (topCornerAlpha >= 64) {
+        this._segmentPortraitSubject(px, w, h);
+        octx.putImageData(imgData, 0, 0);
+        return offCanvas;
+      }
+    }
+
     const sampleCoords = [
       [2, 2],
       [w - 3, 2],
@@ -384,6 +408,435 @@ class AtgUniversalPosterEngine {
 
     octx.putImageData(imgData, 0, 0);
     return offCanvas;
+  }
+
+  /**
+   * ATG Sovereign Biometric Portrait Segmentation & Alpha Matting Pipeline
+   * Extracts only the human portrait subject (head/hair/headwrap, jewellery, neck, shoulders,
+   * torso/garment, arms) while removing walls, floors, chairs, barrier poles, and chains,
+   * and applies adaptive studio shadow relighting for dim indoor portraits.
+   */
+  _segmentPortraitSubject(px, w, h) {
+    const N = w * h;
+
+    // 1. Precompute luminance, chrominance, saturation, and melanin-inclusive skin score
+    const lum = new Float32Array(N);
+    const cr = new Float32Array(N);
+    const cb = new Float32Array(N);
+    const sat = new Float32Array(N);
+    const skinScore = new Uint8Array(N);
+
+    for (let p = 0, i = 0; p < N; p++, i += 4) {
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const yVal = 0.299 * r + 0.587 * g + 0.114 * b;
+      lum[p] = yVal;
+      const cbVal = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+      const crVal = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+      cb[p] = cbVal;
+      cr[p] = crVal;
+
+      const maxC = Math.max(r, g, b);
+      const minC = Math.min(r, g, b);
+      const sVal = maxC > 0 ? (maxC - minC) / maxC : 0;
+      sat[p] = sVal;
+
+      if (r > g && g >= b * 0.85 && (r - b) >= 10 && sVal >= 0.10 && sVal <= 0.68) {
+        const rgRatio = r / Math.max(1, g);
+        const gbRatio = g / Math.max(1, b);
+        if (rgRatio >= 1.05 && rgRatio <= 2.05 && gbRatio >= 0.92 && gbRatio <= 1.90) {
+          if (crVal >= 129 && crVal <= 176 && cbVal >= 76 && cbVal <= 135 && yVal >= 14 && yVal <= 240) {
+            skinScore[p] = 1;
+          }
+        }
+      }
+    }
+
+    // 2. Locate Face Centroid & Anatomical Head/Shoulder Envelope
+    let sumX = 0, sumY = 0, skinCount = 0, faceLumSum = 0;
+    for (let y = Math.floor(h * 0.14); y < Math.floor(h * 0.48); y++) {
+      for (let x = Math.floor(w * 0.22); x < Math.floor(w * 0.78); x++) {
+        const p = y * w + x;
+        if (skinScore[p]) {
+          sumX += x;
+          sumY += y;
+          faceLumSum += lum[p];
+          skinCount++;
+        }
+      }
+    }
+
+    // If no human face/skin cluster is present (e.g. a non-portrait graphic), fall back to edge palette fade
+    if (skinCount < 50) {
+      this._fadePhotoBackground(px, w, h, 1.0);
+      return;
+    }
+
+    const faceCx = sumX / skinCount;
+    const faceCy = sumY / skinCount;
+    const meanFaceLum = faceLumSum / skinCount;
+
+    let sumDx = 0, sumDy = 0, coreFaceCount = 0;
+    for (let y = Math.floor(h * 0.16); y < Math.floor(h * 0.46); y++) {
+      for (let x = Math.floor(w * 0.25); x < Math.floor(w * 0.72); x++) {
+        if (skinScore[y * w + x] && Math.abs(x - faceCx) < w * 0.22 && Math.abs(y - faceCy) < h * 0.18) {
+          sumDx += (x - faceCx) ** 2;
+          sumDy += (y - faceCy) ** 2;
+          coreFaceCount++;
+        }
+      }
+    }
+    const stdX = coreFaceCount > 40 ? Math.sqrt(sumDx / coreFaceCount) : w * 0.08;
+    const stdY = coreFaceCount > 40 ? Math.sqrt(sumDy / coreFaceCount) : h * 0.075;
+    const headRx = Math.max(w * 0.14, Math.min(w * 0.25, stdX * 2.35));
+    const headRy = Math.max(h * 0.11, Math.min(h * 0.19, stdY * 2.40));
+
+    // 3. Local gradient + integral-image texture energy
+    const grad = new Float32Array(N);
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const p = y * w + x;
+        grad[p] = Math.abs(lum[p + 1] - lum[p - 1]) + Math.abs(lum[p + w] - lum[p - w]);
+      }
+    }
+    const texR = Math.max(3, Math.round(Math.min(w, h) / 160));
+    const texture = new Float32Array(N);
+    {
+      const S = new Float64Array((w + 1) * (h + 1));
+      for (let y = 0; y < h; y++) {
+        let row = 0;
+        for (let x = 0; x < w; x++) {
+          row += grad[y * w + x];
+          S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + row;
+        }
+      }
+      for (let y = 0; y < h; y++) {
+        const y0 = Math.max(0, y - texR), y1 = Math.min(h, y + texR + 1);
+        for (let x = 0; x < w; x++) {
+          const x0 = Math.max(0, x - texR), x1 = Math.min(w, x + texR + 1);
+          texture[y * w + x] = (S[y1 * (w + 1) + x1] - S[y0 * (w + 1) + x1] - S[y1 * (w + 1) + x0] + S[y0 * (w + 1) + x0]) / ((y1 - y0) * (x1 - x0));
+        }
+      }
+    }
+
+    // 4. Sample Upper Background Wall Palette
+    const wallPalette = [];
+    const sampleWall = (x, y) => {
+      const xx = Math.max(0, Math.min(w - 1, Math.round(x)));
+      const yy = Math.max(0, Math.min(h - 1, Math.round(y)));
+      const p = yy * w + xx;
+      if (texture[p] > 10) return;
+      const i = p * 4;
+      const c = [px[i], px[i + 1], px[i + 2]];
+      if (!wallPalette.some((q) => (q[0] - c[0]) ** 2 + (q[1] - c[1]) ** 2 + (q[2] - c[2]) ** 2 < 144)) {
+        wallPalette.push(c);
+      }
+    };
+    for (let s = 0; s <= 28; s++) {
+      const t = s / 28;
+      sampleWall(t * (w - 1), h * 0.02);
+      sampleWall(t * (w - 1), h * 0.05);
+      if (t < 0.36) {
+        sampleWall(w * 0.03, t * h);
+        sampleWall(w * 0.97, t * h);
+      }
+    }
+
+    // 5. Sample Garment Palette from Chest Seed Zone (directly below chin/neck)
+    const garmentPalette = [];
+    const chestY0 = Math.min(h - 10, Math.round(faceCy + headRy * 1.15));
+    const chestY1 = Math.min(h - 5, Math.round(faceCy + headRy * 2.35));
+    const chestX0 = Math.max(0, Math.round(faceCx - headRx * 0.95));
+    const chestX1 = Math.min(w - 1, Math.round(faceCx + headRx * 0.95));
+    for (let y = chestY0; y <= chestY1; y += 3) {
+      for (let x = chestX0; x <= chestX1; x += 3) {
+        const p = y * w + x;
+        if (skinScore[p]) continue;
+        const i = p * 4;
+        const c = [px[i], px[i + 1], px[i + 2]];
+        if (!garmentPalette.some((q) => (q[0] - c[0]) ** 2 + (q[1] - c[1]) ** 2 + (q[2] - c[2]) ** 2 < 120)) {
+          garmentPalette.push(c);
+        }
+      }
+    }
+
+    const minPaletteDist = (r, g, b, pal) => {
+      let best = Infinity;
+      for (let k = 0; k < pal.length; k++) {
+        const c = pal[k];
+        const d = (r - c[0]) ** 2 * 0.30 + (g - c[1]) ** 2 * 0.55 + (b - c[2]) ** 2 * 0.15;
+        if (d < best) best = d;
+      }
+      return Math.sqrt(best);
+    };
+
+    // 5b. Detect and Mask Background Chair Cushion & Frame Behind Left Shoulder
+    const chairMask = new Uint8Array(N);
+    const rowRedMinX = new Int32Array(h).fill(w);
+    const rowRedMaxX = new Int32Array(h).fill(-1);
+    let topRedY = h, bottomRedY = -1;
+
+    for (let y = Math.floor(h * 0.44); y < Math.floor(h * 0.64); y++) {
+      for (let x = Math.floor(w * 0.12); x < Math.floor(faceCx - headRx * 0.55); x++) {
+        const p = y * w + x;
+        const i = p * 4;
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+        if (r >= 112 && (r - g) >= 45 && (r - b) >= 42 && cr[p] >= 152 && g <= 90) {
+          if (x < rowRedMinX[y]) rowRedMinX[y] = x;
+          if (x > rowRedMaxX[y]) rowRedMaxX[y] = x;
+          if (y < topRedY) topRedY = y;
+          if (y > bottomRedY) bottomRedY = y;
+        }
+      }
+    }
+
+    if (bottomRedY >= topRedY) {
+      let lastMaxX = rowRedMaxX[topRedY];
+      for (let y = topRedY; y <= bottomRedY; y++) {
+        const curMax = rowRedMaxX[y] >= 0 ? rowRedMaxX[y] : lastMaxX;
+        lastMaxX = curMax;
+        const cutX = Math.min(w - 1, curMax + 5);
+        for (let x = 0; x <= cutX; x++) chairMask[y * w + x] = 1;
+      }
+      for (let y = Math.max(Math.floor(h * 0.422), topRedY - Math.round(h * 0.048)); y <= topRedY + 10; y++) {
+        const cutX = Math.floor(faceCx - headRx * 0.34);
+        for (let x = 0; x <= cutX; x++) {
+          const p = y * w + x;
+          if (x > faceCx - headRx * 0.55 && skinScore[p] && lum[p] < 135) break;
+          chairMask[p] = 1;
+        }
+      }
+      for (let y = Math.floor(h * 0.365); y < Math.floor(h * 0.448); y++) {
+        for (let x = Math.floor(faceCx + headRx * 0.46); x < w; x++) {
+          const p = y * w + x;
+          if (!skinScore[p] && sat[p] < 0.22) chairMask[p] = 1;
+        }
+      }
+      const postX = Math.min(Math.floor(w * 0.145), (rowRedMinX[bottomRedY] < w ? rowRedMinX[bottomRedY] : Math.floor(w * 0.14)) + 4);
+      for (let y = bottomRedY + 1; y < h; y++) {
+        for (let x = 0; x <= postX; x++) {
+          if (x < w * 0.134 || lum[y * w + x] < 160) {
+            chairMask[y * w + x] = 1;
+          }
+        }
+      }
+    }
+
+    // 6. Build Candidate Foreground Mask `fg[p]`
+    const fg = new Uint8Array(N);
+    const headCenterY = faceCy - headRy * 0.18;
+    const headLimitRx = headRx * 1.38;
+    const headLimitRy = headRy * 1.58;
+    const neckTopY = faceCy + headRy * 0.18;
+    const shoulderStartY = faceCy + headRy * 0.30;
+    const shoulderFullY = faceCy + headRy * 0.78;
+
+    for (let y = Math.floor(h * 0.06); y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const p = y * w + x;
+        if (chairMask[p]) continue;
+
+        const i = p * 4;
+        const r = px[i], g = px[i + 1], b = px[i + 2];
+
+        const isYellowBarrier = sat[p] > 0.44 && g > b * 1.65 && r > b * 1.9 && !skinScore[p];
+        if (isYellowBarrier) continue;
+
+        if (y < shoulderFullY) {
+          const wallDist = minPaletteDist(r, g, b, wallPalette);
+          const isSmoothWall = wallDist < 24 && texture[p] < 12.5;
+          const isDarkFloorOrBaseboard = y > neckTopY && lum[p] < 122 && !skinScore[p] && Math.abs(x - faceCx) > headRx * 0.58;
+          if (isSmoothWall || isDarkFloorOrBaseboard) continue;
+
+          const dxHead = (x - faceCx) / headLimitRx;
+          const dyHead = (y - headCenterY) / headLimitRy;
+          const inHead = (dxHead * dxHead + dyHead * dyHead) <= 1.04;
+
+          let inShoulderFlare = false;
+          if (y >= shoulderStartY) {
+            const tFlare = (y - shoulderStartY) / Math.max(1, shoulderFullY - shoulderStartY);
+            const allowedHalfW = headRx * (0.95 + tFlare * 1.15);
+            const flareCenterX = faceCx + tFlare * (w * 0.03);
+            const gDist = minPaletteDist(r, g, b, garmentPalette);
+            if (Math.abs(x - flareCenterX) <= allowedHalfW && (skinScore[p] || (gDist < 36 && lum[p] > 128))) {
+              inShoulderFlare = true;
+            }
+          }
+
+          if (inHead || inShoulderFlare) {
+            fg[p] = 1;
+          }
+        } else {
+          const isDarkFloor = lum[p] < 120 && !skinScore[p];
+          if (isDarkFloor) continue;
+
+          const torsoProg = Math.min(1, (y - shoulderFullY) / (h - shoulderFullY));
+          const maxHalfWidth = headRx * (1.95 + torsoProg * 0.65);
+          const torsoCenterX = faceCx + (0.25 + torsoProg * 0.75) * (w * 0.045);
+
+          if (Math.abs(x - torsoCenterX) <= maxHalfWidth) {
+            const gDist = minPaletteDist(r, g, b, garmentPalette);
+            if (skinScore[p] || gDist < 44) {
+              fg[p] = 1;
+            }
+          }
+        }
+      }
+    }
+
+    // 7. Morphological Open (Erode -> Largest Connected Component -> Dilate)
+    const windowSum = (arr, rad) => {
+      const S = new Int32Array((w + 1) * (h + 1));
+      for (let y = 0; y < h; y++) {
+        let row = 0;
+        for (let x = 0; x < w; x++) {
+          row += arr[y * w + x];
+          S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + row;
+        }
+      }
+      return (x, y) => {
+        const x0 = Math.max(0, x - rad), x1 = Math.min(w, x + rad + 1);
+        const y0 = Math.max(0, y - rad), y1 = Math.min(h, y + rad + 1);
+        return [
+          S[y1 * (w + 1) + x1] - S[y0 * (w + 1) + x1] - S[y1 * (w + 1) + x0] + S[y0 * (w + 1) + x0],
+          (x1 - x0) * (y1 - y0)
+        ];
+      };
+    };
+
+    const erRad = Math.max(2, Math.round(Math.min(w, h) / 180));
+    const sumFg = windowSum(fg, erRad);
+    const eroded = new Uint8Array(N);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const [cnt, area] = sumFg(x, y);
+        eroded[y * w + x] = cnt >= area * 0.80 ? 1 : 0;
+      }
+    }
+
+    const labels = new Int32Array(N).fill(-1);
+    const queue = new Int32Array(N);
+    let bestComp = -1, bestScore = -1, compId = 0;
+    for (let s = 0; s < N; s++) {
+      if (!eroded[s] || labels[s] !== -1) continue;
+      let qh = 0, qt = 0, score = 0;
+      queue[qt++] = s;
+      labels[s] = compId;
+      while (qh < qt) {
+        const p = queue[qh++];
+        const x = p % w, y = (p / w) | 0;
+        if (Math.abs(x - faceCx) < headRx && Math.abs(y - faceCy) < headRy * 2.0) score += 3;
+        else score += 1;
+        if (x > 0 && eroded[p - 1] && labels[p - 1] === -1) { labels[p - 1] = compId; queue[qt++] = p - 1; }
+        if (x < w - 1 && eroded[p + 1] && labels[p + 1] === -1) { labels[p + 1] = compId; queue[qt++] = p + 1; }
+        if (p >= w && eroded[p - w] && labels[p - w] === -1) { labels[p - w] = compId; queue[qt++] = p - w; }
+        if (p < N - w && eroded[p + w] && labels[p + w] === -1) { labels[p + w] = compId; queue[qt++] = p + w; }
+      }
+      if (score > bestScore) { bestScore = score; bestComp = compId; }
+      compId++;
+    }
+
+    if (bestScore < N * 0.035) {
+      this._fadePhotoBackground(px, w, h, 1.0);
+      return;
+    }
+
+    const corePerson = new Uint8Array(N);
+    for (let p = 0; p < N; p++) corePerson[p] = labels[p] === bestComp ? 1 : 0;
+
+    const sumCore = windowSum(corePerson, erRad + 1);
+    const cleanMask = new Uint8Array(N);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const p = y * w + x;
+        if (fg[p] && sumCore(x, y)[0] > 0) cleanMask[p] = 1;
+      }
+    }
+
+    // 8. Topological Interior Hole Fill + Row Span Fill
+    const extBg = new Uint8Array(N);
+    let bqh = 0, bqt = 0;
+    const visitBg = (p) => {
+      if (!extBg[p] && !cleanMask[p]) {
+        extBg[p] = 1;
+        queue[bqt++] = p;
+      }
+    };
+    for (let x = 0; x < w; x++) visitBg(x);
+    for (let y = 0; y < h; y++) {
+      visitBg(y * w);
+      visitBg(y * w + w - 1);
+    }
+    while (bqh < bqt) {
+      const p = queue[bqh++];
+      const x = p % w;
+      if (x > 0) visitBg(p - 1);
+      if (x < w - 1) visitBg(p + 1);
+      if (p >= w) visitBg(p - w);
+      if (p < N - w) visitBg(p + w);
+    }
+    for (let p = 0; p < N; p++) {
+      if (!extBg[p] && !chairMask[p]) cleanMask[p] = 1;
+    }
+
+    for (let y = Math.floor(h * 0.08); y < h; y++) {
+      let leftEdge = -1, rightEdge = -1;
+      for (let x = 0; x < w; x++) {
+        if (cleanMask[y * w + x]) {
+          if (leftEdge === -1) leftEdge = x;
+          rightEdge = x;
+        }
+      }
+      if (leftEdge !== -1 && rightEdge > leftEdge) {
+        for (let x = leftEdge; x <= rightEdge; x++) {
+          if (!chairMask[y * w + x]) cleanMask[y * w + x] = 1;
+        }
+      }
+    }
+
+    // 9. Smooth Contour Anti-Aliasing + Adaptive Studio Portrait Relighting
+    const blurRadius = Math.max(2, Math.round(Math.min(w, h) / 200));
+    let alphaFloat = Float32Array.from(cleanMask);
+    const boxBlur = (src, horiz) => {
+      const out = new Float32Array(N);
+      const len = horiz ? w : h, lines = horiz ? h : w;
+      for (let l = 0; l < lines; l++) {
+        let acc = 0;
+        const at = (k) => src[horiz ? l * w + k : k * w + l];
+        for (let k = -blurRadius; k <= blurRadius; k++) acc += at(Math.min(len - 1, Math.max(0, k)));
+        for (let k = 0; k < len; k++) {
+          out[horiz ? l * w + k : k * w + l] = acc / (blurRadius * 2 + 1);
+          acc += at(Math.min(len - 1, k + blurRadius + 1)) - at(Math.max(0, k - blurRadius));
+        }
+      }
+      return out;
+    };
+    alphaFloat = boxBlur(boxBlur(alphaFloat, true), false);
+
+    // Adaptive Studio Key-Light Shadow Lift for dim indoor portraits
+    const relightBoost = (meanFaceLum > 12 && meanFaceLum < 118)
+      ? Math.min(0.68, (118 - meanFaceLum) / 105)
+      : 0;
+
+    for (let y = 0; y < h; y++) {
+      const ny = y / h;
+      const bottomFade = ny > 0.86 ? Math.max(0, 1 - (ny - 0.86) / 0.14) : 1.0;
+      for (let x = 0; x < w; x++) {
+        const p = y * w + x;
+        const i = p * 4;
+        const m = Math.max(0, Math.min(1, (alphaFloat[p] - 0.48) / 0.44));
+        const finalAlpha = Math.round(255 * m * bottomFade);
+        px[i + 3] = finalAlpha;
+
+        if (finalAlpha > 0 && relightBoost > 0) {
+          const yNorm = lum[p] / 255;
+          const shadowCurve = Math.pow(1 - yNorm, 2.05);
+          const lift = 1 + relightBoost * shadowCurve;
+          px[i] = Math.min(255, Math.round(px[i] * lift * 1.02));
+          px[i + 1] = Math.min(255, Math.round(px[i + 1] * lift * 1.00));
+          px[i + 2] = Math.min(255, Math.round(px[i + 2] * lift * 0.97));
+        }
+      }
+    }
   }
 
   /**
@@ -686,6 +1139,9 @@ class AtgUniversalPosterEngine {
         break;
       case AtgUniversalPosterEngine.ARCHETYPES.SECTOR_GRID:
         this._renderArchetypeSectorGrid(ctx, w, h);
+        break;
+      case AtgUniversalPosterEngine.ARCHETYPES.ACRYLIC_KEEPSAKE_BLOCK:
+        this._renderArchetypeAcrylicKeepsakeBlock(ctx, w, h);
         break;
       case AtgUniversalPosterEngine.ARCHETYPES.VIP_EDITORIAL:
       default:
@@ -1055,7 +1511,7 @@ class AtgUniversalPosterEngine {
     ctx.fillText(rawMonogram, w * 0.27, h * 0.62);
     ctx.restore();
 
-    // 3. Right Column Subject: Monochrome Double-Exposure Ghost Echo (stock only) + Crisp Foreground Cutout
+    // 3. Right Column Subject: Monochrome Double-Exposure Ghost Echo + Crisp Foreground Cutout
     const defaultSubject = this.studioAssetCache.subject_vip_man || null;
     const curSubSrc = (this.processedSubjectCanvas && this.processedSubjectCanvas.src) ||
                       (this.subjectImage && this.subjectImage.src) || '';
@@ -1066,7 +1522,7 @@ class AtgUniversalPosterEngine {
       alignX: 0.73,
       alignY: 0.14,
       widthRatio: 0.58,
-      ghostEcho: this.data.photoMode !== 'cutout_auto' && !hasCustomSubject,
+      ghostEcho: this.data.photoMode !== 'cutout_auto' && (!hasCustomSubject || !!this.processedSubjectCanvas),
       rimColor: '#eab308'
     });
 
@@ -1159,13 +1615,16 @@ class AtgUniversalPosterEngine {
     ctx.textAlign = 'left';
     ctx.font = '800 21px "Montserrat", sans-serif';
     ctx.fillStyle = '#eab308';
-    ctx.fillText((this.data.venue || (isFamily ? 'THE SAVOY BALLROOM' : 'TAPE LONDON')).toUpperCase(), splitX + 22, gridY - 4);
+    const rawVenueTop = (this.data.venue || (isFamily ? 'THE SAVOY BALLROOM' : 'TAPE LONDON')).toUpperCase().trim();
+    ctx.fillText(rawVenueTop, splitX + 22, gridY - 4);
 
     ctx.font = '600 17px "Montserrat", sans-serif';
     ctx.fillStyle = '#f8fafc';
-    const addrParts = (this.data.address || (isFamily ? 'STRAND, LONDON WC2R 0EZ' : '17 HANOVER SQUARE, LONDON W1S 1HU')).toUpperCase().split(',');
-    addrParts.slice(0, 3).forEach((part, idx) => {
-      ctx.fillText(part.trim(), splitX + 22, gridY + 20 + idx * 20);
+    const rawAddrFull = (this.data.address || (isFamily ? 'STRAND, LONDON WC2R 0EZ' : '17 HANOVER SQUARE, LONDON W1S 1HU')).toUpperCase().trim();
+    const addrParts = rawAddrFull.split(',').map((s) => s.trim()).filter(Boolean);
+    const filteredAddrParts = (addrParts.length === 1 && addrParts[0] === rawVenueTop) ? [] : addrParts;
+    filteredAddrParts.slice(0, 3).forEach((part, idx) => {
+      ctx.fillText(part, splitX + 22, gridY + 20 + idx * 20);
     });
 
     // Row 2: DRESS CODE
@@ -1622,6 +2081,222 @@ class AtgUniversalPosterEngine {
       ctx.fillText(disclaimer, cx, h - 56);
       ctx.restore();
     }
+  }
+
+  /* =========================================================================
+   * ARCHETYPE 16: ILLUMINATED ACRYLIC KEEPSAKE BLOCK (3D Crystal Keepsake Plaque)
+   * High-reality transparent acrylic block with beveled edges, internal depth,
+   * floating subject, halo chamber lighting, watercolor flora & elegant typography.
+   * ========================================================================= */
+  _renderArchetypeAcrylicKeepsakeBlock(ctx, w, h) {
+    const cx = w / 2;
+    const isTall = h >= 1400; // e.g. 9:16 story/flyer or A4 poster
+
+    // 1. Studio Backdrop: Warm Champagne Frosted Ambient Lighting
+    const studioGrad = ctx.createRadialGradient(cx, h * 0.45, 100, cx, h * 0.45, Math.max(w, h) * 0.75);
+    studioGrad.addColorStop(0, '#fffbf5');
+    studioGrad.addColorStop(0.45, '#faf5ed');
+    studioGrad.addColorStop(0.85, '#f1e8da');
+    studioGrad.addColorStop(1, '#e8dcce');
+    ctx.fillStyle = studioGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Warm top ambient glow
+    const topAmbient = ctx.createLinearGradient(0, 0, 0, h * 0.4);
+    topAmbient.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+    topAmbient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = topAmbient;
+    ctx.fillRect(0, 0, w, h * 0.4);
+
+    // 2. Acrylic Plaque Geometry Calculation
+    const plaqueW = Math.min(w * 0.90, 960);
+    const plaqueH = isTall ? Math.min(h * 0.54, 760) : Math.min(h * 0.72, 620);
+    const plaqueX = (w - plaqueW) / 2;
+    const plaqueY = isTall ? (h * 0.18) : (h * 0.12);
+    const plaqueR = 28;
+
+    // Contact surface shadow under the plaque (ground plane reflection)
+    const tableShadowY = plaqueY + plaqueH + 18;
+    ctx.save();
+    const tableShadow = ctx.createRadialGradient(cx, tableShadowY, 40, cx, tableShadowY, plaqueW * 0.52);
+    tableShadow.addColorStop(0, 'rgba(100, 80, 60, 0.32)');
+    tableShadow.addColorStop(0.5, 'rgba(120, 100, 80, 0.14)');
+    tableShadow.addColorStop(1, 'rgba(120, 100, 80, 0)');
+    ctx.fillStyle = tableShadow;
+    ctx.beginPath();
+    ctx.ellipse(cx, tableShadowY, plaqueW * 0.52, 28, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 3. Thick 3D Acrylic Base & Lower Edge Refraction LED Glow
+    ctx.save();
+    const bottomLedGlow = ctx.createRadialGradient(cx, plaqueY + plaqueH, 20, cx, plaqueY + plaqueH, plaqueW * 0.48);
+    bottomLedGlow.addColorStop(0, 'rgba(254, 240, 138, 0.95)');
+    bottomLedGlow.addColorStop(0.35, 'rgba(253, 230, 138, 0.75)');
+    bottomLedGlow.addColorStop(0.7, 'rgba(251, 191, 36, 0.35)');
+    bottomLedGlow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    ctx.fillStyle = bottomLedGlow;
+    ctx.beginPath();
+    ctx.ellipse(cx, plaqueY + plaqueH, plaqueW * 0.5, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 4. Photorealistic Acrylic Block Face
+    const crystalAsset = this.backgroundImage || this.studioAssetCache.bg_acrylic_crystal_block || null;
+    ctx.save();
+    this._roundRect(ctx, plaqueX, plaqueY, plaqueW, plaqueH, plaqueR);
+    ctx.clip();
+
+    if (crystalAsset) {
+      ctx.drawImage(crystalAsset, plaqueX, plaqueY, plaqueW, plaqueH);
+    } else {
+      const glassGrad = ctx.createLinearGradient(plaqueX, plaqueY, plaqueX + plaqueW, plaqueY + plaqueH);
+      glassGrad.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+      glassGrad.addColorStop(0.35, 'rgba(255, 253, 248, 0.78)');
+      glassGrad.addColorStop(0.7, 'rgba(253, 246, 235, 0.82)');
+      glassGrad.addColorStop(1, 'rgba(247, 237, 222, 0.94)');
+      ctx.fillStyle = glassGrad;
+      ctx.fillRect(plaqueX, plaqueY, plaqueW, plaqueH);
+    }
+
+    // Rear chamber halo illumination behind subject
+    const haloX = plaqueX + plaqueW * 0.46;
+    const haloY = plaqueY + plaqueH * 0.52;
+    const halo = ctx.createRadialGradient(haloX, haloY, 20, haloX, haloY, plaqueH * 0.44);
+    halo.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+    halo.addColorStop(0.4, 'rgba(255, 255, 255, 0.65)');
+    halo.addColorStop(0.8, 'rgba(254, 243, 199, 0.25)');
+    halo.addColorStop(1, 'rgba(254, 243, 199, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(haloX, haloY, plaqueH * 0.44, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. User Floating Subject Cutout (if uploaded)
+    if (this.processedSubjectCanvas || this.subjectImage) {
+      const sub = this.processedSubjectCanvas || this.subjectImage;
+      const subMaxH = plaqueH * 0.64;
+      const subMaxW = plaqueW * 0.48;
+      const scale = Math.min(subMaxW / (sub.width || 1), subMaxH / (sub.height || 1));
+      const drawW = (sub.width || subMaxW) * scale;
+      const drawH = (sub.height || subMaxH) * scale;
+      const subX = haloX - drawW / 2;
+      const subY = haloY - drawH / 2;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(120, 100, 80, 0.45)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetX = 12;
+      ctx.shadowOffsetY = 16;
+      ctx.drawImage(sub, subX, subY, drawW, drawH);
+      ctx.restore();
+    }
+
+    // Specular diagonal glare sweep across the acrylic face
+    const glare = ctx.createLinearGradient(plaqueX, plaqueY, plaqueX + plaqueW * 0.7, plaqueY + plaqueH);
+    glare.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+    glare.addColorStop(0.18, 'rgba(255, 255, 255, 0.12)');
+    glare.addColorStop(0.38, 'rgba(255, 255, 255, 0)');
+    glare.addColorStop(0.75, 'rgba(255, 255, 255, 0.08)');
+    glare.addColorStop(1, 'rgba(255, 255, 255, 0.28)');
+    ctx.fillStyle = glare;
+    ctx.fillRect(plaqueX, plaqueY, plaqueW, plaqueH);
+
+    // Beveled internal border reflection
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.lineWidth = 2;
+    this._roundRect(ctx, plaqueX + 8, plaqueY + 8, plaqueW - 16, plaqueH - 16, plaqueR - 4);
+    ctx.stroke();
+
+    ctx.restore(); // Exit plaque clip
+
+    // 6. Exterior Crisp Bevel & Outer Chamfer Frame
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.lineWidth = 3.5;
+    this._roundRect(ctx, plaqueX, plaqueY, plaqueW, plaqueH, plaqueR);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(180, 160, 140, 0.55)';
+    ctx.lineWidth = 1.5;
+    this._roundRect(ctx, plaqueX + 1.5, plaqueY + 1.5, plaqueW - 3, plaqueH - 3, plaqueR);
+    ctx.stroke();
+    ctx.restore();
+
+    // 7. Dynamic Inscriptions & Luxury Keepsake Typography
+    ctx.save();
+    const kickerText = this.data.kicker || this.data.badge || 'HAPPY 1ST BIRTHDAY';
+    const titleText = this.data.title || 'ISABELLE';
+    const subtitleText = this.data.subtitle || 'Illuminated 3D Acrylic Keepsake';
+
+    // Top script inscription on plaque
+    ctx.font = '700 36px "Caveat", "Playfair Display", cursive, serif';
+    ctx.fillStyle = '#ec4899';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(kickerText, cx, plaqueY + 34);
+
+    // Right-aligned or prominent title name
+    ctx.font = '800 52px "Playfair Display", Georgia, serif';
+    ctx.fillStyle = '#4f46e5';
+    ctx.textAlign = 'right';
+    ctx.fillText(titleText, plaqueX + plaqueW - 56, plaqueY + plaqueH * 0.44);
+
+    ctx.font = '600 20px "Montserrat", sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(subtitleText, plaqueX + plaqueW - 56, plaqueY + plaqueH * 0.44 + 44);
+    ctx.restore();
+
+    // 8. Event Information Sub-Card / Bottom Presentation Bar
+    const infoCardY = isTall ? (plaqueY + plaqueH + 48) : (plaqueY + plaqueH + 26);
+    const infoCardW = plaqueW;
+    const infoCardH = isTall ? (h - infoCardY - 60) : (h - infoCardY - 24);
+
+    if (infoCardH > 100) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+      this._roundRect(ctx, plaqueX, infoCardY, infoCardW, infoCardH, 20);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#b45309';
+      ctx.font = '800 14px "Montserrat", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('CELEBRATION DISPATCH & RSVP DETAILS', plaqueX + 28, infoCardY + 34);
+
+      const dateStr = [this.data.date, this.data.time].filter(Boolean).join('  •  ');
+      ctx.fillStyle = '#0f172a';
+      ctx.font = '700 22px "Montserrat", sans-serif';
+      ctx.fillText(`📅  ${dateStr || 'Saturday 24th October 2026 • 2:00 PM'}`, plaqueX + 28, infoCardY + 72);
+
+      const venueStr = [this.data.venue, this.data.address].filter(Boolean).join('  •  ');
+      ctx.fillStyle = '#334155';
+      ctx.font = '600 17px "Montserrat", sans-serif';
+      this._wrapText(ctx, `📍  ${venueStr || 'The Grand Pavilion • London & Kent'}`, plaqueX + 28, infoCardY + 110, infoCardW - 180, 24);
+
+      if (this.data.hosts) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'italic 16px "Playfair Display", Georgia, serif';
+        ctx.fillText(`Hosted with love by ${this.data.hosts}`, plaqueX + 28, infoCardY + infoCardH - 24);
+      }
+
+      if (this.data.qrUrl) {
+        const qrSize = Math.min(infoCardH - 40, 110);
+        this._renderScannableQrBadge(ctx, plaqueX + infoCardW - qrSize - 24, infoCardY + (infoCardH - qrSize) / 2, qrSize, this.data.qrUrl, 'light_compact');
+      }
+      ctx.restore();
+    }
+
+    // 9. Statutory Footer / Craftsmanship Watermark
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '600 14px "Montserrat", sans-serif';
+    const footerText = this.data.regulatoryNotice || 'PartyPlatform • Handcrafted 3D Acrylic Keepsake Edition • Studio Quality Proof';
+    ctx.fillText(footerText, cx, h - 22);
+    ctx.restore();
   }
 
   /* =========================================================================
@@ -4493,17 +5168,53 @@ class AtgUniversalPosterEngine {
     // 1. Monochrome Faded Double-Exposure Ghost Echo Behind Subject (Sample #3)
     if (cfg.ghostEcho) {
       ctx.save();
-      ctx.globalAlpha = 0.24;
-      if ('filter' in ctx) {
-        ctx.filter = 'grayscale(100%) contrast(120%) brightness(88%)';
-      }
-      const echoW = targetW * 1.12;
-      const echoH = targetH * 1.12;
+      const echoW = Math.max(1, Math.round(targetW * 1.12));
+      const echoH = Math.max(1, Math.round(targetH * 1.12));
       const echoX = destX - targetW * 0.28;
       const echoY = destY - targetH * 0.06;
-      ctx.drawImage(activeSource, echoX, echoY, echoW, echoH);
-      if ('filter' in ctx) {
-        ctx.filter = 'none';
+
+      let drewMaskedEcho = false;
+      if (typeof document !== 'undefined') {
+        const echoCanvas = document.createElement('canvas');
+        echoCanvas.width = echoW;
+        echoCanvas.height = echoH;
+        const ectx = echoCanvas.getContext('2d');
+        if (ectx && ectx.createLinearGradient) {
+          if ('filter' in ectx) {
+            ectx.filter = 'grayscale(100%) contrast(122%) brightness(82%)';
+          }
+          ectx.drawImage(activeSource, 0, 0, echoW, echoH);
+          if ('filter' in ectx) {
+            ectx.filter = 'none';
+          }
+          ectx.globalCompositeOperation = 'destination-out';
+          const vFade = ectx.createLinearGradient(0, echoH * 0.40, 0, echoH * 0.78);
+          vFade.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          vFade.addColorStop(1, 'rgba(0, 0, 0, 1)');
+          ectx.fillStyle = vFade;
+          ectx.fillRect(0, 0, echoW, echoH);
+
+          const hFade = ectx.createLinearGradient(0, 0, echoW * 0.26, 0);
+          hFade.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+          hFade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ectx.fillStyle = hFade;
+          ectx.fillRect(0, 0, echoW * 0.26, echoH);
+
+          ctx.globalAlpha = 0.26;
+          ctx.drawImage(echoCanvas, echoX, echoY, echoW, echoH);
+          drewMaskedEcho = true;
+        }
+      }
+
+      if (!drewMaskedEcho) {
+        ctx.globalAlpha = 0.24;
+        if ('filter' in ctx) {
+          ctx.filter = 'grayscale(100%) contrast(120%) brightness(88%)';
+        }
+        ctx.drawImage(activeSource, echoX, echoY, echoW, echoH);
+        if ('filter' in ctx) {
+          ctx.filter = 'none';
+        }
       }
       ctx.restore();
     }
