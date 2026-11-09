@@ -566,4 +566,12 @@ class AdminService
         ]);
         return true;
     }
+
+    /**
+     * Retrieve the sovereign Blog & Editorial Admin Engine.
+     */
+    public function getBlogService(): BlogAdminService
+    {
+        return new BlogAdminService($this->db);
+    }
 }
