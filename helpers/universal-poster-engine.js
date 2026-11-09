@@ -330,21 +330,26 @@ class AtgUniversalPosterEngine {
     }
 
     const px = imgData.data;
+
+    // For real user-uploaded / event cover portraits (non-built-in assets with opaque corners),
+    // execute the ATG Sovereign Biometric Portrait Segmentation & Alpha Matting pipeline.
+    // The portrait subject is kept 100% solid (untouched by transparency), while the photo's
+    // background is controlled by backgroundFade (0 = removed by default when Smart Cutout is on,
+    // or faded by backgroundFade 0..1 so the slider strictly fades the background only).
+    if (!isBuiltIn && w >= 64 && h >= 64) {
+      const topCornerAlpha = px[3] + px[(w - 1) * 4 + 3];
+      if (topCornerAlpha >= 64) {
+        const bgStrength = backgroundFade > 0 ? Math.min(1, backgroundFade) : 1.0;
+        this._segmentPortraitSubject(px, w, h, bgStrength);
+        octx.putImageData(imgData, 0, 0);
+        return offCanvas;
+      }
+    }
+
     if (backgroundFade > 0) {
       this._fadePhotoBackground(px, w, h, Math.min(1, backgroundFade));
       octx.putImageData(imgData, 0, 0);
       return offCanvas;
-    }
-
-    // For real user-uploaded / event cover portraits (non-built-in assets with opaque corners),
-    // execute the ATG Sovereign Biometric Portrait Segmentation & Alpha Matting pipeline.
-    if (!isBuiltIn && w >= 64 && h >= 64) {
-      const topCornerAlpha = px[3] + px[(w - 1) * 4 + 3];
-      if (topCornerAlpha >= 64) {
-        this._segmentPortraitSubject(px, w, h);
-        octx.putImageData(imgData, 0, 0);
-        return offCanvas;
-      }
     }
 
     const sampleCoords = [
@@ -415,8 +420,13 @@ class AtgUniversalPosterEngine {
    * Extracts only the human portrait subject (head/hair/headwrap, jewellery, neck, shoulders,
    * torso/garment, arms) while removing walls, floors, chairs, barrier poles, and chains,
    * and applies adaptive studio shadow relighting for dim indoor portraits.
+   *
+   * @param {Uint8ClampedArray} px
+   * @param {number} w
+   * @param {number} h
+   * @param {number} [bgFadeStrength=1.0] 0..1 — how transparent the background behind the person becomes (1.0 = 100% transparent). The person (m=1) is never touched by transparency.
    */
-  _segmentPortraitSubject(px, w, h) {
+  _segmentPortraitSubject(px, w, h, bgFadeStrength = 1.0) {
     const N = w * h;
 
     // 1. Precompute luminance, chrominance, saturation, and melanin-inclusive skin score
@@ -467,7 +477,7 @@ class AtgUniversalPosterEngine {
 
     // If no human face/skin cluster is present (e.g. a non-portrait graphic), fall back to edge palette fade
     if (skinCount < 50) {
-      this._fadePhotoBackground(px, w, h, 1.0);
+      this._fadePhotoBackground(px, w, h, bgFadeStrength);
       return;
     }
 
@@ -736,7 +746,7 @@ class AtgUniversalPosterEngine {
     }
 
     if (bestScore < N * 0.035) {
-      this._fadePhotoBackground(px, w, h, 1.0);
+      this._fadePhotoBackground(px, w, h, bgFadeStrength);
       return;
     }
 
@@ -817,6 +827,7 @@ class AtgUniversalPosterEngine {
       ? Math.min(0.68, (118 - meanFaceLum) / 105)
       : 0;
 
+    const bgAlphaScale = Math.max(0, Math.min(1, 1 - bgFadeStrength));
     for (let y = 0; y < h; y++) {
       const ny = y / h;
       const bottomFade = ny > 0.86 ? Math.max(0, 1 - (ny - 0.86) / 0.14) : 1.0;
@@ -824,13 +835,23 @@ class AtgUniversalPosterEngine {
         const p = y * w + x;
         const i = p * 4;
         const m = Math.max(0, Math.min(1, (alphaFloat[p] - 0.48) / 0.44));
-        const finalAlpha = Math.round(255 * m * bottomFade);
+        // m = 1 on the person (kept 100% opaque); m = 0 on the background (faded by bgFadeStrength)
+        const effectiveMask = m + (1 - m) * bgAlphaScale;
+        // Soften outer edges of any remaining photo background so it never forms a sharp box
+        let edgeFeather = 1.0;
+        if (m < 0.99 && bgAlphaScale > 0) {
+          const nx = x / w;
+          const fx = nx < 0.18 ? nx / 0.18 : (nx > 0.90 ? (1 - nx) / 0.10 : 1.0);
+          const fy = ny < 0.08 ? ny / 0.08 : 1.0;
+          edgeFeather = Math.max(0, Math.min(1, fx * fy));
+        }
+        const finalAlpha = Math.round(255 * (m + (1 - m) * bgAlphaScale * edgeFeather) * bottomFade);
         px[i + 3] = finalAlpha;
 
-        if (finalAlpha > 0 && relightBoost > 0) {
+        if (m > 0.05 && relightBoost > 0) {
           const yNorm = lum[p] / 255;
           const shadowCurve = Math.pow(1 - yNorm, 2.05);
-          const lift = 1 + relightBoost * shadowCurve;
+          const lift = 1 + relightBoost * shadowCurve * m;
           px[i] = Math.min(255, Math.round(px[i] * lift * 1.02));
           px[i + 1] = Math.min(255, Math.round(px[i + 1] * lift * 1.00));
           px[i + 2] = Math.min(255, Math.round(px[i + 2] * lift * 0.97));
@@ -1029,21 +1050,12 @@ class AtgUniversalPosterEngine {
     };
     mask = blur(blur(mask, true), false);
 
-    // 5. Apply: fade the background, plus a gentle vignette on far-off areas at high strengths
-    //    (catches textured backgrounds the colour palette cannot fully describe).
-    const prior = strength > 0.45 ? ((strength - 0.45) / 0.55) * 0.85 : 0;
+    // 5. Apply: fade only the detected background (mask[p]) without touching the person.
     for (let y = 0; y < h; y++) {
       const ny = y / h;
-      const ey = (ny - 0.56) / 0.62;
       for (let x = 0; x < w; x++) {
         const p = y * w + x, i = p * 4;
-        let fade = mask[p] * strength;
-        if (prior > 0) {
-          const ex = (x / w - 0.5) / 0.4;
-          const e = ex * ex + ey * ey;
-          const outside = e <= 1 ? 0 : e >= 1.6 ? 1 : (e - 1) / 0.6;
-          fade = Math.max(fade, outside * prior * strength);
-        }
+        const fade = mask[p] * strength;
         let a = px[i + 3] * (1 - fade);
         if (ny > 0.88) a *= Math.max(0, 1 - (ny - 0.88) / 0.12); // same soft bottom edge as the cutout
         px[i + 3] = Math.round(a);
@@ -5126,16 +5138,6 @@ class AtgUniversalPosterEngine {
       fadeTop.addColorStop(1, 'rgba(0, 0, 0, 0)');
       g.fillStyle = fadeTop;
       g.fillRect(0, 0, targetW, topH);
-    } else {
-      // For cutouts, provide a soft atmospheric blend on the far-left boundary
-      // so any subject edges melt completely into the background without a sharp cut
-      const leftDissolveW = Math.max(1, Math.round(targetW * 0.16));
-      const dissolveLeft = g.createLinearGradient(0, 0, leftDissolveW, 0);
-      dissolveLeft.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
-      dissolveLeft.addColorStop(0.40, 'rgba(0, 0, 0, 0.45)');
-      dissolveLeft.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      g.fillStyle = dissolveLeft;
-      g.fillRect(0, 0, leftDissolveW, targetH);
     }
 
     g.globalCompositeOperation = 'source-over';
@@ -5229,28 +5231,13 @@ class AtgUniversalPosterEngine {
       ctx.restore();
     }
 
-    // 2. Crisp Foreground Subject with Soft Atmospheric Drop Shadow
+    // 2. Crisp Foreground Subject with Soft Atmospheric Drop Shadow (100% solid & untouched by transparency)
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
     ctx.shadowBlur = 32;
     ctx.shadowOffsetX = -4;
     ctx.shadowOffsetY = 14;
     ctx.drawImage(activeSource, destX, destY, targetW, targetH);
-    ctx.restore();
-
-    // 3. Editorial Left-Boundary Atmospheric Dissolve:
-    // Ensures the left side of the subject layer dissolves seamlessly into the template
-    // so no edge or box imposition ever shows.
-    ctx.save();
-    const dissolveW = Math.max(1, Math.round(targetW * 0.22));
-    const dissolveX = destX;
-    const dissolveGrad = ctx.createLinearGradient(dissolveX, 0, dissolveX + dissolveW, 0);
-    dissolveGrad.addColorStop(0, 'rgba(4, 4, 6, 0.95)');
-    dissolveGrad.addColorStop(0.35, 'rgba(4, 4, 6, 0.65)');
-    dissolveGrad.addColorStop(0.70, 'rgba(4, 4, 6, 0.25)');
-    dissolveGrad.addColorStop(1, 'rgba(4, 4, 6, 0)');
-    ctx.fillStyle = dissolveGrad;
-    ctx.fillRect(dissolveX, destY, dissolveW, targetH);
     ctx.restore();
   }
 
