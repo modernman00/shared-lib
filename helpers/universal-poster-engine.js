@@ -5126,6 +5126,16 @@ class AtgUniversalPosterEngine {
       fadeTop.addColorStop(1, 'rgba(0, 0, 0, 0)');
       g.fillStyle = fadeTop;
       g.fillRect(0, 0, targetW, topH);
+    } else {
+      // For cutouts, provide a soft atmospheric blend on the far-left boundary
+      // so any subject edges melt completely into the background without a sharp cut
+      const leftDissolveW = Math.max(1, Math.round(targetW * 0.16));
+      const dissolveLeft = g.createLinearGradient(0, 0, leftDissolveW, 0);
+      dissolveLeft.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+      dissolveLeft.addColorStop(0.40, 'rgba(0, 0, 0, 0.45)');
+      dissolveLeft.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      g.fillStyle = dissolveLeft;
+      g.fillRect(0, 0, leftDissolveW, targetH);
     }
 
     g.globalCompositeOperation = 'source-over';
@@ -5226,6 +5236,21 @@ class AtgUniversalPosterEngine {
     ctx.shadowOffsetX = -4;
     ctx.shadowOffsetY = 14;
     ctx.drawImage(activeSource, destX, destY, targetW, targetH);
+    ctx.restore();
+
+    // 3. Editorial Left-Boundary Atmospheric Dissolve:
+    // Ensures the left side of the subject layer dissolves seamlessly into the template
+    // so no edge or box imposition ever shows.
+    ctx.save();
+    const dissolveW = Math.max(1, Math.round(targetW * 0.22));
+    const dissolveX = destX;
+    const dissolveGrad = ctx.createLinearGradient(dissolveX, 0, dissolveX + dissolveW, 0);
+    dissolveGrad.addColorStop(0, 'rgba(4, 4, 6, 0.95)');
+    dissolveGrad.addColorStop(0.35, 'rgba(4, 4, 6, 0.65)');
+    dissolveGrad.addColorStop(0.70, 'rgba(4, 4, 6, 0.25)');
+    dissolveGrad.addColorStop(1, 'rgba(4, 4, 6, 0)');
+    ctx.fillStyle = dissolveGrad;
+    ctx.fillRect(dissolveX, destY, dissolveW, targetH);
     ctx.restore();
   }
 

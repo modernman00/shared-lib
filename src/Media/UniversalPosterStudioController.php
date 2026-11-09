@@ -1854,10 +1854,11 @@ class UniversalPosterStudioController
         // Subject Photo Upload with Smart Background Removal
         let lastSubjectSrc = null;
         async function reloadSubjectPhoto() {
-            if (!lastSubjectSrc) return;
+            const activeSrc = lastSubjectSrc || (engine.subjectImage && (engine.subjectImage.src || engine.subjectImage)) || null;
+            if (!activeSrc) return;
             const autoCutout = document.getElementById('chkAutoCutout').checked;
             const bgFade = (parseInt(document.getElementById('rngSubjectBgFade').value, 10) || 0) / 100;
-            await engine.setSubjectImage(lastSubjectSrc, { autoRemoveBackground: autoCutout, tolerance: 44, backgroundFade: bgFade });
+            await engine.setSubjectImage(activeSrc, { autoRemoveBackground: autoCutout, tolerance: 44, backgroundFade: bgFade });
             engine.render();
             showToast(bgFade > 0 ? 'Photo background ' + Math.round(bgFade * 100) + '% transparent' : (autoCutout ? 'Subject isolated with Smart Background Cutout' : 'Subject photo updated'));
         }
@@ -1868,7 +1869,8 @@ class UniversalPosterStudioController
             document.getElementById('lblBgFadeVal').textContent = e.target.value + '%';
         });
         document.getElementById('rngSubjectBgFade').addEventListener('change', () => {
-            if (!lastSubjectSrc) { showToast('Upload a photo first — this fades the background behind the person'); return; }
+            const activeSrc = lastSubjectSrc || (engine.subjectImage && (engine.subjectImage.src || engine.subjectImage)) || null;
+            if (!activeSrc) { showToast('Upload a photo first — this fades the background behind the person'); return; }
             reloadSubjectPhoto();
         });
 
