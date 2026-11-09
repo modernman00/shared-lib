@@ -134,7 +134,7 @@ class AlgorithmicUnderwriterTest extends TestCase
         $relStr = number_format($reliability, 2, '.', '');
 
         $rawPayload = "{$uuid}|{$userId}|{$type}|{$netIncStr}|{$ndcrStr}|{$dtiStr}|{$velStr}|{$relStr}|{$tier}|{$expiresAt}";
-        $signature = hash_hmac('sha256', $rawPayload, 'iaccount_sovereign_signing_key_2026');
+        $signature = hash_hmac('sha256', $rawPayload, $this->signingKey);
 
         $profile = [
             'monthly_income' => 4200.0,
@@ -143,6 +143,7 @@ class AlgorithmicUnderwriterTest extends TestCase
             'solvency_passport' => [
                 'uuid' => $uuid,
                 'signature' => $signature,
+                'signing_key' => $this->signingKey,
                 'user_id' => $userId,
                 'passport_type' => $type,
                 'verified_net_monthly_income' => $netIncome,
@@ -161,5 +162,22 @@ class AlgorithmicUnderwriterTest extends TestCase
         $this->assertTrue($decision['fast_track_approved']);
         $this->assertTrue($decision['solvency_passport_verified']);
         $this->assertEquals(0.10, $decision['effective_annual_rate']); // 50% discount on 20%
+    }
+
+    public function testDefaultInsecureSigningKeyIsRejected(): void
+    {
+        $uuid = bin2hex(random_bytes(16));
+        $passportData = [
+            'user_id' => 1,
+            'passport_type' => 'mortgage_readiness',
+            'verified_net_monthly_income' => 5000.0,
+            'expires_at' => date('Y-m-d H:i:s', strtotime('+30 days')),
+        ];
+
+        $forgedSig = hash_hmac('sha256', 'dummy', 'iaccount_sovereign_signing_key_2026');
+        $result = $this->underwriter->verifySolvencyPassport($uuid, $forgedSig, $passportData, 'iaccount_sovereign_signing_key_2026');
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('Insecure or unconfigured ecosystem signing key rejected', $result['reason']);
     }
 }

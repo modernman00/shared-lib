@@ -36,8 +36,9 @@ class RentReliabilityPredictorTest extends TestCase
         $velStr = number_format($velocity, 2, '.', '');
         $relStr = number_format($reliability, 2, '.', '');
 
+        $signingKey = 'test_secret_key_rent_2026';
         $rawPayload = "{$uuid}|{$userId}|{$type}|{$netIncStr}|{$ndcrStr}|{$dtiStr}|{$velStr}|{$relStr}|{$tier}|{$expiresAt}";
-        $signature = hash_hmac('sha256', $rawPayload, 'iaccount_sovereign_signing_key_2026');
+        $signature = hash_hmac('sha256', $rawPayload, $signingKey);
 
         $applicant = [
             'monthly_income' => 4500.0,
@@ -46,6 +47,7 @@ class RentReliabilityPredictorTest extends TestCase
             'solvency_passport' => [
                 'uuid' => $uuid,
                 'signature' => $signature,
+                'signing_key' => $signingKey,
                 'user_id' => $userId,
                 'passport_type' => $type,
                 'verified_net_monthly_income' => $netIncome,

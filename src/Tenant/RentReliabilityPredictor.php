@@ -54,10 +54,18 @@ class RentReliabilityPredictor
         string $uuid,
         string $signature,
         array $passportData,
-        string $signingKey = 'iaccount_sovereign_signing_key_2026'
+        string $signingKey = ''
     ): array {
         if ($uuid === '' || $signature === '') {
             return ['valid' => false, 'reason' => 'Passport identifier and cryptographic signature required.'];
+        }
+
+        // 🛡️ Marcus ("Ghost") Reinholt Security Gate: Reject default, insecure, or unconfigured signing keys
+        if (empty($signingKey) || $signingKey === 'iaccount_sovereign_signing_key_2026') {
+            return [
+                'valid' => false,
+                'reason' => 'Cryptographic verification halted: Insecure or unconfigured ecosystem signing key rejected.',
+            ];
         }
 
         $expiresAt = (string)($passportData['expires_at'] ?? '');
@@ -136,10 +144,12 @@ class RentReliabilityPredictor
         $passportTier = 'standard';
 
         if (is_array($passport) && !empty($passport['uuid']) && !empty($passport['signature'])) {
+            $passportSigningKey = (string)($passport['signing_key'] ?? $_ENV['ECOSYSTEM_SIGNING_KEY'] ?? $_ENV['APP_KEY'] ?? '');
             $verification = $this->verifySolvencyPassport(
                 (string)$passport['uuid'],
                 (string)$passport['signature'],
-                $passport
+                $passport,
+                $passportSigningKey
             );
             if ($verification['valid']) {
                 $passportVerified = true;
