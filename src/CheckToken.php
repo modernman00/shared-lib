@@ -18,14 +18,14 @@ class CheckToken
     public static function tokenCheck(): void
     {
         // try {
-        $sessionToken = $_SESSION['token'] ?? '';
-        $postToken = $_POST['token'] ?? '';
-        $headerToken = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '';
+        $sessionToken = (string)($_SESSION['token'] ?? '');
+        $postToken = (string)($_POST['token'] ?? '');
+        $headerToken = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_SERVER['HTTP_X_XSRF_TOKEN'] ?? '');
 
         $valid = false;
-        if ($sessionToken && hash_equals($sessionToken, $headerToken)) {
+        if ($sessionToken !== '' && $headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
             $valid = true;
-        } elseif ($sessionToken && hash_equals($sessionToken, $postToken)) {
+        } elseif ($sessionToken !== '' && $postToken !== '' && hash_equals($sessionToken, $postToken)) {
             $valid = true;
         }
 
