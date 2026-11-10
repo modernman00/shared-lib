@@ -15,6 +15,27 @@ use Src\SendEmail;
 
 // use RuntimeException;
 
+if (!function_exists('env')) {
+    /**
+     * Gets the value of an environment variable with optional fallback.
+     */
+    function env(string $key, mixed $default = null): mixed
+    {
+        $val = $_ENV[$key] ?? getenv($key);
+        if ($val === false || $val === null || $val === '') {
+            return $default;
+        }
+
+        return match (strtolower((string)$val)) {
+            'true', '(true)'   => true,
+            'false', '(false)' => false,
+            'empty', '(empty)' => '',
+            'null', '(null)'   => null,
+            default            => $val,
+        };
+    }
+}
+
 if (!function_exists('isTestEnv')) {
     /**
      * True when the consuming application is exercising controller methods
