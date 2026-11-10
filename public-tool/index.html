@@ -5,6 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bank Statement Assessment &amp; Gap-Detection Engine</title>
   <style>
+    /* Top Suite Navigation Switcher */
+    .app-top-nav {
+      background: #0f172a;
+      color: #ffffff;
+      border-bottom: 1px solid #1e293b;
+      padding: 0 16px;
+    }
+
+    .top-nav-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 48px;
+      flex-wrap: wrap;
+    }
+
+    .top-nav-brand {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .top-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .top-nav-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      transition: all 0.15s ease;
+    }
+
+    .top-nav-link:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .top-nav-link.active {
+      color: #ffffff;
+      background: #1e293b;
+      font-weight: 700;
+      box-shadow: inset 0 -2px 0 0 #3b82f6;
+    }
+
     :root {
       /* 60-30-10 Disciplined Palette — WCAG AA/AAA Compliant */
       --bg-canvas: #f8fafc;
@@ -831,6 +893,24 @@
   </style>
 </head>
 <body>
+  <!-- Top Suite Navigation Switcher -->
+  <nav class="app-top-nav" aria-label="Tool Switcher">
+    <div class="top-nav-inner">
+      <div class="top-nav-brand">
+        <span style="font-size: 1.1rem;">⚖️</span>
+        <span>Assessment &amp; Review Suite</span>
+      </div>
+      <div class="top-nav-links">
+        <a href="bank-statement-checker.html" class="top-nav-link active" id="navLinkStatement" aria-current="page">
+          <span>📑 Bank Statement Checker</span>
+        </a>
+        <a href="uc-case-planner.html" class="top-nav-link" id="navLinkPlanner">
+          <span>📋 Case Project Planner</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
 
   <header class="app-header">
     <div class="header-inner">
@@ -1149,13 +1229,10 @@
           </div>
         </div>
 
-        <!-- 3-View Segmented Tab Switcher -->
+        <!-- 2-View Segmented Tab Switcher -->
         <div class="view-tabs" role="tablist" aria-label="Assessment Output Views">
           <button type="button" role="tab" id="tabViewCustomer" aria-selected="true" aria-controls="panelCustomerMessage" class="tab-btn active">
             <span>💬 Message to Customer</span>
-          </button>
-          <button type="button" role="tab" id="tabViewReply" aria-selected="false" aria-controls="panelReplyAssistant" class="tab-btn">
-            <span>↩️ Respond to Message</span>
           </button>
           <button type="button" role="tab" id="tabViewAudit" aria-selected="false" aria-controls="panelAuditNote" class="tab-btn">
             <span>📋 My Audit Note</span>
@@ -1204,9 +1281,6 @@
                 <span class="spinner" aria-hidden="true"></span>
                 <span id="btnCopyEmailText">Copy Journal Message to Clipboard</span>
               </button>
-              <button type="button" id="btnSwitchToReply" class="btn btn-secondary">
-                <span>Respond to Customer &rarr;</span>
-              </button>
               <button type="button" id="btnSwitchToAudit" class="btn btn-secondary">
                 <span>View My Audit Note &rarr;</span>
               </button>
@@ -1215,143 +1289,7 @@
           </div>
         </div>
 
-        <!-- VIEW 2: Respond to Message / Reply Assistant -->
-        <div id="panelReplyAssistant" role="tabpanel" aria-labelledby="tabViewReply" style="display: none;">
-          <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; font-size: 0.8125rem; color: var(--text-secondary);">
-            <span><strong>Customer Message Intelligence:</strong> Paste any message or email received from a customer below. The tool will automatically analyse what they are asking (e.g. closed accounts, delays, branch printouts, or missing dates) and draft an ultra-concise, policy-compliant response.</span>
-          </div>
-
-          <!-- Customer Message Paste Input Area -->
-          <div class="form-group" style="margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-              <label for="pastedCustomerMessage" style="font-weight: 700; color: var(--text-primary); margin: 0;">
-                📩 Paste Customer Message / Journal Entry Here:
-              </label>
-              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Try Demo Text:</span>
-                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="closed" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Account Closed</button>
-                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="extension" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Need Extension</button>
-                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="dispute" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">Already Sent All</button>
-                <button type="button" class="btn btn-outline-light btn-sm js-sample-msg" data-sample="branch" style="min-height: 28px; padding: 2px 8px; font-size: 0.75rem; color: var(--accent-primary); border-color: var(--border-strong);">No Online Banking</button>
-              </div>
-            </div>
-            <textarea id="pastedCustomerMessage" placeholder="Paste the customer's journal message or email here (e.g. 'I do not use this NatWest account anymore it was closed months ago' or 'I need more time to get my Barclays statement')..." style="min-height: 90px; width: 100%; border-color: var(--accent-primary);"></textarea>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; flex-wrap: wrap; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <button type="button" id="btnAnalyzeCustomerMsg" class="btn btn-primary" style="min-height: 44px;">
-                  <span class="spinner" aria-hidden="true"></span>
-                  <span>✨ Analyse Message &amp; Draft Response</span>
-                </button>
-                <button type="button" id="btnClearPastedMsg" class="btn btn-secondary btn-sm" style="min-height: 38px; padding: 4px 10px;">
-                  Clear Message
-                </button>
-              </div>
-              <div id="detectedIntentBadge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: 700; color: var(--accent-primary);">
-                <!-- e.g. Detected: Closed Account Query (NatWest) -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Secondary Customisation & Override Controls -->
-          <details style="margin-bottom: 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 8px 12px;">
-            <summary style="font-size: 0.8125rem; font-weight: 700; cursor: pointer; color: var(--text-secondary);">
-              ⚙️ Fine-Tune Template &amp; Deadline Options (Optional)
-            </summary>
-            <div style="padding-top: 10px;">
-              <div class="form-grid" style="margin-bottom: 10px;">
-                <div class="form-group">
-                  <label for="replyScenario">Detected / Selected Intent</label>
-                  <select id="replyScenario">
-                    <option value="unreadable">📸 Unreadable or Cropped Screenshot / Photo</option>
-                    <option value="closed">🔒 Account Closed or Dormant</option>
-                    <option value="clarification">⚠️ Clarification: Missing Dates Still Required</option>
-                    <option value="extension">⏳ Extension Request Granted</option>
-                    <option value="branch">🏦 Online Banking Unavailable / Branch Advice</option>
-                    <option value="compliant">✓ Statements Complete (Verification Confirmed)</option>
-                    <option value="custom">✍️ Custom Points / Free-Form Response</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="replyAccountTarget">Target Bank Account</label>
-                  <select id="replyAccountTarget">
-                    <option value="all">All Accounts / General Response</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <label for="replyFormat" style="font-size: 0.75rem; font-weight: 700;">Format:</label>
-                  <select id="replyFormat" style="min-height: 44px; padding: 4px 8px;">
-                    <option value="journal" selected>Slim Journal Message (Action-Focused)</option>
-                    <option value="detailed">Detailed Letter / Email</option>
-                  </select>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <label for="replyExtensionDays" style="font-size: 0.75rem; font-weight: 700;">Reply Deadline / Extension:</label>
-                  <select id="replyExtensionDays" style="min-height: 44px; padding: 4px 8px;">
-                    <option value="7">7 Calendar Days</option>
-                    <option value="14" selected>14 Calendar Days</option>
-                    <option value="28">28 Calendar Days</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group" style="margin-top: 12px; border-top: 1px dashed var(--border-strong); padding-top: 10px;">
-                <label for="geminiApiKey" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">
-                  Optional Free Gemini API Key (Stored 100% locally in your browser):
-                </label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <input type="password" id="geminiApiKey" placeholder="AIzaSy... (Get free key from aistudio.google.com)" style="flex: 1; font-size: 0.8125rem; min-height: 44px;" />
-                  <button type="button" id="btnSaveApiKey" class="btn btn-secondary btn-sm" style="min-height: 44px;">Save Key</button>
-                  <button type="button" id="btnClearApiKey" class="btn btn-secondary btn-sm" style="min-height: 44px;">Clear</button>
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
-                  100% free with no credit card required. If omitted, the tool automatically uses on-device Chrome AI (Gemini Nano) or the built-in intelligent NLP rules engine.
-                </div>
-              </div>
-            </div>
-          </details>
-
-          <!-- Drafted Response Output -->
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label for="replySubject">Drafted Response Subject / Journal Heading</label>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <input type="text" id="replySubject" readonly style="flex: 1; background: #f8fafc; font-weight: 600;" />
-              <button type="button" id="btnCopyReplySubject" class="btn btn-secondary btn-sm">
-                <span class="spinner" aria-hidden="true"></span>
-                <span>Copy Subject</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="replyBody">Drafted Response (Editable &amp; Ready to Paste into Journal)</label>
-            <textarea id="replyBody" class="email-box" style="min-height: 200px;"></textarea>
-          </div>
-
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px;">
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-              <button type="button" id="btnCopyReply" class="btn btn-primary">
-                <span class="spinner" aria-hidden="true"></span>
-                <span id="btnCopyReplyText">Copy Response to Clipboard</span>
-              </button>
-              <button type="button" id="btnAppendReplyToAudit" class="btn btn-secondary" title="Appends a record of this response to your caseworker audit note">
-                <span class="spinner" aria-hidden="true"></span>
-                <span>Append to My Audit Note</span>
-              </button>
-              <button type="button" id="btnSwitchFromReplyToCustomer" class="btn btn-secondary">
-                <span>&larr; Message to Customer</span>
-              </button>
-              <button type="button" id="btnSwitchFromReplyToAudit" class="btn btn-secondary">
-                <span>View My Audit Note &rarr;</span>
-              </button>
-            </div>
-            <span id="replyFeedback" class="toast-feedback" role="status" aria-live="polite"></span>
-          </div>
-        </div>
-
-        <!-- VIEW 3: My Audit Note -->
+        <!-- VIEW 2: My Audit Note -->
         <div id="panelAuditNote" role="tabpanel" aria-labelledby="tabViewAudit" style="display: none;">
           <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; font-size: 0.8125rem; color: var(--text-secondary);">
             <span>Store a concise record of what you completed on this assessment for your own records so you can always remember the update. Notes are stored in your browser so you can quickly review history, reload previous case inputs, or copy action summaries.</span>
@@ -1392,9 +1330,6 @@
             </button>
             <button type="button" id="btnSwitchToCustomer" class="btn btn-secondary">
               <span>&larr; Message to Customer</span>
-            </button>
-            <button type="button" id="btnSwitchAuditToReply" class="btn btn-secondary">
-              <span>Respond to Customer &rarr;</span>
             </button>
           </div>
 
@@ -1877,7 +1812,7 @@
      * ============================================================================
      * 3. DETERMINISTIC BRITISH ENGLISH EMAIL & JOURNAL DRAFT GENERATOR
      * ============================================================================
-     * Optimized for Benefit Journal entries:
+     * Optimised for Benefit Journal entries:
      * - Default 'journal' mode is slimmed-down, zero-fluff, and laser-focused on
      *   what further information is required from the customer.
      * - Optional 'detailed' mode provides formal letter/email formatting.
@@ -1963,7 +1898,7 @@
         return { subject, body, caseNote };
       }
 
-      // 3. Gaps or Missing Account Types Exist: Straight to the point for the DWP Journal
+      // 3. Gaps or Missing Account Types Exist: Straight to the point for the Customer Journal
       const subject = isJournalFormat
         ? `Action Required: Missing Bank Statements`
         : `Action Required: Missing Bank Statement Dates for Assessment Review (${apPeriodStr})`;
@@ -2005,7 +1940,7 @@
 
       let body = '';
       if (isJournalFormat) {
-        // Ultra-concise DWP Journal format (straight to the point)
+        // Ultra-concise Customer Journal format (straight to the point)
         body = [
           `Please upload bank statements covering the following missing dates by ${deadlineFormatted}:`,
           ``,
@@ -2137,267 +2072,11 @@
 
     /**
      * ============================================================================
-     * 3C. INTERACTIVE CUSTOMER RESPONSE & MESSAGE DRAFTING ASSISTANT
-     * ============================================================================
-     * Generates instant, targeted British English journal replies and emails for
-     * frequent caseworker enquiries (unreadable uploads, closed accounts,
-     * extensions, branch advice, boundary clarifications, and custom notes).
-     */
-    function generateCustomerResponse(replyConfig, appConfig, result) {
-      const isJournal = (replyConfig.format || 'journal') === 'journal';
-      const targetStartIso = appConfig.reviewStart || appConfig.assessmentStart || '';
-      const targetEndIso = appConfig.reviewEnd || appConfig.assessmentEnd || '';
-      const reviewPeriodStr = targetStartIso && targetEndIso
-        ? `${CalendarEngine.formatUK(targetStartIso, 'long')} to ${CalendarEngine.formatUK(targetEndIso, 'long')}`
-        : 'your 4-month review window';
-
-      const todayIso = new Date().toISOString().slice(0, 10);
-      const extDays = Number(replyConfig.extensionDays || 14);
-      const deadlineIso = CalendarEngine.addDays(todayIso, extDays);
-      const deadlineFormatted = CalendarEngine.formatUK(deadlineIso, 'long');
-
-      // Identify target account label
-      let targetAccountLabel = 'your bank account';
-      if (replyConfig.targetAccountKey && replyConfig.targetAccountKey !== 'all' && result.accountAnalyses) {
-        const found = result.accountAnalyses.find(a => {
-          const k = `${(a.bankName || '').toLowerCase()}__${(a.accountType || '').toLowerCase()}__${(a.accountRef || '').toLowerCase()}`;
-          return k === replyConfig.targetAccountKey;
-        });
-        if (found) {
-          targetAccountLabel = found.displayLabel;
-        }
-      }
-
-      // Build missing dates summary if needed
-      let missingSummary = '';
-      if (result.accountAnalyses && result.accountAnalyses.length > 0) {
-        const lines = [];
-        for (const acc of result.accountAnalyses) {
-          if (acc.gaps.length > 0) {
-            const gapList = acc.gaps.map(g => g.days === 1
-              ? `  - ${CalendarEngine.formatUK(g.startIso, 'long')} (1 missing day)`
-              : `  - ${CalendarEngine.formatUK(g.startIso, 'long')} to ${CalendarEngine.formatUK(g.endIso, 'long')}`
-            ).join('\n');
-            lines.push(`• ${acc.displayLabel}:\n${gapList}`);
-          }
-        }
-        for (const m of result.missingAccountTypes || []) {
-          lines.push(`• ${m}: All 4 months required (${reviewPeriodStr})`);
-        }
-        missingSummary = lines.join('\n\n');
-      }
-
-      let subject = '';
-      let body = '';
-      let auditSummary = '';
-
-      const scenario = replyConfig.scenario || 'unreadable';
-
-      switch (scenario) {
-        case 'unreadable':
-          subject = isJournal
-            ? `Action Required: Re-upload Clear Bank Statement`
-            : `Action Required: Re-upload Clear Bank Statement for Assessment Review`;
-          body = isJournal ? [
-            `The bank statement you provided for ${targetAccountLabel} is unreadable, cropped, or missing key details.`,
-            ``,
-            `Please upload a clear, full-page statement or official transaction summary by ${deadlineFormatted} showing:`,
-            `• Your full name as the account holder`,
-            `• Sort code and account number`,
-            `• Complete transaction dates and running balance`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for uploading your documents. However, the statement image or document received for ${targetAccountLabel} is cropped, blurry, or missing key verification details.`,
-            ``,
-            `To verify your claim, statements must clearly display:`,
-            `• Your full name as the account holder`,
-            `• Your sort code and account number`,
-            `• The complete dates of transactions and running balance`,
-            ``,
-            `Please upload a clear PDF download or full-page copy to your journal by ${deadlineFormatted}.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Requested clear/uncropped statement for ${targetAccountLabel}. Deadline ${deadlineFormatted}.`;
-          break;
-
-        case 'closed':
-          subject = isJournal
-            ? `Action Required: Closed Account Confirmation`
-            : `Action Required: Verification for Closed Account (${targetAccountLabel})`;
-          body = isJournal ? [
-            `Regarding ${targetAccountLabel}:`,
-            ``,
-            `If this account is closed or no longer in use, please provide one of the following by ${deadlineFormatted}:`,
-            `• An official bank closure letter confirming the date the account was closed, or`,
-            `• The final bank statement showing the account closed with a £0.00 balance.`,
-            ``,
-            `If you cannot obtain either document, please reply in your journal confirming the approximate date the account was closed and with which bank.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for your update regarding ${targetAccountLabel}.`,
-            ``,
-            `If this account has been closed, we require official confirmation for our audit records. Please provide one of the following:`,
-            `• An official bank closure letter or confirmation showing the date the account was closed, or`,
-            `• The final bank statement showing the account closed with a £0.00 balance.`,
-            ``,
-            `Please upload this document to your journal by ${deadlineFormatted}. If you do not have either document, please reply confirming the approximate date the account was closed.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Requested closure letter or final £0.00 statement for ${targetAccountLabel}. Deadline ${deadlineFormatted}.`;
-          break;
-
-        case 'clarification':
-          subject = isJournal
-            ? `Update: Missing Bank Statement Dates`
-            : `Clarification: Bank Statement Dates Still Required`;
-          body = isJournal ? [
-            `Thank you for your message. We have checked your uploaded statements, but there are still dates that we are required to verify:`,
-            ``,
-            missingSummary || `• Statements covering ${reviewPeriodStr}`,
-            ``,
-            `Please upload statements covering these specific dates by ${deadlineFormatted}.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for your message regarding your bank statements.`,
-            ``,
-            `We have re-checked the statements you have submitted so far. While we have logged your submissions, we are required by regulation to review continuous statements across your full 4-month review window (${reviewPeriodStr}).`,
-            ``,
-            `The following dates are still unverified and must be provided:`,
-            ``,
-            missingSummary || `• Statements covering ${reviewPeriodStr}`,
-            ``,
-            `Please upload statements covering these dates by ${deadlineFormatted} so we can complete your assessment review.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Clarified outstanding missing dates to customer. Set deadline ${deadlineFormatted}.`;
-          break;
-
-        case 'extension':
-          subject = isJournal
-            ? `Extension Granted: Bank Statements Deadline`
-            : `Extension Granted: Bank Statements for Assessment Review`;
-          body = isJournal ? [
-            `We have noted your message and granted an extension of ${extDays} calendar days to submit your bank statements.`,
-            ``,
-            `Your new deadline to upload the required statements is ${deadlineFormatted}.`,
-            ``,
-            `Please upload your statements as soon as you receive them to avoid delays to your assessment.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for contacting us regarding your bank statements.`,
-            ``,
-            `We have agreed to your request for additional time. Your deadline to upload the required bank statements has been extended by ${extDays} days to ${deadlineFormatted}.`,
-            ``,
-            `Please ensure all required statements covering the 4-month review window (${reviewPeriodStr}) are uploaded by this date so your assessment can be finalized.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Granted ${extDays}d deadline extension to ${deadlineFormatted}.`;
-          break;
-
-        case 'branch':
-          subject = isJournal
-            ? `Advice: Obtaining Bank Statements via Branch`
-            : `Guidance: Obtaining Bank Statements Without Online Banking`;
-          body = isJournal ? [
-            `If you cannot download statements from online banking, you can visit any local branch of your bank and ask for an interim transaction printout covering ${reviewPeriodStr}.`,
-            ``,
-            `The branch printout must show your name, sort code, account number, and transaction history.`,
-            ``,
-            `Please upload photos or scans of the printout by ${deadlineFormatted}.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for contacting us regarding access to your bank statements.`,
-            ``,
-            `If you do not use online banking or are experiencing technical difficulties, you can obtain the required statements by visiting any local branch of your bank.`,
-            ``,
-            `Please ask the branch staff for an interim statement or stamped transaction history printout covering the period from ${reviewPeriodStr}. Ensure the printout includes:`,
-            `• Your full name`,
-            `• Sort code and account number`,
-            `• Complete transaction history and balances`,
-            ``,
-            `Please upload the printout to your journal by ${deadlineFormatted}.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Advised customer on obtaining branch printout for ${reviewPeriodStr}. Deadline ${deadlineFormatted}.`;
-          break;
-
-        case 'compliant':
-          subject = isJournal
-            ? `Bank Statement Verification Complete`
-            : `Bank Statement Verification Complete – Assessment Review`;
-          body = isJournal ? [
-            `Thank you for submitting your bank statements. All required statements across your 4-month review period have now been received and verified. No further statements are needed.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for providing the remaining bank statements for your assessment review.`,
-            ``,
-            `We can confirm that all statements across your 4-month review period (${reviewPeriodStr}) have been successfully received and verified with full continuous coverage.`,
-            ``,
-            `No further bank statements are required from you at this stage. Your assessment has now been passed to the decision team.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Confirmed 100% statement compliance to customer. No further statements needed.`;
-          break;
-
-        case 'custom':
-        default:
-          const customNotes = (replyConfig.customNotes || '').trim();
-          subject = isJournal
-            ? `Assessment Review Update: Bank Statements`
-            : `Assessment Review Update: Bank Statement Enquiry`;
-          body = isJournal ? [
-            `Thank you for your message regarding your bank statements.`,
-            ``,
-            customNotes ? `${customNotes}\n` : `Please ensure all required statements covering ${reviewPeriodStr} are uploaded.\n`,
-            `Please provide this information by ${deadlineFormatted}.`
-          ].join('\n') : [
-            `Dear Customer,`,
-            ``,
-            `Thank you for your message regarding your assessment review.`,
-            ``,
-            customNotes ? `${customNotes}\n` : `For your assessment review, we require complete bank statements covering the 4-month period from ${reviewPeriodStr}.\n`,
-            `Please upload the requested information by ${deadlineFormatted} so we can finalise your assessment.`,
-            ``,
-            `Kind regards,`,
-            `Assessment Review Team`
-          ].join('\n');
-          auditSummary = `Sent custom response${customNotes ? ' (' + customNotes.slice(0, 50) + '...)' : ''}. Deadline ${deadlineFormatted}.`;
-          break;
-      }
-
-      if (scenario !== 'custom' && replyConfig.customNotes && replyConfig.customNotes.trim()) {
-        body += `\n\nNote: ${replyConfig.customNotes.trim()}`;
-      }
-
-      return { subject, body, auditSummary };
-    }
-
-    /**
-     * ============================================================================
      * 4. APPLICATION STATE & PRESETS (INCLUDING EXACT HANDWRITTEN WORKSHEET)
      * ============================================================================
      */
     let statementsState = [];
     let latestCaseNoteText = '';
-    let latestReplyAuditSummary = '';
     let editingStatementId = null;
     let lastDeletedStatement = null;
     let undoToastTimeout = null;
@@ -2549,7 +2228,6 @@
         document.getElementById('emailSubject').value = comms.subject;
         document.getElementById('emailBody').value = comms.body;
         latestCaseNoteText = comms.caseNote;
-        renderCustomerResponse(config, result);
         renderSavedRecords();
         return;
       }
@@ -2795,24 +2473,6 @@
         }
       }
 
-      // Populate target accounts in reply assistant
-      const replyAccountSelect = document.getElementById('replyAccountTarget');
-      if (replyAccountSelect) {
-        const currentVal = replyAccountSelect.value || 'all';
-        replyAccountSelect.innerHTML = '<option value="all">All Accounts / General Response</option>';
-        for (const acc of result.accountAnalyses) {
-          const k = `${(acc.bankName || '').toLowerCase()}__${(acc.accountType || '').toLowerCase()}__${(acc.accountRef || '').toLowerCase()}`;
-          const opt = document.createElement('option');
-          opt.value = k;
-          opt.textContent = acc.displayLabel;
-          if (k === currentVal) opt.selected = true;
-          replyAccountSelect.appendChild(opt);
-        }
-      }
-
-      // Generate & Render Customer Reply Assistant Draft
-      renderCustomerResponse(config, result);
-
       // Render Stored Records
       renderSavedRecords();
     }
@@ -2840,236 +2500,6 @@
       setTimeout(() => {
         if (el.textContent === msg) el.textContent = '';
       }, 3500);
-    }
-
-    function showReplyFeedback(msg) {
-      const el = document.getElementById('replyFeedback');
-      if (!el) return;
-      el.textContent = msg;
-      setTimeout(() => {
-        if (el.textContent === msg) el.textContent = '';
-      }, 3500);
-    }
-
-    const DEMO_CUSTOMER_MESSAGES = {
-      closed: "I don't have this NatWest account anymore. It was closed last year so I cannot download statements.",
-      extension: "I spoke with my bank and they said my paper statements will take 7 to 10 days to arrive by post. Can I please have an extension?",
-      dispute: "I have already uploaded all my statements from Barclays for the 4 months, why are you asking for more?",
-      branch: "I don't use online banking or mobile apps. Can I go to my local branch to get the transaction printout?"
-    };
-
-    /**
-     * Client-side NLP Intent Classifier for Pasted Customer Correspondence
-     */
-    function analyzePastedCustomerMessage(text, accountsList) {
-      if (!text || typeof text !== 'string') return { scenario: 'custom', accountKey: 'all', label: 'General Enquiry' };
-      const lower = text.toLowerCase();
-
-      // Detect mentioned bank accounts
-      let matchedAccountKey = 'all';
-      let matchedBankName = '';
-
-      const knownBanks = ['natwest', 'barclays', 'lloyds', 'santander', 'hsbc', 'monzo', 'revolut', 'nationwide', 'halifax', 'tsb', 'chase', 'starling', 'virgin'];
-      for (const b of knownBanks) {
-        if (lower.includes(b)) {
-          matchedBankName = b.charAt(0).toUpperCase() + b.slice(1);
-          if (accountsList && accountsList.length > 0) {
-            const found = accountsList.find(a => (a.bankName || '').toLowerCase().includes(b));
-            if (found) {
-              matchedAccountKey = `${(found.bankName || '').toLowerCase()}__${(found.accountType || '').toLowerCase()}__${(found.accountRef || '').toLowerCase()}`;
-            }
-          }
-          break;
-        }
-      }
-
-      // 1. Extension Request (check early for explicit deadline / extension appeals)
-      if (/\b(extension|extend|more time|extra days|extra time|need more days|delay|waiting for bank)\b/.test(lower)) {
-        return {
-          scenario: 'extension',
-          accountKey: matchedAccountKey,
-          label: 'Extension Request'
-        };
-      }
-
-      // 2. Branch / Paper Statement Guidance (check before closed account so "don't use online banking" isn't misclassified)
-      if (/\b(online banking|don'?t have online|can'?t access (the )?app|no app|paper statement|branch|visit.*bank|by post|order.*statement)\b/.test(lower)) {
-        return {
-          scenario: 'branch',
-          accountKey: matchedAccountKey,
-          label: matchedBankName ? `Branch / Paper Guidance (${matchedBankName})` : 'Branch / Paper Guidance'
-        };
-      }
-
-      // 3. Closed / Dormant Account
-      if (/\b(closed|shut|close|dormant|cancelled|canceled|no longer have|not open|deleted|terminated)\b|\bdon'?t use (this|the|my)?\s*(account|bank)\b/.test(lower)) {
-        return {
-          scenario: 'closed',
-          accountKey: matchedAccountKey,
-          label: matchedBankName ? `Closed Account (${matchedBankName})` : 'Closed Account Query'
-        };
-      }
-
-      // 4. Unreadable / Cropped Document
-      if (/\b(blurry|blury|unreadable|cropped|cut off|screenshot|photo|picture|screen shot|can'?t read|image)\b/.test(lower)) {
-        return {
-          scenario: 'unreadable',
-          accountKey: matchedAccountKey,
-          label: matchedBankName ? `Unreadable Document (${matchedBankName})` : 'Unreadable / Cropped Document'
-        };
-      }
-
-      // 5. Dispute / Missing Dates Clarification
-      if (/\b(already (sent|uploaded|provided)|sent (all|everything)|uploaded (all|everything)|why are you (asking|requesting)|provided these|sent them all)\b/.test(lower)) {
-        return {
-          scenario: 'clarification',
-          accountKey: matchedAccountKey,
-          label: 'Missing Dates Clarification'
-        };
-      }
-
-      // 6. Compliant Statements
-      if (/\b(uploaded|done|provided|sent|here are|attached)\b/.test(lower)) {
-        return {
-          scenario: 'compliant',
-          accountKey: matchedAccountKey,
-          label: 'Uploaded Statements'
-        };
-      }
-
-      return {
-        scenario: 'custom',
-        accountKey: matchedAccountKey,
-        label: 'General Customer Enquiry'
-      };
-    }
-
-    /**
-     * Multi-Tier AI Drafting Engine (Gemini Free Tier, Chrome Gemini Nano window.ai, or Local NLP)
-     */
-    async function generateAIDraftResponse(pastedText, config, result) {
-      const apiKey = (localStorage.getItem('gemini_api_key_v1') || document.getElementById('geminiApiKey')?.value || '').trim();
-      const format = document.getElementById('replyFormat')?.value || 'journal';
-      const deadlineDays = document.getElementById('replyExtensionDays')?.value || '14';
-      const targetStartIso = config.reviewStart || config.assessmentStart || '';
-      const targetEndIso = config.reviewEnd || config.assessmentEnd || '';
-      const reviewPeriodStr = targetStartIso && targetEndIso
-        ? `${CalendarEngine.formatUK(targetStartIso, 'long')} to ${CalendarEngine.formatUK(targetEndIso, 'long')}`
-        : 'the 4-month review window';
-      const todayIso = new Date().toISOString().slice(0, 10);
-      const deadlineFormatted = CalendarEngine.formatUK(CalendarEngine.addDays(todayIso, Number(deadlineDays)), 'long');
-
-      const analysis = analyzePastedCustomerMessage(pastedText, result.accountAnalyses);
-
-      const promptInstructions = `You are a UK Universal Credit DWP Caseworker. Draft an ultra-concise, professional ${format === 'journal' ? 'journal response' : 'formal email'} to a customer enquiry.
-Customer Message: "${pastedText}"
-
-Context:
-- 4-Month Statement Review Window: ${reviewPeriodStr}
-- Reply Deadline: ${deadlineFormatted}
-- Key Rules: Continuous 4-month statements needed. If closed, require official bank letter or £0.00 final statement. If photo blurry/cropped, require full statement with name, sort code, account number, and balance.
-- Tone: Polite, direct, strictly British English (e.g. organise, colour, behaviour).
-- Constraints: Keep to 2-3 sentences maximum for journal. No bureaucratic filler. Output ONLY the drafted message text.`;
-
-      // Tier 1: User-supplied Free Gemini API Key
-      if (apiKey) {
-        try {
-          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-          const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: promptInstructions }] }]
-            })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (aiText && aiText.trim()) {
-              return {
-                text: aiText.trim(),
-                provider: 'Gemini 1.5 Flash (AI)',
-                scenario: analysis.scenario,
-                accountKey: analysis.accountKey,
-                label: analysis.label,
-                subject: format === 'journal' ? `Update: Bank Statement Enquiry` : `Assessment Review: Bank Statement Response`
-              };
-            }
-          }
-        } catch (_) {}
-      }
-
-      // Tier 2: Chrome Built-in AI (window.ai.languageModel / Gemini Nano)
-      if (typeof window !== 'undefined' && window.ai?.languageModel) {
-        try {
-          const session = await window.ai.languageModel.create();
-          const aiText = await session.prompt(promptInstructions);
-          if (aiText && aiText.trim()) {
-            return {
-              text: aiText.trim(),
-              provider: 'Chrome Built-in AI (Gemini Nano)',
-              scenario: analysis.scenario,
-              accountKey: analysis.accountKey,
-              label: analysis.label,
-              subject: format === 'journal' ? `Update: Bank Statement Enquiry` : `Assessment Review: Bank Statement Response`
-            };
-          }
-        } catch (_) {}
-      }
-
-      // Tier 3: Zero-latency deterministic NLP Caseworker Engine (100% reliable fallback)
-      const resp = generateCustomerResponse({
-        scenario: analysis.scenario,
-        targetAccountKey: analysis.accountKey,
-        format: format,
-        extensionDays: deadlineDays,
-        customNotes: ''
-      }, config, result);
-
-      return {
-        text: resp.body,
-        provider: 'Built-in Intelligent Engine',
-        scenario: analysis.scenario,
-        accountKey: analysis.accountKey,
-        label: analysis.label,
-        subject: resp.subject
-      };
-    }
-
-    function renderCustomerResponse(config, result) {
-      if (!config) config = getConfig();
-      if (!result) result = evaluateStatementsAssessment(config, statementsState);
-
-      const replyScenario = document.getElementById('replyScenario')?.value || 'unreadable';
-      const replyAccountTarget = document.getElementById('replyAccountTarget')?.value || 'all';
-      const replyFormat = document.getElementById('replyFormat')?.value || 'journal';
-      const replyExtensionDays = document.getElementById('replyExtensionDays')?.value || '14';
-      const replyCustomNotes = document.getElementById('replyCustomNotes')?.value || '';
-
-      const resp = generateCustomerResponse({
-        scenario: replyScenario,
-        targetAccountKey: replyAccountTarget,
-        format: replyFormat,
-        extensionDays: replyExtensionDays,
-        customNotes: replyCustomNotes
-      }, config, result);
-
-      const subjectEl = document.getElementById('replySubject');
-      if (subjectEl) subjectEl.value = resp.subject;
-
-      const bodyEl = document.getElementById('replyBody');
-      if (bodyEl && (!bodyEl.dataset.userEdited || bodyEl.dataset.userEdited === 'false')) {
-        bodyEl.value = resp.body;
-      }
-
-      latestReplyAuditSummary = resp.auditSummary;
-
-      const copyReplyText = document.getElementById('btnCopyReplyText');
-      if (copyReplyText) {
-        copyReplyText.textContent = replyFormat === 'journal'
-          ? 'Copy Response to Clipboard'
-          : 'Copy Full Email to Clipboard';
-      }
     }
 
     /* Undo Toast Controller */
@@ -3102,7 +2532,16 @@ Context:
       const restoredName = item.bankName;
       lastDeletedStatement = null;
       hideUndoToast();
+      
+      const isPublic = window.location.pathname.includes("public-tool") || window.location.href.includes("public-tool");
+      const stmtLink = document.getElementById("navLinkStatement");
+      const plannerLink = document.getElementById("navLinkPlanner");
+      if (stmtLink && plannerLink) {
+        stmtLink.href = isPublic ? "index.html" : "bank-statement-checker.html";
+        plannerLink.href = isPublic ? "planner.html" : "uc-case-planner.html";
+      }
       renderAll();
+  
       showFeedback(`✓ Restored statement for ${restoredName}`);
     }
 
@@ -3476,39 +2915,29 @@ Context:
     }
 
     /**
-     * View Switcher: Three Views for Message to Customer, Respond to Message, and My Audit Note
+     * View Switcher: Two Views for Message to Customer and My Audit Note
      */
     function switchOutputView(viewName) {
       const tabCustomer = document.getElementById('tabViewCustomer');
-      const tabReply = document.getElementById('tabViewReply');
       const tabAudit = document.getElementById('tabViewAudit');
       const panelCustomer = document.getElementById('panelCustomerMessage');
-      const panelReply = document.getElementById('panelReplyAssistant');
       const panelAudit = document.getElementById('panelAuditNote');
 
-      if (!tabCustomer || !tabReply || !tabAudit || !panelCustomer || !panelReply || !panelAudit) return;
-
-      // Reset all tabs
-      [tabCustomer, tabReply, tabAudit].forEach(t => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-      });
-      // Hide all panels
-      panelCustomer.style.display = 'none';
-      panelReply.style.display = 'none';
-      panelAudit.style.display = 'none';
+      if (!tabCustomer || !tabAudit || !panelCustomer || !panelAudit) return;
 
       if (viewName === 'audit') {
+        tabCustomer.classList.remove('active');
+        tabCustomer.setAttribute('aria-selected', 'false');
         tabAudit.classList.add('active');
         tabAudit.setAttribute('aria-selected', 'true');
+        panelCustomer.style.display = 'none';
         panelAudit.style.display = 'block';
-      } else if (viewName === 'reply') {
-        tabReply.classList.add('active');
-        tabReply.setAttribute('aria-selected', 'true');
-        panelReply.style.display = 'block';
       } else {
+        tabAudit.classList.remove('active');
+        tabAudit.setAttribute('aria-selected', 'false');
         tabCustomer.classList.add('active');
         tabCustomer.setAttribute('aria-selected', 'true');
+        panelAudit.style.display = 'none';
         panelCustomer.style.display = 'block';
       }
     }
@@ -3745,37 +3174,17 @@ Context:
         handleClearAllRecords();
       });
 
-      // 3-View Tab & Cross-Link Listeners
+      // 2-View Tab & Cross-Link Listeners
       document.getElementById('tabViewCustomer')?.addEventListener('click', () => {
         switchOutputView('customer');
-      });
-
-      document.getElementById('tabViewReply')?.addEventListener('click', () => {
-        switchOutputView('reply');
       });
 
       document.getElementById('tabViewAudit')?.addEventListener('click', () => {
         switchOutputView('audit');
       });
 
-      document.getElementById('btnSwitchToReply')?.addEventListener('click', () => {
-        switchOutputView('reply');
-      });
-
       document.getElementById('btnSwitchToAudit')?.addEventListener('click', () => {
         switchOutputView('audit');
-      });
-
-      document.getElementById('btnSwitchFromReplyToCustomer')?.addEventListener('click', () => {
-        switchOutputView('customer');
-      });
-
-      document.getElementById('btnSwitchFromReplyToAudit')?.addEventListener('click', () => {
-        switchOutputView('audit');
-      });
-
-      document.getElementById('btnSwitchAuditToReply')?.addEventListener('click', () => {
-        switchOutputView('reply');
       });
 
       document.getElementById('btnSwitchToCustomer')?.addEventListener('click', () => {
@@ -3786,160 +3195,6 @@ Context:
         e.preventDefault();
         switchOutputView('audit');
         document.getElementById('emailSection')?.scrollIntoView({ behavior: 'smooth' });
-      });
-
-      // Paste & Analyze Customer Message Action Handlers
-      async function executeCustomerMessageAnalysis() {
-        const text = (document.getElementById('pastedCustomerMessage')?.value || '').trim();
-        if (!text) {
-          showReplyFeedback('Please paste a customer message or click a demo sample first');
-          document.getElementById('pastedCustomerMessage')?.focus();
-          return;
-        }
-
-        const config = getConfig();
-        const result = evaluateStatementsAssessment(config, statementsState);
-        
-        const badgeEl = document.getElementById('detectedIntentBadge');
-        if (badgeEl) badgeEl.innerHTML = '<span class="badge badge-current">🤖 AI Drafting Response...</span>';
-
-        const aiDraft = await generateAIDraftResponse(text, config, result);
-
-        const scenSelect = document.getElementById('replyScenario');
-        if (scenSelect && aiDraft.scenario) scenSelect.value = aiDraft.scenario;
-
-        const accSelect = document.getElementById('replyAccountTarget');
-        if (accSelect && aiDraft.accountKey && aiDraft.accountKey !== 'all') {
-          accSelect.value = aiDraft.accountKey;
-        }
-
-        if (badgeEl) {
-          const providerText = aiDraft.provider ? ` • ${aiDraft.provider}` : '';
-          badgeEl.innerHTML = `<span class="badge badge-ok">✓ ${escapeHtml((aiDraft.label || 'Intent Detected') + providerText)}</span>`;
-        }
-
-        const subjectEl = document.getElementById('replySubject');
-        if (subjectEl && aiDraft.subject) subjectEl.value = aiDraft.subject;
-
-        const bodyEl = document.getElementById('replyBody');
-        if (bodyEl) {
-          bodyEl.value = aiDraft.text;
-          bodyEl.dataset.userEdited = 'false';
-        }
-
-        latestReplyAuditSummary = `Sent AI response to enquiry regarding ${aiDraft.label || 'customer enquiry'}.`;
-        showReplyFeedback(`✓ Response drafted via ${aiDraft.provider || 'AI Engine'}`);
-      }
-
-      document.getElementById('btnAnalyzeCustomerMsg')?.addEventListener('click', async e => {
-        const btn = e.currentTarget;
-        btn.classList.add('is-loading');
-        btn.disabled = true;
-        try {
-          await executeCustomerMessageAnalysis();
-        } finally {
-          btn.classList.remove('is-loading');
-          btn.disabled = false;
-        }
-      });
-
-      document.getElementById('btnClearPastedMsg')?.addEventListener('click', () => {
-        const pasteBox = document.getElementById('pastedCustomerMessage');
-        if (pasteBox) pasteBox.value = '';
-        const badgeEl = document.getElementById('detectedIntentBadge');
-        if (badgeEl) badgeEl.innerHTML = '';
-        const bodyEl = document.getElementById('replyBody');
-        if (bodyEl) bodyEl.dataset.userEdited = 'false';
-        renderCustomerResponse();
-        showReplyFeedback('Cleared customer message input');
-      });
-
-      // Quick Demo Sample buttons
-      document.querySelectorAll('.js-sample-msg').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const sampleKey = btn.dataset.sample;
-          const msg = DEMO_CUSTOMER_MESSAGES[sampleKey];
-          const pasteBox = document.getElementById('pastedCustomerMessage');
-          if (pasteBox && msg) {
-            pasteBox.value = msg;
-            await executeCustomerMessageAnalysis();
-          }
-        });
-      });
-
-      // Load saved Gemini API Key if present
-      const savedApiKey = localStorage.getItem('gemini_api_key_v1') || '';
-      const apiKeyInput = document.getElementById('geminiApiKey');
-      if (apiKeyInput && savedApiKey) {
-        apiKeyInput.value = savedApiKey;
-      }
-
-      document.getElementById('btnSaveApiKey')?.addEventListener('click', () => {
-        const key = (document.getElementById('geminiApiKey')?.value || '').trim();
-        if (key) {
-          localStorage.setItem('gemini_api_key_v1', key);
-          showReplyFeedback('✓ Gemini API key saved locally in browser');
-        } else {
-          localStorage.removeItem('gemini_api_key_v1');
-          showReplyFeedback('Cleared saved API key');
-        }
-      });
-
-      document.getElementById('btnClearApiKey')?.addEventListener('click', () => {
-        localStorage.removeItem('gemini_api_key_v1');
-        const keyInput = document.getElementById('geminiApiKey');
-        if (keyInput) keyInput.value = '';
-        showReplyFeedback('Cleared saved API key');
-      });
-
-      // Reply Assistant controls listeners
-      ['replyScenario', 'replyAccountTarget', 'replyFormat', 'replyExtensionDays'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', () => {
-          const bodyEl = document.getElementById('replyBody');
-          if (bodyEl) bodyEl.dataset.userEdited = 'false';
-          renderCustomerResponse();
-        });
-      });
-
-      document.getElementById('replyCustomNotes')?.addEventListener('input', () => {
-        const bodyEl = document.getElementById('replyBody');
-        if (bodyEl) bodyEl.dataset.userEdited = 'false';
-        renderCustomerResponse();
-      });
-
-      document.getElementById('replyBody')?.addEventListener('input', e => {
-        e.target.dataset.userEdited = 'true';
-      });
-
-      document.getElementById('btnCopyReplySubject')?.addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('replySubject').value;
-          navigator.clipboard?.writeText(text);
-          showReplyFeedback('✓ Subject line copied to clipboard');
-        });
-      });
-
-      document.getElementById('btnCopyReply')?.addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('replyBody').value;
-          navigator.clipboard?.writeText(text);
-          const isDetailed = document.getElementById('replyFormat')?.value === 'detailed';
-          showReplyFeedback(isDetailed ? '✓ Detailed email copied to clipboard' : '✓ Journal message copied to clipboard');
-        });
-      });
-
-      document.getElementById('btnAppendReplyToAudit')?.addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const noteEl = document.getElementById('assessorActionNote');
-          if (noteEl) {
-            const todayIso = new Date().toISOString().slice(0, 10);
-            const stamp = CalendarEngine.formatUK(todayIso);
-            const appendLine = `• RESPONSE SENT [${stamp}]: ${latestReplyAuditSummary || 'Sent response to customer enquiry.'}`;
-            noteEl.value = (noteEl.value.trim() ? noteEl.value.trim() + '\n' : '') + appendLine;
-            noteEl.dataset.userEdited = 'true';
-            showReplyFeedback('✓ Appended response to caseworker audit note');
-          }
-        });
       });
 
       // Track manual edits on assessor note so user changes are preserved

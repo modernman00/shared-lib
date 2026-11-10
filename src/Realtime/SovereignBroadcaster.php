@@ -156,6 +156,15 @@ class SovereignBroadcaster
                 ':socket_id' => $cleanSocketId,
                 ':created_at' => $now,
             ]);
+            $insertedId = (int)$this->pdo->lastInsertId();
+            $this->publishToFastPathCache($cleanChannel, [
+                'id'         => $insertedId,
+                'channel'    => $cleanChannel,
+                'event'      => $cleanEvent,
+                'data'       => $data,
+                'socket_id'  => $cleanSocketId,
+                'created_at' => $now,
+            ]);
             $dispatched++;
         }
 
@@ -180,6 +189,12 @@ class SovereignBroadcaster
         $cleanChannel = self::sanitizeIdentifier($channel, 'channel');
         $afterId = max(0, $afterId);
         $limit = max(1, min($limit, 250));
+
+        // High-concurrency Fast-Path (APCu in-memory ring buffer) bypasses SQL polling when cursor is caught up
+        $cachedEvents = $this->readFromFastPathCache($cleanChannel, $afterId, $limit);
+        if ($cachedEvents !== null) {
+            return $cachedEvents;
+        }
 
         $this->ensureSchema();
 
@@ -427,8 +442,78 @@ class SovereignBroadcaster
                 flush();
             }
 
-            // Sleep 500ms before next poll tick
-            usleep(500000);
+            // Sleep with randomised jitter (450ms–650ms) to prevent thundering-herd SQL spikes across concurrent SSE workers
+            usleep(self::getJitteredPollIntervalUs());
         }
+    }
+
+    /**
+     * Returns a jittered microsecond sleep interval (450,000–650,000 us) to desynchronise concurrent SSE workers.
+     */
+    public static function getJitteredPollIntervalUs(int $baseUs = 500_000): int
+    {
+        $safeBase = max(200_000, $baseUs);
+        $offset = random_int(-90_000, 90_000);
+        return $safeBase + $offset;
+    }
+
+    /**
+     * Publishes an event into the optional APCu shared-memory ring buffer so high-concurrency
+     * SSE workers can short-circuit database queries when caught up with the latest event ID.
+     *
+     * @param array<string, mixed> $eventRecord
+     */
+    private function publishToFastPathCache(string $channel, array $eventRecord): void
+    {
+        if (!function_exists('apcu_store') || !function_exists('apcu_fetch')) {
+            return;
+        }
+
+        $ringKey = 'sbe_ring:' . $channel;
+        $existing = apcu_fetch($ringKey);
+        $ring = is_array($existing) ? $existing : [];
+        $ring[] = $eventRecord;
+
+        if (count($ring) > 50) {
+            $ring = array_slice($ring, -50);
+        }
+
+        @apcu_store($ringKey, $ring, $this->eventTtlSeconds);
+    }
+
+    /**
+     * Reads events from the APCu fast-path ring buffer if available and contiguous with $afterId.
+     * Returns null when APCu is unavailable or when $afterId predates the in-memory ring window.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function readFromFastPathCache(string $channel, int $afterId, int $limit): ?array
+    {
+        if ($afterId <= 0 || !function_exists('apcu_fetch')) {
+            return null;
+        }
+
+        $ring = apcu_fetch('sbe_ring:' . $channel);
+        if (!is_array($ring) || $ring === []) {
+            return null;
+        }
+
+        $firstId = isset($ring[0]['id']) ? (int)$ring[0]['id'] : 0;
+        if ($afterId < $firstId) {
+            // Client cursor is older than the in-memory window; fall back to SQL
+            return null;
+        }
+
+        $matched = [];
+        foreach ($ring as $item) {
+            if (is_array($item) && isset($item['id']) && (int)$item['id'] > $afterId) {
+                $matched[] = $item;
+                if (count($matched) >= $limit) {
+                    break;
+                }
+            }
+        }
+
+        return $matched;
     }
 }

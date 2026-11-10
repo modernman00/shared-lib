@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Src;
 
+use Src\smsFunctionality\SovereignSmsEngine;
 use Src\smsFunctionality\Textlocal;
+use Src\smsFunctionality\TwilioSms;
 use TextMagic\Api\TextMagicApi;
 use TextMagic\Configuration;
 use GuzzleHttp\Client;
@@ -37,7 +39,12 @@ class ToSendText
     }
     try {
       if ($provider == 'twilio') {
-        // Implement Twilio sending logic here
+        return TwilioSms::send($to, $message);
+      }
+
+      if ($provider === 'textmagic_native' || ($provider === 'textmagic' && !class_exists(TextMagicApi::class))) {
+        SovereignSmsEngine::sendViaTextMagicNative($to, $message, $sender);
+        return true;
       }
 
       if ($provider === 'textmagic') {

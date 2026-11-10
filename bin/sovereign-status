@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Src\Quality\SovereignDiagnostic;
+use Src\Security\SovereignAlertNotifier;
+
+$args = $argv ?? [];
+$sendAlert = in_array('--alert', $args, true);
+
+echo SovereignDiagnostic::renderCliScreen();
+
+if ($sendAlert) {
+    echo "\033[1;33m[✉] Dispatching Executive Health Digest to " . SovereignAlertNotifier::getOwnerEmail() . "...\033[0m\n";
+    $report = SovereignDiagnostic::checkAll();
+    $sent = SovereignAlertNotifier::sendExecutiveHealthDigest($report);
+    if ($sent) {
+        echo "\033[1;32m[✔] Email successfully dispatched to " . SovereignAlertNotifier::getOwnerEmail() . "!\033[0m\n\n";
+    } else {
+        echo "\033[1;31m[!] Failed to dispatch email. Check SMTP credentials in .env.\033[0m\n\n";
+    }
+}
