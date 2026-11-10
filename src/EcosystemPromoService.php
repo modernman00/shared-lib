@@ -58,18 +58,18 @@ class EcosystemPromoService
         ],
         'familyplatform' => [
             'name' => 'FamilyPlatform',
-            'headline' => 'Private Family Social Network & Living Heritage Tree',
+            'headline' => 'Private Family Social Network & Living Heritage Sanctuary',
             'tagline' => '100% Private Family Haven',
             'description' => 'Connect generations, preserve precious memories, and celebrate life milestones in a secure, private haven designed exclusively for your family.',
             'cta_text' => 'Explore Family Haven',
             'badge' => 'PRIVATE VAULT',
-            'accent_color' => '#4f46e5', // Indigo
-            'gradient' => 'linear-gradient(135deg, #4f46e5 0%, #10b981 100%)',
+            'accent_color' => '#a31621', // Crimson
+            'gradient' => 'linear-gradient(135deg, #b8202c 0%, #8a1019 100%)',
             'icon' => 'bi-people-fill',
             'default_url' => 'https://myfamilyplatform.com',
             'env_key' => 'FAMILYPLATFORM_APP_URL',
             'trigger_keywords' => ['family', 'kids', 'birthday', 'anniversary', 'milestone', 'memories', 'vault', 'heritage', 'chores'],
-            'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="url(#fam_grad)"/><path d="M16 6C12 6 9 9 9 13C9 17.5 16 26 16 26C16 26 23 17.5 23 13C23 9 20 6 16 6Z" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="12" r="3" fill="#34d399"/><defs><linearGradient id="fam_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#4f46e5"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs></svg>',
+            'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="url(#fam_crimson_grad)"/><path d="M16 7C12.5 7 10 9.5 10 13C10 17.5 16 25 16 25C16 25 22 17.5 22 13C22 9.5 19.5 7 16 7Z" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="12.5" r="2.5" fill="#fca5a5"/><defs><linearGradient id="fam_crimson_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#b8202c"/><stop offset="1" stop-color="#8a1019"/></linearGradient></defs></svg>',
         ],
         'scoretenant' => [
             'name' => 'scoreTenant',
@@ -124,12 +124,27 @@ class EcosystemPromoService
             'cta_text' => 'Plan Celebration',
             'badge' => 'CELEBRATION OS',
             'accent_color' => '#9B5CFB', // Electric Purple
-            'gradient' => 'linear-gradient(135deg, #FFE259 0%, #FFA751 100%)',
+            'gradient' => 'linear-gradient(135deg, #7b03fc 0%, #d946ef 100%)',
             'icon' => 'bi-balloon-heart-fill',
             'default_url' => 'https://mypartyplatform.com',
             'env_key' => 'PARTYPLATFORM_APP_URL',
             'trigger_keywords' => ['party', 'event', 'celebration', 'rsvp', 'tickets', 'guest_list', 'invitation'],
             'svg_icon' => '<svg viewBox="0 0 512 512" width="28" height="28" class="pp-brand-logo-svg" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="spk_g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F43F5E"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient><linearGradient id="spk_g2" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FBBF24"/><stop offset="100%" stop-color="#EF4444"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#1E1035"/><path d="M256 120 L278 220 L378 198 L296 256 L378 314 L278 292 L256 392 L234 292 L134 314 L216 256 L134 198 L234 220 Z" fill="url(#spk_g1)"/><path d="M256 80 Q256 220 120 256 Q256 256 256 432 Q256 256 392 256 Q256 220 256 80 Z" fill="url(#spk_g2)"/><circle cx="256" cy="256" r="32" fill="#FFFFFF"/></svg>',
+        ],
+        'bcp' => [
+            'name' => 'Best Care Professionals',
+            'headline' => '24/7 CQC-Compliant Healthcare Staffing & Emergency Carer Dispatch',
+            'tagline' => 'CQC Regulated Healthcare Agency',
+            'description' => 'Fully vetted, compliant nurses, healthcare assistants, and specialist support workers with 15-minute response dispatch across the UK.',
+            'cta_text' => 'Book Healthcare Staff',
+            'badge' => 'CQC REGULATED',
+            'accent_color' => '#006699', // Ocean Blue
+            'gradient' => 'linear-gradient(135deg, #006699 0%, #70a936 100%)',
+            'icon' => 'bi-heart-pulse-fill',
+            'default_url' => 'https://www.bestcarepro.co.uk',
+            'env_key' => 'BCP_APP_URL',
+            'trigger_keywords' => ['care', 'nurse', 'health', 'carer', 'cqc', 'elderly', 'hospital', 'staffing', 'shift', 'medical', 'clinic', 'first_aid', 'safeguarding'],
+            'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="url(#bcp_grad)"/><path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="11" stroke="#70a936" stroke-width="2"/><defs><linearGradient id="bcp_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#006699"/><stop offset="1" stop-color="#004d73"/></linearGradient></defs></svg>',
         ],
     ];
 
@@ -194,6 +209,7 @@ class EcosystemPromoService
         if (class_exists(EcosystemAdManager::class)) {
             $customAd = EcosystemAdManager::getAdvertForApp($currentAppKey, $placement, $context);
             if ($customAd !== null) {
+                EcosystemAdManager::recordImpression((string) ($customAd['id'] ?? ''), $currentAppKey);
                 return $customAd;
             }
         }
@@ -202,8 +218,7 @@ class EcosystemPromoService
         $keywords = $this->extractKeywords($context, $placement);
 
         // 2. Score internal portfolio candidates (excluding current app)
-        $bestMatchApp = null;
-        $highestScore = 0;
+        $candidates = [];
 
         foreach (self::PORTFOLIO_CATALOG as $appKey => $meta) {
             if ($appKey === $currentAppKey) {
@@ -218,21 +233,35 @@ class EcosystemPromoService
                 }
             }
 
-            if ($score > $highestScore) {
-                $highestScore = $score;
-                $bestMatchApp = $appKey;
+            if ($score > 0) {
+                $candidates[$appKey] = $score;
             }
         }
 
-        // 3. If an internal match has positive intent, return Tier 1 Ecosystem banner
-        if ($bestMatchApp !== null && $highestScore > 0) {
-            return $this->formatEcosystemBanner($bestMatchApp, $currentAppKey, $placement, $context);
+        // 3. If an internal match has positive intent, rotate among top candidates
+        if (!empty($candidates)) {
+            arsort($candidates);
+            $topScore = reset($candidates);
+            $topMatches = array_keys(array_filter($candidates, static fn(int $s): bool => $s >= $topScore));
+
+            $matchIndex = self::resolveSequenceIndex($currentAppKey . '_match', count($topMatches), $context);
+            $chosenApp = $topMatches[$matchIndex] ?? $topMatches[0];
+
+            $banner = $this->formatEcosystemBanner($chosenApp, $currentAppKey, $placement, $context);
+            if (class_exists(EcosystemAdManager::class)) {
+                EcosystemAdManager::recordImpression((string) ($banner['id'] ?? ''), $currentAppKey);
+            }
+            return $banner;
         }
 
         // 4. If no specific keyword match, select default strategic internal partner
         $defaultSibling = $this->getDefaultSiblingApp($currentAppKey, $placement, $context);
         if ($defaultSibling !== null) {
-            return $this->formatEcosystemBanner($defaultSibling, $currentAppKey, $placement, $context);
+            $banner = $this->formatEcosystemBanner($defaultSibling, $currentAppKey, $placement, $context);
+            if (class_exists(EcosystemAdManager::class)) {
+                EcosystemAdManager::recordImpression((string) ($banner['id'] ?? ''), $currentAppKey);
+            }
+            return $banner;
         }
 
         // 5. Tier 2 Fallback: Curated Affiliate partner
@@ -288,6 +317,8 @@ class EcosystemPromoService
             $baseUrl = (string) $_ENV['MYFAMILYPLATFORM_APP_URL'];
         } elseif ($targetApp === 'partyplatform' && !empty($_ENV['MYPARTYPLATFORM_APP_URL'])) {
             $baseUrl = (string) $_ENV['MYPARTYPLATFORM_APP_URL'];
+        } elseif ($targetApp === 'bcp' && !empty($_ENV['BESTCARE_APP_URL'])) {
+            $baseUrl = (string) $_ENV['BESTCARE_APP_URL'];
         } else {
             $baseUrl = (string) $meta['default_url'];
         }
@@ -385,8 +416,74 @@ class EcosystemPromoService
     }
 
     /**
-     * Selects an ecosystem sister app using zero-cron deterministic time-window hashing
-     * combined with session impression cycling to eliminate banner blindness.
+     * Resolves a rolling rotation sequence index across multiple tiers:
+     * 1. Mock context (for unit tests and deterministic simulation)
+     * 2. PHP $_SESSION (if session is active)
+     * 3. Browser HTTP cookie ($_COOKIE) (for Laravel and stateless frameworks where $_SESSION is absent)
+     * 4. Micro-time interval entropy (rotates every 60 seconds so subsequent visits cycle naturally)
+     *
+     * @param string $appKey
+     * @param int $count
+     * @param array<string, mixed> $context
+     * @return int
+     */
+    public static function resolveSequenceIndex(string $appKey, int $count, array $context = []): int
+    {
+        if ($count <= 1) {
+            return 0;
+        }
+
+        // 1. Mock override for testing
+        if (isset($context['mock_session_offset']) && is_numeric($context['mock_session_offset'])) {
+            return abs((int) $context['mock_session_offset']) % $count;
+        }
+
+        // 2. Native PHP Session
+        $sessionKey = '_eco_promo_seq_' . $appKey;
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION)) {
+            $offset = isset($_SESSION[$sessionKey]) && is_numeric($_SESSION[$sessionKey])
+                ? (int) $_SESSION[$sessionKey]
+                : 0;
+            $_SESSION[$sessionKey] = ($offset + 1) % $count;
+            return $offset % $count;
+        }
+
+        // 3. Client Cookie fallback (handles Laravel/stateless apps where native $_SESSION is inactive)
+        $cookieKey = '_eco_seq_' . substr(md5($appKey), 0, 8);
+        if (isset($_COOKIE[$cookieKey]) && is_numeric($_COOKIE[$cookieKey])) {
+            $offset = (int) $_COOKIE[$cookieKey];
+            $next = ($offset + 1) % $count;
+            if (!headers_sent()) {
+                @setcookie($cookieKey, (string) $next, [
+                    'expires' => time() + 86400 * 7,
+                    'path' => '/',
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
+            }
+            $_COOKIE[$cookieKey] = (string) $next;
+            return $offset % $count;
+        }
+
+        // 4. Micro-time interval entropy (rotates every 60 seconds)
+        $timeWindow = (int) floor(time() / 60);
+        $next = ($timeWindow + 1) % $count;
+        if (!headers_sent()) {
+            @setcookie($cookieKey, (string) $next, [
+                'expires' => time() + 86400 * 7,
+                'path' => '/',
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            $_COOKIE[$cookieKey] = (string) $next;
+        }
+
+        return $timeWindow % $count;
+    }
+
+    /**
+     * Selects an ecosystem sister app using multi-tier anti-fatigue rotation:
+     * Day-of-year baseline + placement salt + (Session/Cookie/Interval sequence index).
      *
      * @param string $currentApp Current application key
      * @param string $placement Surface identifier
@@ -407,8 +504,7 @@ class EcosystemPromoService
 
         $count = count($eligibleApps);
 
-        // 2. Day-of-year rotation baseline (0-365):
-        // Automatically varies every single day at midnight UTC without cron or background workers.
+        // 2. Day-of-year rotation baseline (0-365)
         $dayOfYear = isset($context['mock_day_of_year']) && is_numeric($context['mock_day_of_year'])
             ? (int) $context['mock_day_of_year']
             : (int) date('z');
@@ -416,20 +512,8 @@ class EcosystemPromoService
         // 3. Placement salt ensures distinct pages on the same day feature distinct apps
         $placementSalt = abs(crc32($currentApp . ':' . $placement)) % $count;
 
-        // 4. Session-aware impression index:
-        // Sequentially cycles through eligible apps across page loads within an active user session.
-        $sessionOffset = 0;
-        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION)) {
-            $sessionKey = '_eco_promo_seq_' . $currentApp;
-            $sessionOffset = isset($_SESSION[$sessionKey]) && is_numeric($_SESSION[$sessionKey])
-                ? (int) $_SESSION[$sessionKey]
-                : 0;
-
-            // Increment sequentially for the next page load
-            $_SESSION[$sessionKey] = ($sessionOffset + 1) % $count;
-        } elseif (isset($context['mock_session_offset']) && is_numeric($context['mock_session_offset'])) {
-            $sessionOffset = (int) $context['mock_session_offset'];
-        }
+        // 4. Multi-tier anti-fatigue sequence offset (Session -> Cookie -> Time Window)
+        $sessionOffset = self::resolveSequenceIndex($currentApp, $count, $context);
 
         // 5. Deterministic target index
         $targetIndex = ($dayOfYear + $placementSalt + $sessionOffset) % $count;

@@ -155,13 +155,18 @@ class EcosystemAdManager
             return null;
         }
 
-        // Select candidate deterministically or by highest weight
-        // If multiple candidates exist, rotate using placement and day-of-year
+        // Select candidate deterministically or by rolling sequence index
+        // Rotates smoothly across page loads via Session, Cookie, or Micro-window
         $count = count($candidates);
-        $dayOfYear = (int) date('z');
+        $dayOfYear = isset($context['mock_day_of_year']) && is_numeric($context['mock_day_of_year'])
+            ? (int) $context['mock_day_of_year']
+            : (int) date('z');
         $placementSalt = abs(crc32($appKey . ':' . $placement)) % $count;
-        $idx = ($dayOfYear + $placementSalt) % $count;
+        $seqOffset = class_exists(EcosystemPromoService::class)
+            ? EcosystemPromoService::resolveSequenceIndex($appKey . '_custom', $count, $context)
+            : ((int) floor(time() / 60) % $count);
 
+        $idx = ($dayOfYear + $placementSalt + $seqOffset) % $count;
         $chosen = $candidates[$idx] ?? $candidates[0];
 
         // If candidate mode is 'blended', roll a 50/50 dice with session/day to share impressions
@@ -188,6 +193,7 @@ class EcosystemAdManager
 
     /**
      * Formats raw custom advert record into the standard Ecosystem Promo Banner structure.
+     * Automatically resolves authentic brand vector icons, colours, and gradients from catalog.
      *
      * @param array<string, mixed> $ad
      * @param string $sourceApp
@@ -198,6 +204,23 @@ class EcosystemAdManager
     {
         $id = (string) ($ad['id'] ?? 'custom_' . substr(md5((string) ($ad['title'] ?? '')), 0, 8));
         $targetUrl = (string) ($ad['target_url'] ?? '#');
+        $targetAppKey = strtolower(trim((string) ($ad['target_app_key'] ?? '')));
+
+        // Check if targetAppKey or targetUrl matches a catalog app
+        $catalog = class_exists(EcosystemPromoService::class) ? EcosystemPromoService::getCatalog() : [];
+        $matchedMeta = null;
+
+        if ($targetAppKey !== '' && isset($catalog[$targetAppKey])) {
+            $matchedMeta = $catalog[$targetAppKey];
+        } else {
+            foreach ($catalog as $cKey => $cMeta) {
+                if (str_contains($targetUrl, $cKey) || strcasecmp((string)($ad['brand_name'] ?? ''), (string)$cMeta['name']) === 0) {
+                    $matchedMeta = $cMeta;
+                    $targetAppKey = $cKey;
+                    break;
+                }
+            }
+        }
 
         // Append tracking parameters if valid URL
         if (filter_var($targetUrl, FILTER_VALIDATE_URL) && !str_contains($targetUrl, 'utm_source=')) {
@@ -210,19 +233,26 @@ class EcosystemAdManager
             $targetUrl .= $separator . http_build_query($params);
         }
 
-        $accentColor = (string) ($ad['accent_color'] ?? '#6366f1');
-        $gradient = (string) ($ad['gradient'] ?? "linear-gradient(135deg, {$accentColor} 0%, #a855f7 100%)");
+        $accentColor = !empty($ad['accent_color']) && $ad['accent_color'] !== '#6366f1'
+            ? (string) $ad['accent_color']
+            : ($matchedMeta['accent_color'] ?? (string) ($ad['accent_color'] ?? '#6366f1'));
+
+        $gradient = !empty($ad['gradient']) && !str_contains($ad['gradient'], '#6366f1')
+            ? (string) $ad['gradient']
+            : ($matchedMeta['gradient'] ?? "linear-gradient(135deg, {$accentColor} 0%, #3b82f6 100%)");
+
         $badge = (string) ($ad['badge'] ?? 'FEATURED PROMO');
         $badge = strtoupper(trim($badge));
 
         $svgIcon = !empty($ad['svg_icon'])
             ? (string) $ad['svg_icon']
-            : '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-brand-logo-svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            : ($matchedMeta['svg_icon'] ?? '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-brand-logo-svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>');
 
         return [
             'id' => 'custom_' . $id,
+            'raw_id' => $id,
             'type' => 'custom_campaign',
-            'target_app' => (string) ($ad['target_app_key'] ?? 'external'),
+            'target_app' => $targetAppKey !== '' ? $targetAppKey : (string) ($ad['target_app_key'] ?? 'external'),
             'brand_name' => (string) ($ad['brand_name'] ?? $ad['title'] ?? 'Special Announcement'),
             'badge' => $badge,
             'title' => (string) ($ad['headline'] ?? $ad['title'] ?? ''),
@@ -230,9 +260,12 @@ class EcosystemAdManager
             'description' => (string) ($ad['description'] ?? ''),
             'cta_text' => (string) ($ad['cta_text'] ?? 'Learn More'),
             'target_url' => $targetUrl,
+            'tracking_click_url' => '?action=click&ad_id=' . urlencode($id) . '&source=' . urlencode($sourceApp),
+            'impressions' => (int) ($ad['impressions'] ?? 0),
+            'clicks' => (int) ($ad['clicks'] ?? 0),
             'accent_color' => $accentColor,
             'gradient' => $gradient,
-            'icon' => (string) ($ad['icon'] ?? 'bi-stars'),
+            'icon' => (string) ($ad['icon'] ?? ($matchedMeta['icon'] ?? 'bi-stars')),
             'svg_icon' => $svgIcon,
             'disclosure_type' => (string) ($ad['disclosure_type'] ?? 'promotion'),
             'disclosure_text' => (string) ($ad['disclosure_text'] ?? 'Verified Partner Promotion — Curated across our Ecosystem Studio.'),
@@ -313,6 +346,10 @@ class EcosystemAdManager
             'campaign_slug' => $campaignSlug,
             'start_at' => !empty($input['start_at']) ? trim((string) $input['start_at']) : null,
             'end_at' => !empty($input['end_at']) ? trim((string) $input['end_at']) : null,
+            'impressions' => (int) ($all[$id]['impressions'] ?? 0),
+            'clicks' => (int) ($all[$id]['clicks'] ?? 0),
+            'last_impression_at' => $all[$id]['last_impression_at'] ?? null,
+            'last_click_at' => $all[$id]['last_click_at'] ?? null,
             'updated_at' => date('Y-m-d H:i:s'),
             'created_at' => $all[$id]['created_at'] ?? date('Y-m-d H:i:s'),
         ];
@@ -374,6 +411,98 @@ class EcosystemAdManager
     }
 
     /**
+     * Atomically records an impression event for an advert.
+     *
+     * @param string $adId Advert identifier
+     * @param string $appKey Source application where impression occurred
+     * @return bool
+     */
+    public static function recordImpression(string $adId, string $appKey = ''): bool
+    {
+        if (trim($adId) === '') {
+            return false;
+        }
+
+        $cleanId = preg_replace('/^(custom_|eco_)/', '', $adId);
+        $all = self::getAllAdverts();
+
+        if (!isset($all[$cleanId])) {
+            return false;
+        }
+
+        $all[$cleanId]['impressions'] = (int) ($all[$cleanId]['impressions'] ?? 0) + 1;
+        $all[$cleanId]['last_impression_at'] = date('Y-m-d H:i:s');
+
+        self::$memoryCache = $all;
+        return self::persistAdverts($all);
+    }
+
+    /**
+     * Atomically records a click-through event for an advert and returns validated destination URL.
+     *
+     * @param string $adId Advert identifier
+     * @param string $sourceApp Source application where click occurred
+     * @return string|null Target destination URL or null
+     */
+    public static function recordClick(string $adId, string $sourceApp = ''): ?string
+    {
+        if (trim($adId) === '') {
+            return null;
+        }
+
+        $cleanId = preg_replace('/^(custom_|eco_)/', '', $adId);
+        $all = self::getAllAdverts();
+
+        if (!isset($all[$cleanId])) {
+            return null;
+        }
+
+        $all[$cleanId]['clicks'] = (int) ($all[$cleanId]['clicks'] ?? 0) + 1;
+        $all[$cleanId]['last_click_at'] = date('Y-m-d H:i:s');
+
+        self::$memoryCache = $all;
+        self::persistAdverts($all);
+
+        $targetUrl = (string) ($all[$cleanId]['target_url'] ?? '/');
+        if (filter_var($targetUrl, FILTER_VALIDATE_URL) && !str_contains($targetUrl, 'utm_source=')) {
+            $separator = str_contains($targetUrl, '?') ? '&' : '?';
+            $params = [
+                'utm_source' => $sourceApp !== '' ? $sourceApp : 'ecosystem',
+                'utm_medium' => 'ecosystem_ad_click',
+                'utm_campaign' => $all[$cleanId]['campaign_slug'] ?? 'campaign',
+            ];
+            $targetUrl .= $separator . http_build_query($params);
+        }
+
+        return $targetUrl;
+    }
+
+    /**
+     * Retrieves telemetry statistics for an advert.
+     *
+     * @param string $adId
+     * @return array{impressions: int, clicks: int, ctr: float, last_impression_at: ?string, last_click_at: ?string}
+     */
+    public static function getStats(string $adId): array
+    {
+        $cleanId = preg_replace('/^(custom_|eco_)/', '', $adId);
+        $all = self::getAllAdverts();
+        $ad = $all[$cleanId] ?? [];
+
+        $impressions = (int) ($ad['impressions'] ?? 0);
+        $clicks = (int) ($ad['clicks'] ?? 0);
+        $ctr = $impressions > 0 ? round(($clicks / $impressions) * 100, 2) : 0.0;
+
+        return [
+            'impressions' => $impressions,
+            'clicks' => $clicks,
+            'ctr' => $ctr,
+            'last_impression_at' => $ad['last_impression_at'] ?? null,
+            'last_click_at' => $ad['last_click_at'] ?? null,
+        ];
+    }
+
+    /**
      * Atomically writes adverts to the central storage file.
      *
      * @param array<string, array<string, mixed>> $data
@@ -424,6 +553,19 @@ class EcosystemAdManager
     public static function handleAdminRequest(array $get, array $post, array &$session): void
     {
         $action = (string) ($get['action'] ?? $post['action'] ?? 'index');
+
+        // Fast-path click tracking redirect
+        if ($action === 'click') {
+            $id = (string) ($get['ad_id'] ?? $get['id'] ?? '');
+            $source = (string) ($get['source'] ?? '');
+            $targetUrl = self::recordClick($id, $source);
+            if ($targetUrl !== null && filter_var($targetUrl, FILTER_VALIDATE_URL)) {
+                header('Location: ' . $targetUrl);
+                exit;
+            }
+            header('Location: /');
+            exit;
+        }
 
         // Verify CSRF on state changes
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -691,7 +833,7 @@ class EcosystemAdManager
                                     placeholder="e.g. SPECIAL OFFER" oninput="updateLivePreview()">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label text-secondary small fw-semibold">Accent Color</label>
+                                <label class="form-label text-secondary small fw-semibold">Accent Colour</label>
                                 <input type="color" class="form-control form-control-color w-100" name="accent_color" id="inputColor"
                                     value="#6366f1" onchange="updateLivePreview()">
                             </div>
@@ -816,6 +958,7 @@ class EcosystemAdManager
                                 <th>Badge</th>
                                 <th>Targets</th>
                                 <th>Mode</th>
+                                <th>Telemetry (Views / Clicks)</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -853,6 +996,16 @@ class EcosystemAdManager
                                     </td>
                                     <td>
                                         <span class="small text-secondary"><?= htmlspecialchars((string) ($ad['mode'] ?? 'exclusive'), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="small text-white">
+                                            <i class="bi-eye text-info me-1" title="Impressions"></i> <?= number_format((int) ($ad['impressions'] ?? 0)) ?>
+                                            <span class="text-secondary mx-1">•</span>
+                                            <i class="bi-cursor text-success me-1" title="Clicks"></i> <?= number_format((int) ($ad['clicks'] ?? 0)) ?>
+                                        </div>
+                                        <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 mt-1" style="font-size: 0.68rem;">
+                                            CTR: <?= (!empty($ad['impressions']) ? round(((int) ($ad['clicks'] ?? 0) / (int) $ad['impressions']) * 100, 1) : 0.0) ?>%
+                                        </div>
                                     </td>
                                     <td class="text-end">
                                         <button class="btn btn-sm btn-outline-primary rounded-pill me-1" onclick='editAd(<?= json_encode($ad, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>

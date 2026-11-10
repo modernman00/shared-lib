@@ -145,4 +145,129 @@ class EcosystemAdManagerTest extends TestCase
         $this->assertFalse($result['success']);
         $this->assertStringContainsString('valid destination URL', (string) $result['error']);
     }
+
+    public function testBrandColorsAndVectorIconsForRefreshedApps(): void
+    {
+        $catalog = EcosystemPromoService::getCatalog();
+
+        // 1. FamilyPlatform must use unified Crimson #a31621 and crimson gradient
+        $this->assertArrayHasKey('familyplatform', $catalog);
+        $family = $catalog['familyplatform'];
+        $this->assertEquals('#a31621', $family['accent_color']);
+        $this->assertStringContainsString('#b8202c', $family['gradient']);
+        $this->assertStringContainsString('pp-brand-logo-svg', $family['svg_icon']);
+        $this->assertStringContainsString('#b8202c', $family['svg_icon']);
+
+        // 2. Best Care Professionals (BCP) must be present with healthcare assets
+        $this->assertArrayHasKey('bcp', $catalog);
+        $bcp = $catalog['bcp'];
+        $this->assertEquals('#006699', $bcp['accent_color']);
+        $this->assertEquals('CQC REGULATED', $bcp['badge']);
+        $this->assertStringContainsString('pp-brand-logo-svg', $bcp['svg_icon']);
+        $this->assertStringContainsString('#006699', $bcp['svg_icon']);
+
+        // 3. PartyPlatform must use authentic electric violet/fuchsia gradient
+        $this->assertArrayHasKey('partyplatform', $catalog);
+        $party = $catalog['partyplatform'];
+        $this->assertEquals('#9B5CFB', $party['accent_color']);
+        $this->assertStringContainsString('#7b03fc', $party['gradient']);
+    }
+
+    public function testAdvertsRotationAcrossImpressions(): void
+    {
+        $promoService = new EcosystemPromoService();
+
+        // With mock session offsets, consecutive requests on same placement must rotate
+        $ad1 = $promoService->getPromoForContext('partyplatform', 'dashboard', ['mock_session_offset' => 0]);
+        $ad2 = $promoService->getPromoForContext('partyplatform', 'dashboard', ['mock_session_offset' => 1]);
+        $ad3 = $promoService->getPromoForContext('partyplatform', 'dashboard', ['mock_session_offset' => 2]);
+
+        $this->assertNotNull($ad1);
+        $this->assertNotNull($ad2);
+        $this->assertNotNull($ad3);
+
+        // Target apps must cycle and not be stuck on the exact same app
+        $this->assertNotEquals($ad1['target_app'], $ad2['target_app']);
+        $this->assertNotEquals($ad2['target_app'], $ad3['target_app']);
+    }
+
+    public function testCustomAdvertsRotationAcrossMultipleCandidates(): void
+    {
+        EcosystemAdManager::saveAdvert([
+            'id' => 'campaign_alpha',
+            'headline' => 'Campaign Alpha Special',
+            'target_url' => 'https://alpha.example.com',
+            'active' => 1,
+            'target_apps' => ['all'],
+        ]);
+
+        EcosystemAdManager::saveAdvert([
+            'id' => 'campaign_beta',
+            'headline' => 'Campaign Beta Special',
+            'target_url' => 'https://beta.example.com',
+            'active' => 1,
+            'target_apps' => ['all'],
+        ]);
+
+        $ad1 = EcosystemAdManager::getAdvertForApp('partyplatform', 'dashboard', ['mock_session_offset' => 0]);
+        $ad2 = EcosystemAdManager::getAdvertForApp('partyplatform', 'dashboard', ['mock_session_offset' => 1]);
+
+        $this->assertNotNull($ad1);
+        $this->assertNotNull($ad2);
+        $this->assertNotEquals($ad1['id'], $ad2['id']);
+    }
+
+    public function testImpressionAndClickTrackingTelemetry(): void
+    {
+        $saveResult = EcosystemAdManager::saveAdvert([
+            'id' => 'trackable_campaign',
+            'headline' => 'Trackable Campaign 2026',
+            'target_url' => 'https://example.com/tracked-landing',
+            'active' => 1,
+            'target_apps' => ['all'],
+        ]);
+
+        $this->assertTrue($saveResult['success']);
+
+        // 1. Initial telemetry must be zero
+        $statsInitial = EcosystemAdManager::getStats('trackable_campaign');
+        $this->assertEquals(0, $statsInitial['impressions']);
+        $this->assertEquals(0, $statsInitial['clicks']);
+        $this->assertEquals(0.0, $statsInitial['ctr']);
+
+        // 2. Record 2 impressions
+        EcosystemAdManager::recordImpression('trackable_campaign', 'partyplatform');
+        EcosystemAdManager::recordImpression('custom_trackable_campaign', 'familyplatform');
+
+        $statsAfterImpressions = EcosystemAdManager::getStats('trackable_campaign');
+        $this->assertEquals(2, $statsAfterImpressions['impressions']);
+        $this->assertNotNull($statsAfterImpressions['last_impression_at']);
+
+        // 3. Record 1 click
+        $redirectUrl = EcosystemAdManager::recordClick('trackable_campaign', 'partyplatform');
+        $this->assertNotNull($redirectUrl);
+        $this->assertStringContainsString('https://example.com/tracked-landing', $redirectUrl);
+        $this->assertStringContainsString('utm_source=partyplatform', $redirectUrl);
+
+        $statsAfterClick = EcosystemAdManager::getStats('trackable_campaign');
+        $this->assertEquals(1, $statsAfterClick['clicks']);
+        $this->assertEquals(50.0, $statsAfterClick['ctr']); // 1 click / 2 impressions = 50.0%
+        $this->assertNotNull($statsAfterClick['last_click_at']);
+    }
+
+    public function testCustomBannerInheritsCatalogBrandAssetsWhenTargetingSisterApp(): void
+    {
+        $banner = EcosystemAdManager::formatCustomBanner([
+            'id' => 'ad_promo_family',
+            'headline' => 'Join the Family Heritage Sanctuary',
+            'target_url' => 'https://myfamilyplatform.com/join',
+            'target_app_key' => 'familyplatform',
+        ], 'partyplatform', 'dashboard');
+
+        // Must inherit FamilyPlatform's updated Crimson brand color and authentic SVG icon
+        $this->assertEquals('#a31621', $banner['accent_color']);
+        $this->assertStringContainsString('#b8202c', $banner['gradient']);
+        $this->assertStringContainsString('pp-brand-logo-svg', $banner['svg_icon']);
+        $this->assertStringContainsString('action=click', $banner['tracking_click_url']);
+    }
 }
