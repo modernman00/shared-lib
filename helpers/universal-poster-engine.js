@@ -284,11 +284,71 @@ class AtgUniversalPosterEngine {
     // above 0 processes the photo even when Smart Background Cutout is switched off.
     const backgroundFade = Math.max(0, Math.min(1, Number(options.backgroundFade) || 0));
     const shouldCutout = options.autoRemoveBackground !== false;
+    // Real photos: on-device AI person segmentation (keeps dark clothing, drops busy venues).
+    // Falls back to the colour-key cut-out if the model cannot load (offline, strict CSP, old browser).
+    if (rawImg && shouldCutout && backgroundFade === 0 && options.aiCutout !== false && !this._isBuiltInAsset(String(rawImg.src || ''))) {
+      try {
+        this.processedSubjectCanvas = await this.aiSegmentPerson(rawImg);
+        return;
+      } catch (e) {
+        if (typeof console !== 'undefined') console.warn('[PosterEngine] AI cut-out unavailable, using colour-key', e);
+      }
+    }
     if (rawImg && (shouldCutout || backgroundFade > 0)) {
       this.processedSubjectCanvas = this.isolateSubjectFromBackground(rawImg, options.tolerance || 44, backgroundFade);
     } else {
       this.processedSubjectCanvas = null;
     }
+  }
+
+  /**
+   * On-device AI person cut-out (MediaPipe selfie multiclass segmenter, loaded on first use).
+   * Returns a transparent canvas cropped to the person. Photos never leave the device.
+   * Hosts need CSP: script-src cdn.jsdelivr.net + 'wasm-unsafe-eval'; connect-src storage.googleapis.com.
+   */
+  async aiSegmentPerson(img) {
+    if (typeof document === 'undefined') throw new Error('No DOM');
+    const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+    const MODEL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite';
+    if (!AtgUniversalPosterEngine.__segmenter) {
+      AtgUniversalPosterEngine.__segmenter = (async () => {
+        const vision = await import(MP + '/vision_bundle.mjs');
+        const fileset = await vision.FilesetResolver.forVisionTasks(MP + '/wasm');
+        return vision.ImageSegmenter.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: MODEL, delegate: 'CPU' },
+          runningMode: 'IMAGE', outputCategoryMask: false, outputConfidenceMasks: true,
+        });
+      })().catch((e) => { AtgUniversalPosterEngine.__segmenter = null; throw e; });
+    }
+    const seg = await AtgUniversalPosterEngine.__segmenter;
+    const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+    const res = seg.segment(img);
+    const bg = res.confidenceMasks[0];
+    const mw = bg.width, mh = bg.height, conf = bg.getAsFloat32Array();
+    const mask = document.createElement('canvas'); mask.width = mw; mask.height = mh;
+    const mctx = mask.getContext('2d'); const md = mctx.createImageData(mw, mh);
+    let x0 = mw, y0 = mh, x1 = -1, y1 = -1;
+    for (let i = 0; i < conf.length; i++) {
+      const a = Math.max(0, Math.min(1, ((1 - conf[i]) - 0.3) / 0.4));
+      md.data[i * 4 + 3] = Math.round(a * 255);
+      if (a > 0.5) { const x = i % mw, y = (i / mw) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (res.close) res.close();
+    if (x1 < 0) throw new Error('No person found');
+    mctx.putImageData(md, 0, 0);
+    const full = document.createElement('canvas'); full.width = W; full.height = H;
+    const f = full.getContext('2d');
+    f.drawImage(img, 0, 0);
+    f.globalCompositeOperation = 'destination-in';
+    f.imageSmoothingQuality = 'high';
+    if ('filter' in f) f.filter = 'blur(' + Math.max(1, Math.round(W / 700)) + 'px)';
+    f.drawImage(mask, 0, 0, W, H);
+    const pad = 0.03;
+    const cx0 = Math.max(0, Math.floor((x0 / mw - pad) * W)), cy0 = Math.max(0, Math.floor((y0 / mh - pad) * H));
+    const cx1 = Math.min(W, Math.ceil(((x1 + 1) / mw + pad) * W)), cy1 = Math.min(H, Math.ceil(((y1 + 1) / mh + pad) * H));
+    const out = document.createElement('canvas'); out.width = Math.max(1, cx1 - cx0); out.height = Math.max(1, cy1 - cy0);
+    out.getContext('2d').drawImage(full, cx0, cy0, out.width, out.height, 0, 0, out.width, out.height);
+    return out;
   }
 
   /**
@@ -1608,8 +1668,12 @@ class AtgUniversalPosterEngine {
     ctx.textAlign = 'center';
     ctx.font = 'italic 700 20px "Montserrat", sans-serif';
     ctx.fillStyle = '#f8fafc';
-    const timeLead = isFamily ? 'RECEPTION & BANQUET AT' : 'PARTY STARTS AT';
-    this._drawTrackedText(ctx, `${timeLead} ${(this.data.time || (isFamily ? '4:00 PM' : '9PM')).toUpperCase()}`, leftCx, h * 0.552, 3);
+    // Optional caller-supplied labels (data.labels) so sectors like memorials/weddings never inherit party/gala wording
+    const L = (this.data.labels && typeof this.data.labels === 'object') ? this.data.labels : {};
+    const lbl = (key, fallback) => (typeof L[key] === 'string' ? L[key] : fallback);
+    const timeLead = lbl('timeLead', isFamily ? 'RECEPTION & BANQUET AT' : 'PARTY STARTS AT');
+    const timeVal = (this.data.time || (this.strictContent ? '' : (isFamily ? '4:00 PM' : '9PM'))).toUpperCase().trim();
+    if (timeLead || timeVal) this._drawTrackedText(ctx, `${timeLead} ${timeVal}`.trim(), leftCx, h * 0.552, 3);
     ctx.restore();
 
     // 5. Structured 2-Column Editorial Grid: VENUE AT | ... and DRESS CODE | ...
@@ -1621,8 +1685,8 @@ class AtgUniversalPosterEngine {
     ctx.textAlign = 'right';
     ctx.font = '500 30px "Oswald", "Montserrat", sans-serif';
     ctx.fillStyle = '#eab308';
-    ctx.fillText(isFamily ? 'GALA' : 'VENUE', splitX, gridY);
-    ctx.fillText('AT', splitX, gridY + 32);
+    ctx.fillText(lbl('venueLine1', isFamily ? 'GALA' : 'VENUE'), splitX, gridY);
+    ctx.fillText(lbl('venueLine2', 'AT'), splitX, gridY + 32);
 
     ctx.textAlign = 'left';
     ctx.font = '800 21px "Montserrat", sans-serif';
@@ -1644,8 +1708,8 @@ class AtgUniversalPosterEngine {
     ctx.textAlign = 'right';
     ctx.font = '500 30px "Oswald", "Montserrat", sans-serif';
     ctx.fillStyle = '#eab308';
-    ctx.fillText('DRESS', splitX, gridY);
-    ctx.fillText('CODE', splitX, gridY + 32);
+    ctx.fillText(lbl('dressLine1', 'DRESS'), splitX, gridY);
+    ctx.fillText(lbl('dressLine2', 'CODE'), splitX, gridY + 32);
 
     ctx.textAlign = 'left';
     const dressTokens = (this.data.dressCode || (isFamily ? 'TRADITIONAL ROYAL GOLD & IVORY • CELEBRATION ATTIRE' : 'ALL BLACK AFFAIR • WEAR ALL BLACK')).toUpperCase().split(/•|\|/);
@@ -1661,7 +1725,7 @@ class AtgUniversalPosterEngine {
     const rsvpY = h * 0.825;
     ctx.font = 'italic 400 44px "Great Vibes", "Alex Brush", cursive';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('rsvp', leftCx - w * 0.16, rsvpY);
+    ctx.fillText(lbl('rsvp', 'rsvp'), leftCx - w * 0.16, rsvpY);
 
     ctx.font = '700 20px "Montserrat", sans-serif';
     ctx.fillStyle = '#eab308';
@@ -1670,7 +1734,9 @@ class AtgUniversalPosterEngine {
 
     // Wax Crest Seal for Family Heirloom Gala
     if (isFamily) {
-      this._renderWaxCrestSeal(ctx, leftCx - w * 0.15, h * 0.90, 42, 'HERITAGE', 'GALA SEAL', '#064e3b', '#eab308');
+      if (lbl('sealTop', 'HERITAGE') !== '' || lbl('sealBottom', 'GALA SEAL') !== '') {
+        this._renderWaxCrestSeal(ctx, leftCx - w * 0.15, h * 0.90, 42, lbl('sealTop', 'HERITAGE'), lbl('sealBottom', 'GALA SEAL'), '#064e3b', '#eab308');
+      }
     }
 
     if (this.data.qrUrl) {

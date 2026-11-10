@@ -1407,9 +1407,14 @@ class UniversalPosterStudioController
                     <input type="range" id="rngSubjectScale" min="0.5" max="1.8" step="0.05" value="1.0" class="range-slider">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="rngSubjectOffsetY">Vertical Offset</label>
-                    <input type="range" id="rngSubjectOffsetY" min="-260" max="260" step="10" value="0" class="range-slider">
+                    <label class="form-label" for="rngSubjectOffsetY">Move Up / Down</label>
+                    <input type="range" id="rngSubjectOffsetY" min="-400" max="400" step="5" value="0" class="range-slider">
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="rngSubjectOffsetX">Move Left / Right</label>
+                <input type="range" id="rngSubjectOffsetX" min="-500" max="500" step="5" value="0" class="range-slider">
             </div>
 
             <div class="form-group">
@@ -1782,7 +1787,8 @@ class UniversalPosterStudioController
                 footerStrip: document.getElementById('inpFooterStrip').value,
                 photoMode: document.getElementById('chkGhostEcho').checked ? 'ghost_double' : 'cutout_auto',
                 subjectScale: parseFloat(document.getElementById('rngSubjectScale').value) || 1.0,
-                subjectOffsetY: parseInt(document.getElementById('rngSubjectOffsetY').value, 10) || 0
+                subjectOffsetY: parseInt(document.getElementById('rngSubjectOffsetY').value, 10) || 0,
+                subjectOffsetX: parseInt(document.getElementById('rngSubjectOffsetX').value, 10) || 0
             });
             engine.render();
         }
@@ -1850,6 +1856,7 @@ class UniversalPosterStudioController
             pushInputsToEngine();
         });
         document.getElementById('rngSubjectOffsetY').addEventListener('input', pushInputsToEngine);
+        document.getElementById('rngSubjectOffsetX').addEventListener('input', pushInputsToEngine);
 
         // Subject Photo Upload with Smart Background Removal
         let lastSubjectSrc = null;
