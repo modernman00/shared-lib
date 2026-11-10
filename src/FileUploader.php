@@ -7,19 +7,21 @@ namespace Src;
 use Intervention\Image\ImageManager as Image;
 use Spatie\ImageOptimizer\OptimizerChainFactory as ImgOptimizer;
 use Src\Exceptions\ValidationException;
+use Src\Media\SovereignMediaEngine;
+use Src\Security\SovereignThreatEngine;
 use Src\VirusScan as ScanVirus;
 use Throwable;
 
 class FileUploader
 {
     /** Longest edge (px) an uploaded image may keep. Anything larger is scaled down (never up). */
-    private const MAX_IMAGE_DIMENSION = 1920;
+    public const MAX_IMAGE_DIMENSION = 1920;
 
     /** Re-encode quality for lossy formats (JPEG / WebP), 0-100. */
-    private const IMAGE_QUALITY = 80;
+    public const IMAGE_QUALITY = 80;
 
     /** Only replace a re-encoded file when it is at least this much smaller (or the format changed). */
-    private const MIN_SAVING_RATIO = 0.98;
+    public const MIN_SAVING_RATIO = 0.98;
 
     /** Hard upload ceiling: 25 MB (allowing high quality phone video clips). */
     private const MAX_UPLOAD_BYTES = 26_214_400;
@@ -306,12 +308,8 @@ class FileUploader
                 throw new ValidationException('FILE FORMAT - File contents do not match its extension.');
             }
 
-            // Red Team Polyglot Guard: Reject files embedding raw server-side PHP tags or script shells
-            $headChunk = (string) @file_get_contents($fileTemp, false, null, 0, 65536);
-            if ($headChunk !== '' && preg_match('/<\?(?:php|=)|\b__HALT_COMPILER\s*\(|<script\s+[^>]*language\s*=\s*["\']?php/i', $headChunk)) {
-                @unlink($fileTemp);
-                throw new ValidationException('SECURITY VIOLATION - Malicious executable polyglot payload detected in file.');
-            }
+            // ATG Sovereign Threat Engine: Magic bytes, polyglots, webshells, PDF exploits, and macros
+            SovereignThreatEngine::scan($fileTemp, null, $extension);
         }
     }
 
@@ -353,7 +351,11 @@ class FileUploader
      *
      * @return string final path on disk (differs from the input only when HEIC is transcoded)
      */
-    private static function finaliseImage(string $path, string $extension): string
+    /**
+     * Finalise image: orient according to EXIF, downscale if > MAX_IMAGE_DIMENSION,
+     * re-encode to strip metadata, and run binary optimizer.
+     */
+    public static function finaliseImage(string $path, string $extension): string
     {
         if (self::isProcessableImage($extension)) {
             $path = self::optimiseImageFile($path, $extension, allowFormatChange: true);
@@ -367,68 +369,14 @@ class FileUploader
     }
 
     /**
-     * Scale an image down to MAX_IMAGE_DIMENSION (never up), strip metadata and re-encode
-     * it to cut file size. Writes in place unless $allowFormatChange transcodes HEIC to JPEG.
+     * Scale an image down to MAX_IMAGE_DIMENSION, strip EXIF metadata, and re-encode
+     * using the ATG SovereignMediaEngine (native PHP core GD/Imagick with AVIF/WebP).
      *
      * @return string the resulting path (unchanged unless a HEIC file was transcoded)
      */
     private static function optimiseImageFile(string $path, string $extension, bool $allowFormatChange = false): string
     {
-        if (!is_file($path) || !is_readable($path)) {
-            return $path;
-        }
-
-        // HEIC cannot be re-encoded to itself reliably and must not be renamed before move_uploaded_file().
-        if ($extension === 'heic' && !$allowFormatChange) {
-            return $path;
-        }
-
-        // Red Team Fix: Prevent pixel flood / decompression bombs
-        $imageSize = @getimagesize($path);
-        if ($imageSize !== false && ($imageSize[0] > 10000 || $imageSize[1] > 10000)) {
-            throw new ValidationException('Image dimensions exceed the maximum allowed safety limits.');
-        }
-
-        try {
-            $manager = extension_loaded('imagick') ? Image::imagick() : Image::gd();
-            $image = $manager->read($path);
-
-            if (method_exists($image, 'orient')) {
-                $image->orient(); // honour EXIF rotation before metadata is stripped on encode
-            }
-
-            if ($image->width() > self::MAX_IMAGE_DIMENSION || $image->height() > self::MAX_IMAGE_DIMENSION) {
-                $image->scaleDown(self::MAX_IMAGE_DIMENSION, self::MAX_IMAGE_DIMENSION);
-            }
-
-            $targetExt = $extension === 'heic' ? 'jpg' : $extension;
-            $targetPath = $extension === 'heic'
-                ? (string) preg_replace('/\.[^.]+$/', '.jpg', $path)
-                : $path;
-
-            $encoded = match ($targetExt) {
-                'png'  => $image->toPng(true),                              // interlaced
-                'webp' => $image->toWebp(self::IMAGE_QUALITY, true),        // quality, strip
-                default => $image->toJpeg(self::IMAGE_QUALITY, true, true), // quality, progressive, strip
-            };
-
-            $originalBytes = (int) filesize($path);
-            $formatChanged = $targetPath !== $path;
-
-            if ($formatChanged || $encoded->size() < $originalBytes * self::MIN_SAVING_RATIO) {
-                $encoded->save($targetPath);
-                if ($formatChanged) {
-                    unlink($path); // original (e.g. .heic) is now redundant; it was verified readable above
-                }
-                clearstatcache(true, $targetPath);
-
-                return $targetPath;
-            }
-
-            return $path;
-        } catch (Throwable $e) {
-            return $path; // undecodable / driver missing / encode failure - keep the original bytes
-        }
+        return SovereignMediaEngine::optimise($path, $extension, $allowFormatChange);
     }
 
     private static function runBinaryOptimizer(string $path): void

@@ -1,0 +1,4 @@
+pyvips>=2.2.3
+yara-python>=4.5.0
+PyMuPDF>=1.24.0
+oletools>=0.60.2
