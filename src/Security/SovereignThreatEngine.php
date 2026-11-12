@@ -57,13 +57,13 @@ class SovereignThreatEngine
         '/\b(eval|assert)\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13)\s*\(/i',
     ];
 
-    /** Malicious PDF object markers. */
+    /** Malicious PDF object markers (case-sensitive per PDF spec to avoid binary stream collisions). */
     private const PDF_RISK_MARKERS = [
-        '/\/JavaScript\b/i',
-        '/\/JS\b/i',
-        '/\/Launch\b/i',
-        '/\/EmbeddedFiles\b/i',
-        '/\/OpenAction\b/i',
+        '/JavaScript'        => '/\/JavaScript\b/',
+        '/JS'                => '/\/JS\b/',
+        '/Launch'            => '/\/Launch\b/',
+        '/EmbeddedFiles'     => '/\/EmbeddedFiles\b/',
+        '/OpenAction+Action' => '/\/OpenAction\s*<<[^>]*\/S\s*\/(?:JavaScript|JS|Launch|SubmitForm|ImportData|GoToR)\b/',
     ];
 
     /**
@@ -214,9 +214,14 @@ class SovereignThreatEngine
         }
         fclose($handle);
 
-        foreach (self::PDF_RISK_MARKERS as $marker) {
+        foreach (self::PDF_RISK_MARKERS as $label => $marker) {
             if (preg_match($marker, $content)) {
-                self::abortWithAlert($filePath, 'Malicious Active PDF Object', 'SECURITY VIOLATION - Malicious active PDF script or launch object detected.');
+                error_log(sprintf('[SovereignThreatEngine] Blocked PDF "%s" — matched marker: %s', basename($filePath), $label));
+                self::abortWithAlert(
+                    $filePath,
+                    "Malicious Active PDF Object ({$label})",
+                    'SECURITY VIOLATION - Malicious active PDF script or launch object detected.'
+                );
             }
         }
     }
