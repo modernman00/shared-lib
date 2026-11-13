@@ -20,7 +20,10 @@ echo "===============================================================\n\n";
 $sitesDir = dirname(__DIR__, 2);
 $sharedLibDir = dirname(__DIR__);
 
-require_once $sharedLibDir . '/vendor/autoload.php';
+$autoloadPath = file_exists($sharedLibDir . '/vendor/autoload.php')
+    ? $sharedLibDir . '/vendor/autoload.php'
+    : dirname($sharedLibDir, 3) . '/vendor/autoload.php';
+require_once $autoloadPath;
 require_once $sharedLibDir . '/helpers/helpers.php';
 
 use Src\I18n;

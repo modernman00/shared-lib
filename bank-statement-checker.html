@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bank Statement Assessment &amp; Gap-Detection Engine</title>
+  <title>Bank Statement Checker | Aji's Assessment and Planner</title>
   <style>
     /* Top Suite Navigation Switcher */
     .app-top-nav {
@@ -897,19 +897,29 @@
   <nav class="app-top-nav" aria-label="Tool Switcher">
     <div class="top-nav-inner">
       <div class="top-nav-brand">
-        <span style="font-size: 1.1rem;">⚖️</span>
-        <span>Assessment &amp; Review Suite</span>
+        <span style="font-size: 1.2rem;">⚖️</span>
+        <span>AJI'S ASSESSMENT AND PLANNER</span>
       </div>
       <div class="top-nav-links">
         <a href="bank-statement-checker.html" class="top-nav-link active" id="navLinkStatement" aria-current="page">
           <span>📑 Bank Statement Checker</span>
         </a>
         <a href="uc-case-planner.html" class="top-nav-link" id="navLinkPlanner">
-          <span>📋 Case Project Planner</span>
+          <span>📋 Case Tracking Dashboard</span>
         </a>
       </div>
     </div>
   </nav>
+
+  <script>
+    (function () {
+      const isPublic = window.location.pathname.includes('public-tool') || window.location.href.includes('public-tool');
+      const stmtLink = document.getElementById('navLinkStatement');
+      const plannerLink = document.getElementById('navLinkPlanner');
+      if (stmtLink) stmtLink.href = isPublic ? 'index.html' : 'bank-statement-checker.html';
+      if (plannerLink) plannerLink.href = isPublic ? 'planner.html' : 'uc-case-planner.html';
+    })();
+  </script>
 
 
   <header class="app-header">
@@ -927,17 +937,6 @@
         <button type="button" id="btnClearAll" class="btn btn-outline-light" title="Reset all fields to a blank slate">
           <span>New / Blank Assessment</span>
         </button>
-        <button type="button" id="btnLoadPaperExample" class="btn btn-outline-light" title="Loads a demo dataset to see gap detection in action">
-          <span class="spinner" aria-hidden="true"></span>
-          <span>Load Demo Sample (Gap Detection)</span>
-        </button>
-        <button type="button" id="btnLoadCompliantExample" class="btn btn-outline-light" title="Loads a 100% compliant Current and Savings statement set">
-          <span class="spinner" aria-hidden="true"></span>
-          <span>Load Demo Sample (100% Covered)</span>
-        </button>
-        <a href="#emailSection" id="btnHeaderStoredNotes" class="btn btn-outline-light" style="text-decoration: none;" title="Jump to your personal stored assessment action notes">
-          <span>Stored Notes (<span id="headerRecordsCount">0</span>)</span>
-        </a>
       </div>
     </div>
   </header>
@@ -1317,33 +1316,13 @@
           </div>
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
-            <button type="button" id="btnSaveRecord" class="btn btn-primary">
+            <button type="button" id="btnCopyRecordNote" class="btn btn-primary">
               <span class="spinner" aria-hidden="true"></span>
-              <span>💾 Save Note to My Records</span>
-            </button>
-            <button type="button" id="btnCopyRecordNote" class="btn btn-secondary">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Copy Note</span>
-            </button>
-            <button type="button" id="btnExportRecords" class="btn btn-secondary" title="Export all stored notes as a text file">
-              <span>Export Notes (.txt)</span>
+              <span>📋 Copy Assessor Note</span>
             </button>
             <button type="button" id="btnSwitchToCustomer" class="btn btn-secondary">
               <span>&larr; Message to Customer</span>
             </button>
-          </div>
-
-          <!-- Stored Records History Accordion / List -->
-          <div id="recordsSection">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-top: 1px dashed var(--border-strong); padding-top: 14px;">
-              <strong style="font-size: 0.875rem; color: var(--text-primary);">Stored Assessment Records (<span id="storedRecordsCount">0</span>)</strong>
-              <button type="button" id="btnClearAllRecords" class="btn btn-danger-ghost btn-sm" style="min-height: 32px; padding: 2px 10px; font-size: 0.75rem;" title="Clear all stored notes">
-                Clear All Stored
-              </button>
-            </div>
-            <div id="savedRecordsList" style="display: flex; flex-direction: column; gap: 10px;">
-              <!-- Rendered dynamically -->
-            </div>
           </div>
         </div>
       </div>
@@ -3100,21 +3079,6 @@
         }
       });
 
-      // Preset buttons (Optional Demos)
-      document.getElementById('btnLoadPaperExample').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          loadPreset(PAPER_WORKSHEET_PRESET);
-          showFeedback('✓ Loaded Demo Sample with gap detection (26 Jun – 26 Oct 2026)');
-        });
-      });
-
-      document.getElementById('btnLoadCompliantExample').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          loadPreset(COMPLIANT_PRESET);
-          showFeedback('✓ Loaded Demo Sample (100% Fulfilled)');
-        });
-      });
-
       document.getElementById('btnClearAll').addEventListener('click', () => {
         statementsState = [];
         exitEditMode();
@@ -3151,27 +3115,12 @@
         });
       });
 
-      // Assessor Stored Records buttons & listeners
-      document.getElementById('btnSaveRecord')?.addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          handleSaveCurrentRecord();
-        });
-      });
-
       document.getElementById('btnCopyRecordNote')?.addEventListener('click', e => {
         withButtonSpinner(e.currentTarget, () => {
           const text = document.getElementById('assessorActionNote').value;
           navigator.clipboard?.writeText(text);
           showFeedback('✓ Action note copied to clipboard');
         });
-      });
-
-      document.getElementById('btnExportRecords')?.addEventListener('click', () => {
-        handleExportRecords();
-      });
-
-      document.getElementById('btnClearAllRecords')?.addEventListener('click', () => {
-        handleClearAllRecords();
       });
 
       // 2-View Tab & Cross-Link Listeners
@@ -3189,12 +3138,6 @@
 
       document.getElementById('btnSwitchToCustomer')?.addEventListener('click', () => {
         switchOutputView('customer');
-      });
-
-      document.getElementById('btnHeaderStoredNotes')?.addEventListener('click', e => {
-        e.preventDefault();
-        switchOutputView('audit');
-        document.getElementById('emailSection')?.scrollIntoView({ behavior: 'smooth' });
       });
 
       // Track manual edits on assessor note so user changes are preserved

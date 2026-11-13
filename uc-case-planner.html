@@ -1,128 +1,120 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Case Project Planner | Assessment &amp; Review Flight Deck</title>
-  <meta name="description" content="Professional 6-step project planner and case review tool for Claims Assessors. Covers Standard and Self-Employed claims with automated journal messages, evidence tracking, GSE/MIF assessment, and audit note generation." />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case Tracking Dashboard | Aji's Assessment and Planner</title>
   <style>
-    :root {
-      --bg-canvas: #f8fafc;
-      --bg-surface: #ffffff;
-      --bg-subtle: #f1f5f9;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
-      --text-muted: #64748b;
-      --text-inverse: #ffffff;
-      
-      --accent-primary: #1e40af;
-      --accent-hover: #1d4ed8;
-      --accent-soft: #eff6ff;
-      --accent-border: #bfdbfe;
-
-      --status-ok-bg: #ecfdf5;
-      --status-ok-border: #10b981;
-      --status-ok-text: #065f46;
-      --status-ok-bar: #059669;
-
-      --status-warn-bg: #fffbeb;
-      --status-warn-border: #f59e0b;
-      --status-warn-text: #92400e;
-
-      --status-gap-bg: #fef2f2;
-      --status-gap-border: #ef4444;
-      --status-gap-text: #991b1b;
-      --status-gap-bar: #dc2626;
-
-      --border-subtle: #e2e8f0;
-      --border-strong: #cbd5e1;
-
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --radius-full: 9999px;
-
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-    }
-
-    * {
+    /* CSS Reset & Variables */
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --primary-subtle: #eff6ff;
+      --primary-border: #bfdbfe;
+      
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      
+      --warning: #b45309;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      
+      --purple: #6b21a8;
+      --purple-bg: #faf5ff;
+      --purple-border: #e9d5ff;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-canvas);
-      color: var(--text-primary);
+      color: var(--text-main);
       line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-      padding: 0 0 60px 0;
+      font-size: 15px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Accessibility focus ring */
-    *:focus-visible {
-      outline: 2px solid var(--accent-primary);
-      outline-offset: 2px;
-    }
-
-    /* Layout Container */
-    .container {
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 0 16px;
-    }
-
-    /* Top Suite Navigation Switcher */
+    /* Top Suite Nav */
     .app-top-nav {
       background: #0f172a;
       color: #ffffff;
       border-bottom: 1px solid #1e293b;
-      padding: 0 16px;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
 
     .top-nav-inner {
-      max-width: 1240px;
+      max-width: 1400px;
       margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      min-height: 52px;
       gap: 16px;
-      min-height: 48px;
-      flex-wrap: wrap;
     }
 
     .top-nav-brand {
-      font-size: 0.875rem;
-      font-weight: 700;
-      color: #f8fafc;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      letter-spacing: 0.02em;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
     }
 
     .top-nav-links {
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .top-nav-link {
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      min-height: 36px;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #94a3b8;
       transition: all 0.15s ease;
+      white-space: nowrap;
+      min-height: 44px;
     }
 
     .top-nav-link:hover {
@@ -132,42 +124,41 @@
 
     .top-nav-link.active {
       color: #ffffff;
-      background: #1e293b;
-      font-weight: 700;
-      box-shadow: inset 0 -2px 0 0 #3b82f6;
+      background: #1e3a8a;
     }
 
-    /* App Header */
-    header.app-header {
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 20px 0;
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 24px;
+    /* Main Container */
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      width: 100%;
+      flex: 1;
     }
 
-    .header-content {
+    /* Header & Action Bar */
+    .header-section {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 20px;
       flex-wrap: wrap;
     }
 
-    .app-title-area h1 {
-      font-size: 1.5rem;
+    .header-title-group h1 {
+      font-size: 24px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: var(--text-main);
       letter-spacing: -0.02em;
-      line-height: 1.25;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .app-title-area p {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
+    .header-title-group p {
+      color: var(--text-muted);
+      font-size: 14px;
       margin-top: 4px;
     }
 
@@ -178,361 +169,560 @@
       flex-wrap: wrap;
     }
 
-    /* Badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: var(--radius-full);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .badge-native {
-      background: #e0e7ff;
-      color: #3730a3;
-      border: 1px solid #c7d2fe;
-    }
-
-    .badge-selfemp {
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-    }
-
-    .badge-ok {
-      background: var(--status-ok-bg);
-      color: var(--status-ok-text);
-      border: 1px solid var(--status-ok-border);
-    }
-
-    .badge-warn {
-      background: var(--status-warn-bg);
-      color: var(--status-warn-text);
-      border: 1px solid var(--status-warn-border);
-    }
-
-    .badge-danger {
-      background: var(--status-gap-bg);
-      color: var(--status-gap-text);
-      border: 1px solid var(--status-gap-border);
-    }
-
-    .badge-neutral {
-      background: var(--bg-subtle);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-strong);
-    }
-
     /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      min-height: 44px;
-      padding: 8px 16px;
-      font-size: 0.875rem;
-      font-weight: 600;
+      padding: 9px 16px;
       border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
       cursor: pointer;
       border: 1px solid transparent;
-      transition: filter 0.15s ease, transform 0.1s ease, background-color 0.15s ease;
+      transition: all 0.15s ease;
       white-space: nowrap;
-      flex-shrink: 0;
+      min-height: 44px;
       text-decoration: none;
     }
 
-    .btn:hover:not(:disabled) {
-      filter: brightness(1.05);
-      transform: translateY(-0.5px);
-    }
-
-    .btn:active:not(:disabled) {
+    .btn:active {
       transform: scale(0.98);
     }
 
-    .btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .btn-sm {
-      min-height: 36px;
-      padding: 4px 12px;
-      font-size: 0.8125rem;
-    }
-
     .btn-primary {
-      background: var(--accent-primary);
-      color: var(--text-inverse);
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
     }
 
     .btn-secondary {
-      background: var(--bg-surface);
-      color: var(--text-primary);
+      background: #ffffff;
+      color: var(--text-main);
       border-color: var(--border-strong);
     }
 
-    .btn-outline-light {
-      background: transparent;
-      color: var(--text-secondary);
-      border-color: var(--border-strong);
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
     }
 
-    .btn-danger-ghost {
-      background: transparent;
-      color: var(--status-gap-bar);
-      border-color: transparent;
+    .btn-sm {
+      padding: 6px 12px;
+      min-height: 36px;
+      font-size: 12.5px;
     }
 
-    .btn-danger-ghost:hover {
-      background: var(--status-gap-bg);
-      border-color: var(--status-gap-border);
-    }
-
-    /* Loading Spinner */
-    .spinner {
-      display: none;
-      width: 14px;
-      height: 14px;
-      border: 2px solid currentColor;
-      border-right-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .btn.is-loading .spinner {
-      display: inline-block;
-    }
-
-    /* Active Case Hero Card */
-    .case-hero-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      box-shadow: var(--shadow-sm);
+    /* KPI Summary Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
       margin-bottom: 24px;
     }
 
-    .case-hero-top {
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-card.active {
+      border-color: var(--primary);
+      background: var(--primary-subtle);
+    }
+
+    .kpi-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 6px;
+      line-height: 1;
+    }
+
+    .kpi-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Filters & Controls Toolbar */
+    .toolbar-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
       flex-wrap: wrap;
-      margin-bottom: 16px;
     }
 
-    .case-title-row {
+    .toolbar-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      flex: 1;
+      min-width: 280px;
       flex-wrap: wrap;
     }
 
-    .case-title-row input {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      border: 1px solid transparent;
-      background: transparent;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      min-width: 240px;
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+      min-width: 200px;
     }
 
-    .case-title-row input:focus,
-    .case-title-row input:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-subtle);
-    }
-
-    /* Type Switcher Segmented Control */
-    .type-switcher {
-      display: inline-flex;
-      background: var(--bg-subtle);
+    .search-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px 0 36px;
+      font-size: 13.5px;
       border: 1px solid var(--border-strong);
-      padding: 3px;
       border-radius: var(--radius-md);
-      gap: 4px;
+      background: #f8fafc;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s ease;
     }
 
-    .type-switcher-btn {
-      min-height: 38px;
-      padding: 4px 14px;
-      border-radius: var(--radius-sm);
+    .search-input:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-subtle);
+      pointer-events: none;
+      font-size: 14px;
+    }
+
+    .filter-select {
+      height: 42px;
+      padding: 0 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary);
+    }
+
+    .view-toggle-group {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .view-toggle-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
       border: none;
       background: transparent;
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: var(--text-secondary);
+      color: var(--text-muted);
+      border-radius: 6px;
       cursor: pointer;
+      transition: all 0.15s ease;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      white-space: nowrap;
-      transition: all 0.15s ease;
+      min-height: 36px;
     }
 
-    .type-switcher-btn.active {
-      background: var(--bg-surface);
-      color: var(--accent-primary);
+    .view-toggle-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
       box-shadow: var(--shadow-sm);
     }
 
-    /* Progress & Stepper Bar */
-    .stepper-container {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
+    /* Pipeline / Board View */
+    .pipeline-board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(220px, 1fr));
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+
+    .pipeline-col {
+      background: #f1f5f9;
       border-radius: var(--radius-lg);
-      padding: 16px 20px;
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 24px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      min-width: 220px;
+      max-height: 780px;
     }
 
-    .stepper-header {
+    .pipeline-col-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 12px;
-      flex-wrap: wrap;
+      background: #e2e8f0;
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
     }
 
-    .stepper-progress-track {
-      width: 100%;
-      height: 8px;
-      background: var(--bg-subtle);
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .col-badge {
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
       border-radius: var(--radius-full);
-      overflow: hidden;
-      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
     }
 
-    .stepper-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #1e40af, #3b82f6);
-      width: 16.66%;
-      transition: width 0.3s ease;
+    .pipeline-cards-container {
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
     }
 
-    .stepper-nav {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 8px;
-    }
-
-    @media (max-width: 900px) {
-      .stepper-nav {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 540px) {
-      .stepper-nav {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    .step-btn {
-      background: var(--bg-subtle);
+    .case-card {
+      background: #ffffff;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 10px 8px;
-      text-align: left;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      transition: all 0.15s ease;
-      position: relative;
-    }
-
-    .step-btn:hover {
-      border-color: var(--accent-border);
-      background: #f8fafc;
-    }
-
-    .step-btn.active {
-      border-color: var(--accent-primary);
-      background: var(--accent-soft);
-      box-shadow: 0 0 0 1px var(--accent-primary);
-    }
-
-    .step-btn.completed {
-      border-color: var(--status-ok-border);
-    }
-
-    .step-num {
-      font-size: 0.6875rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .step-btn.active .step-num {
-      color: var(--accent-primary);
-    }
-
-    .step-btn.completed .step-num {
-      color: var(--status-ok-text);
-    }
-
-    .step-title {
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.25;
-    }
-
-    /* Main Step Content Panels */
-    .step-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 24px;
-    }
-
-    .step-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      gap: 16px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 14px;
-    }
-
-    .step-card-header h2 {
-      font-size: 1.1875rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
       gap: 10px;
     }
 
-    /* Forms & Inputs */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    .case-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .case-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .case-ref {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-subtle);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    .case-type-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+
+    .type-native {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .type-se {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .case-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .case-note {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--border-strong);
+    }
+
+    .case-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-subtle);
+      padding-top: 4px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .case-deadline {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+
+    .case-deadline.urgent {
+      color: var(--danger);
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-step-move {
+      background: #f1f5f9;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-step-move:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-step-move:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background: #f1f5f9;
+      color: var(--text-subtle);
+      border-color: var(--border-subtle);
+    }
+
+    /* Table / List View */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+
+    .cases-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    .cases-table th {
+      background: #f8fafc;
+      padding: 12px 16px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .cases-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    .cases-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Stepper Pills on Table Row */
+    .step-pills-tracker {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .step-pill {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: var(--text-subtle);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-width: 28px;
+    }
+
+    .step-pill:hover {
+      transform: scale(1.1);
+      border-color: var(--primary);
+    }
+
+    .step-pill.completed {
+      background: var(--success-bg);
+      color: var(--success);
+      border-color: var(--success-border);
+    }
+
+    .step-pill.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+    }
+
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-window {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-subtle);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
       gap: 16px;
-      margin-bottom: 18px;
     }
 
     .form-group {
@@ -541,171 +731,45 @@
       gap: 6px;
     }
 
-    .form-group label {
-      font-size: 0.8125rem;
+    .form-label {
+      font-size: 13px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--text-main);
     }
 
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      min-height: 44px;
-      padding: 8px 12px;
-      font-size: 0.875rem;
+    .form-control {
+      height: 44px;
+      padding: 0 14px;
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-md);
-      background: var(--bg-surface);
-      color: var(--text-primary);
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      font-family: inherit;
-    }
-
-    .form-group textarea {
-      min-height: 100px;
-      line-height: 1.5;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      font-size: 14px;
+      color: var(--text-main);
+      background: #ffffff;
       outline: none;
+      transition: all 0.15s ease;
     }
 
-    /* Scope Checklist Toggle Cards */
-    .checklist-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
     }
 
-    .checklist-item {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      cursor: pointer;
-      transition: border-color 0.15s ease;
-    }
-
-    .checklist-item:hover {
-      border-color: var(--border-strong);
-    }
-
-    .checklist-item input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      margin-top: 2px;
-      cursor: pointer;
-      accent-color: var(--accent-primary);
-    }
-
-    .checklist-text {
-      flex: 1;
-    }
-
-    .checklist-text strong {
-      font-size: 0.875rem;
-      color: var(--text-primary);
-      display: block;
-    }
-
-    .checklist-text span {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-
-    /* Verdict Banner Card */
-    .verdict-banner {
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    .verdict-banner.in-scope {
-      background: var(--status-ok-bg);
-      border: 1px solid var(--status-ok-border);
-      color: var(--status-ok-text);
-    }
-
-    .verdict-banner.out-scope {
-      background: var(--status-gap-bg);
-      border: 1px solid var(--status-gap-border);
-      color: var(--status-gap-text);
-    }
-
-    /* Output Email/Journal Box */
-    .journal-box {
-      width: 100%;
-      min-height: 180px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.8125rem;
-      line-height: 1.6;
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-md);
-      padding: 14px;
-      white-space: pre-wrap;
-      color: var(--text-primary);
-    }
-
-    /* Evidence Tracking Table */
-    .evidence-table-container {
-      overflow-x: auto;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      margin-bottom: 20px;
-    }
-
-    table.evidence-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-      text-align: left;
-    }
-
-    table.evidence-table th {
-      background: var(--bg-subtle);
-      color: var(--text-secondary);
-      font-weight: 700;
+    textarea.form-control {
+      height: 90px;
       padding: 10px 14px;
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      resize: vertical;
     }
 
-    table.evidence-table td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border-subtle);
-      vertical-align: middle;
-    }
-
-    table.evidence-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    /* Step Action Footer */
-    .step-actions {
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 24px;
-      padding-top: 18px;
-      border-top: 1px dashed var(--border-subtle);
+      background: #f8fafc;
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
     }
 
     /* Toast Notification */
@@ -713,90 +777,29 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 9999;
-      background: #0f172a;
-      color: #f8fafc;
-      padding: 12px 18px;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      font-size: 0.875rem;
-      display: none;
-      align-items: center;
-      gap: 12px;
-      max-width: 440px;
-      border: 1px solid #334155;
-    }
-
-    /* Modal / Drawer for Case Manager */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(2px);
-      z-index: 1000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-card {
-      background: var(--bg-surface);
-      border-radius: var(--radius-lg);
-      max-width: 680px;
-      width: 100%;
-      max-height: 90vh;
+      z-index: 200;
       display: flex;
       flex-direction: column;
-      box-shadow: var(--shadow-lg);
-      overflow: hidden;
+      gap: 10px;
     }
 
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-body {
-      padding: 20px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border-subtle);
-      background: var(--bg-subtle);
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    /* Case Item in Manager */
-    .case-list-item {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
+    .toast {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
       border-radius: var(--radius-md);
-      padding: 14px;
-      margin-bottom: 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      transition: all 0.15s ease;
+      gap: 10px;
+      animation: slideUp 0.2s ease;
     }
 
-    .case-list-item:hover {
-      border-color: var(--accent-primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .case-list-item.is-current {
-      border-color: var(--accent-primary);
-      background: var(--accent-soft);
+    @keyframes slideUp {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
@@ -804,2243 +807,791 @@
 
   <!-- Top Suite Navigation Switcher -->
   <nav class="app-top-nav" aria-label="Tool Switcher">
-    <div class="container top-nav-inner">
+    <div class="top-nav-inner">
       <div class="top-nav-brand">
-        <span style="font-size: 1.1rem;">⚖️</span>
-        <span>Assessment &amp; Review Suite</span>
+        <span style="font-size: 1.2rem;">⚖️</span>
+        <span>AJI'S ASSESSMENT AND PLANNER</span>
       </div>
       <div class="top-nav-links">
         <a href="bank-statement-checker.html" class="top-nav-link" id="navLinkStatement">
           <span>📑 Bank Statement Checker</span>
         </a>
         <a href="uc-case-planner.html" class="top-nav-link active" id="navLinkPlanner" aria-current="page">
-          <span>📋 Case Project Planner</span>
+          <span>📋 Case Tracking Dashboard</span>
         </a>
       </div>
     </div>
   </nav>
 
-  <!-- Header -->
-  <header class="app-header">
-    <div class="container header-content">
-      <div class="app-title-area">
-        <h1>
-          <span>📋 Case Project Planner</span>
-        </h1>
-        <p>Comprehensive 6-Step Case Assessment Flight Deck for Standard (PAYE) &amp; Self-Employed (GSE &amp; MIF) Claims</p>
+  <script>
+    (function () {
+      const isPublic = window.location.pathname.includes('public-tool') || window.location.href.includes('public-tool');
+      const stmtLink = document.getElementById('navLinkStatement');
+      const plannerLink = document.getElementById('navLinkPlanner');
+      if (stmtLink) stmtLink.href = isPublic ? 'index.html' : 'bank-statement-checker.html';
+      if (plannerLink) plannerLink.href = isPublic ? 'planner.html' : 'uc-case-planner.html';
+    })();
+  </script>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Header Section -->
+    <section class="header-section">
+      <div class="header-title-group">
+        <h1><span>📋 Case Tracking Dashboard</span></h1>
+        <p>Aji's Assessment and Planner — Streamlined 6-step caseload workflow tracker for Native and Self-Employed claims</p>
       </div>
       <div class="header-actions">
-        <button type="button" id="btnHeaderExportExcel" class="btn btn-secondary btn-sm" title="Export all cases as an Excel spreadsheet (.csv)">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv" title="Export all cases as an Excel spreadsheet (.csv)">
           <span>📊 Export to Excel (.csv)</span>
         </button>
-        <button type="button" id="btnOpenCaseManager" class="btn btn-secondary">
-          <span>📁 Case Manager (<span id="totalCasesBadge">1</span>)</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCopyExcel" title="Copy case rows for Excel Ctrl+V pasting">
+          <span>📋 Copy Excel Rows</span>
         </button>
-        <button type="button" id="btnNewCase" class="btn btn-primary">
-          <span>+ New Case</span>
-        </button>
-        <button type="button" id="btnLoadDemoCases" class="btn btn-secondary btn-sm" title="Preload sample Native and Self-Employed cases for demonstration">
-          <span>Demo Presets</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container">
-
-    <!-- Active Case Hero Card -->
-    <section class="case-hero-card" aria-label="Active Case Details">
-      <div class="case-hero-top">
-        <div class="case-title-row">
-          <input type="text" id="caseReferenceInput" value="Case #101 - Standard Review" aria-label="Case Reference or Anonymous Identifier" title="Click to rename case reference" />
-          <span id="caseTypeBadge" class="badge badge-native">👤 Native Claim</span>
-          <span id="caseStageBadge" class="badge badge-neutral">Step 1: Scope</span>
-        </div>
-
-        <!-- Case Type Selector Segmented Pill -->
-        <div class="type-switcher" role="radiogroup" aria-label="Case Assessment Pathway">
-          <button type="button" id="btnTypeNative" class="type-switcher-btn active" role="radio" aria-checked="true">
-            <span>👤 Native / Standard Claim</span>
-          </button>
-          <button type="button" id="btnTypeSelfEmployed" class="type-switcher-btn" role="radio" aria-checked="false">
-            <span>🏢 Self-Employed (GSE &amp; MIF)</span>
-          </button>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 0.8125rem; color: var(--text-secondary); border-top: 1px dashed var(--border-subtle); padding-top: 12px;">
-        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <span><strong>Assessment Period:</strong> <span id="heroApDatesText">27 Sep 2026 – 26 Oct 2026</span></span>
-          <span><strong>Assessor:</strong> <span id="heroAssessorText">Assessment Officer</span></span>
-          <span><strong>Declared Capital:</strong> <span id="heroCapitalText">£0.00</span></span>
-        </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" id="btnExportCaseExcel" class="btn btn-secondary btn-sm" title="Download Excel spreadsheet (.csv) for this case">
-            <span>📊 Export to Excel (.csv)</span>
-          </button>
-          <button type="button" id="btnCopyExcelRow" class="btn btn-secondary btn-sm" title="Copy row to paste directly into Microsoft Excel (Ctrl+V)">
-            <span>📋 Copy Excel Row</span>
-          </button>
-          <button type="button" id="btnSaveCaseExplicit" class="btn btn-secondary btn-sm">
-            <span class="spinner" aria-hidden="true"></span>
-            <span>💾 Save Case</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 6-Step Stepper & Progress Tracker -->
-    <nav class="stepper-container" aria-label="Case Assessment Progress">
-      <div class="stepper-header">
-        <strong style="font-size: 0.875rem; color: var(--text-primary);">Case Lifecycle Progress</strong>
-        <span id="stepperProgressPercent" style="font-size: 0.8125rem; font-weight: 700; color: var(--accent-primary);">Step 1 of 6 (17% Complete)</span>
-      </div>
-      <div class="stepper-progress-track">
-        <div id="stepperProgressBar" class="stepper-progress-fill"></div>
-      </div>
-      <div class="stepper-nav" role="tablist">
-        <button type="button" class="step-btn active" data-step="1" role="tab" id="stepTab1" aria-selected="true" aria-controls="stepPanel1">
-          <div class="step-num"><span>Step 1</span><span id="stepIcon1">▶</span></div>
-          <div class="step-title">Scope Check</div>
-        </button>
-        <button type="button" class="step-btn" data-step="2" role="tab" id="stepTab2" aria-selected="false" aria-controls="stepPanel2">
-          <div class="step-num"><span>Step 2</span><span id="stepIcon2">○</span></div>
-          <div class="step-title">Collate Info</div>
-        </button>
-        <button type="button" class="step-btn" data-step="3" role="tab" id="stepTab3" aria-selected="false" aria-controls="stepPanel3">
-          <div class="step-num"><span>Step 3</span><span id="stepIcon3">○</span></div>
-          <div class="step-title">Request Evidence</div>
-        </button>
-        <button type="button" class="step-btn" data-step="4" role="tab" id="stepTab4" aria-selected="false" aria-controls="stepPanel4">
-          <div class="step-num"><span>Step 4</span><span id="stepIcon4">○</span></div>
-          <div class="step-title">Review &amp; Analyse</div>
-        </button>
-        <button type="button" class="step-btn" data-step="5" role="tab" id="stepTab5" aria-selected="false" aria-controls="stepPanel5">
-          <div class="step-num"><span>Step 5</span><span id="stepIcon5">○</span></div>
-          <div class="step-title">Book Interview</div>
-        </button>
-        <button type="button" class="step-btn" data-step="6" role="tab" id="stepTab6" aria-selected="false" aria-controls="stepPanel6">
-          <div class="step-num"><span>Step 6</span><span id="stepIcon6">○</span></div>
-          <div class="step-title">Interview &amp; Close</div>
-        </button>
-      </div>
-    </nav>
-
-    <!-- STEP 1 PANEL: Scope Determination -->
-    <section id="stepPanel1" class="step-card" role="tabpanel" aria-labelledby="stepTab1">
-      <div class="step-card-header">
-        <h2>
-          <span>1️⃣ Step 1: Check If In-Scope or Out-of-Scope</span>
-        </h2>
-        <span class="badge badge-neutral">Gateway Determination</span>
-      </div>
-
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Verify statutory gateway conditions before requesting detailed documents. If a claim violates basic residency or capital rules (e.g. capital exceeding £16,000), it must be flagged out-of-scope immediately.
-      </p>
-
-      <div class="checklist-grid">
-        <label class="checklist-item">
-          <input type="checkbox" id="chkResidency" checked />
-          <div class="checklist-text">
-            <strong>UK Habitual Residence &amp; Right to Reside</strong>
-            <span>Claimant satisfies basic UK presence and residency conditions</span>
-          </div>
-        </label>
-        <label class="checklist-item">
-          <input type="checkbox" id="chkWorkingAge" checked />
-          <div class="checklist-text">
-            <strong>Working Age Condition</strong>
-            <span>Claimant is aged 18 or over and under State Pension credit qualifying age</span>
-          </div>
-        </label>
-        <label class="checklist-item">
-          <input type="checkbox" id="chkCapitalThreshold" checked />
-          <div class="checklist-text">
-            <strong>Capital Below £16,000 Disqualification Limit</strong>
-            <span>Total combined capital, savings, and investments do not exceed £16,000</span>
-          </div>
-        </label>
-        <label class="checklist-item">
-          <input type="checkbox" id="chkActiveClaim" checked />
-          <div class="checklist-text">
-            <strong>Active Claim / In-Payment Assessment</strong>
-            <span>Claim is live in the assessment system and requires review</span>
-          </div>
-        </label>
-        <!-- Self-Employed Gateway condition -->
-        <label class="checklist-item" id="chkSelfEmpActivityRow" style="display: none;">
-          <input type="checkbox" id="chkSelfEmpActivity" checked />
-          <div class="checklist-text">
-            <strong>Active Self-Employed Trading Declared</strong>
-            <span>Trade or profession is active in the UK (sole trader, partnership, or sub-contractor)</span>
-          </div>
-        </label>
-      </div>
-
-      <!-- Live Verdict Banner -->
-      <div id="scopeVerdictBanner" class="verdict-banner in-scope">
-        <div>
-          <strong id="scopeVerdictTitle" style="font-size: 1rem; display: block;">✓ Case is IN-SCOPE for Assessment Review</strong>
-          <span id="scopeVerdictSubtitle" style="font-size: 0.8125rem;">All statutory gateway conditions satisfied. Proceed to Step 2 to collate information.</span>
-        </div>
-        <span id="scopeVerdictBadge" class="badge badge-ok">In-Scope</span>
-      </div>
-
-      <!-- Out-of-Scope Fallback Box (Visible if Out of Scope) -->
-      <div id="outOfScopeBox" style="display: none; background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
-        <strong style="font-size: 0.875rem; color: var(--status-gap-text); display: block; margin-bottom: 6px;">
-          ⚠️ Out-of-Scope Closure / Referral Journal Note
-        </strong>
-        <textarea id="outOfScopeNote" class="journal-box" style="min-height: 110px;"></textarea>
-        <div style="margin-top: 8px;">
-          <button type="button" id="btnCopyOutScopeNote" class="btn btn-secondary btn-sm">
-            <span class="spinner" aria-hidden="true"></span>
-            <span>Copy Closure Note</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="step-actions">
-        <span style="font-size: 0.8125rem; color: var(--text-muted);">Step 1 of 6</span>
-        <button type="button" class="btn btn-primary js-next-step" data-next="2">
-          <span>Proceed to Step 2: Collate Information &rarr;</span>
+        <button type="button" class="btn btn-primary" id="btnOpenNewCase">
+          <span>➕ New Case</span>
         </button>
       </div>
     </section>
 
-    <!-- STEP 2 PANEL: Collate Information -->
-    <section id="stepPanel2" class="step-card" role="tabpanel" aria-labelledby="stepTab2" style="display: none;">
-      <div class="step-card-header">
-        <h2>
-          <span>2️⃣ Step 2: Collate Information</span>
-        </h2>
-        <span class="badge badge-neutral">Circumstances &amp; Data Collation</span>
+    <!-- KPI Summary Grid -->
+    <section class="kpi-grid" aria-label="Caseload Summary Metrics">
+      <div class="kpi-card" data-filter="all" id="kpiTotal">
+        <div class="kpi-header">
+          <span>Total Active Cases</span>
+          <span>📁</span>
+        </div>
+        <div class="kpi-value" id="valTotalCases">0</div>
+        <div class="kpi-subtext">Across all 6 steps</div>
       </div>
 
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Collate all declared circumstances, assessment period windows, household elements, and known bank accounts from initial declarations and RTI checks.
-      </p>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="apStartDate">Assessment Period Start Date</label>
-          <input type="date" id="apStartDate" value="2026-09-27" />
+      <div class="kpi-card" data-filter="native" id="kpiNative">
+        <div class="kpi-header">
+          <span>Native / Standard</span>
+          <span>👤</span>
         </div>
-        <div class="form-group">
-          <label for="apEndDate">Assessment Period End Date</label>
-          <input type="date" id="apEndDate" value="2026-10-26" />
-        </div>
-        <div class="form-group">
-          <label for="claimantType">Household Structure</label>
-          <select id="claimantType">
-            <option value="single">Single Claimant</option>
-            <option value="joint">Joint Claim (Couple)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="declaredCapitalInput">Declared Capital / Savings (£)</label>
-          <input type="number" id="declaredCapitalInput" value="0.00" min="0" step="0.01" />
-        </div>
+        <div class="kpi-value" id="valNativeCases">0</div>
+        <div class="kpi-subtext">Standard PAYE claims</div>
       </div>
 
-      <!-- Household Elements Checklist -->
-      <div style="margin-bottom: 20px;">
-        <label style="font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); display: block; margin-bottom: 8px;">
-          Declared Elements Under Review:
-        </label>
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem;">
-            <input type="checkbox" id="elemHousing" checked /> Housing Costs Element
-          </label>
-          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem;">
-            <input type="checkbox" id="elemChildren" /> Child / Childcare Element
-          </label>
-          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem;">
-            <input type="checkbox" id="elemHealth" /> LCW / LCWRA Disability Element
-          </label>
-          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem;">
-            <input type="checkbox" id="elemCarer" /> Carer Element
-          </label>
+      <div class="kpi-card" data-filter="se" id="kpiSE">
+        <div class="kpi-header">
+          <span>Self-Employed</span>
+          <span>🏢</span>
         </div>
+        <div class="kpi-value" id="valSECases">0</div>
+        <div class="kpi-subtext">GSE &amp; MIF caseload</div>
       </div>
 
-      <!-- Declared Bank Accounts Sub-Section -->
-      <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <div>
-            <strong style="font-size: 0.875rem; color: var(--text-primary); display: block;">Declared Bank &amp; Building Society Accounts</strong>
-            <span style="font-size: 0.75rem; color: var(--text-secondary);">Accounts identified for rolling 4-month capital review</span>
-          </div>
-          <button type="button" id="btnAddAccountRow" class="btn btn-secondary btn-sm">
-            <span>+ Add Declared Account</span>
-          </button>
+      <div class="kpi-card" data-filter="step3" id="kpiStep3">
+        <div class="kpi-header">
+          <span>Awaiting Evidence</span>
+          <span>⏳</span>
         </div>
-        <div id="declaredAccountsList" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- Dynamically Rendered -->
-        </div>
+        <div class="kpi-value" id="valStep3Cases">0</div>
+        <div class="kpi-subtext">Step 3 To-Do active</div>
       </div>
 
-      <!-- Self-Employed Trading Specifics (Conditioned by Case Type) -->
-      <div id="selfEmployedCollationBlock" style="display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <strong style="font-size: 0.875rem; color: #92400e; display: block; margin-bottom: 10px;">
-          🏢 Self-Employed Trading Details (Statutory GSE Baseline)
-        </strong>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="seBusinessName">Business / Trading Name</label>
-            <input type="text" id="seBusinessName" placeholder="e.g. Apex Courier Services" />
-          </div>
-          <div class="form-group">
-            <label for="seTradeType">Trade / Sector</label>
-            <input type="text" id="seTradeType" placeholder="e.g. Logistics, Construction CIS, Retail" />
-          </div>
-          <div class="form-group">
-            <label for="seStartDate">Trading Start Date</label>
-            <input type="date" id="seStartDate" value="2026-01-15" />
-          </div>
-          <div class="form-group">
-            <label for="seHmrcUtr">HMRC UTR Status</label>
-            <select id="seHmrcUtr">
-              <option value="registered">Registered (10-digit UTR Confirmed)</option>
-              <option value="pending">Recently Registered (Awaiting UTR by Post)</option>
-              <option value="not_registered">Not Registered with HMRC</option>
-            </select>
-          </div>
+      <div class="kpi-card" data-filter="step5" id="kpiStep5">
+        <div class="kpi-header">
+          <span>Interviews Booked</span>
+          <span>📅</span>
         </div>
-        <div style="font-size: 0.8125rem; color: #b45309;" id="seMonthsTradingCalculated">
-          Trading Duration: 9 months. Eligible to be considered for 12-Month Start-up Period.
-        </div>
+        <div class="kpi-value" id="valStep5Cases">0</div>
+        <div class="kpi-subtext">Step 5 Scheduled</div>
       </div>
 
-      <div class="step-actions">
-        <button type="button" class="btn btn-secondary js-prev-step" data-prev="1">
-          <span>&larr; Back to Step 1</span>
-        </button>
-        <button type="button" class="btn btn-primary js-next-step" data-next="3">
-          <span>Proceed to Step 3: Request Evidence &rarr;</span>
-        </button>
+      <div class="kpi-card" data-filter="closed" id="kpiClosed">
+        <div class="kpi-header">
+          <span>Completed &amp; Closed</span>
+          <span>✅</span>
+        </div>
+        <div class="kpi-value" id="valClosedCases">0</div>
+        <div class="kpi-subtext">Finalised cases</div>
       </div>
     </section>
 
-    <!-- STEP 3 PANEL: Request Evidence by Creating a To-Do List -->
-    <section id="stepPanel3" class="step-card" role="tabpanel" aria-labelledby="stepTab3" style="display: none;">
-      <div class="step-card-header">
-        <h2>
-          <span>3️⃣ Step 3: Request Evidence from Claimants by Creating a To-Do List</span>
-        </h2>
-        <span class="badge badge-neutral">Customer Journal To-Do Generator</span>
-      </div>
-
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Select the required evidence package for the claimant. The tool automatically compiles an official, bulleted customer journal to-do task with a clear statutory deadline.
-      </p>
-
-      <!-- Evidence Checklist Management -->
-      <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <div>
-            <strong style="font-size: 0.875rem; color: var(--text-primary); display: block;">Claimant Evidence To-Do Items</strong>
-            <span style="font-size: 0.75rem; color: var(--text-secondary);">Toggle items to include in the claimant's journal task</span>
-          </div>
-          <button type="button" id="btnAddCustomTodo" class="btn btn-secondary btn-sm">
-            <span>+ Add Custom Item</span>
-          </button>
+    <!-- Toolbar Filters -->
+    <section class="toolbar-card">
+      <div class="toolbar-left">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name, ref or note..." aria-label="Search cases">
         </div>
 
-        <div id="todoItemsContainer" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- Dynamically populated based on Native vs Self-Employed -->
-        </div>
-      </div>
+        <select id="filterType" class="filter-select" aria-label="Filter by Case Type">
+          <option value="all">All Case Types</option>
+          <option value="Native / Standard Claim">👤 Native / Standard</option>
+          <option value="Self-Employed">🏢 Self-Employed</option>
+        </select>
 
-      <!-- Deadline Selector -->
-      <div style="display: flex; align-items: center; justify-content: space-between; background: var(--accent-soft); border: 1px solid var(--accent-border); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <label for="todoDeadlineDays" style="font-size: 0.8125rem; font-weight: 700; color: var(--accent-primary);">Statutory To-Do Deadline:</label>
-          <select id="todoDeadlineDays" style="min-height: 40px; padding: 4px 10px; font-weight: 600;">
-            <option value="7">7 Calendar Days</option>
-            <option value="14" selected>14 Calendar Days (Standard Policy)</option>
-            <option value="21">21 Calendar Days</option>
-            <option value="28">28 Calendar Days</option>
-          </select>
-        </div>
-        <div style="font-size: 0.8125rem; font-weight: 700; color: var(--accent-primary);">
-          Due Date: <span id="todoDueDateDisplay">24 Nov 2026</span>
-        </div>
-      </div>
-
-      <!-- Auto-Drafted Journal To-Do Message -->
-      <div class="form-group" style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-          <label for="draftTodoJournalText">Auto-Drafted Journal To-Do Message (Ready to Paste)</label>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" id="btnCopyTodoJournal" class="btn btn-primary btn-sm">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Copy Journal To-Do</span>
-            </button>
-          </div>
-        </div>
-        <textarea id="draftTodoJournalText" class="journal-box" style="min-height: 190px;"></textarea>
-      </div>
-
-      <div class="step-actions">
-        <button type="button" class="btn btn-secondary js-prev-step" data-prev="2">
-          <span>&larr; Back to Step 2</span>
-        </button>
-        <button type="button" class="btn btn-primary js-next-step" data-next="4">
-          <span>Proceed to Step 4: Review &amp; Analyse &rarr;</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- STEP 4 PANEL: Review and Analyse Evidence -->
-    <section id="stepPanel4" class="step-card" role="tabpanel" aria-labelledby="stepTab4" style="display: none;">
-      <div class="step-card-header">
-        <h2>
-          <span>4️⃣ Step 4: Review and Analyse Evidence</span>
-        </h2>
-        <span class="badge badge-neutral">Verification &amp; Discrepancy Audit</span>
-      </div>
-
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Inspect uploaded documents for authenticity, full continuous dates, and consistency with declarations. Reconcile bank statement gaps and calculate tariff income on capital between £6,000 and £16,000.
-      </p>
-
-      <!-- Evidence Status Audit Table -->
-      <div class="evidence-table-container">
-        <table class="evidence-table">
-          <thead>
-            <tr>
-              <th>Evidence Item</th>
-              <th>Status</th>
-              <th>Assessor Verification Notes / Finding</th>
-            </tr>
-          </thead>
-          <tbody id="evidenceAuditTableBody">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Cross-Link to Bank Statement Gap Checker -->
-      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-        <div>
-          <strong style="font-size: 0.875rem; color: #166534; display: block;">📊 Bank Statement Date Continuity Tool</strong>
-          <span style="font-size: 0.75rem; color: #15803d;">If bank statements have missing dates or gaps across the 4-month rolling window, open the companion statement checker.</span>
-        </div>
-        <a href="bank-statement-checker.html" target="_blank" class="btn btn-secondary btn-sm" style="color: #166534; border-color: #86efac; background: #ffffff;">
-          <span>Open Bank Statement Checker ↗</span>
-        </a>
-      </div>
-
-      <!-- Capital & Tariff Income Reconciler -->
-      <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <strong style="font-size: 0.875rem; color: var(--text-primary); display: block; margin-bottom: 10px;">
-          💷 Capital &amp; Tariff Income Reconciler (Statutory Rule)
-        </strong>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="verifiedCapitalInput">Verified Total Capital (£)</label>
-            <input type="number" id="verifiedCapitalInput" value="0.00" min="0" step="0.01" />
-          </div>
-          <div class="form-group">
-            <label>Tariff Income Deduction</label>
-            <input type="text" id="calculatedTariffIncome" readonly value="£0.00 / month" style="background: #ffffff; font-weight: 700; color: var(--accent-primary);" />
-          </div>
-          <div class="form-group">
-            <label>Capital Compliance Status</label>
-            <input type="text" id="capitalStatusSummary" readonly value="Under £6,000 (No deduction)" style="background: #ffffff; font-weight: 600;" />
-          </div>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
-          *Under £6,000 = Disregarded. Between £6,000 and £16,000 = £4.35 per £250 (or part thereof). Above £16,000 = Claim Disqualified.
-        </div>
-      </div>
-
-      <div class="step-actions">
-        <button type="button" class="btn btn-secondary js-prev-step" data-prev="3">
-          <span>&larr; Back to Step 3</span>
-        </button>
-        <button type="button" class="btn btn-primary js-next-step" data-next="5">
-          <span>Proceed to Step 5: Book Interview &rarr;</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- STEP 5 PANEL: Book Interview -->
-    <section id="stepPanel5" class="step-card" role="tabpanel" aria-labelledby="stepTab5" style="display: none;">
-      <div class="step-card-header">
-        <h2>
-          <span>5️⃣ Step 5: Book Interview</span>
-        </h2>
-        <span class="badge badge-neutral">Appointment Scheduling &amp; Notification</span>
-      </div>
-
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Schedule the formal review interview with the claimant. For Self-Employed claims, this is the statutory Gainful Self-Employment (GSE) interview. Generate the appointment journal invitation.
-      </p>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="interviewFormat">Interview Format</label>
-          <select id="interviewFormat">
-            <option value="telephone">📞 Telephone Interview (Assessor calls claimant)</option>
-            <option value="face_to_face">🏢 Assessment Office / In-Person Interview</option>
-            <option value="video">💻 Video / Attend Anywhere Call</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="interviewDate">Interview Date</label>
-          <input type="date" id="interviewDate" value="2026-11-18" />
-        </div>
-        <div class="form-group">
-          <label for="interviewTime">Interview Time (UK)</label>
-          <input type="time" id="interviewTime" value="10:30" />
-        </div>
-        <div class="form-group">
-          <label for="interviewLocation">Location / Phone Number</label>
-          <input type="text" id="interviewLocation" value="Registered claimant telephone number" />
-        </div>
-      </div>
-
-      <!-- Auto-Drafted Appointment Invite -->
-      <div class="form-group" style="margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-          <label for="draftAppointmentNoticeText">Draft Appointment Journal Notice (Ready to Paste)</label>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" id="btnCopyAppointmentNotice" class="btn btn-primary btn-sm">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Copy Appointment Notice</span>
-            </button>
-            <button type="button" id="btnDownloadIcs" class="btn btn-secondary btn-sm" title="Download .ics calendar appointment file">
-              <span>📅 Download (.ics)</span>
-            </button>
-          </div>
-        </div>
-        <textarea id="draftAppointmentNoticeText" class="journal-box" style="min-height: 190px;"></textarea>
-      </div>
-
-      <div class="step-actions">
-        <button type="button" class="btn btn-secondary js-prev-step" data-prev="4">
-          <span>&larr; Back to Step 4</span>
-        </button>
-        <button type="button" class="btn btn-primary js-next-step" data-next="6">
-          <span>Proceed to Step 6: Conduct Interview &amp; Close &rarr;</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- STEP 6 PANEL: Conduct Interview and Close Case -->
-    <section id="stepPanel6" class="step-card" role="tabpanel" aria-labelledby="stepTab6" style="display: none;">
-      <div class="step-card-header">
-        <h2>
-          <span>6️⃣ Step 6: Conduct Interview and Close Case</span>
-        </h2>
-        <span class="badge badge-neutral">Outcome Decision &amp; Audit Closure</span>
-      </div>
-
-      <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Conduct the structured interview, record claimant responses, determine the final statutory outcome, and generate both the claimant journal decision notice and your internal case audit note.
-      </p>
-
-      <!-- Structured Interview Worksheet (Native vs Self-Employed) -->
-      <div id="interviewWorksheetNative" style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <strong style="font-size: 0.875rem; color: var(--text-primary); display: block; margin-bottom: 10px;">
-          👤 Native (Standard / PAYE) Interview Checklist
-        </strong>
-        <div class="checklist-grid" style="margin-bottom: 12px;">
-          <label class="checklist-item">
-            <input type="checkbox" id="chkNativeQ1" checked />
-            <div class="checklist-text">
-              <strong>1. Identity &amp; Household Status Verified</strong>
-              <span>Claimant confirmed identity, current residential address, and living arrangements</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkNativeQ2" checked />
-            <div class="checklist-text">
-              <strong>2. Complete Account &amp; Capital Declarations</strong>
-              <span>Verified all active accounts (personal, savings, digital wallets, ISAs)</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkNativeQ3" checked />
-            <div class="checklist-text">
-              <strong>3. Discrepancy &amp; Deposit Reconciliation</strong>
-              <span>Any unexplained cash deposits or transfers discussed and verified</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkNativeQ4" checked />
-            <div class="checklist-text">
-              <strong>4. Claimant Commitment &amp; Work Expectations</strong>
-              <span>Commitment reviewed and agreed in line with labour market conditionality</span>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <!-- Self-Employed Statutory GSE & MIF Worksheet -->
-      <div id="interviewWorksheetSelfEmp" style="display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-        <strong style="font-size: 0.875rem; color: #92400e; display: block; margin-bottom: 10px;">
-          🏢 Gainful Self-Employment (GSE) &amp; MIF Assessment Worksheet
-        </strong>
-        <p style="font-size: 0.8125rem; color: #b45309; margin-bottom: 12px;">
-          Statutory Regulation 64: Self-employment must be regular, organised, developed, and carried on in expectation of profit.
-        </p>
-        <div class="checklist-grid" style="margin-bottom: 14px;">
-          <label class="checklist-item">
-            <input type="checkbox" id="chkGseOrganised" checked />
-            <div class="checklist-text">
-              <strong>1. Organised, Developed &amp; Regular Activity</strong>
-              <span>Maintains records, commercial marketing, active customer base, invoices</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkGseProfit" checked />
-            <div class="checklist-text">
-              <strong>2. Expectation of Profit</strong>
-              <span>Clear commercial intent to make sustainable profit, pricing reflects market rates</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkGseLivelihood" checked />
-            <div class="checklist-text">
-              <strong>3. Primary Livelihood / Substantial Activity</strong>
-              <span>Trading is claimant's main source of livelihood with substantial weekly hours</span>
-            </div>
-          </label>
-          <label class="checklist-item">
-            <input type="checkbox" id="chkGseStartup" checked />
-            <div class="checklist-text">
-              <strong>4. 12-Month Start-up Period Eligibility</strong>
-              <span>Trading under 12 months with no start-up period in previous 5 years</span>
-            </div>
-          </label>
-        </div>
-
-        <!-- Minimum Income Floor (MIF) Summary -->
-        <div style="background: #ffffff; border: 1px solid #fcd34d; border-radius: var(--radius-md); padding: 12px 14px; font-size: 0.8125rem;">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-            <span style="font-weight: 700; color: #92400e;">Minimum Income Floor (MIF) Rule:</span>
-            <span id="gseMifStatusText" class="badge badge-ok">Start-up Period Granted (MIF Suspended for 12 Months)</span>
-          </div>
-          <div style="font-size: 0.75rem; color: #78350f; margin-top: 4px;" id="gseMifExplanation">
-            Because trading commenced under 12 months ago, the claimant is eligible for a statutory Start-up Period. The Minimum Income Floor does not apply for up to 12 months.
-          </div>
-        </div>
-      </div>
-
-      <!-- Assessor Notes from Interview -->
-      <div class="form-group" style="margin-bottom: 18px;">
-        <label for="interviewAssessorNotes">Assessor Interview Findings &amp; Summary Notes</label>
-        <textarea id="interviewAssessorNotes" placeholder="Enter key points discussed, claimant answers, and reasons for your determination..." style="min-height: 90px;"></textarea>
-      </div>
-
-      <!-- Case Outcome Decision Selector -->
-      <div class="form-group" style="margin-bottom: 20px;">
-        <label for="caseFinalOutcome">Final Statutory Case Outcome</label>
-        <select id="caseFinalOutcome" style="font-weight: 700; color: var(--accent-primary);">
-          <option value="approved">✅ Compliant – Claim Verified &amp; Continues in Payment</option>
-          <option value="gse_startup">🏢 Gainfully Self-Employed (12-Month Start-up Period Granted)</option>
-          <option value="gse_mif">🏢 Gainfully Self-Employed (Minimum Income Floor Applied)</option>
-          <option value="not_gse">👤 Not Gainfully Self-Employed (Standard Labour Market Conditionality)</option>
-          <option value="award_adjusted">⚠️ Award Adjusted (Capital Tariff Income / Excess Earnings)</option>
-          <option value="closed_failure">❌ Claim Closed / Terminated (Failure to Attend / Provide Evidence)</option>
-          <option value="referral">🚨 Escalated / Serious Non-Compliance Referral</option>
+        <select id="filterStep" class="filter-select" aria-label="Filter by Current Step">
+          <option value="all">All Steps (1 to 6)</option>
+          <option value="1">Step 1: Scope Check</option>
+          <option value="2">Step 2: Collate Info</option>
+          <option value="3">Step 3: Request Evidence</option>
+          <option value="4">Step 4: Review Evidence</option>
+          <option value="5">Step 5: Book Interview</option>
+          <option value="6">Step 6: Conduct &amp; Close</option>
+          <option value="7">Closed Cases</option>
         </select>
       </div>
 
-      <!-- 2 Outputs: Customer Journal Notice vs Caseworker Audit Note -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        
-        <!-- Output 1: Message to Customer -->
-        <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-            <strong style="font-size: 0.875rem; color: var(--text-primary);">💬 Customer Journal Decision Notice</strong>
-            <button type="button" id="btnCopyCustomerOutcome" class="btn btn-primary btn-sm">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Copy Journal</span>
-            </button>
-          </div>
-          <textarea id="draftCustomerOutcomeText" class="journal-box" style="min-height: 200px;"></textarea>
-        </div>
-
-        <!-- Output 2: Assessor Audit Note -->
-        <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-            <strong style="font-size: 0.875rem; color: var(--text-primary);">📋 My Internal Case Audit Note</strong>
-            <button type="button" id="btnCopyAssessorOutcome" class="btn btn-secondary btn-sm">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Copy Audit Note</span>
-            </button>
-          </div>
-          <textarea id="draftAssessorOutcomeText" class="journal-box" style="min-height: 200px;"></textarea>
-        </div>
-
-      </div>
-
-      <div class="step-actions">
-        <button type="button" class="btn btn-secondary js-prev-step" data-prev="5">
-          <span>&larr; Back to Step 5</span>
+      <div class="view-toggle-group" role="group" aria-label="View Mode">
+        <button type="button" class="view-toggle-btn active" id="btnViewPipeline">
+          <span>📊 Pipeline Board</span>
         </button>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" id="btnStep6ExportExcel" class="btn btn-secondary" title="Export this case to an Excel spreadsheet (.csv)">
-            <span>📊 Add to Excel (.csv)</span>
-          </button>
-          <button type="button" id="btnStep6CopyExcelRow" class="btn btn-secondary" title="Copy row to paste directly into your Excel Casework Tracker (Ctrl+V)">
-            <span>📋 Copy Excel Row</span>
-          </button>
-          <button type="button" id="btnCloseCaseFinal" class="btn btn-primary">
-            <span class="spinner" aria-hidden="true"></span>
-            <span>💾 Finalise &amp; Archive Completed Case</span>
-          </button>
-        </div>
+        <button type="button" class="view-toggle-btn" id="btnViewTable">
+          <span>📑 Table Register</span>
+        </button>
       </div>
     </section>
 
+    <!-- VIEW 1: Pipeline / Kanban Board -->
+    <section id="pipelineView" class="pipeline-board" aria-label="6-Step Caseload Pipeline">
+      <!-- Col 1 -->
+      <div class="pipeline-col" data-col-step="1">
+        <div class="pipeline-col-header">
+          <span class="col-title">1. Scope Check</span>
+          <span class="col-badge" id="badgeStep1">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol1"></div>
+      </div>
+
+      <!-- Col 2 -->
+      <div class="pipeline-col" data-col-step="2">
+        <div class="pipeline-col-header">
+          <span class="col-title">2. Collate Info</span>
+          <span class="col-badge" id="badgeStep2">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol2"></div>
+      </div>
+
+      <!-- Col 3 -->
+      <div class="pipeline-col" data-col-step="3">
+        <div class="pipeline-col-header">
+          <span class="col-title">3. Request Evidence</span>
+          <span class="col-badge" id="badgeStep3">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol3"></div>
+      </div>
+
+      <!-- Col 4 -->
+      <div class="pipeline-col" data-col-step="4">
+        <div class="pipeline-col-header">
+          <span class="col-title">4. Review Evidence</span>
+          <span class="col-badge" id="badgeStep4">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol4"></div>
+      </div>
+
+      <!-- Col 5 -->
+      <div class="pipeline-col" data-col-step="5">
+        <div class="pipeline-col-header">
+          <span class="col-title">5. Book Interview</span>
+          <span class="col-badge" id="badgeStep5">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol5"></div>
+      </div>
+
+      <!-- Col 6 -->
+      <div class="pipeline-col" data-col-step="6">
+        <div class="pipeline-col-header">
+          <span class="col-title">6. Conduct &amp; Close</span>
+          <span class="col-badge" id="badgeStep6">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol6"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: Table / Register View (Hidden by default) -->
+    <section id="tableView" class="table-container" style="display: none;" aria-label="Caseload Table Register">
+      <table class="cases-table">
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Claimant Name</th>
+            <th>Type</th>
+            <th>6-Step Progress Tracker</th>
+            <th>Current Step</th>
+            <th>Target Deadline / Date</th>
+            <th>Quick Notes</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="casesTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </section>
   </main>
 
-  <!-- Case Manager Modal Drawer -->
-  <div id="caseManagerModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-card">
+  <!-- Add / Edit Case Modal -->
+  <div class="modal-overlay" id="caseModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-window">
       <div class="modal-header">
-        <h3 id="modalTitle" style="font-size: 1.125rem; font-weight: 800; color: var(--text-primary);">
-          📁 Caseload Manager
-        </h3>
-        <button type="button" id="btnCloseModal" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color: var(--text-secondary);">&times;</button>
+        <h2 id="modalTitle">Add New Case</h2>
+        <button type="button" class="modal-close-btn" id="btnCloseModal" aria-label="Close dialog">&times;</button>
       </div>
-      <div class="modal-body">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
-          <input type="text" id="caseSearchInput" placeholder="Filter cases by reference or type..." style="flex:1; min-height: 38px; padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-md);" />
-          <button type="button" id="btnModalNewCase" class="btn btn-primary btn-sm">+ New Case</button>
+      <form id="caseForm">
+        <div class="modal-body">
+          <input type="hidden" id="formCaseId">
+
+          <div class="form-group">
+            <label class="form-label" for="formCaseRef">Case Reference *</label>
+            <input type="text" id="formCaseRef" class="form-control" placeholder="e.g. CAS-2026-104" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formClaimantName">Claimant Full Name *</label>
+            <input type="text" id="formClaimantName" class="form-control" placeholder="e.g. Sarah Jenkins" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formCaseType">Case Pathway Type *</label>
+            <select id="formCaseType" class="form-control">
+              <option value="Native / Standard Claim">👤 Native / Standard Claim</option>
+              <option value="Self-Employed">🏢 Self-Employed</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formCurrentStep">Current Step *</label>
+            <select id="formCurrentStep" class="form-control">
+              <option value="1">Step 1: Check Scope (In-scope / Out-of-scope)</option>
+              <option value="2">Step 2: Collate Information</option>
+              <option value="3">Step 3: Request Evidence (To-Do List)</option>
+              <option value="4">Step 4: Review and Analyse Evidence</option>
+              <option value="5">Step 5: Book Interview</option>
+              <option value="6">Step 6: Conduct Interview &amp; Close Case</option>
+              <option value="7">✅ Closed Case</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formScopeStatus">Gateway Scope Status</label>
+            <select id="formScopeStatus" class="form-control">
+              <option value="In-Scope">In-Scope (Proceeding)</option>
+              <option value="Out-of-Scope">Out-of-Scope (Ineligible)</option>
+              <option value="Pending Check">Pending Initial Check</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formDeadline">Target Deadline / Appointment Date</label>
+            <input type="date" id="formDeadline" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formNotes">Casework Notes / Next Action</label>
+            <textarea id="formNotes" class="form-control" placeholder="e.g. To-do requested for 4 months bank statements. Deadline 14 days."></textarea>
+          </div>
         </div>
 
-        <div id="modalCasesList" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- Rendered dynamically -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelModal">Cancel</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnDeleteCase" style="display: none; margin-right: auto;">Delete Case</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCase">Save Case</button>
         </div>
-      </div>
-      <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
-        <button type="button" id="btnExportAllCasesExcel" class="btn btn-primary btn-sm" title="Download Excel caseload spreadsheet (.csv) with all cases">
-          <span>📊 Export All to Excel (.csv)</span>
-        </button>
-        <button type="button" id="btnCopyAllExcelRows" class="btn btn-secondary btn-sm" title="Copy all case rows with headers for Microsoft Excel">
-          <span>📋 Copy All for Excel</span>
-        </button>
-        <button type="button" id="btnExportAllCasesTxt" class="btn btn-secondary btn-sm">Export All (.txt)</button>
-        <button type="button" id="btnExportAllCasesJson" class="btn btn-secondary btn-sm">Export All (.json)</button>
-        <button type="button" id="btnCloseModalBottom" class="btn btn-secondary btn-sm">Close</button>
-      </div>
+      </form>
     </div>
   </div>
 
-  <!-- Action Toast Feedback -->
-  <aside id="plannerToast" class="toast-container" role="status" aria-live="polite">
-    <span id="toastMessage" style="flex: 1;">Action completed</span>
-  </aside>
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
   <script>
     /**
-     * CASE PROJECT PLANNER - ENGINE
-     * 100% Client-Side Sovereign Data Architecture
+     * Case Tracking Dashboard - Lightweight, Fast, Offline Caseload Manager
+     * Zero-bloat client-side state engine.
      */
+    const STORAGE_KEY = 'case_tracking_dashboard_cases_v1';
 
-    // --- State Storage Key ---
-    const STORAGE_KEY = 'uc_case_planner_v1';
+    const STEP_NAMES = {
+      1: "1. Scope Check",
+      2: "2. Collate Info",
+      3: "3. Request Evidence",
+      4: "4. Review Evidence",
+      5: "5. Book Interview",
+      6: "6. Conduct & Close",
+      7: "✅ Closed"
+    };
 
-    // --- Default / Initial Case Templates ---
-    function createInitialCase(type = 'native', label = null) {
-      const now = new Date();
-      const randomSuffix = Math.floor(100 + Math.random() * 900);
-      const isNative = type === 'native';
-
-      return {
-        id: 'case-' + Date.now() + '-' + randomSuffix,
-        type: isNative ? 'native' : 'self_employed',
-        label: label || (isNative ? `Case #${randomSuffix} - Native Review` : `Case #${randomSuffix} - Self-Employed GSE`),
-        currentStep: 1,
-        completedSteps: [],
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        status: 'active', // 'active' | 'completed'
-
-        // Step 1: Scope
-        scope: {
-          residency: true,
-          workingAge: true,
-          capitalUnder16k: true,
-          activeClaim: true,
-          selfEmpActivity: true,
-          isOutScope: false,
-          outScopeReason: ''
-        },
-
-        // Step 2: Collate Info
-        collate: {
-          apStart: '2026-09-27',
-          apEnd: '2026-10-26',
-          householdType: 'single',
-          declaredCapital: 0.00,
-          assessorName: 'Assessment Officer',
-          elements: {
-            housing: true,
-            children: false,
-            health: false,
-            carer: false
-          },
-          accounts: [
-            { id: 'acc-1', bankName: 'Barclays', accountType: 'Current', last4: '4192' },
-            { id: 'acc-2', bankName: 'NatWest', accountType: 'Savings', last4: '8831' }
-          ],
-          selfEmployed: {
-            businessName: 'Apex Courier Services',
-            tradeType: 'Logistics / Parcel Courier',
-            startDate: '2026-01-15',
-            hmrcUtr: 'registered'
-          }
-        },
-
-        // Step 3: Evidence To-Dos
-        todoList: isNative ? [
-          { id: 'td-1', title: 'Proof of Identity (Passport or Driving Licence)', required: true, checked: true },
-          { id: 'td-2', title: '4-Month Continuous Bank Statements (All Personal & Savings Accounts)', required: true, checked: true },
-          { id: 'td-3', title: 'Tenancy Agreement & Proof of Rent Liability', required: true, checked: true },
-          { id: 'td-4', title: 'Recent Wage Slips / PAYE Proof (Last 3 Assessment Periods)', required: false, checked: true }
-        ] : [
-          { id: 'td-se-1', title: '4-Month Business Bank Statements', required: true, checked: true },
-          { id: 'td-se-2', title: '4-Month Personal Bank Statements (All Accounts)', required: true, checked: true },
-          { id: 'td-se-3', title: 'Profit & Loss Ledger / Cash Book (Last 12 Months)', required: true, checked: true },
-          { id: 'td-se-4', title: 'HMRC UTR Registration Letter / Tax Return', required: true, checked: true },
-          { id: 'td-se-5', title: 'Invoices, Receipts Sample & Commercial Contracts', required: true, checked: true }
-        ],
-        deadlineDays: 14,
-
-        // Step 4: Review & Audit
-        evidenceAudit: [],
-        verifiedCapital: 0.00,
-
-        // Step 5: Book Interview
-        interview: {
-          format: 'telephone',
-          date: '2026-11-18',
-          time: '10:30',
-          location: 'Registered claimant telephone number'
-        },
-
-        // Step 6: Conduct & Close
-        worksheet: {
-          q1: true,
-          q2: true,
-          q3: true,
-          q4: true,
-          notes: ''
-        },
-        finalOutcome: 'approved'
-      };
-    }
-
-    // --- Demo Preset Cases ---
-    const DEMO_PRESET_CASES = [
+    // Default Seed Data
+    const DEFAULT_CASES = [
       {
-        ...createInitialCase('native', 'Case #201 - Sarah Jenkins (Native Review)'),
-        currentStep: 1,
-        completedSteps: [],
-        collate: {
-          apStart: '2026-09-27',
-          apEnd: '2026-10-26',
-          householdType: 'single',
-          declaredCapital: 1200.00,
-          assessorName: 'Senior Reviewer #44',
-          elements: { housing: true, children: false, health: false, carer: false },
-          accounts: [
-            { id: 'demo-1', bankName: 'Barclays', accountType: 'Current', last4: '1044' },
-            { id: 'demo-2', bankName: 'Monzo', accountType: 'Savings', last4: '8821' }
-          ],
-          selfEmployed: {}
-        }
+        id: "case-01",
+        ref: "CAS-2026-9481",
+        name: "Sarah Jenkins",
+        type: "Self-Employed",
+        step: 6,
+        scope: "In-Scope",
+        deadline: "2026-11-15",
+        notes: "GSE 4-pillar interview scheduled. MIF assessment ready for determination."
       },
       {
-        ...createInitialCase('self_employed', 'Case #202 - David Miller (Courier GSE & MIF)'),
-        currentStep: 4,
-        completedSteps: [1, 2, 3],
-        collate: {
-          apStart: '2026-09-27',
-          apEnd: '2026-10-26',
-          householdType: 'single',
-          declaredCapital: 3400.00,
-          assessorName: 'Specialist Reviewer #12',
-          elements: { housing: true, children: false, health: false, carer: false },
-          accounts: [
-            { id: 'demo-3', bankName: 'NatWest', accountType: 'Business Current', last4: '7721' },
-            { id: 'demo-4', bankName: 'Barclays', accountType: 'Personal Current', last4: '3312' }
-          ],
-          selfEmployed: {
-            businessName: 'Miller Express Logistics',
-            tradeType: 'Van Courier & Delivery',
-            startDate: '2026-01-10',
-            hmrcUtr: 'registered'
-          }
-        }
+        id: "case-02",
+        ref: "CAS-2026-8820",
+        name: "Marcus Adebayo",
+        type: "Native / Standard Claim",
+        step: 4,
+        scope: "In-Scope",
+        deadline: "2026-11-18",
+        notes: "Auditing 4 months bank statements. Verifying capital balance under £6k."
+      },
+      {
+        id: "case-03",
+        ref: "CAS-2026-7734",
+        name: "Elena Rostova",
+        type: "Self-Employed",
+        step: 3,
+        scope: "In-Scope",
+        deadline: "2026-11-24",
+        notes: "To-do issued for business P&L, Starling business statements, and UTR proof."
+      },
+      {
+        id: "case-04",
+        ref: "CAS-2026-6641",
+        name: "David Campbell",
+        type: "Native / Standard Claim",
+        step: 1,
+        scope: "In-Scope",
+        deadline: "2026-11-12",
+        notes: "Initial gateway check: verifying residency and capital threshold."
+      },
+      {
+        id: "case-05",
+        ref: "CAS-2026-5519",
+        name: "Amina Khan",
+        type: "Self-Employed",
+        step: 5,
+        scope: "In-Scope",
+        deadline: "2026-11-14",
+        notes: "Interview booked for Thursday 10:00 AM. Appointment notice sent to customer journal."
+      },
+      {
+        id: "case-06",
+        ref: "CAS-2026-4402",
+        name: "James Wilson",
+        type: "Native / Standard Claim",
+        step: 7,
+        scope: "In-Scope",
+        deadline: "2026-11-05",
+        notes: "Interview completed. Capital verified at £3,200. Claim closed and authorised."
       }
     ];
 
-    // --- Global Application State ---
-    let appCases = [];
-    let activeCaseId = null;
+    let cases = [];
+    let currentView = 'pipeline'; // 'pipeline' | 'table'
 
-    // --- Local Storage Helpers ---
-    function loadCasesFromStorage() {
+    // Load from storage or initialize defaults
+    function loadCases() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch (_) {}
-      return [...DEMO_PRESET_CASES];
-    }
-
-    function saveCasesToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appCases));
-      } catch (_) {}
-    }
-
-    function getActiveCase() {
-      return appCases.find(c => c.id === activeCaseId) || appCases[0];
-    }
-
-    // --- Tactile Spinner & Toast Helpers ---
-    function withButtonSpinner(btnEl, fn) {
-      if (!btnEl) return;
-      btnEl.classList.add('is-loading');
-      btnEl.disabled = true;
-      setTimeout(() => {
-        try {
-          fn();
-        } finally {
-          btnEl.classList.remove('is-loading');
-          btnEl.disabled = false;
-        }
-      }, 140);
-    }
-
-    function showToast(msg) {
-      const el = document.getElementById('plannerToast');
-      const textEl = document.getElementById('toastMessage');
-      if (!el || !textEl) return;
-      textEl.textContent = msg;
-      el.style.display = 'inline-flex';
-      setTimeout(() => {
-        if (textEl.textContent === msg) el.style.display = 'none';
-      }, 3500);
-    }
-
-    // --- British English Date Formatter ---
-    function formatUKDate(isoStr) {
-      if (!isoStr) return '';
-      const [y, m, d] = isoStr.split('-');
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${parseInt(d, 10)} ${months[parseInt(m, 10) - 1]} ${y}`;
-    }
-
-    function addDays(isoStr, numDays) {
-      if (!isoStr) return '';
-      const d = new Date(isoStr + 'T00:00:00Z');
-      d.setUTCDate(d.getUTCDate() + numDays);
-      return d.toISOString().slice(0, 10);
-    }
-
-    // --- Capital & Tariff Income Calculator ---
-    function calculateTariffIncome(capital) {
-      const cap = Number(capital) || 0;
-      if (cap <= 6000) return 0;
-      if (cap > 16000) return -1; // Disqualified
-      const excess = cap - 6000;
-      const chunks = Math.ceil(excess / 250);
-      return chunks * 4.35;
-    }
-
-    // --- Render All App State ---
-    function renderApp() {
-      const currentCase = getActiveCase();
-      if (!currentCase) return;
-
-      // 1. Hero Card Updates
-      document.getElementById('caseReferenceInput').value = currentCase.label;
-      const isNative = currentCase.type === 'native';
-      
-      const typeBadge = document.getElementById('caseTypeBadge');
-      typeBadge.className = isNative ? 'badge badge-native' : 'badge badge-selfemp';
-      typeBadge.textContent = isNative ? '👤 Native Claim' : '🏢 Self-Employed (GSE)';
-
-      document.getElementById('caseStageBadge').textContent = `Step ${currentCase.currentStep}: ${getStepShortName(currentCase.currentStep)}`;
-
-      const btnNative = document.getElementById('btnTypeNative');
-      const btnSelfEmp = document.getElementById('btnTypeSelfEmployed');
-      if (isNative) {
-        btnNative.classList.add('active');
-        btnNative.setAttribute('aria-checked', 'true');
-        btnSelfEmp.classList.remove('active');
-        btnSelfEmp.setAttribute('aria-checked', 'false');
-      } else {
-        btnSelfEmp.classList.add('active');
-        btnSelfEmp.setAttribute('aria-checked', 'true');
-        btnNative.classList.remove('active');
-        btnNative.setAttribute('aria-checked', 'false');
-      }
-
-      const apStartFmt = formatUKDate(currentCase.collate.apStart);
-      const apEndFmt = formatUKDate(currentCase.collate.apEnd);
-      document.getElementById('heroApDatesText').textContent = apStartFmt && apEndFmt ? `${apStartFmt} – ${apEndFmt}` : 'Not specified';
-      document.getElementById('heroAssessorText').textContent = currentCase.collate.assessorName || 'Assessment Officer';
-      document.getElementById('heroCapitalText').textContent = `£${Number(currentCase.collate.declaredCapital || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}`;
-      document.getElementById('totalCasesBadge').textContent = appCases.length;
-
-      // 2. Stepper Progress
-      const pct = Math.round((currentCase.currentStep / 6) * 100);
-      document.getElementById('stepperProgressBar').style.width = `${pct}%`;
-      document.getElementById('stepperProgressPercent').textContent = `Step ${currentCase.currentStep} of 6 (${pct}% Complete)`;
-
-      for (let s = 1; s <= 6; s++) {
-        const tab = document.getElementById(`stepTab${s}`);
-        const icon = document.getElementById(`stepIcon${s}`);
-        if (!tab) continue;
-        tab.classList.remove('active', 'completed');
-        tab.setAttribute('aria-selected', 'false');
-        if (s === currentCase.currentStep) {
-          tab.classList.add('active');
-          tab.setAttribute('aria-selected', 'true');
-          icon.textContent = '▶';
-        } else if (currentCase.completedSteps.includes(s)) {
-          tab.classList.add('completed');
-          icon.textContent = '✓';
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          cases = JSON.parse(stored);
         } else {
-          icon.textContent = '○';
+          cases = [...DEFAULT_CASES];
+          saveCases();
         }
+      } catch (e) {
+        cases = [...DEFAULT_CASES];
+      }
+    }
 
-        const panel = document.getElementById(`stepPanel${s}`);
-        if (panel) {
-          panel.style.display = s === currentCase.currentStep ? 'block' : 'none';
+    function saveCases() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+      } catch (e) {
+        console.warn("Storage quota or permission error:", e);
+      }
+    }
+
+    // UI Toast
+    function showToast(msg) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<span>✓</span><span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 200);
+      }, 3000);
+    }
+
+    // Filter Logic
+    function getFilteredCases() {
+      const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const typeFilter = document.getElementById('filterType').value;
+      const stepFilter = document.getElementById('filterStep').value;
+
+      return cases.filter(c => {
+        if (typeFilter !== 'all' && c.type !== typeFilter) return false;
+        if (stepFilter !== 'all' && String(c.step) !== stepFilter) return false;
+        if (q) {
+          const matchRef = (c.ref || '').toLowerCase().includes(q);
+          const matchName = (c.name || '').toLowerCase().includes(q);
+          const matchNote = (c.notes || '').toLowerCase().includes(q);
+          if (!matchRef && !matchName && !matchNote) return false;
         }
-      }
-
-      // 3. Step 1: Scope Render
-      document.getElementById('chkResidency').checked = currentCase.scope.residency;
-      document.getElementById('chkWorkingAge').checked = currentCase.scope.workingAge;
-      document.getElementById('chkCapitalThreshold').checked = currentCase.scope.capitalUnder16k;
-      document.getElementById('chkActiveClaim').checked = currentCase.scope.activeClaim;
-      
-      const seScopeRow = document.getElementById('chkSelfEmpActivityRow');
-      if (isNative) {
-        seScopeRow.style.display = 'none';
-      } else {
-        seScopeRow.style.display = 'flex';
-        document.getElementById('chkSelfEmpActivity').checked = currentCase.scope.selfEmpActivity;
-      }
-
-      renderScopeVerdict(currentCase);
-
-      // 4. Step 2: Collate Info Render
-      document.getElementById('apStartDate').value = currentCase.collate.apStart;
-      document.getElementById('apEndDate').value = currentCase.collate.apEnd;
-      document.getElementById('claimantType').value = currentCase.collate.householdType;
-      document.getElementById('declaredCapitalInput').value = currentCase.collate.declaredCapital;
-      
-      document.getElementById('elemHousing').checked = currentCase.collate.elements.housing;
-      document.getElementById('elemChildren').checked = currentCase.collate.elements.children;
-      document.getElementById('elemHealth').checked = currentCase.collate.elements.health;
-      document.getElementById('elemCarer').checked = currentCase.collate.elements.carer;
-
-      renderDeclaredAccounts(currentCase);
-
-      const seBlock = document.getElementById('selfEmployedCollationBlock');
-      if (isNative) {
-        seBlock.style.display = 'none';
-      } else {
-        seBlock.style.display = 'block';
-        document.getElementById('seBusinessName').value = currentCase.collate.selfEmployed.businessName || '';
-        document.getElementById('seTradeType').value = currentCase.collate.selfEmployed.tradeType || '';
-        document.getElementById('seStartDate').value = currentCase.collate.selfEmployed.startDate || '2026-01-15';
-        document.getElementById('seHmrcUtr').value = currentCase.collate.selfEmployed.hmrcUtr || 'registered';
-        updateSeTradingDuration(currentCase.collate.selfEmployed.startDate);
-      }
-
-      // 5. Step 3: Evidence To-Do Render
-      renderTodoList(currentCase);
-      document.getElementById('todoDeadlineDays').value = currentCase.deadlineDays || 14;
-      updateTodoJournalNotice(currentCase);
-
-      // 6. Step 4: Review & Audit Render
-      renderEvidenceAuditTable(currentCase);
-      document.getElementById('verifiedCapitalInput').value = currentCase.verifiedCapital || 0.00;
-      updateCapitalTariffCalculations(currentCase);
-
-      // 7. Step 5: Book Interview Render
-      document.getElementById('interviewFormat').value = currentCase.interview.format;
-      document.getElementById('interviewDate').value = currentCase.interview.date;
-      document.getElementById('interviewTime').value = currentCase.interview.time;
-      document.getElementById('interviewLocation').value = currentCase.interview.location;
-      updateAppointmentNotice(currentCase);
-
-      // 8. Step 6: Interview Worksheet & Outcomes Render
-      const wsNative = document.getElementById('interviewWorksheetNative');
-      const wsSelfEmp = document.getElementById('interviewWorksheetSelfEmp');
-      if (isNative) {
-        wsNative.style.display = 'block';
-        wsSelfEmp.style.display = 'none';
-        document.getElementById('chkNativeQ1').checked = currentCase.worksheet.q1 !== false;
-        document.getElementById('chkNativeQ2').checked = currentCase.worksheet.q2 !== false;
-        document.getElementById('chkNativeQ3').checked = currentCase.worksheet.q3 !== false;
-        document.getElementById('chkNativeQ4').checked = currentCase.worksheet.q4 !== false;
-      } else {
-        wsNative.style.display = 'none';
-        wsSelfEmp.style.display = 'block';
-        document.getElementById('chkGseOrganised').checked = currentCase.worksheet.gseOrganised !== false;
-        document.getElementById('chkGseProfit').checked = currentCase.worksheet.gseProfit !== false;
-        document.getElementById('chkGseLivelihood').checked = currentCase.worksheet.gseLivelihood !== false;
-        document.getElementById('chkGseStartup').checked = currentCase.worksheet.gseStartup !== false;
-      }
-
-      document.getElementById('interviewAssessorNotes').value = currentCase.worksheet.notes || '';
-      document.getElementById('caseFinalOutcome').value = currentCase.finalOutcome || (isNative ? 'approved' : 'gse_startup');
-      updateFinalOutcomesText(currentCase);
-    }
-
-    function getStepShortName(step) {
-      const names = ['', 'Scope Check', 'Collate Info', 'Request Evidence', 'Review Evidence', 'Book Interview', 'Interview & Close'];
-      return names[step] || 'Assessment';
-    }
-
-    // --- Step 1: Scope Determination ---
-    function renderScopeVerdict(c) {
-      const isNative = c.type === 'native';
-      const inScope = c.scope.residency && c.scope.workingAge && c.scope.capitalUnder16k && c.scope.activeClaim && (isNative || c.scope.selfEmpActivity);
-
-      const banner = document.getElementById('scopeVerdictBanner');
-      const title = document.getElementById('scopeVerdictTitle');
-      const sub = document.getElementById('scopeVerdictSubtitle');
-      const badge = document.getElementById('scopeVerdictBadge');
-      const outBox = document.getElementById('outOfScopeBox');
-      const outNote = document.getElementById('outOfScopeNote');
-
-      if (inScope) {
-        banner.className = 'verdict-banner in-scope';
-        title.textContent = '✓ Case is IN-SCOPE for Assessment Review';
-        sub.textContent = 'All statutory gateway conditions satisfied. Proceed to Step 2 to collate declarations and evidence requirements.';
-        badge.className = 'badge badge-ok';
-        badge.textContent = 'In-Scope';
-        outBox.style.display = 'none';
-      } else {
-        banner.className = 'verdict-banner out-scope';
-        title.textContent = '❌ Case is OUT-OF-SCOPE for Standard Review';
-        badge.className = 'badge badge-danger';
-        badge.textContent = 'Out-of-Scope';
-
-        let reasons = [];
-        if (!c.scope.residency) reasons.push('Habitual residence or right to reside condition not satisfied');
-        if (!c.scope.workingAge) reasons.push('Claimant is not within working age parameters');
-        if (!c.scope.capitalUnder16k) reasons.push('Declared or verified capital exceeds the £16,000 disqualification ceiling');
-        if (!c.scope.activeClaim) reasons.push('benefit claim is not currently active');
-        if (!isNative && !c.scope.selfEmpActivity) reasons.push('Active commercial self-employed activity has ceased');
-
-        sub.textContent = `Gateway check failed: ${reasons.join('; ')}. Case should be referred for closure or termination.`;
-        outBox.style.display = 'block';
-
-        outNote.value = [
-          `CASE ASSESSMENT REVIEW – OUT-OF-SCOPE DETERMINATION`,
-          `-------------------------------------------------------`,
-          `Case Ref: ${c.label}`,
-          `Assessment Period: ${formatUKDate(c.collate.apStart)} to ${formatUKDate(c.collate.apEnd)}`,
-          `Status: Claim Out-of-Scope`,
-          ``,
-          `Reason(s) for Out-of-Scope Determination:`,
-          reasons.map(r => `• ${r}`).join('\n'),
-          ``,
-          `Action: Claim closed / referred to decision maker for award termination in accordance with claim regulations.`
-        ].join('\n');
-      }
-    }
-
-    // --- Step 2: Declared Accounts ---
-    function renderDeclaredAccounts(c) {
-      const container = document.getElementById('declaredAccountsList');
-      container.innerHTML = '';
-
-      if (c.collate.accounts.length === 0) {
-        container.innerHTML = '<div style="font-size:0.8125rem; color:var(--text-muted); padding:8px 0;">No accounts declared yet. Click "+ Add Declared Account".</div>';
-        return;
-      }
-
-      c.collate.accounts.forEach((acc, idx) => {
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.gap = '8px';
-        row.style.flexWrap = 'wrap';
-
-        row.innerHTML = `
-          <input type="text" value="${escapeHtml(acc.bankName)}" placeholder="Bank Name (e.g. Barclays)" style="flex:2; min-width:140px; min-height:38px; padding:4px 8px; font-size:0.8125rem;" data-field="bankName" data-idx="${idx}" />
-          <input type="text" value="${escapeHtml(acc.accountType)}" placeholder="Type (e.g. Current, Savings)" style="flex:1.5; min-width:110px; min-height:38px; padding:4px 8px; font-size:0.8125rem;" data-field="accountType" data-idx="${idx}" />
-          <input type="text" value="${escapeHtml(acc.last4)}" placeholder="Last 4 Digits" maxlength="4" style="width:100px; min-height:38px; padding:4px 8px; font-size:0.8125rem;" data-field="last4" data-idx="${idx}" />
-          <button type="button" class="btn btn-danger-ghost btn-sm js-delete-acc" data-idx="${idx}" title="Remove account" style="min-height:38px;">&times;</button>
-        `;
-        container.appendChild(row);
+        return true;
       });
     }
 
-    function updateSeTradingDuration(startDateStr) {
-      const el = document.getElementById('seMonthsTradingCalculated');
-      if (!el || !startDateStr) return;
-      const start = new Date(startDateStr);
-      const now = new Date();
-      const diffMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-      if (diffMonths < 12) {
-        el.textContent = `Trading Duration: ${Math.max(1, diffMonths)} months. Eligible to be considered for 12-Month Start-up Period.`;
-        el.style.color = '#b45309';
-      } else {
-        el.textContent = `Trading Duration: ${diffMonths} months. Established trading (> 12 months). Standard Minimum Income Floor (MIF) applies if Gainfully Self-Employed.`;
-        el.style.color = '#1e3a8a';
+    // Render KPIs
+    function updateKpis() {
+      document.getElementById('valTotalCases').textContent = cases.length;
+      document.getElementById('valNativeCases').textContent = cases.filter(c => c.type === "Native / Standard Claim").length;
+      document.getElementById('valSECases').textContent = cases.filter(c => c.type === "Self-Employed").length;
+      document.getElementById('valStep3Cases').textContent = cases.filter(c => c.step === 3).length;
+      document.getElementById('valStep5Cases').textContent = cases.filter(c => c.step === 5).length;
+      document.getElementById('valClosedCases').textContent = cases.filter(c => c.step === 7).length;
+    }
+
+    // Render Pipeline Board
+    function renderPipeline(filtered) {
+      for (let s = 1; s <= 6; s++) {
+        const colContainer = document.getElementById(`cardsCol${s}`);
+        const colBadge = document.getElementById(`badgeStep${s}`);
+        const stepCases = filtered.filter(c => c.step === s);
+        
+        colBadge.textContent = stepCases.length;
+        colContainer.innerHTML = '';
+
+        if (stepCases.length === 0) {
+          colContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 24px 8px;">No cases in Step ${s}</div>`;
+          continue;
+        }
+
+        stepCases.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'case-card';
+          card.innerHTML = `
+            <div class="case-card-header">
+              <span class="case-ref">${c.ref}</span>
+              <span class="case-type-badge ${c.type === 'Self-Employed' ? 'type-se' : 'type-native'}">
+                ${c.type === 'Self-Employed' ? '🏢 Self-Employed' : '👤 Native'}
+              </span>
+            </div>
+            <div class="case-name">${c.name}</div>
+            ${c.notes ? `<div class="case-note">${c.notes}</div>` : ''}
+            <div class="case-meta-row">
+              <span class="case-deadline">📅 ${c.deadline || 'No target date'}</span>
+              <span>${c.scope || 'In-Scope'}</span>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="prev" ${c.step <= 1 ? 'disabled' : ''} title="Move to previous step">← Step ${c.step - 1}</button>
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="edit" style="flex:1;">Edit / View</button>
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="next" title="${c.step === 6 ? 'Close case' : 'Move to next step'}">
+                ${c.step === 6 ? 'Close Case ✓' : `Step ${c.step + 1} →`}
+              </button>
+            </div>
+          `;
+          colContainer.appendChild(card);
+        });
       }
     }
 
-    // --- Step 3: Evidence To-Dos & Journal Generator ---
-    function renderTodoList(c) {
-      const container = document.getElementById('todoItemsContainer');
-      container.innerHTML = '';
-
-      c.todoList.forEach((td, idx) => {
-        const item = document.createElement('div');
-        item.style.display = 'flex';
-        item.style.alignItems = 'center';
-        item.style.justifyContent = 'space-between';
-        item.style.gap = '8px';
-        item.style.background = '#ffffff';
-        item.style.border = '1px solid var(--border-subtle)';
-        item.style.borderRadius = 'var(--radius-sm)';
-        item.style.padding = '8px 12px';
-
-        item.innerHTML = `
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; flex:1;">
-            <input type="checkbox" class="js-todo-check" data-idx="${idx}" ${td.checked ? 'checked' : ''} style="width:18px; height:18px;" />
-            <span style="font-size:0.8125rem; font-weight:600; color:var(--text-primary);">${escapeHtml(td.title)}</span>
-          </label>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span class="badge ${td.required ? 'badge-danger' : 'badge-neutral'}">${td.required ? 'Required' : 'Optional'}</span>
-            <button type="button" class="btn btn-danger-ghost btn-sm js-delete-todo" data-idx="${idx}" style="min-height:30px; padding:2px 8px;">&times;</button>
-          </div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function updateTodoJournalNotice(c) {
-      const todayIso = new Date().toISOString().slice(0, 10);
-      const days = Number(c.deadlineDays || 14);
-      const dueIso = addDays(todayIso, days);
-      const dueFmt = formatUKDate(dueIso);
-      document.getElementById('todoDueDateDisplay').textContent = dueFmt;
-
-      const activeItems = c.todoList.filter(t => t.checked);
-      const isNative = c.type === 'native';
-
-      const journalText = [
-        `ACTION REQUIRED: Please Provide Bank Statements & Verification Documents`,
-        `------------------------------------------------------------------------`,
-        `As part of your claim assessment review, we require evidence to verify your current circumstances and entitlement.`,
-        ``,
-        `WHAT YOU NEED TO PROVIDE BY ${dueFmt.toUpperCase()}:`,
-        activeItems.map((item, i) => `${i + 1}. ${item.title}`).join('\n'),
-        ``,
-        `HOW TO SUBMIT:`,
-        `Please upload clear PDF downloads or full-page official photographs directly to your customer journal before the deadline above.`,
-        `Ensure all documents clearly display your full name, account details, and full continuous transaction history.`,
-        ``,
-        `If you need an extension or have difficulties accessing your statements, please send a message in your journal as soon as possible.`
-      ].join('\n');
-
-      document.getElementById('draftTodoJournalText').value = journalText;
-    }
-
-    // --- Step 4: Evidence Review & Audit ---
-    function renderEvidenceAuditTable(c) {
-      const tbody = document.getElementById('evidenceAuditTableBody');
+    // Render Table Register
+    function renderTable(filtered) {
+      const tbody = document.getElementById('casesTableBody');
       tbody.innerHTML = '';
 
-      const activeItems = c.todoList.filter(t => t.checked);
-      if (activeItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:16px;">No evidence requested in Step 3.</td></tr>';
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 32px;">No matching cases found.</td></tr>`;
         return;
       }
 
-      activeItems.forEach((item, idx) => {
-        // sync existing note or default
-        const existingAudit = c.evidenceAudit.find(a => a.id === item.id) || {
-          id: item.id,
-          status: 'verified',
-          note: 'Verified against declarations.'
-        };
-
+      filtered.forEach(c => {
         const tr = document.createElement('tr');
+        
+        // Build 6-step interactive pills
+        let pillsHtml = '<div class="step-pills-tracker">';
+        for (let s = 1; s <= 6; s++) {
+          const isComp = c.step > s || c.step === 7;
+          const isAct = c.step === s;
+          const pillClass = isAct ? 'active' : (isComp ? 'completed' : '');
+          pillsHtml += `<button type="button" class="step-pill ${pillClass}" data-id="${c.id}" data-jump-step="${s}" title="Jump case to Step ${s}">${s}</button>`;
+        }
+        if (c.step === 7) {
+          pillsHtml += `<span style="font-size: 11px; font-weight: 700; color: #15803d; margin-left: 4px;">CLOSED</span>`;
+        }
+        pillsHtml += '</div>';
+
         tr.innerHTML = `
-          <td style="font-weight:600; color:var(--text-primary); width:35%;">
-            ${escapeHtml(item.title)}
-          </td>
-          <td style="width:25%;">
-            <select class="js-audit-status" data-id="${item.id}" style="min-height:36px; padding:4px 8px; font-size:0.8125rem; width:100%;">
-              <option value="verified" ${existingAudit.status === 'verified' ? 'selected' : ''}>✅ Received &amp; Verified</option>
-              <option value="pending" ${existingAudit.status === 'pending' ? 'selected' : ''}>⏳ Pending / Awaiting</option>
-              <option value="query" ${existingAudit.status === 'query' ? 'selected' : ''}>⚠️ Gaps / Discrepancy Found</option>
-              <option value="unreadable" ${existingAudit.status === 'unreadable' ? 'selected' : ''}>❌ Unreadable / Re-upload Needed</option>
-              <option value="waived" ${existingAudit.status === 'waived' ? 'selected' : ''}>○ Waived / Not Applicable</option>
-            </select>
-          </td>
+          <td><span class="case-ref">${c.ref}</span></td>
+          <td><strong>${c.name}</strong></td>
           <td>
-            <input type="text" class="js-audit-note" data-id="${item.id}" value="${escapeHtml(existingAudit.note)}" placeholder="Enter findings or gap details..." style="width:100%; min-height:36px; padding:4px 8px; font-size:0.8125rem;" />
+            <span class="case-type-badge ${c.type === 'Self-Employed' ? 'type-se' : 'type-native'}">
+              ${c.type === 'Self-Employed' ? '🏢 Self-Employed' : '👤 Native'}
+            </span>
+          </td>
+          <td>${pillsHtml}</td>
+          <td><strong>${STEP_NAMES[c.step] || 'Step ' + c.step}</strong></td>
+          <td><span style="font-size: 12.5px; color: #475569;">${c.deadline || '—'}</span></td>
+          <td style="max-width: 280px; font-size: 12px; color: #475569;">${c.notes || '—'}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn btn-secondary btn-sm" data-id="${c.id}" data-action="edit">Edit</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function updateCapitalTariffCalculations(c) {
-      const cap = Number(c.verifiedCapital || 0);
-      const tariff = calculateTariffIncome(cap);
-      const tariffEl = document.getElementById('calculatedTariffIncome');
-      const statusEl = document.getElementById('capitalStatusSummary');
-
-      if (tariff === -1) {
-        tariffEl.value = 'DISQUALIFIED (Over £16k)';
-        tariffEl.style.color = 'var(--status-gap-bar)';
-        statusEl.value = 'Exceeds statutory capital ceiling of £16,000';
-      } else if (tariff === 0) {
-        tariffEl.value = '£0.00 / month';
-        tariffEl.style.color = 'var(--accent-primary)';
-        statusEl.value = 'Under £6,000 threshold (Fully disregarded)';
+    function render() {
+      const filtered = getFilteredCases();
+      updateKpis();
+      if (currentView === 'pipeline') {
+        renderPipeline(filtered);
       } else {
-        tariffEl.value = `£${tariff.toFixed(2)} / month`;
-        tariffEl.style.color = '#b45309';
-        statusEl.value = `Tariff income applied: £4.35 per £250 over £6,000 (Capital: £${cap.toLocaleString()})`;
+        renderTable(filtered);
       }
     }
 
-    // --- Step 5: Appointment Notice Generator ---
-    function updateAppointmentNotice(c) {
-      const formatLabel = c.interview.format === 'telephone' ? 'Telephone Interview' : (c.interview.format === 'video' ? 'Video Call' : 'In-Person Office Interview');
-      const dateFmt = formatUKDate(c.interview.date);
-      const isNative = c.type === 'native';
-
-      const notice = [
-        `APPOINTMENT CONFIRMATION: Claim Assessment Review Interview`,
-        `----------------------------------------------------------------------`,
-        `You have been scheduled for a Assessment Review Interview.`,
-        ``,
-        `APPOINTMENT DETAILS:`,
-        `• Format: ${formatLabel}`,
-        `• Date: ${dateFmt}`,
-        `• Time: ${c.interview.time} (UK Time)`,
-        `• Location / Contact: ${c.interview.location}`,
-        ``,
-        `PURPOSE OF INTERVIEW:`,
-        isNative 
-          ? `To review your submitted verification documents, confirm capital declarations, and review your Claimant Commitment.`
-          : `To conduct your statutory Gainful Self-Employment (GSE) review, assess trading sustainability, and determine applicable Minimum Income Floor (MIF) provisions.`,
-        ``,
-        `IMPORTANT: This is a mandatory interview. If you fail to attend without good cause, your entitlement payments may be reduced or stopped under conditionality regulations.`
-      ].join('\n');
-
-      document.getElementById('draftAppointmentNoticeText').value = notice;
-    }
-
-    // --- Step 6: Conduct & Close Case Generator ---
-    function updateFinalOutcomesText(c) {
-      const outcome = c.finalOutcome || 'approved';
-      const isNative = c.type === 'native';
-      const dateFmt = formatUKDate(c.interview.date);
-
-      // Customer Journal Notice
-      let custNotice = '';
-      if (outcome === 'approved') {
-        custNotice = [
-          `CLAIM REVIEW COMPLETE – NO CHANGE TO ENTITLEMENT`,
-          `-----------------------------------------------------------`,
-          `Thank you for attending your assessment interview and providing your verification evidence.`,
-          ``,
-          `We can confirm that your review is now complete. All submitted documents have been verified and satisfy claim regulations. Your claim continues in payment as normal.`
-        ].join('\n');
-      } else if (outcome === 'gse_startup') {
-        custNotice = [
-          `CLAIM REVIEW COMPLETE – START-UP PERIOD GRANTED`,
-          `----------------------------------------------------------`,
-          `Following your Gainful Self-Employment review interview on ${dateFmt}, we have determined that your self-employment is gainful.`,
-          ``,
-          `Because your business trading commenced less than 12 months ago, you have been granted a statutory 12-Month Start-up Period. The Minimum Income Floor (MIF) will not apply to your claim during this period.`,
-          ``,
-          `Please continue to report your self-employed earnings and allowable expenses at the end of each assessment period.`
-        ].join('\n');
-      } else if (outcome === 'gse_mif') {
-        custNotice = [
-          `CLAIM REVIEW COMPLETE – MINIMUM INCOME FLOOR (MIF) APPLIED`,
-          `---------------------------------------------------------------------`,
-          `Following your Gainful Self-Employment interview on ${dateFmt}, we have determined that your business is established and gainful.`,
-          ``,
-          `In accordance with claim regulations, the Minimum Income Floor (MIF) will now apply to your assessment periods. If your actual net profit falls below the MIF in any month, your entitlement award will be calculated using the MIF threshold.`
-        ].join('\n');
-      } else if (outcome === 'closed_failure') {
-        custNotice = [
-          `ACTION TAKEN: CLAIM TERMINATED`,
-          `-----------------------------------------------`,
-          `You were requested to provide verification evidence and attend an assessment review interview.`,
-          ``,
-          `Because you failed to provide the requested information and failed to attend your mandatory appointment without good reason, your entitlement award has been terminated in accordance with Section 26 of the Welfare Reform Act 2012.`
-        ].join('\n');
-      } else {
-        custNotice = [
-          `CLAIM REVIEW OUTCOME NOTIFICATION`,
-          `--------------------------------------------`,
-          `Your claim assessment review has been concluded following your interview on ${dateFmt}.`,
-          ``,
-          `Please check your journal for details of any adjustments made to your entitlement or commitments.`
-        ].join('\n');
+    // Step Movement Logic
+    function moveCaseStep(id, delta) {
+      const c = cases.find(item => item.id === id);
+      if (!c) return;
+      
+      const newStep = c.step + delta;
+      if (newStep >= 1 && newStep <= 7) {
+        c.step = newStep;
+        saveCases();
+        render();
+        showToast(`Moved ${c.name} to ${STEP_NAMES[newStep]}`);
       }
-      document.getElementById('draftCustomerOutcomeText').value = custNotice;
-
-      // Internal Assessor Audit Note
-      const assessorNote = [
-        `CASE REVIEW AUDIT NOTE – CLAIMS ASSESSMENT OPERATIONS`,
-        `=========================================================`,
-        `Case Reference: ${c.label}`,
-        `Case Pathway: ${isNative ? 'Native (Standard / PAYE)' : 'Self-Employed (GSE & MIF)'}`,
-        `Assessment Period: ${formatUKDate(c.collate.apStart)} to ${formatUKDate(c.collate.apEnd)}`,
-        `Assessor Stamp: ${c.collate.assessorName} | Completed: ${formatUKDate(new Date().toISOString().slice(0, 10))}`,
-        ``,
-        `1. SCOPE & GATEWAY CHECK: In-scope verified (Residency, Working age, Capital < £16k).`,
-        `2. EVIDENCE VERIFICATION: All required to-do evidence reviewed and logged. Verified capital: £${Number(c.verifiedCapital || 0).toLocaleString()}.`,
-        `3. INTERVIEW CONDUCTED: ${dateFmt} via ${c.interview.format}.`,
-        `   Assessor Notes: ${c.worksheet.notes || 'Interview conducted satisfactorily in accordance with guidelines.'}`,
-        `4. FINAL DETERMINATION: ${outcome.toUpperCase()}`,
-        `   Outcome Action: Notice issued to journal; system markers updated.`
-      ].join('\n');
-      document.getElementById('draftAssessorOutcomeText').value = assessorNote;
     }
 
-    // --- HTML Escaping Helper ---
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function jumpCaseStep(id, targetStep) {
+      const c = cases.find(item => item.id === id);
+      if (!c) return;
+      c.step = targetStep;
+      saveCases();
+      render();
+      showToast(`${c.name} set to ${STEP_NAMES[targetStep]}`);
     }
 
-    // --- Wire Event Handlers ---
-    function initEventHandlers() {
-      // Step Tab Navigation
-      document.querySelectorAll('.step-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const s = parseInt(btn.dataset.step, 10);
-          const c = getActiveCase();
-          if (c) {
-            c.currentStep = s;
-            saveCasesToStorage();
-            renderApp();
-            window.scrollTo({ top: 180, behavior: 'smooth' });
-          }
-        });
-      });
+    // Modal Add / Edit
+    const modal = document.getElementById('caseModal');
+    const form = document.getElementById('caseForm');
 
-      // Next / Previous Step Buttons
-      document.querySelectorAll('.js-next-step').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const next = parseInt(btn.dataset.next, 10);
-          const c = getActiveCase();
-          if (c) {
-            if (!c.completedSteps.includes(c.currentStep)) {
-              c.completedSteps.push(c.currentStep);
-            }
-            c.currentStep = next;
-            saveCasesToStorage();
-            renderApp();
-            window.scrollTo({ top: 180, behavior: 'smooth' });
-          }
-        });
-      });
+    function openModal(caseData = null) {
+      document.getElementById('modalTitle').textContent = caseData ? 'Edit Case Record' : 'Add New Case';
+      document.getElementById('formCaseId').value = caseData ? caseData.id : '';
+      document.getElementById('formCaseRef').value = caseData ? caseData.ref : `CAS-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      document.getElementById('formClaimantName').value = caseData ? caseData.name : '';
+      document.getElementById('formCaseType').value = caseData ? caseData.type : 'Native / Standard Claim';
+      document.getElementById('formCurrentStep').value = caseData ? caseData.step : '1';
+      document.getElementById('formScopeStatus').value = caseData ? (caseData.scope || 'In-Scope') : 'In-Scope';
+      document.getElementById('formDeadline').value = caseData ? (caseData.deadline || '') : '';
+      document.getElementById('formNotes').value = caseData ? (caseData.notes || '') : '';
 
-      document.querySelectorAll('.js-prev-step').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const prev = parseInt(btn.dataset.prev, 10);
-          const c = getActiveCase();
-          if (c) {
-            c.currentStep = prev;
-            saveCasesToStorage();
-            renderApp();
-            window.scrollTo({ top: 180, behavior: 'smooth' });
-          }
-        });
-      });
-
-      // Case Type Switcher Buttons
-      document.getElementById('btnTypeNative').addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c && c.type !== 'native') {
-          c.type = 'native';
-          c.todoList = createInitialCase('native').todoList;
-          saveCasesToStorage();
-          renderApp();
-          showToast('✓ Switched to Native / Standard Claim pathway');
-        }
-      });
-
-      document.getElementById('btnTypeSelfEmployed').addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c && c.type !== 'self_employed') {
-          c.type = 'self_employed';
-          c.todoList = createInitialCase('self_employed').todoList;
-          saveCasesToStorage();
-          renderApp();
-          showToast('✓ Switched to Self-Employed (GSE & MIF) pathway');
-        }
-      });
-
-      // Case Name Edit
-      document.getElementById('caseReferenceInput').addEventListener('input', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.label = e.target.value.trim() || 'Untitled Case';
-          saveCasesToStorage();
-        }
-      });
-
-      // Save Explicit Button
-      document.getElementById('btnSaveCaseExplicit').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          saveCasesToStorage();
-          showToast('✓ Case state saved successfully in local storage');
-        });
-      });
-
-      // Step 1: Scope Checkboxes
-      ['chkResidency', 'chkWorkingAge', 'chkCapitalThreshold', 'chkActiveClaim', 'chkSelfEmpActivity'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', () => {
-          const c = getActiveCase();
-          if (!c) return;
-          c.scope.residency = document.getElementById('chkResidency').checked;
-          c.scope.workingAge = document.getElementById('chkWorkingAge').checked;
-          c.scope.capitalUnder16k = document.getElementById('chkCapitalThreshold').checked;
-          c.scope.activeClaim = document.getElementById('chkActiveClaim').checked;
-          c.scope.selfEmpActivity = document.getElementById('chkSelfEmpActivity').checked;
-          saveCasesToStorage();
-          renderScopeVerdict(c);
-        });
-      });
-
-      // Copy Out-of-Scope Note
-      document.getElementById('btnCopyOutScopeNote')?.addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('outOfScopeNote').value;
-          navigator.clipboard?.writeText(text);
-          showToast('✓ Out-of-scope note copied to clipboard');
-        });
-      });
-
-      // Step 2: Collate Info Inputs
-      document.getElementById('apStartDate').addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) { c.collate.apStart = e.target.value; saveCasesToStorage(); renderApp(); }
-      });
-      document.getElementById('apEndDate').addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) { c.collate.apEnd = e.target.value; saveCasesToStorage(); renderApp(); }
-      });
-      document.getElementById('claimantType').addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) { c.collate.householdType = e.target.value; saveCasesToStorage(); }
-      });
-      document.getElementById('declaredCapitalInput').addEventListener('input', e => {
-        const c = getActiveCase();
-        if (c) { c.collate.declaredCapital = parseFloat(e.target.value) || 0; saveCasesToStorage(); }
-      });
-
-      // Elements Checkboxes
-      ['elemHousing', 'elemChildren', 'elemHealth', 'elemCarer'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', () => {
-          const c = getActiveCase();
-          if (!c) return;
-          const key = id.replace('elem', '').toLowerCase();
-          c.collate.elements[key] = document.getElementById(id).checked;
-          saveCasesToStorage();
-        });
-      });
-
-      // Add Declared Account
-      document.getElementById('btnAddAccountRow').addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c) {
-          c.collate.accounts.push({
-            id: 'acc-' + Date.now(),
-            bankName: 'Santander',
-            accountType: 'Current',
-            last4: '0000'
-          });
-          saveCasesToStorage();
-          renderDeclaredAccounts(c);
-        }
-      });
-
-      // Account fields delegation
-      document.getElementById('declaredAccountsList').addEventListener('input', e => {
-        const idx = parseInt(e.target.dataset.idx, 10);
-        const field = e.target.dataset.field;
-        const c = getActiveCase();
-        if (c && c.collate.accounts[idx] && field) {
-          c.collate.accounts[idx][field] = e.target.value;
-          saveCasesToStorage();
-        }
-      });
-
-      document.getElementById('declaredAccountsList').addEventListener('click', e => {
-        const delBtn = e.target.closest('.js-delete-acc');
-        if (delBtn) {
-          const idx = parseInt(delBtn.dataset.idx, 10);
-          const c = getActiveCase();
-          if (c) {
-            c.collate.accounts.splice(idx, 1);
-            saveCasesToStorage();
-            renderDeclaredAccounts(c);
-          }
-        }
-      });
-
-      // Self-Employed specifics
-      ['seBusinessName', 'seTradeType', 'seHmrcUtr'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => {
-          const c = getActiveCase();
-          if (!c) return;
-          const key = id.replace('se', '');
-          const prop = key.charAt(0).toLowerCase() + key.slice(1);
-          c.collate.selfEmployed[prop] = e.target.value;
-          saveCasesToStorage();
-        });
-      });
-
-      document.getElementById('seStartDate')?.addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.collate.selfEmployed.startDate = e.target.value;
-          updateSeTradingDuration(e.target.value);
-          saveCasesToStorage();
-        }
-      });
-
-      // Step 3: To-Do Checklist
-      document.getElementById('todoItemsContainer').addEventListener('change', e => {
-        if (e.target.classList.contains('js-todo-check')) {
-          const idx = parseInt(e.target.dataset.idx, 10);
-          const c = getActiveCase();
-          if (c && c.todoList[idx]) {
-            c.todoList[idx].checked = e.target.checked;
-            saveCasesToStorage();
-            updateTodoJournalNotice(c);
-          }
-        }
-      });
-
-      document.getElementById('todoItemsContainer').addEventListener('click', e => {
-        const del = e.target.closest('.js-delete-todo');
-        if (del) {
-          const idx = parseInt(del.dataset.idx, 10);
-          const c = getActiveCase();
-          if (c) {
-            c.todoList.splice(idx, 1);
-            saveCasesToStorage();
-            renderTodoList(c);
-            updateTodoJournalNotice(c);
-          }
-        }
-      });
-
-      document.getElementById('btnAddCustomTodo').addEventListener('click', () => {
-        const title = window.prompt('Enter custom evidence or to-do requirement:');
-        if (title && title.trim()) {
-          const c = getActiveCase();
-          if (c) {
-            c.todoList.push({
-              id: 'td-cust-' + Date.now(),
-              title: title.trim(),
-              required: true,
-              checked: true
-            });
-            saveCasesToStorage();
-            renderTodoList(c);
-            updateTodoJournalNotice(c);
-          }
-        }
-      });
-
-      document.getElementById('todoDeadlineDays').addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.deadlineDays = parseInt(e.target.value, 10);
-          saveCasesToStorage();
-          updateTodoJournalNotice(c);
-        }
-      });
-
-      document.getElementById('btnCopyTodoJournal').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('draftTodoJournalText').value;
-          navigator.clipboard?.writeText(text);
-          showToast('✓ Journal To-Do message copied to clipboard');
-        });
-      });
-
-      // Step 4: Audit Table & Capital Inputs
-      document.getElementById('evidenceAuditTableBody').addEventListener('change', e => {
-        if (e.target.classList.contains('js-audit-status')) {
-          const id = e.target.dataset.id;
-          const c = getActiveCase();
-          if (c) {
-            let item = c.evidenceAudit.find(a => a.id === id);
-            if (!item) { item = { id, status: e.target.value, note: '' }; c.evidenceAudit.push(item); }
-            item.status = e.target.value;
-            saveCasesToStorage();
-          }
-        }
-      });
-
-      document.getElementById('evidenceAuditTableBody').addEventListener('input', e => {
-        if (e.target.classList.contains('js-audit-note')) {
-          const id = e.target.dataset.id;
-          const c = getActiveCase();
-          if (c) {
-            let item = c.evidenceAudit.find(a => a.id === id);
-            if (!item) { item = { id, status: 'verified', note: e.target.value }; c.evidenceAudit.push(item); }
-            item.note = e.target.value;
-            saveCasesToStorage();
-          }
-        }
-      });
-
-      document.getElementById('verifiedCapitalInput').addEventListener('input', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.verifiedCapital = parseFloat(e.target.value) || 0;
-          saveCasesToStorage();
-          updateCapitalTariffCalculations(c);
-        }
-      });
-
-      // Step 5: Book Interview
-      ['interviewFormat', 'interviewDate', 'interviewTime', 'interviewLocation'].forEach(id => {
-        document.getElementById(id)?.addEventListener('input', e => {
-          const c = getActiveCase();
-          if (!c) return;
-          const key = id.replace('interview', '').toLowerCase();
-          c.interview[key] = e.target.value;
-          saveCasesToStorage();
-          updateAppointmentNotice(c);
-        });
-      });
-
-      document.getElementById('btnCopyAppointmentNotice').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('draftAppointmentNoticeText').value;
-          navigator.clipboard?.writeText(text);
-          showToast('✓ Appointment notice copied to clipboard');
-        });
-      });
-
-      document.getElementById('btnDownloadIcs').addEventListener('click', () => {
-        const c = getActiveCase();
-        if (!c) return;
-        const dStr = (c.interview.date || '2026-11-18').replace(/-/g, '');
-        const tStr = (c.interview.time || '10:30').replace(/:/g, '') + '00';
-        const icsData = [
-          'BEGIN:VCALENDAR',
-          'VERSION:2.0',
-          'PRODID:-//Case Operations//Case Planner//EN',
-          'BEGIN:VEVENT',
-          `UID:${c.id}@case-planner.internal`,
-          `DTSTAMP:${dStr}T090000Z`,
-          `DTSTART:${dStr}T${tStr}Z`,
-          `DTEND:${dStr}T${parseInt(tStr.slice(0, 2)) + 1}${tStr.slice(2)}Z`,
-          `SUMMARY:Claim Assessment Review Interview (${c.label})`,
-          `DESCRIPTION:Assessment Review Interview. Format: ${c.interview.format}. Location: ${c.interview.location}`,
-          `LOCATION:${c.interview.location}`,
-          'STATUS:CONFIRMED',
-          'END:VEVENT',
-          'END:VCALENDAR'
-        ].join('\r\n');
-
-        const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `interview-${c.id}.ics`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('✓ Downloaded .ics calendar appointment');
-      });
-
-      // Step 6: Worksheet & Decision
-      document.getElementById('interviewAssessorNotes').addEventListener('input', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.worksheet.notes = e.target.value;
-          saveCasesToStorage();
-          updateFinalOutcomesText(c);
-        }
-      });
-
-      document.getElementById('caseFinalOutcome').addEventListener('change', e => {
-        const c = getActiveCase();
-        if (c) {
-          c.finalOutcome = e.target.value;
-          saveCasesToStorage();
-          updateFinalOutcomesText(c);
-        }
-      });
-
-      document.getElementById('btnCopyCustomerOutcome').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('draftCustomerOutcomeText').value;
-          navigator.clipboard?.writeText(text);
-          showToast('✓ Customer journal decision notice copied');
-        });
-      });
-
-      document.getElementById('btnCopyAssessorOutcome').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const text = document.getElementById('draftAssessorOutcomeText').value;
-          navigator.clipboard?.writeText(text);
-          showToast('✓ Assessor internal audit note copied');
-        });
-      });
-
-      document.getElementById('btnCloseCaseFinal').addEventListener('click', e => {
-        withButtonSpinner(e.currentTarget, () => {
-          const c = getActiveCase();
-          if (c) {
-            c.status = 'completed';
-            if (!c.completedSteps.includes(6)) c.completedSteps.push(6);
-            saveCasesToStorage();
-            renderApp();
-            showToast('✓ Case finalised and marked completed in Case Manager');
-          }
-        });
-      });
-
-      // Top Actions & Case Manager
-      document.getElementById('btnNewCase').addEventListener('click', () => {
-        createNewCaseFlow();
-      });
-
-      document.getElementById('btnLoadDemoCases').addEventListener('click', () => {
-        if (window.confirm('Load demo presets for Native & Self-Employed claims?')) {
-          appCases = [...DEMO_PRESET_CASES];
-          activeCaseId = appCases[0].id;
-          saveCasesToStorage();
-          renderApp();
-          showToast('✓ Loaded sample Native and Self-Employed cases');
-        }
-      });
-
-      document.getElementById('btnOpenCaseManager').addEventListener('click', () => {
-        openCaseManagerModal();
-      });
-
-      document.getElementById('btnCloseModal').addEventListener('click', () => {
-        document.getElementById('caseManagerModal').style.display = 'none';
-      });
-
-      document.getElementById('btnCloseModalBottom').addEventListener('click', () => {
-        document.getElementById('caseManagerModal').style.display = 'none';
-      });
-
-      document.getElementById('btnModalNewCase').addEventListener('click', () => {
-        document.getElementById('caseManagerModal').style.display = 'none';
-        createNewCaseFlow();
-      });
-
-      document.getElementById('caseSearchInput').addEventListener('input', e => {
-        renderModalCasesList(e.target.value.toLowerCase());
-      });
-
-      document.getElementById('btnExportAllCasesTxt').addEventListener('click', () => {
-        exportCasesAsText();
-      });
-
-      document.getElementById('btnExportAllCasesJson').addEventListener('click', () => {
-        exportCasesAsJson();
-      });
-
-      // Excel Integration Handlers
-      document.getElementById('btnExportCaseExcel')?.addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c) exportCaseToExcel(c);
-      });
-
-      document.getElementById('btnCopyExcelRow')?.addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c) copyCaseExcelRow(c, false);
-      });
-
-      document.getElementById('btnStep6ExportExcel')?.addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c) exportCaseToExcel(c);
-      });
-
-      document.getElementById('btnStep6CopyExcelRow')?.addEventListener('click', () => {
-        const c = getActiveCase();
-        if (c) copyCaseExcelRow(c, false);
-      });
-
-      document.getElementById('btnHeaderExportExcel')?.addEventListener('click', () => {
-        exportAllCasesToExcel();
-      });
-
-      document.getElementById('btnExportAllCasesExcel')?.addEventListener('click', () => {
-        exportAllCasesToExcel();
-      });
-
-      document.getElementById('btnCopyAllExcelRows')?.addEventListener('click', () => {
-        copyAllCasesExcelRows();
-      });
+      document.getElementById('btnDeleteCase').style.display = caseData ? 'inline-flex' : 'none';
+      modal.classList.add('open');
+      document.getElementById('formClaimantName').focus();
     }
 
-    function createNewCaseFlow() {
-      const choice = window.confirm('Click OK for a Native / Standard Claim.\nClick Cancel for a Self-Employed (GSE) Claim.');
-      const newCase = createInitialCase(choice ? 'native' : 'self_employed');
-      appCases.unshift(newCase);
-      activeCaseId = newCase.id;
-      saveCasesToStorage();
-      renderApp();
-      showToast(`✓ Created new ${choice ? 'Native' : 'Self-Employed'} case`);
+    function closeModal() {
+      modal.classList.remove('open');
+      form.reset();
     }
 
-    function openCaseManagerModal() {
-      renderModalCasesList('');
-      document.getElementById('caseManagerModal').style.display = 'flex';
-    }
+    // Event Delegations
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
 
-    function renderModalCasesList(query = '') {
-      const container = document.getElementById('modalCasesList');
-      container.innerHTML = '';
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      const jumpStep = btn.getAttribute('data-jump-step');
 
-      const filtered = appCases.filter(c => {
-        return (c.label || '').toLowerCase().includes(query) || (c.type || '').toLowerCase().includes(query);
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = '<div style="font-size:0.875rem; color:var(--text-muted); text-align:center; padding:20px;">No matching cases found.</div>';
+      if (jumpStep && id) {
+        jumpCaseStep(id, parseInt(jumpStep, 10));
         return;
       }
 
-      filtered.forEach(c => {
-        const isCurrent = c.id === activeCaseId;
-        const item = document.createElement('div');
-        item.className = `case-list-item ${isCurrent ? 'is-current' : ''}`;
+      if (action === 'prev' && id) {
+        moveCaseStep(id, -1);
+      } else if (action === 'next' && id) {
+        moveCaseStep(id, 1);
+      } else if (action === 'edit' && id) {
+        const c = cases.find(item => item.id === id);
+        if (c) openModal(c);
+      }
+    });
 
-        const isNative = c.type === 'native';
-        item.innerHTML = `
-          <div>
-            <div style="font-weight:700; color:var(--text-primary); font-size:0.9375rem;">
-              ${escapeHtml(c.label)}
-              ${isCurrent ? '<span class="badge badge-ok" style="margin-left:6px;">Active</span>' : ''}
-              ${c.status === 'completed' ? '<span class="badge badge-neutral" style="margin-left:6px;">Archived</span>' : ''}
-            </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-              ${isNative ? '👤 Native' : '🏢 Self-Employed'} • Step ${c.currentStep} of 6 • Created ${formatUKDate(c.createdAt.slice(0, 10))}
-            </div>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button type="button" class="btn btn-secondary btn-sm js-switch-case" data-id="${c.id}" ${isCurrent ? 'disabled' : ''}>
-              ${isCurrent ? 'Viewing' : 'Switch &rarr;'}
-            </button>
-            <button type="button" class="btn btn-danger-ghost btn-sm js-delete-case" data-id="${c.id}" title="Delete case">&times;</button>
-          </div>
-        `;
-        container.appendChild(item);
-      });
+    // Form Submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('formCaseId').value;
+      const ref = document.getElementById('formCaseRef').value.trim();
+      const name = document.getElementById('formClaimantName').value.trim();
+      const type = document.getElementById('formCaseType').value;
+      const step = parseInt(document.getElementById('formCurrentStep').value, 10);
+      const scope = document.getElementById('formScopeStatus').value;
+      const deadline = document.getElementById('formDeadline').value;
+      const notes = document.getElementById('formNotes').value.trim();
 
-      // Delegation
-      container.querySelectorAll('.js-switch-case').forEach(b => {
-        b.addEventListener('click', () => {
-          activeCaseId = b.dataset.id;
-          saveCasesToStorage();
-          renderApp();
-          document.getElementById('caseManagerModal').style.display = 'none';
-          showToast('✓ Switched active case');
-        });
-      });
-
-      container.querySelectorAll('.js-delete-case').forEach(b => {
-        b.addEventListener('click', () => {
-          const id = b.dataset.id;
-          if (appCases.length <= 1) {
-            alert('Cannot delete the only case. Create another case first.');
-            return;
-          }
-          if (confirm('Delete this case record permanently?')) {
-            appCases = appCases.filter(c => c.id !== id);
-            if (activeCaseId === id) activeCaseId = appCases[0].id;
-            saveCasesToStorage();
-            renderApp();
-            renderModalCasesList(query);
-            showToast('✓ Deleted case');
-          }
-        });
-      });
-    }
-
-    // --- Excel (.csv & Clipboard TSV) Integration Engine ---
-    const EXCEL_COLUMNS = [
-      'Case ID',
-      'Case Reference',
-      'Case Pathway',
-      'Status',
-      'Current Step',
-      'Scope Determination',
-      'AP Start Date',
-      'AP End Date',
-      'Household Type',
-      'Declared Capital (£)',
-      'Verified Capital (£)',
-      'Monthly Tariff Income (£)',
-      'Declared Bank Accounts',
-      'Housing Element Under Review',
-      'Child Element Under Review',
-      'Health LCWRA Under Review',
-      'SE Business Name',
-      'SE Trade Sector',
-      'SE Trading Start Date',
-      'SE HMRC UTR Status',
-      'SE Start-up Period Eligible',
-      'Evidence Requested Count',
-      'Evidence Verified Count',
-      'Interview Date',
-      'Interview Time',
-      'Interview Format',
-      'Final Statutory Outcome',
-      'Assessor Stamp',
-      'Case Created Date',
-      'Last Updated Date'
-    ];
-
-    function getCaseExcelRowData(c) {
-      const isNative = c.type === 'native';
-      const inScope = c.scope.residency && c.scope.workingAge && c.scope.capitalUnder16k && c.scope.activeClaim && (isNative || c.scope.selfEmpActivity);
-      const cap = Number(c.verifiedCapital || 0);
-      const tariff = calculateTariffIncome(cap);
-      const tariffStr = tariff === -1 ? 'Disqualified (>£16k)' : `£${tariff.toFixed(2)}`;
-
-      const accsStr = (c.collate.accounts || []).map(a => `${a.bankName} ${a.accountType} (${a.last4})`).join('; ');
-
-      const activeTodos = (c.todoList || []).filter(t => t.checked);
-      const verifiedCount = (c.evidenceAudit || []).filter(a => a.status === 'verified').length;
-
-      let startupPeriodEligible = 'N/A';
-      if (!isNative && c.collate.selfEmployed?.startDate) {
-        const start = new Date(c.collate.selfEmployed.startDate);
-        const now = new Date();
-        const diffMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-        startupPeriodEligible = diffMonths < 12 ? 'Yes (< 12 months)' : 'No (Established)';
+      if (id) {
+        // Edit existing
+        const c = cases.find(item => item.id === id);
+        if (c) {
+          c.ref = ref;
+          c.name = name;
+          c.type = type;
+          c.step = step;
+          c.scope = scope;
+          c.deadline = deadline;
+          c.notes = notes;
+          showToast(`Updated case ${ref}`);
+        }
+      } else {
+        // Create new
+        const newCase = {
+          id: 'case-' + Date.now(),
+          ref,
+          name,
+          type,
+          step,
+          scope,
+          deadline,
+          notes
+        };
+        cases.unshift(newCase);
+        showToast(`Created new case ${ref}`);
       }
 
-      return [
-        c.id,
-        c.label,
-        isNative ? 'Native (Standard / PAYE)' : 'Self-Employed (GSE & MIF)',
-        c.status === 'completed' ? 'Completed / Archived' : 'Active Review',
-        `Step ${c.currentStep}: ${getStepShortName(c.currentStep)}`,
-        inScope ? 'In-Scope' : 'Out-of-Scope',
-        c.collate.apStart || '',
-        c.collate.apEnd || '',
-        c.collate.householdType === 'joint' ? 'Joint Claim' : 'Single Claimant',
-        Number(c.collate.declaredCapital || 0).toFixed(2),
-        Number(c.verifiedCapital || 0).toFixed(2),
-        tariffStr,
-        accsStr,
-        c.collate.elements?.housing ? 'Yes' : 'No',
-        c.collate.elements?.children ? 'Yes' : 'No',
-        c.collate.elements?.health ? 'Yes' : 'No',
-        !isNative ? (c.collate.selfEmployed?.businessName || '') : '',
-        !isNative ? (c.collate.selfEmployed?.tradeType || '') : '',
-        !isNative ? (c.collate.selfEmployed?.startDate || '') : '',
-        !isNative ? (c.collate.selfEmployed?.hmrcUtr || '') : '',
-        startupPeriodEligible,
-        activeTodos.length,
-        verifiedCount,
-        c.interview.date || '',
-        c.interview.time || '',
-        c.interview.format || '',
-        (c.finalOutcome || 'Pending').toUpperCase(),
-        c.collate.assessorName || 'Assessment Officer',
-        c.createdAt ? c.createdAt.slice(0, 10) : '',
-        c.updatedAt ? c.updatedAt.slice(0, 10) : ''
-      ];
-    }
+      saveCases();
+      closeModal();
+      render();
+    });
 
-    function escapeCsvCell(val) {
-      if (val === null || val === undefined) return '""';
-      const str = String(val);
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-
-    function exportCaseToExcel(c) {
-      const row = getCaseExcelRowData(c);
-      const csvLines = [
-        EXCEL_COLUMNS.map(escapeCsvCell).join(','),
-        row.map(escapeCsvCell).join(',')
-      ];
-
-      // Add detailed Evidence Checklist section below
-      csvLines.push('');
-      csvLines.push('"EVIDENCE AUDIT CHECKLIST FOR THIS CASE"');
-      csvLines.push('"Evidence Item","Requirement Type","Verification Status","Assessor Findings / Gaps"');
-      const activeTodos = (c.todoList || []).filter(t => t.checked);
-      activeTodos.forEach(item => {
-        const audit = (c.evidenceAudit || []).find(a => a.id === item.id) || { status: 'verified', note: 'Verified against declarations.' };
-        csvLines.push([
-          escapeCsvCell(item.title),
-          escapeCsvCell(item.required ? 'Required' : 'Optional'),
-          escapeCsvCell(audit.status),
-          escapeCsvCell(audit.note)
-        ].join(','));
-      });
-
-      const csvContent = '\uFEFF' + csvLines.join('\r\n'); // UTF-8 BOM for Microsoft Excel
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `uc-case-${c.id}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('✓ Exported case to Excel spreadsheet (.csv)');
-    }
-
-    function exportAllCasesToExcel() {
-      const csvLines = [
-        EXCEL_COLUMNS.map(escapeCsvCell).join(',')
-      ];
-
-      appCases.forEach(c => {
-        const row = getCaseExcelRowData(c);
-        csvLines.push(row.map(escapeCsvCell).join(','));
-      });
-
-      const csvContent = '\uFEFF' + csvLines.join('\r\n'); // UTF-8 BOM for Microsoft Excel
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `uc-caseload-tracker-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(`✓ Exported all ${appCases.length} cases to Excel spreadsheet (.csv)`);
-    }
-
-    function copyCaseExcelRow(c, includeHeaders = false) {
-      const row = getCaseExcelRowData(c);
-      const lines = [];
-      if (includeHeaders) {
-        lines.push(EXCEL_COLUMNS.join('\t'));
+    // Delete Case
+    document.getElementById('btnDeleteCase').addEventListener('click', () => {
+      const id = document.getElementById('formCaseId').value;
+      if (!id) return;
+      if (confirm("Are you sure you want to delete this case record?")) {
+        cases = cases.filter(c => c.id !== id);
+        saveCases();
+        closeModal();
+        render();
+        showToast("Case deleted.");
       }
-      lines.push(row.map(val => String(val).replace(/[\t\r\n]/g, ' ')).join('\t'));
-      
-      const tsvContent = lines.join('\n');
-      navigator.clipboard?.writeText(tsvContent).then(() => {
-        showToast('✓ Copied Excel row! Paste directly into Microsoft Excel (Ctrl+V)');
+    });
+
+    // Modal controls
+    document.getElementById('btnOpenNewCase').addEventListener('click', () => openModal());
+    document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+    document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Search and filter listeners
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('filterType').addEventListener('change', render);
+    document.getElementById('filterStep').addEventListener('change', render);
+
+    // View toggles
+    document.getElementById('btnViewPipeline').addEventListener('click', () => {
+      currentView = 'pipeline';
+      document.getElementById('btnViewPipeline').classList.add('active');
+      document.getElementById('btnViewTable').classList.remove('active');
+      document.getElementById('pipelineView').style.display = 'grid';
+      document.getElementById('tableView').style.display = 'none';
+      render();
+    });
+
+    document.getElementById('btnViewTable').addEventListener('click', () => {
+      currentView = 'table';
+      document.getElementById('btnViewTable').classList.add('active');
+      document.getElementById('btnViewPipeline').classList.remove('active');
+      document.getElementById('pipelineView').style.display = 'none';
+      document.getElementById('tableView').style.display = 'block';
+      render();
+    });
+
+    // KPI Card Quick Filters
+    document.querySelectorAll('.kpi-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const f = card.getAttribute('data-filter');
+        const filterStep = document.getElementById('filterStep');
+        const filterType = document.getElementById('filterType');
+
+        if (f === 'all') {
+          filterStep.value = 'all';
+          filterType.value = 'all';
+        } else if (f === 'native') {
+          filterType.value = 'Native / Standard Claim';
+          filterStep.value = 'all';
+        } else if (f === 'se') {
+          filterType.value = 'Self-Employed';
+          filterStep.value = 'all';
+        } else if (f === 'step3') {
+          filterStep.value = '3';
+          filterType.value = 'all';
+        } else if (f === 'step5') {
+          filterStep.value = '5';
+          filterType.value = 'all';
+        } else if (f === 'closed') {
+          filterStep.value = '7';
+          filterType.value = 'all';
+        }
+        render();
+      });
+    });
+
+    // Export to Excel (.csv)
+    document.getElementById('btnExportCsv').addEventListener('click', () => {
+      const headers = ["Case Reference", "Claimant Name", "Case Pathway", "Current Step", "Scope Status", "Target Deadline", "Casework Notes"];
+      const rows = cases.map(c => [
+        c.ref,
+        `"${c.name.replace(/"/g, '""')}"`,
+        c.type,
+        `"${STEP_NAMES[c.step] || c.step}"`,
+        c.scope || "In-Scope",
+        c.deadline || "",
+        `"${(c.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Case_Tracking_Register_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Caseload exported to Excel CSV.");
+    });
+
+    // Copy to Clipboard for Excel Ctrl+V
+    document.getElementById('btnCopyExcel').addEventListener('click', () => {
+      const headers = ["Case Ref\tClaimant Name\tCase Type\tCurrent Step\tScope\tTarget Deadline\tNotes"];
+      const rows = cases.map(c => `${c.ref}\t${c.name}\t${c.type}\t${STEP_NAMES[c.step] || c.step}\t${c.scope || 'In-Scope'}\t${c.deadline || ''}\t${c.notes || ''}`);
+      const text = [headers, ...rows].join("\r\n");
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Copied to clipboard. Paste into Excel with Ctrl+V.");
       }).catch(() => {
-        showToast('✓ Copied Excel row');
+        showToast("Clipboard copy failed. Use Export to Excel instead.");
       });
+    });
+
+    // Auto-adjust nav links between root and public-tool
+    function initNavHrefs() {
+      const isPublic = window.location.pathname.includes('/public-tool/');
+      const stLink = document.getElementById('navLinkStatement');
+      const plLink = document.getElementById('navLinkPlanner');
+      if (stLink) stLink.href = isPublic ? 'index.html' : 'bank-statement-checker.html';
+      if (plLink) plLink.href = isPublic ? 'planner.html' : 'uc-case-planner.html';
     }
 
-    function copyAllCasesExcelRows() {
-      const lines = [EXCEL_COLUMNS.join('\t')];
-      appCases.forEach(c => {
-        const row = getCaseExcelRowData(c);
-        lines.push(row.map(val => String(val).replace(/[\t\r\n]/g, ' ')).join('\t'));
-      });
-      const tsvContent = lines.join('\n');
-      navigator.clipboard?.writeText(tsvContent).then(() => {
-        showToast(`✓ Copied all ${appCases.length} case rows for Excel! Paste into spreadsheet (Ctrl+V)`);
-      }).catch(() => {
-        showToast('✓ Copied all case rows for Excel');
-      });
-    }
-
-    function exportCasesAsText() {
-      const lines = [
-        '=========================================================================',
-        'CASE ASSESSMENT PLANNER – CONSOLIDATED CASE REPORT',
-        `Generated: ${new Date().toUTCString()}`,
-        `Total Cases: ${appCases.length}`,
-        '=========================================================================\n'
-      ];
-
-      appCases.forEach((c, i) => {
-        lines.push(`CASE ${i + 1}: ${c.label}`);
-        lines.push(`Pathway: ${c.type === 'native' ? 'Native (Standard / PAYE)' : 'Self-Employed (GSE & MIF)'}`);
-        lines.push(`Current Step: ${c.currentStep} of 6`);
-        lines.push(`Assessment Period: ${formatUKDate(c.collate.apStart)} to ${formatUKDate(c.collate.apEnd)}`);
-        lines.push(`Declared Capital: £${Number(c.collate.declaredCapital || 0).toFixed(2)}`);
-        lines.push(`Status: ${c.status.toUpperCase()}`);
-        lines.push(`Outcome: ${(c.finalOutcome || 'Pending').toUpperCase()}`);
-        lines.push('-------------------------------------------------------------------------\n');
-      });
-
-      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `uc-cases-export-${new Date().toISOString().slice(0, 10)}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('✓ Exported all cases as text report');
-    }
-
-    function exportCasesAsJson() {
-      const data = JSON.stringify(appCases, null, 2);
-      const blob = new Blob([data], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `uc-cases-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('✓ Exported all cases as JSON backup');
-    }
-
-    // --- Application Bootstrapping ---
-    function init() {
-      appCases = loadCasesFromStorage();
-      if (!appCases || appCases.length === 0) {
-        appCases = [...DEMO_PRESET_CASES];
-      }
-      activeCaseId = appCases[0].id;
-
-      initEventHandlers();
-      renderApp();
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      
-    const isPublic = window.location.pathname.includes("public-tool") || window.location.href.includes("public-tool");
-    const stmtLink = document.getElementById("navLinkStatement");
-    const plannerLink = document.getElementById("navLinkPlanner");
-    if (stmtLink && plannerLink) {
-      stmtLink.href = isPublic ? "index.html" : "bank-statement-checker.html";
-      plannerLink.href = isPublic ? "planner.html" : "uc-case-planner.html";
-    }
-    init();
-  
-    }
+    // Init
+    initNavHrefs();
+    loadCases();
+    render();
   </script>
 </body>
 </html>

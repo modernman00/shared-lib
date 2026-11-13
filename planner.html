@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case Tracking Dashboard | Aji's Assessment and Planner</title>
+  <style>
+    /* CSS Reset & Variables */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --primary-subtle: #eff6ff;
+      --primary-border: #bfdbfe;
+      
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      
+      --warning: #b45309;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      
+      --purple: #6b21a8;
+      --purple-bg: #faf5ff;
+      --purple-border: #e9d5ff;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      line-height: 1.5;
+      font-size: 15px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Suite Nav */
+    .app-top-nav {
+      background: #0f172a;
+      color: #ffffff;
+      border-bottom: 1px solid #1e293b;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .top-nav-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 52px;
+      gap: 16px;
+    }
+
+    .top-nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .top-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #94a3b8;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      min-height: 44px;
+    }
+
+    .top-nav-link:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .top-nav-link.active {
+      color: #ffffff;
+      background: #1e3a8a;
+    }
+
+    /* Main Container */
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Header & Action Bar */
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-title-group h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title-group p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      min-height: 44px;
+      text-decoration: none;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      min-height: 36px;
+      font-size: 12.5px;
+    }
+
+    /* KPI Summary Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-card.active {
+      border-color: var(--primary);
+      background: var(--primary-subtle);
+    }
+
+    .kpi-header {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 6px;
+      line-height: 1;
+    }
+
+    .kpi-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Filters & Controls Toolbar */
+    .toolbar-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 280px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 320px;
+      min-width: 200px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px 0 36px;
+      font-size: 13.5px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: #f8fafc;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      background: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-subtle);
+      pointer-events: none;
+      font-size: 14px;
+    }
+
+    .filter-select {
+      height: 42px;
+      padding: 0 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary);
+    }
+
+    .view-toggle-group {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .view-toggle-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+    }
+
+    .view-toggle-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Pipeline / Board View */
+    .pipeline-board {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(220px, 1fr));
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+
+    .pipeline-col {
+      background: #f1f5f9;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      min-width: 220px;
+      max-height: 780px;
+    }
+
+    .pipeline-col-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #e2e8f0;
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
+    }
+
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .col-badge {
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pipeline-cards-container {
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .case-card {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .case-card:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .case-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .case-ref {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-subtle);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+    }
+
+    .case-type-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+
+    .type-native {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .type-se {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .case-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .case-note {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--border-strong);
+    }
+
+    .case-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--text-subtle);
+      padding-top: 4px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .case-deadline {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+    }
+
+    .case-deadline.urgent {
+      color: var(--danger);
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .btn-step-move {
+      background: #f1f5f9;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-step-move:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-step-move:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background: #f1f5f9;
+      color: var(--text-subtle);
+      border-color: var(--border-subtle);
+    }
+
+    /* Table / List View */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+
+    .cases-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    .cases-table th {
+      background: #f8fafc;
+      padding: 12px 16px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .cases-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    .cases-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Stepper Pills on Table Row */
+    .step-pills-tracker {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .step-pill {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: var(--text-subtle);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-width: 28px;
+    }
+
+    .step-pill:hover {
+      transform: scale(1.1);
+      border-color: var(--primary);
+    }
+
+    .step-pill.completed {
+      background: var(--success-bg);
+      color: var(--success);
+      border-color: var(--success-border);
+    }
+
+    .step-pill.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2);
+    }
+
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-window {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-subtle);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      color: var(--text-main);
+      background: #ffffff;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    }
+
+    textarea.form-control {
+      height: 90px;
+      padding: 10px 14px;
+      resize: vertical;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f8fafc;
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Suite Navigation Switcher -->
+  <nav class="app-top-nav" aria-label="Tool Switcher">
+    <div class="top-nav-inner">
+      <div class="top-nav-brand">
+        <span style="font-size: 1.2rem;">⚖️</span>
+        <span>AJI'S ASSESSMENT AND PLANNER</span>
+      </div>
+      <div class="top-nav-links">
+        <a href="bank-statement-checker.html" class="top-nav-link" id="navLinkStatement">
+          <span>📑 Bank Statement Checker</span>
+        </a>
+        <a href="uc-case-planner.html" class="top-nav-link active" id="navLinkPlanner" aria-current="page">
+          <span>📋 Case Tracking Dashboard</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <script>
+    (function () {
+      const isPublic = window.location.pathname.includes('public-tool') || window.location.href.includes('public-tool');
+      const stmtLink = document.getElementById('navLinkStatement');
+      const plannerLink = document.getElementById('navLinkPlanner');
+      if (stmtLink) stmtLink.href = isPublic ? 'index.html' : 'bank-statement-checker.html';
+      if (plannerLink) plannerLink.href = isPublic ? 'planner.html' : 'uc-case-planner.html';
+    })();
+  </script>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Header Section -->
+    <section class="header-section">
+      <div class="header-title-group">
+        <h1><span>📋 Case Tracking Dashboard</span></h1>
+        <p>Aji's Assessment and Planner — Streamlined 6-step caseload workflow tracker for Native and Self-Employed claims</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnExportCsv" title="Export all cases as an Excel spreadsheet (.csv)">
+          <span>📊 Export to Excel (.csv)</span>
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCopyExcel" title="Copy case rows for Excel Ctrl+V pasting">
+          <span>📋 Copy Excel Rows</span>
+        </button>
+        <button type="button" class="btn btn-primary" id="btnOpenNewCase">
+          <span>➕ New Case</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- KPI Summary Grid -->
+    <section class="kpi-grid" aria-label="Caseload Summary Metrics">
+      <div class="kpi-card" data-filter="all" id="kpiTotal">
+        <div class="kpi-header">
+          <span>Total Active Cases</span>
+          <span>📁</span>
+        </div>
+        <div class="kpi-value" id="valTotalCases">0</div>
+        <div class="kpi-subtext">Across all 6 steps</div>
+      </div>
+
+      <div class="kpi-card" data-filter="native" id="kpiNative">
+        <div class="kpi-header">
+          <span>Native / Standard</span>
+          <span>👤</span>
+        </div>
+        <div class="kpi-value" id="valNativeCases">0</div>
+        <div class="kpi-subtext">Standard PAYE claims</div>
+      </div>
+
+      <div class="kpi-card" data-filter="se" id="kpiSE">
+        <div class="kpi-header">
+          <span>Self-Employed</span>
+          <span>🏢</span>
+        </div>
+        <div class="kpi-value" id="valSECases">0</div>
+        <div class="kpi-subtext">GSE &amp; MIF caseload</div>
+      </div>
+
+      <div class="kpi-card" data-filter="step3" id="kpiStep3">
+        <div class="kpi-header">
+          <span>Awaiting Evidence</span>
+          <span>⏳</span>
+        </div>
+        <div class="kpi-value" id="valStep3Cases">0</div>
+        <div class="kpi-subtext">Step 3 To-Do active</div>
+      </div>
+
+      <div class="kpi-card" data-filter="step5" id="kpiStep5">
+        <div class="kpi-header">
+          <span>Interviews Booked</span>
+          <span>📅</span>
+        </div>
+        <div class="kpi-value" id="valStep5Cases">0</div>
+        <div class="kpi-subtext">Step 5 Scheduled</div>
+      </div>
+
+      <div class="kpi-card" data-filter="closed" id="kpiClosed">
+        <div class="kpi-header">
+          <span>Completed &amp; Closed</span>
+          <span>✅</span>
+        </div>
+        <div class="kpi-value" id="valClosedCases">0</div>
+        <div class="kpi-subtext">Finalised cases</div>
+      </div>
+    </section>
+
+    <!-- Toolbar Filters -->
+    <section class="toolbar-card">
+      <div class="toolbar-left">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name, ref or note..." aria-label="Search cases">
+        </div>
+
+        <select id="filterType" class="filter-select" aria-label="Filter by Case Type">
+          <option value="all">All Case Types</option>
+          <option value="Native / Standard Claim">👤 Native / Standard</option>
+          <option value="Self-Employed">🏢 Self-Employed</option>
+        </select>
+
+        <select id="filterStep" class="filter-select" aria-label="Filter by Current Step">
+          <option value="all">All Steps (1 to 6)</option>
+          <option value="1">Step 1: Scope Check</option>
+          <option value="2">Step 2: Collate Info</option>
+          <option value="3">Step 3: Request Evidence</option>
+          <option value="4">Step 4: Review Evidence</option>
+          <option value="5">Step 5: Book Interview</option>
+          <option value="6">Step 6: Conduct &amp; Close</option>
+          <option value="7">Closed Cases</option>
+        </select>
+      </div>
+
+      <div class="view-toggle-group" role="group" aria-label="View Mode">
+        <button type="button" class="view-toggle-btn active" id="btnViewPipeline">
+          <span>📊 Pipeline Board</span>
+        </button>
+        <button type="button" class="view-toggle-btn" id="btnViewTable">
+          <span>📑 Table Register</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 1: Pipeline / Kanban Board -->
+    <section id="pipelineView" class="pipeline-board" aria-label="6-Step Caseload Pipeline">
+      <!-- Col 1 -->
+      <div class="pipeline-col" data-col-step="1">
+        <div class="pipeline-col-header">
+          <span class="col-title">1. Scope Check</span>
+          <span class="col-badge" id="badgeStep1">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol1"></div>
+      </div>
+
+      <!-- Col 2 -->
+      <div class="pipeline-col" data-col-step="2">
+        <div class="pipeline-col-header">
+          <span class="col-title">2. Collate Info</span>
+          <span class="col-badge" id="badgeStep2">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol2"></div>
+      </div>
+
+      <!-- Col 3 -->
+      <div class="pipeline-col" data-col-step="3">
+        <div class="pipeline-col-header">
+          <span class="col-title">3. Request Evidence</span>
+          <span class="col-badge" id="badgeStep3">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol3"></div>
+      </div>
+
+      <!-- Col 4 -->
+      <div class="pipeline-col" data-col-step="4">
+        <div class="pipeline-col-header">
+          <span class="col-title">4. Review Evidence</span>
+          <span class="col-badge" id="badgeStep4">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol4"></div>
+      </div>
+
+      <!-- Col 5 -->
+      <div class="pipeline-col" data-col-step="5">
+        <div class="pipeline-col-header">
+          <span class="col-title">5. Book Interview</span>
+          <span class="col-badge" id="badgeStep5">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol5"></div>
+      </div>
+
+      <!-- Col 6 -->
+      <div class="pipeline-col" data-col-step="6">
+        <div class="pipeline-col-header">
+          <span class="col-title">6. Conduct &amp; Close</span>
+          <span class="col-badge" id="badgeStep6">0</span>
+        </div>
+        <div class="pipeline-cards-container" id="cardsCol6"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: Table / Register View (Hidden by default) -->
+    <section id="tableView" class="table-container" style="display: none;" aria-label="Caseload Table Register">
+      <table class="cases-table">
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>Claimant Name</th>
+            <th>Type</th>
+            <th>6-Step Progress Tracker</th>
+            <th>Current Step</th>
+            <th>Target Deadline / Date</th>
+            <th>Quick Notes</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="casesTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Add / Edit Case Modal -->
+  <div class="modal-overlay" id="caseModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Case</h2>
+        <button type="button" class="modal-close-btn" id="btnCloseModal" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="caseForm">
+        <div class="modal-body">
+          <input type="hidden" id="formCaseId">
+
+          <div class="form-group">
+            <label class="form-label" for="formCaseRef">Case Reference *</label>
+            <input type="text" id="formCaseRef" class="form-control" placeholder="e.g. CAS-2026-104" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formClaimantName">Claimant Full Name *</label>
+            <input type="text" id="formClaimantName" class="form-control" placeholder="e.g. Sarah Jenkins" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formCaseType">Case Pathway Type *</label>
+            <select id="formCaseType" class="form-control">
+              <option value="Native / Standard Claim">👤 Native / Standard Claim</option>
+              <option value="Self-Employed">🏢 Self-Employed</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formCurrentStep">Current Step *</label>
+            <select id="formCurrentStep" class="form-control">
+              <option value="1">Step 1: Check Scope (In-scope / Out-of-scope)</option>
+              <option value="2">Step 2: Collate Information</option>
+              <option value="3">Step 3: Request Evidence (To-Do List)</option>
+              <option value="4">Step 4: Review and Analyse Evidence</option>
+              <option value="5">Step 5: Book Interview</option>
+              <option value="6">Step 6: Conduct Interview &amp; Close Case</option>
+              <option value="7">✅ Closed Case</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formScopeStatus">Gateway Scope Status</label>
+            <select id="formScopeStatus" class="form-control">
+              <option value="In-Scope">In-Scope (Proceeding)</option>
+              <option value="Out-of-Scope">Out-of-Scope (Ineligible)</option>
+              <option value="Pending Check">Pending Initial Check</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formDeadline">Target Deadline / Appointment Date</label>
+            <input type="date" id="formDeadline" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="formNotes">Casework Notes / Next Action</label>
+            <textarea id="formNotes" class="form-control" placeholder="e.g. To-do requested for 4 months bank statements. Deadline 14 days."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelModal">Cancel</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnDeleteCase" style="display: none; margin-right: auto;">Delete Case</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveCase">Save Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <script>
+    /**
+     * Case Tracking Dashboard - Lightweight, Fast, Offline Caseload Manager
+     * Zero-bloat client-side state engine.
+     */
+    const STORAGE_KEY = 'case_tracking_dashboard_cases_v1';
+
+    const STEP_NAMES = {
+      1: "1. Scope Check",
+      2: "2. Collate Info",
+      3: "3. Request Evidence",
+      4: "4. Review Evidence",
+      5: "5. Book Interview",
+      6: "6. Conduct & Close",
+      7: "✅ Closed"
+    };
+
+    // Default Seed Data
+    const DEFAULT_CASES = [
+      {
+        id: "case-01",
+        ref: "CAS-2026-9481",
+        name: "Sarah Jenkins",
+        type: "Self-Employed",
+        step: 6,
+        scope: "In-Scope",
+        deadline: "2026-11-15",
+        notes: "GSE 4-pillar interview scheduled. MIF assessment ready for determination."
+      },
+      {
+        id: "case-02",
+        ref: "CAS-2026-8820",
+        name: "Marcus Adebayo",
+        type: "Native / Standard Claim",
+        step: 4,
+        scope: "In-Scope",
+        deadline: "2026-11-18",
+        notes: "Auditing 4 months bank statements. Verifying capital balance under £6k."
+      },
+      {
+        id: "case-03",
+        ref: "CAS-2026-7734",
+        name: "Elena Rostova",
+        type: "Self-Employed",
+        step: 3,
+        scope: "In-Scope",
+        deadline: "2026-11-24",
+        notes: "To-do issued for business P&L, Starling business statements, and UTR proof."
+      },
+      {
+        id: "case-04",
+        ref: "CAS-2026-6641",
+        name: "David Campbell",
+        type: "Native / Standard Claim",
+        step: 1,
+        scope: "In-Scope",
+        deadline: "2026-11-12",
+        notes: "Initial gateway check: verifying residency and capital threshold."
+      },
+      {
+        id: "case-05",
+        ref: "CAS-2026-5519",
+        name: "Amina Khan",
+        type: "Self-Employed",
+        step: 5,
+        scope: "In-Scope",
+        deadline: "2026-11-14",
+        notes: "Interview booked for Thursday 10:00 AM. Appointment notice sent to customer journal."
+      },
+      {
+        id: "case-06",
+        ref: "CAS-2026-4402",
+        name: "James Wilson",
+        type: "Native / Standard Claim",
+        step: 7,
+        scope: "In-Scope",
+        deadline: "2026-11-05",
+        notes: "Interview completed. Capital verified at £3,200. Claim closed and authorised."
+      }
+    ];
+
+    let cases = [];
+    let currentView = 'pipeline'; // 'pipeline' | 'table'
+
+    // Load from storage or initialize defaults
+    function loadCases() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          cases = JSON.parse(stored);
+        } else {
+          cases = [...DEFAULT_CASES];
+          saveCases();
+        }
+      } catch (e) {
+        cases = [...DEFAULT_CASES];
+      }
+    }
+
+    function saveCases() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
+      } catch (e) {
+        console.warn("Storage quota or permission error:", e);
+      }
+    }
+
+    // UI Toast
+    function showToast(msg) {
+      const c = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.innerHTML = `<span>✓</span><span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        setTimeout(() => t.remove(), 200);
+      }, 3000);
+    }
+
+    // Filter Logic
+    function getFilteredCases() {
+      const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const typeFilter = document.getElementById('filterType').value;
+      const stepFilter = document.getElementById('filterStep').value;
+
+      return cases.filter(c => {
+        if (typeFilter !== 'all' && c.type !== typeFilter) return false;
+        if (stepFilter !== 'all' && String(c.step) !== stepFilter) return false;
+        if (q) {
+          const matchRef = (c.ref || '').toLowerCase().includes(q);
+          const matchName = (c.name || '').toLowerCase().includes(q);
+          const matchNote = (c.notes || '').toLowerCase().includes(q);
+          if (!matchRef && !matchName && !matchNote) return false;
+        }
+        return true;
+      });
+    }
+
+    // Render KPIs
+    function updateKpis() {
+      document.getElementById('valTotalCases').textContent = cases.length;
+      document.getElementById('valNativeCases').textContent = cases.filter(c => c.type === "Native / Standard Claim").length;
+      document.getElementById('valSECases').textContent = cases.filter(c => c.type === "Self-Employed").length;
+      document.getElementById('valStep3Cases').textContent = cases.filter(c => c.step === 3).length;
+      document.getElementById('valStep5Cases').textContent = cases.filter(c => c.step === 5).length;
+      document.getElementById('valClosedCases').textContent = cases.filter(c => c.step === 7).length;
+    }
+
+    // Render Pipeline Board
+    function renderPipeline(filtered) {
+      for (let s = 1; s <= 6; s++) {
+        const colContainer = document.getElementById(`cardsCol${s}`);
+        const colBadge = document.getElementById(`badgeStep${s}`);
+        const stepCases = filtered.filter(c => c.step === s);
+        
+        colBadge.textContent = stepCases.length;
+        colContainer.innerHTML = '';
+
+        if (stepCases.length === 0) {
+          colContainer.innerHTML = `<div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 24px 8px;">No cases in Step ${s}</div>`;
+          continue;
+        }
+
+        stepCases.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'case-card';
+          card.innerHTML = `
+            <div class="case-card-header">
+              <span class="case-ref">${c.ref}</span>
+              <span class="case-type-badge ${c.type === 'Self-Employed' ? 'type-se' : 'type-native'}">
+                ${c.type === 'Self-Employed' ? '🏢 Self-Employed' : '👤 Native'}
+              </span>
+            </div>
+            <div class="case-name">${c.name}</div>
+            ${c.notes ? `<div class="case-note">${c.notes}</div>` : ''}
+            <div class="case-meta-row">
+              <span class="case-deadline">📅 ${c.deadline || 'No target date'}</span>
+              <span>${c.scope || 'In-Scope'}</span>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="prev" ${c.step <= 1 ? 'disabled' : ''} title="Move to previous step">← Step ${c.step - 1}</button>
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="edit" style="flex:1;">Edit / View</button>
+              <button type="button" class="btn-step-move" data-id="${c.id}" data-action="next" title="${c.step === 6 ? 'Close case' : 'Move to next step'}">
+                ${c.step === 6 ? 'Close Case ✓' : `Step ${c.step + 1} →`}
+              </button>
+            </div>
+          `;
+          colContainer.appendChild(card);
+        });
+      }
+    }
+
+    // Render Table Register
+    function renderTable(filtered) {
+      const tbody = document.getElementById('casesTableBody');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 32px;">No matching cases found.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(c => {
+        const tr = document.createElement('tr');
+        
+        // Build 6-step interactive pills
+        let pillsHtml = '<div class="step-pills-tracker">';
+        for (let s = 1; s <= 6; s++) {
+          const isComp = c.step > s || c.step === 7;
+          const isAct = c.step === s;
+          const pillClass = isAct ? 'active' : (isComp ? 'completed' : '');
+          pillsHtml += `<button type="button" class="step-pill ${pillClass}" data-id="${c.id}" data-jump-step="${s}" title="Jump case to Step ${s}">${s}</button>`;
+        }
+        if (c.step === 7) {
+          pillsHtml += `<span style="font-size: 11px; font-weight: 700; color: #15803d; margin-left: 4px;">CLOSED</span>`;
+        }
+        pillsHtml += '</div>';
+
+        tr.innerHTML = `
+          <td><span class="case-ref">${c.ref}</span></td>
+          <td><strong>${c.name}</strong></td>
+          <td>
+            <span class="case-type-badge ${c.type === 'Self-Employed' ? 'type-se' : 'type-native'}">
+              ${c.type === 'Self-Employed' ? '🏢 Self-Employed' : '👤 Native'}
+            </span>
+          </td>
+          <td>${pillsHtml}</td>
+          <td><strong>${STEP_NAMES[c.step] || 'Step ' + c.step}</strong></td>
+          <td><span style="font-size: 12.5px; color: #475569;">${c.deadline || '—'}</span></td>
+          <td style="max-width: 280px; font-size: 12px; color: #475569;">${c.notes || '—'}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button type="button" class="btn btn-secondary btn-sm" data-id="${c.id}" data-action="edit">Edit</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function render() {
+      const filtered = getFilteredCases();
+      updateKpis();
+      if (currentView === 'pipeline') {
+        renderPipeline(filtered);
+      } else {
+        renderTable(filtered);
+      }
+    }
+
+    // Step Movement Logic
+    function moveCaseStep(id, delta) {
+      const c = cases.find(item => item.id === id);
+      if (!c) return;
+      
+      const newStep = c.step + delta;
+      if (newStep >= 1 && newStep <= 7) {
+        c.step = newStep;
+        saveCases();
+        render();
+        showToast(`Moved ${c.name} to ${STEP_NAMES[newStep]}`);
+      }
+    }
+
+    function jumpCaseStep(id, targetStep) {
+      const c = cases.find(item => item.id === id);
+      if (!c) return;
+      c.step = targetStep;
+      saveCases();
+      render();
+      showToast(`${c.name} set to ${STEP_NAMES[targetStep]}`);
+    }
+
+    // Modal Add / Edit
+    const modal = document.getElementById('caseModal');
+    const form = document.getElementById('caseForm');
+
+    function openModal(caseData = null) {
+      document.getElementById('modalTitle').textContent = caseData ? 'Edit Case Record' : 'Add New Case';
+      document.getElementById('formCaseId').value = caseData ? caseData.id : '';
+      document.getElementById('formCaseRef').value = caseData ? caseData.ref : `CAS-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      document.getElementById('formClaimantName').value = caseData ? caseData.name : '';
+      document.getElementById('formCaseType').value = caseData ? caseData.type : 'Native / Standard Claim';
+      document.getElementById('formCurrentStep').value = caseData ? caseData.step : '1';
+      document.getElementById('formScopeStatus').value = caseData ? (caseData.scope || 'In-Scope') : 'In-Scope';
+      document.getElementById('formDeadline').value = caseData ? (caseData.deadline || '') : '';
+      document.getElementById('formNotes').value = caseData ? (caseData.notes || '') : '';
+
+      document.getElementById('btnDeleteCase').style.display = caseData ? 'inline-flex' : 'none';
+      modal.classList.add('open');
+      document.getElementById('formClaimantName').focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      form.reset();
+    }
+
+    // Event Delegations
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      const id = btn.getAttribute('data-id');
+      const action = btn.getAttribute('data-action');
+      const jumpStep = btn.getAttribute('data-jump-step');
+
+      if (jumpStep && id) {
+        jumpCaseStep(id, parseInt(jumpStep, 10));
+        return;
+      }
+
+      if (action === 'prev' && id) {
+        moveCaseStep(id, -1);
+      } else if (action === 'next' && id) {
+        moveCaseStep(id, 1);
+      } else if (action === 'edit' && id) {
+        const c = cases.find(item => item.id === id);
+        if (c) openModal(c);
+      }
+    });
+
+    // Form Submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('formCaseId').value;
+      const ref = document.getElementById('formCaseRef').value.trim();
+      const name = document.getElementById('formClaimantName').value.trim();
+      const type = document.getElementById('formCaseType').value;
+      const step = parseInt(document.getElementById('formCurrentStep').value, 10);
+      const scope = document.getElementById('formScopeStatus').value;
+      const deadline = document.getElementById('formDeadline').value;
+      const notes = document.getElementById('formNotes').value.trim();
+
+      if (id) {
+        // Edit existing
+        const c = cases.find(item => item.id === id);
+        if (c) {
+          c.ref = ref;
+          c.name = name;
+          c.type = type;
+          c.step = step;
+          c.scope = scope;
+          c.deadline = deadline;
+          c.notes = notes;
+          showToast(`Updated case ${ref}`);
+        }
+      } else {
+        // Create new
+        const newCase = {
+          id: 'case-' + Date.now(),
+          ref,
+          name,
+          type,
+          step,
+          scope,
+          deadline,
+          notes
+        };
+        cases.unshift(newCase);
+        showToast(`Created new case ${ref}`);
+      }
+
+      saveCases();
+      closeModal();
+      render();
+    });
+
+    // Delete Case
+    document.getElementById('btnDeleteCase').addEventListener('click', () => {
+      const id = document.getElementById('formCaseId').value;
+      if (!id) return;
+      if (confirm("Are you sure you want to delete this case record?")) {
+        cases = cases.filter(c => c.id !== id);
+        saveCases();
+        closeModal();
+        render();
+        showToast("Case deleted.");
+      }
+    });
+
+    // Modal controls
+    document.getElementById('btnOpenNewCase').addEventListener('click', () => openModal());
+    document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+    document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Search and filter listeners
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('filterType').addEventListener('change', render);
+    document.getElementById('filterStep').addEventListener('change', render);
+
+    // View toggles
+    document.getElementById('btnViewPipeline').addEventListener('click', () => {
+      currentView = 'pipeline';
+      document.getElementById('btnViewPipeline').classList.add('active');
+      document.getElementById('btnViewTable').classList.remove('active');
+      document.getElementById('pipelineView').style.display = 'grid';
+      document.getElementById('tableView').style.display = 'none';
+      render();
+    });
+
+    document.getElementById('btnViewTable').addEventListener('click', () => {
+      currentView = 'table';
+      document.getElementById('btnViewTable').classList.add('active');
+      document.getElementById('btnViewPipeline').classList.remove('active');
+      document.getElementById('pipelineView').style.display = 'none';
+      document.getElementById('tableView').style.display = 'block';
+      render();
+    });
+
+    // KPI Card Quick Filters
+    document.querySelectorAll('.kpi-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const f = card.getAttribute('data-filter');
+        const filterStep = document.getElementById('filterStep');
+        const filterType = document.getElementById('filterType');
+
+        if (f === 'all') {
+          filterStep.value = 'all';
+          filterType.value = 'all';
+        } else if (f === 'native') {
+          filterType.value = 'Native / Standard Claim';
+          filterStep.value = 'all';
+        } else if (f === 'se') {
+          filterType.value = 'Self-Employed';
+          filterStep.value = 'all';
+        } else if (f === 'step3') {
+          filterStep.value = '3';
+          filterType.value = 'all';
+        } else if (f === 'step5') {
+          filterStep.value = '5';
+          filterType.value = 'all';
+        } else if (f === 'closed') {
+          filterStep.value = '7';
+          filterType.value = 'all';
+        }
+        render();
+      });
+    });
+
+    // Export to Excel (.csv)
+    document.getElementById('btnExportCsv').addEventListener('click', () => {
+      const headers = ["Case Reference", "Claimant Name", "Case Pathway", "Current Step", "Scope Status", "Target Deadline", "Casework Notes"];
+      const rows = cases.map(c => [
+        c.ref,
+        `"${c.name.replace(/"/g, '""')}"`,
+        c.type,
+        `"${STEP_NAMES[c.step] || c.step}"`,
+        c.scope || "In-Scope",
+        c.deadline || "",
+        `"${(c.notes || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Case_Tracking_Register_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Caseload exported to Excel CSV.");
+    });
+
+    // Copy to Clipboard for Excel Ctrl+V
+    document.getElementById('btnCopyExcel').addEventListener('click', () => {
+      const headers = ["Case Ref\tClaimant Name\tCase Type\tCurrent Step\tScope\tTarget Deadline\tNotes"];
+      const rows = cases.map(c => `${c.ref}\t${c.name}\t${c.type}\t${STEP_NAMES[c.step] || c.step}\t${c.scope || 'In-Scope'}\t${c.deadline || ''}\t${c.notes || ''}`);
+      const text = [headers, ...rows].join("\r\n");
+
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Copied to clipboard. Paste into Excel with Ctrl+V.");
+      }).catch(() => {
+        showToast("Clipboard copy failed. Use Export to Excel instead.");
+      });
+    });
+
+    // Auto-adjust nav links between root and public-tool
+    function initNavHrefs() {
+      const isPublic = window.location.pathname.includes('/public-tool/');
+      const stLink = document.getElementById('navLinkStatement');
+      const plLink = document.getElementById('navLinkPlanner');
+      if (stLink) stLink.href = isPublic ? 'index.html' : 'bank-statement-checker.html';
+      if (plLink) plLink.href = isPublic ? 'planner.html' : 'uc-case-planner.html';
+    }
+
+    // Init
+    initNavHrefs();
+    loadCases();
+    render();
+  </script>
+</body>
+</html>
