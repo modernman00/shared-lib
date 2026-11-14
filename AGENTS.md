@@ -1,56 +1,56 @@
-# ⚡ Master Engineering, Architecture & Security Governance (v4.0 Lean)
+# ⚡ Master Engineering, Architecture & Security Governance (v5.0 — 10-Stage Autonomous Engine)
 
 > [!IMPORTANT]
 > **BINDING OPERATING CHARTER ACROSS ALL 8 PORTFOLIO APPLICATIONS**
 > (`PartyPlatform`, `FamilyPlatform`, `iDecide`, `iAccount`, `TenantScore`, `ExecMind`, `LoanEasyFinance`, `BCP`)
-> This charter enforces high-velocity engineering, unyielding security, and empirical verification. Token efficiency is achieved by eliminating conversational filler and theatrical persona roleplay, while preserving 100% of technical rigor.
+> This charter enforces zero-touch autonomous delivery, mandatory upfront research, unyielding security, and empirical self-healing verification so the CEO can drop a raw voice/text prompt and walk away until the task is 100% finished.
 
 ---
 
-## 0. Prompt Specialist Protocol (Runs FIRST on every user message)
+## 0. The 10-Stage Autonomous Software Delivery Engine (Zero-Stop Loop)
 
-The user writes informally (often CAPS, fragments, multi-message). Before any work, the agent acts as the **Prompt Specialist**:
+Inspired by the 7-component automated production pipeline—and hardened with 3 sovereign enterprise safety layers—every task runs through this **Zero-Stop Autonomous Pipeline** without waking the user until 100% of gates pass (or a genuine architectural ambiguity requires 1 multiple-choice question):
 
-1. **Refine silently into a Refined Brief** using WHAT + WHERE + DONE WHEN, and show it as a 3–6 line block headed `📝 Refined Brief`:
-   - **Goal** (the outcome, in plain words), **Where** (page/route/file; find it via search if unnamed), **Tier** (1/2/3, inferred), **Constraints** (privacy, UK English, relevant domain guide), **Done when** (default: `php -l` + `scripts/preflight.sh` Exit 0 + browser check of `$_ENV['APP_URL']`).
-2. **Merge** all pending/follow-up messages into one brief; later messages amend earlier ones.
-3. **Add the unstated but implied**: edge cases, persistence across reload, server-side enforcement for privacy, removal of dead DOM/JS, mobile check.
-4. **Do not stop to ask for approval of the brief.** Proceed immediately. Ask the user only if a missing fact would cause irreversible or wrong-direction work (max 1–2 questions, multiple-choice).
-5. **Route**: idea/risks → behave as `/grill-me` (no code); large build → plan first; hard bug/security/ATG → deep investigation; otherwise just execute.
-6. **Never inflate**: a Tier 1 request gets a 3-line brief, not a ceremony.
-
-Example — user types: *"WE DONT NEED MY STORY HERE. REMOVE IT. ALSO SHOW ONLINE/LAST SEEN"*
-→ `📝 Refined Brief` — Goal: remove "My Story" (keep Reels), add Online/Last Seen presence. Where: `kin-whispers`. Tier 2. Constraints: privacy toggle enforced server-side, no phantom DOM. Done when: preflight Exit 0 + browser verified.
+| Stage | Role Name | Video Analogy | Autonomous Responsibility |
+| :--- | :--- | :--- | :--- |
+| **1** | **Prompt Transcriber** | *Parakeet* | Converts raw, unedited voice dumps, ALL-CAPS notes, or multi-message fragments into a structured `📝 Refined Brief` (`WHAT + WHERE + DONE WHEN`) immediately on turn 1. Never stops to ask for brief approval. |
+| **2** | **Deep Researcher** | *Chrome Researcher* | **Mandatory on Tier 2 & Tier 3.** Never build blind. Before writing code, searches 2–3 industry benchmarks (`search_web` / docs) + existing `shared-lib` / codebase precedents and outputs a `🔬 5-Bullet Research Brief` (Best Practice, Reusable Primitives, Edge Cases, Security Vectors, UK Copy). |
+| **3** | **Snapshot & Parity Guard** | *[Sovereign Layer]* | Captures working tree state (`git status --porcelain`) and verifies DB schema parity (`SHOW COLUMNS FROM <table>`) so any regression can be rolled back cleanly. |
+| **4** | **Lead Editor (Backend)** | *Claude Code* | Implements PHP 8.2+, parameterised PDO SQL, and `modernman00/shared-lib` logic using strict `string` IDs, zero SQL interpolation, and zero symlinks. |
+| **5** | **UI Animator (Frontend)** | *Hyperframes* | Crafts components using `global_design_standards.md` v2.1 tokens, Alpine.js (`x-data`, `x-collapse`, `x-trap.noscroll`, `x-cloak`), and the **6-State Standard** (Happy Path, Extreme 3/80 chars, Empty State, Submitting Spinner, Error/Offline, Skeleton). |
+| **6** | **Sensory & Brand Designer** | *Epidemic Sound* | Applies strict British English (`en-GB`), tactile press states (`active:scale-[0.98]`), `ScoreTenantSpinner` (`data-spin="true"`), `$toast()` alerts, and `$clipboard()` haptics. |
+| **7** | **Adversarial & Static Gate** | *[Sovereign Layer]* | Runs `bash scripts/autonomous_gate.sh` (incremental `php -l`, targeted PHPStan L8, `verify_engineering_must_haves.php`, targeted PHPUnit tests) plus adversarial 401/403/404 attack neutralization. |
+| **8** | **Screen Editor (Browser QA)** | *Tella MCP* | Opens `$_ENV['APP_URL']` on Desktop (`1440×900`) and Mobile (`390×844`), runs `scripts/dom_audit.js` (`window.runSovereignDomAudit()`) to verify ≥44px touch targets, 0 horizontal overflow, 0 black-on-red or ghost contrast flaws, and 0 console errors, and captures visual screenshots. |
+| **9** | **Self-Healing Finisher** | *FFmpeg* | **Circuit-Breaker Loop (Max 5 Cycles):** If any check in Stages 7 or 8 fails, the agent **does not stop or ask the user**. It diagnoses the root cause, patches the code, and re-runs Stages 7–8 autonomously (up to 5 times) until Exit Code 0 is achieved. |
+| **10**| **Playbook & Proof Capsule** | *[Sovereign Layer]* | Updates `/playbook` or `/how-to-use` in lockstep and outputs the final **Empirical Proof Capsule** so the user returns to a finished, verified product. |
 
 ---
 
-## 0.1 Auto-Triage (The User Does Not Need to Specify Anything)
+## 0.1 Prompt Specialist & Auto-Triage Protocol (Stage 1 & 2)
 
-Prompts follow the shape **WHAT + WHERE + DONE WHEN** (see `docs/governance/PROMPT_CHEATSHEET.md`). The agent MUST:
-1. **Infer the tier itself** from Section 1; never ask the user to name it.
-2. **Apply all invariants (Section 4) silently**: UK English, CSRF, spinners, 44px targets, parameterised SQL.
-3. **Assume a default "Done when"** if none is given: `php -l` + `scripts/preflight.sh` Exit 0 + browser check of `$_ENV['APP_URL']`.
-4. **Treat follow-up messages as amendments** to the same task and re-plan once, not restart.
-5. **Load domain guides** (`docs/governance/*.md`) automatically when the task touches BCP, FinTech, games, or SaaS replacement/ML.
-6. For live-only bugs, **investigate local-vs-live parity first** (env, CORS/CSP, schema via `SHOW COLUMNS`, autoload) before changing code.
+1. **Show `📝 Refined Brief` (3–6 lines) on Turn 1**:
+   - **Goal**, **Where** (route/file), **Tier** (1/2/3 inferred automatically), **Constraints** (UK English, privacy, domain guide), and **Done when**.
+2. **Show `🔬 5-Bullet Research Brief` on all Tier 2 & Tier 3 Tasks**:
+   - Before writing code on Tier 2/3, inspect codebase precedents (`shared-lib`, existing controllers/views) and external best practices (`search_web` when applicable), summarising: (1) UX/Industry Benchmark, (2) Existing Reusable Code, (3) Edge Cases & Failure Modes, (4) Security/IDOR/CSRF Vector, (5) British English Copy & Micro-interactions.
+3. **Merge Follow-Ups**: Treat follow-up messages as amendments to the active brief; re-plan once and continue executing.
+4. **Routing**:
+   - Idea / workflow critique → `/grill-me` (interview 1 question at a time, no code until aligned).
+   - Complex multi-module build → `/plan` or `/boost`.
+   - Standard feature / bug → Execute Stages 1–10 autonomously to completion.
 
 ---
 
 ## 1. The 3-Tier Delivery Framework
 
-Every task is triaged into one of three risk tiers:
-
-| Tier | Scope | Required Governance & Output | Verification Gate |
+| Tier | Scope | Required Autonomous Stages | Verification Gate |
 | :--- | :--- | :--- | :--- |
-| **🟢 Tier 1: Routine Velocity** | UI styling, copy fixes, self-contained bug fixes | Diffs only + `php -l` + Mobile touch check (≥44px). Skips review matrices. | `php -l` + browser visual check |
-| **🟡 Tier 2: Strategic Features** | New UI flows, components, APIs, notification triggers | Structured 4-Lens Review Matrix + In-flight automated attack neutralization. | `scripts/inflight.sh` + Pre-flight + Browser Screenshot |
-| **🔴 Tier 3: Core Architecture** | Schema migrations (`ALTER`/`CREATE`), Auth, Payments, `shared-lib`, `sw.js` | 1-Page RFC + Full 4-Lens Gauntlet + Empirical Proof Capsule + Automated Rollback. | `bash scripts/preflight.sh` (Exit 0) + Executive Sign-Off |
+| **🟢 Tier 1: Routine Velocity** | UI styling, copy fixes, self-contained bug fixes | Stages 1, 4–6, 7–9 (skips Research Brief & 4-Lens Matrix) | `bash scripts/autonomous_gate.sh` + Browser visual & `dom_audit.js` check |
+| **🟡 Tier 2: Strategic Features** | New UI flows, components, APIs, notification triggers | All Stages 1–10 (`🔬 Research Brief` + 4-Lens Matrix + Adversarial PoC) | `bash scripts/autonomous_gate.sh` + Browser Desktop/Mobile `dom_audit.js` (`preflight.sh` at deploy) |
+| **🔴 Tier 3: Core Architecture** | Schema migrations (`ALTER`/`CREATE`), Auth, Payments, `shared-lib`, `sw.js` | All Stages 1–10 + 1-Page RFC + Automated Rollback | Full `bash scripts/preflight.sh` (Exit 0) + TAT Executive Sign-Off |
 
 ---
 
-## 2. The 4 Functional Review Lenses
-
-For Tier 2 and Tier 3 deliverables, evaluate against the **4 Objective Lenses** (no conversational roleplay required):
+## 2. The 4 Functional Review Lenses (Tier 2 & Tier 3)
 
 ```markdown
 ### 🛡️ 1. Security & Red-Team Lens
@@ -63,7 +63,7 @@ For Tier 2 and Tier 3 deliverables, evaluate against the **4 Objective Lenses** 
 
 ### 🎨 3. Product & Usability Lens
 - **Ergonomics & Invariants**: (≥44px touch targets, WCAG AA contrast, UK English, button spinners)
-- **Visual Verification**: (4-State check: Happy Path, Extreme Lengths, Empty State, Submitting)
+- **Visual Verification**: (6-State check + `dom_audit.js` Desktop & Mobile pass)
 
 ### ⚖️ 4. Commercial & Compliance Lens
 - **Definition of Done (DoD)**: (Navigation discoverability, zero dead links, no phantom elements)
@@ -72,20 +72,21 @@ For Tier 2 and Tier 3 deliverables, evaluate against the **4 Objective Lenses** 
 
 ---
 
-## 3. Mandatory Empirical Proof Capsule
+## 3. Mandatory Empirical Proof Capsule (Stage 10 Output)
 
 No deliverable may be marked complete without providing the **Empirical Proof Capsule**:
-1. **Pre-Flight Terminal Output**: Verbatim output of `bash scripts/preflight.sh` showing Exit Code 0 (0 syntax errors, 0 PHPStan L8 errors, 100% passing tests, including `tests/verify_e2e_robust_suite.php`).
-2. **Security Attack Neutralization**: Verbatim proof showing malicious payloads return `401 Unauthorized`, `403 Forbidden`, or `404 Not Found` (or fail safely).
-3. **Browser Visual Evidence**: Live browser inspection (`$_ENV['APP_URL']`) confirming 0 console errors, mobile touch targets ≥44px, and correct layout rendering.
-4. **Living Guide Update**: Confirmation that `/playbook` or `/how-to-use` reflects the changes.
+1. **Research & Precedent Summary** *(Tier 2/3)*: The `🔬 5-Bullet Research Brief` confirming the feature was engineered against proven patterns.
+2. **Validation Terminal Output**: Verbatim output of `bash scripts/autonomous_gate.sh` (Exit Code 0) during iteration; full `bash scripts/preflight.sh` (Exit Code 0) run once at deployment.
+3. **Security Attack Neutralization**: Verbatim proof showing malicious payloads return `401 Unauthorized`, `403 Forbidden`, or `404 Not Found`.
+4. **Browser & DOM Audit Evidence**: Live browser inspection (`$_ENV['APP_URL']`) on Desktop and Mobile with `window.runSovereignDomAudit()` reporting `passed: true` (`0` violations) and `0` console errors.
+5. **Living Guide Update**: Confirmation that `/playbook` or `/how-to-use` reflects the changes.
 
 ---
 
 ## 4. Non-Negotiable Technical Invariants & Defensive Traps
 
 ### 🛡️ Core Security & Engineering Invariants
-1. **Deterministic Pre-Flight Gate**: Run `php scripts/verify_engineering_must_haves.php` and `bash scripts/preflight.sh` to Exit Code 0 before completion.
+1. **Fast Iterative Gate vs. Deploy Pre-Flight**: During autonomous self-healing loops (Stage 7 & 9), run `bash scripts/autonomous_gate.sh [test_path]`. Run the full 8-gate `bash scripts/preflight.sh` (Exit Code 0) once at deployment/release (or when explicitly requested).
 2. **Universal CSRF**: Every `<form>` in Blade templates MUST contain `@include('csrf')` or `@csrf`.
 3. **Zero SQL String Interpolation**: Raw string interpolation (`{$var}`, `$var`, or concatenation) inside SQL is **strictly forbidden across ALL PHP files (including test fixtures)**. Always use parameterized PDO statements (`prepare` & `execute`). Decouple dynamic `?,?,?` placeholders via `sprintf()`.
 4. **Universal Button Spinners**: Every state-changing button MUST trigger a loading spinner (`ScoreTenantSpinner.start(btn)` / `data-spin="true"`) to prevent double submissions.

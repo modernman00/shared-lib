@@ -45,10 +45,10 @@ class ExplainerStoryboard
      *     title: string,
      *     narration: string,
      *     stage?: 'problem'|'solution'|'call_to_action',
-     *     targetSelector?: string,
+     *     targetSelector?: string|null,
      *     camera: array{x: float, y: float, zoom: float},
-     *     cursor?: array{action: 'move'|'click'|'type'|'scroll', targetX: float, targetY: float, label?: string},
-     *     visualSvg?: string,
+     *     cursor?: array{action: 'move'|'click'|'type'|'scroll', targetX: float, targetY: float, label?: string|null}|null,
+     *     visualSvg?: string|null,
      *     captions?: array<int, array{start: float, end: float, text: string}>
      * }> $scenes
      * @param array<string, mixed> $metadata

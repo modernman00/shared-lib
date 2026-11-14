@@ -235,4 +235,167 @@ class DigitalContractEngineTest extends TestCase
         $ref = \SharedLib\Contracts\DigitalContractEngine::generateContractRef('ALIAS');
         $this->assertStringStartsWith('ALIAS-', $ref);
     }
+
+    public function testPrepareTenancyContractGeneratesPerSignerTokensAndChecksum(): void
+    {
+        $contract = DigitalContractEngine::prepareTenancyContract([
+            'tenant_name' => 'Amara Okafor',
+            'tenant_email' => 'amara@example.co.uk',
+            'landlord_name' => 'Thames Estates Ltd',
+            'landlord_email' => 'lettings@thamesestates.co.uk',
+            'guarantor_name' => 'Chidi Okafor',
+            'guarantor_email' => 'chidi@example.co.uk',
+            'property_address' => '14 Baker Street, London NW1 6XE',
+            'monthly_rent' => 1850.00,
+            'deposit_amount' => 2134.61,
+            'term_months' => 12,
+            'tenancy_start_date' => '2026-12-01',
+        ], 'https://scoretenant.com/sign');
+
+        $this->assertSame(DigitalContractEngine::TYPE_TENANCY_AST, $contract['contract_type']);
+        $this->assertStringStartsWith('TS-AST-', $contract['contract_ref']);
+        $this->assertSame(['landlord', 'tenant', 'guarantor'], $contract['required_roles']);
+        $this->assertCount(3, $contract['required_signers']);
+        $this->assertSame(64, strlen($contract['terms_checksum_sha256']));
+        $this->assertStringContainsString('role=tenant', $contract['signing_url']);
+        $this->assertStringContainsString('role=landlord', $contract['required_signers'][0]['signing_url']);
+    }
+
+    public function testPrepareTenancyContractRejectsInvalidRent(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        DigitalContractEngine::prepareTenancyContract([
+            'tenant_name' => 'Amara Okafor',
+            'tenant_email' => 'amara@example.co.uk',
+            'landlord_name' => 'Thames Estates Ltd',
+            'landlord_email' => 'lettings@thamesestates.co.uk',
+            'property_address' => '14 Baker Street, London',
+            'monthly_rent' => 0.0,
+            'term_months' => 12,
+            'tenancy_start_date' => '2026-12-01',
+        ]);
+    }
+
+    public function testMultiPartySigningOrchestrationAndAuditCertificatePdf(): void
+    {
+        $contract = DigitalContractEngine::prepareTenancyContract([
+            'tenant_name' => 'Amara Okafor',
+            'tenant_email' => 'amara@example.co.uk',
+            'landlord_name' => 'Thames Estates Ltd',
+            'landlord_email' => 'lettings@thamesestates.co.uk',
+            'property_address' => '14 Baker Street, London NW1 6XE',
+            'monthly_rent' => 1850.00,
+            'deposit_amount' => 2000.00,
+            'term_months' => 12,
+            'tenancy_start_date' => '2026-12-01',
+        ]);
+
+        $ref = $contract['contract_ref'];
+        $requiredRoles = $contract['required_roles'];
+
+        $ins = $this->sqlitePdo->prepare('INSERT INTO `digital_contracts` (`contract_type`, `contract_ref`, `title`, `signer_name`, `signer_email`, `signer_role`, `signing_token`, `status`) VALUES (:type, :ref, :title, :name, :email, :role, :token, :status)');
+        $ins->execute([
+            ':type' => $contract['contract_type'],
+            ':ref' => $ref,
+            ':title' => $contract['title'],
+            ':name' => $contract['signer_name'],
+            ':email' => $contract['signer_email'],
+            ':role' => $contract['signer_role'],
+            ':token' => $contract['signing_token'],
+            ':status' => DigitalContractEngine::STATUS_SENT,
+        ]);
+
+        $step1 = DigitalContractEngine::recordMultiPartySignature($this->sqlitePdo, [
+            'contract_type' => $contract['contract_type'],
+            'contract_ref' => $ref,
+            'signer_name' => 'Thames Estates Ltd',
+            'signer_email' => 'lettings@thamesestates.co.uk',
+            'signer_role' => DigitalContractEngine::ROLE_LANDLORD,
+            'signature_base64' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            'ip_address' => '192.0.2.10',
+            'required_roles' => $requiredRoles,
+        ]);
+
+        $this->assertFalse($step1['is_fully_signed']);
+        $this->assertSame(['tenant'], $step1['pending_roles']);
+        $this->assertSame(50.0, $step1['completion_percentage']);
+        $this->assertNull($step1['composite_checksum_sha256']);
+
+        $statusCheck = $this->sqlitePdo->prepare('SELECT `status` FROM `digital_contracts` WHERE `contract_ref` = :ref');
+        $statusCheck->execute([':ref' => $ref]);
+        $this->assertSame('sent', $statusCheck->fetchColumn());
+
+        $step2 = DigitalContractEngine::recordMultiPartySignature($this->sqlitePdo, [
+            'contract_type' => $contract['contract_type'],
+            'contract_ref' => $ref,
+            'signer_name' => 'Amara Okafor',
+            'signer_email' => 'amara@example.co.uk',
+            'signer_role' => DigitalContractEngine::ROLE_TENANT,
+            'signature_base64' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            'ip_address' => '192.0.2.20',
+            'required_roles' => $requiredRoles,
+        ]);
+
+        $this->assertTrue($step2['is_fully_signed']);
+        $this->assertSame([], $step2['pending_roles']);
+        $this->assertSame(100.0, $step2['completion_percentage']);
+        $this->assertNotNull($step2['composite_checksum_sha256']);
+        $this->assertSame(64, strlen((string)$step2['composite_checksum_sha256']));
+
+        $statusCheck->execute([':ref' => $ref]);
+        $this->assertSame('signed', $statusCheck->fetchColumn());
+
+        $html = DigitalContractEngine::buildAuditCertificateHtml(
+            $this->sqlitePdo,
+            $ref,
+            $contract['title'],
+            '<h1>Assured Shorthold Tenancy</h1><p>14 Baker Street</p>',
+            $contract['terms_checksum_sha256']
+        );
+        $this->assertStringContainsString('Cryptographic Execution', $html);
+        $this->assertStringContainsString('Thames Estates Ltd', $html);
+        $this->assertStringContainsString('Amara Okafor', $html);
+        $this->assertStringContainsString($contract['terms_checksum_sha256'], $html);
+
+        $pdfBytes = DigitalContractEngine::renderSealedContractPdf(
+            $this->sqlitePdo,
+            $ref,
+            $contract['title'],
+            '<h1>Assured Shorthold Tenancy</h1><p>14 Baker Street</p>',
+            $contract['terms_checksum_sha256']
+        );
+        $this->assertStringStartsWith('%PDF-', $pdfBytes);
+    }
+
+    public function testMultiPartySignatureRejectsDuplicateRole(): void
+    {
+        $ref = DigitalContractEngine::generateContractRef('TS-AST');
+
+        DigitalContractEngine::recordMultiPartySignature($this->sqlitePdo, [
+            'contract_type' => DigitalContractEngine::TYPE_TENANCY_AST,
+            'contract_ref' => $ref,
+            'signer_name' => 'Thames Estates Ltd',
+            'signer_email' => 'lettings@thamesestates.co.uk',
+            'signer_role' => DigitalContractEngine::ROLE_LANDLORD,
+            'signature_base64' => 'sig-1',
+            'ip_address' => '192.0.2.10',
+            'required_roles' => ['landlord', 'tenant'],
+            'sync_digital_contracts' => false,
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+
+        DigitalContractEngine::recordMultiPartySignature($this->sqlitePdo, [
+            'contract_type' => DigitalContractEngine::TYPE_TENANCY_AST,
+            'contract_ref' => $ref,
+            'signer_name' => 'Thames Estates Ltd',
+            'signer_email' => 'lettings@thamesestates.co.uk',
+            'signer_role' => DigitalContractEngine::ROLE_LANDLORD,
+            'signature_base64' => 'sig-2',
+            'ip_address' => '192.0.2.10',
+            'required_roles' => ['landlord', 'tenant'],
+            'sync_digital_contracts' => false,
+        ]);
+    }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Src\Explainer;
 
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -29,18 +30,28 @@ class SovereignVideoRenderer
      * Zero server CPU/RAM load.
      *
      * @param ExplainerStoryboard $storyboard
+     * @param string|null $styleId Optional ExplainerStyleAtlas preset ID
+     * @param array<int, array{word?: string, start?: float|int, end?: float|int}> $externalWords Optional word-level timestamps
      * @return array<string, mixed>
      */
-    public function generateClientManifest(ExplainerStoryboard $storyboard): array
-    {
+    public function generateClientManifest(
+        ExplainerStoryboard $storyboard,
+        ?string $styleId = null,
+        array $externalWords = []
+    ): array {
         $timeline = $this->motionCompiler->compile($storyboard);
         $vttSubtitles = $this->audioBridge->generateWebVTT($storyboard);
         $duckingEnvelope = $this->audioBridge->calculateDuckingEnvelope($storyboard);
+        $wordTimeline = $this->audioBridge->buildWordTimeline($storyboard, $externalWords);
+        $resolvedStyleId = $styleId ?? $storyboard->getTheme();
+        $stylePreset = ExplainerStyleAtlas::get($resolvedStyleId);
 
         return [
             'mode' => 'client_webcodecs',
             'storyboard' => $storyboard->toArray(),
             'timeline' => $timeline,
+            'style_preset' => $stylePreset,
+            'word_timeline' => $wordTimeline,
             'subtitles_vtt' => $vttSubtitles,
             'ducking_envelope' => $duckingEnvelope,
             'export_formats' => ['mp4', 'webm'],
@@ -284,6 +295,16 @@ class SovereignVideoRenderer
      */
     public function renderHeadlessSandboxed(ExplainerStoryboard $storyboard, string $outputFilePath): array
     {
+        if (str_contains($outputFilePath, "\0") || str_contains($outputFilePath, '..')) {
+            throw new InvalidArgumentException('Directory traversal attempt detected.');
+        }
+
+        // Gate 1: Strict input path sanitisation before any branch execution
+        $safeOutputPath = ExplainerSecurityValidator::validateSafePath(
+            basename($outputFilePath),
+            dirname($outputFilePath)
+        );
+
         $ffmpegBinary = $this->ffmpegPath ?? $this->detectFfmpeg();
 
         $timeline = $this->motionCompiler->compile($storyboard);
@@ -294,7 +315,7 @@ class SovereignVideoRenderer
         if ($ffmpegBinary === null || !is_executable($ffmpegBinary)) {
             // Write interactive HTML5 fallback bundle
             $fallbackHtml = $this->renderInteractiveWidget($storyboard);
-            $fallbackPath = preg_replace('/\.mp4$/i', '.html', $outputFilePath) ?: $outputFilePath . '.html';
+            $fallbackPath = preg_replace('/\.mp4$/i', '.html', $safeOutputPath) ?: $safeOutputPath . '.html';
             file_put_contents($fallbackPath, $fallbackHtml);
 
             return [
@@ -312,12 +333,6 @@ class SovereignVideoRenderer
         }
 
         try {
-            // Safe execution pipeline via proc_open with array arguments (eliminates shell injection)
-            $safeOutputPath = ExplainerSecurityValidator::validateSafePath(
-                basename($outputFilePath),
-                dirname($outputFilePath)
-            );
-
             // Gate 3: Watchdog Timeout & Execution
             // In headless environments, generate a compliant synthetic H.264 preview
             $cmd = [
@@ -381,11 +396,111 @@ class SovereignVideoRenderer
                 'frames_rendered' => $totalFrames,
             ];
         } finally {
-            // Clean up temporary sandbox directory
-            if (is_dir($tempDir)) {
+            // Clean up temporary sandbox directory recursively
+            if (isset($tempDir) && is_dir($tempDir)) {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($tempDir, \FilesystemIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::CHILD_FIRST
+                );
+                foreach ($iterator as $item) {
+                    if ($item->isDir()) {
+                        @rmdir($item->getRealPath());
+                    } else {
+                        @unlink($item->getRealPath());
+                    }
+                }
                 @rmdir($tempDir);
             }
         }
+    }
+
+    /**
+     * Generates a self-contained HTML5 Canvas + Web Audio Studio widget with live
+     * Style Atlas switching, word-level kinetic captions, optional voiceover sync,
+     * and client-side WebM export.
+     *
+     * @param ExplainerStoryboard $storyboard
+     * @param string|null $styleId
+     * @param array<int, array{word?: string, start?: float|int, end?: float|int}> $externalWords
+     * @return string
+     */
+    public function renderCanvasStudio(
+        ExplainerStoryboard $storyboard,
+        ?string $styleId = null,
+        array $externalWords = []
+    ): string {
+        $manifest = $this->generateClientManifest($storyboard, $styleId, $externalWords);
+        $styles = ExplainerStyleAtlas::all();
+        $studioId = 'atg-canvas-studio-' . htmlspecialchars($storyboard->getId(), ENT_QUOTES, 'UTF-8');
+        $title = htmlspecialchars($storyboard->getTitle(), ENT_QUOTES, 'UTF-8');
+        $activeStyleId = (string)($manifest['style_preset']['id'] ?? ExplainerStyleAtlas::DEFAULT_STYLE);
+
+        $aspectRatioClass = match ($storyboard->getAspectRatio()) {
+            ExplainerStoryboard::ASPECT_9_16 => 'aspect-[9/16] max-w-sm mx-auto',
+            ExplainerStoryboard::ASPECT_1_1 => 'aspect-square max-w-lg mx-auto',
+            default => 'aspect-video',
+        };
+
+        $manifestJson = (string)json_encode($manifest, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        $stylesJson = (string)json_encode($styles, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+
+        $styleOptionsHtml = '';
+        foreach ($styles as $id => $style) {
+            $selected = $id === $activeStyleId ? ' selected' : '';
+            $styleOptionsHtml .= sprintf(
+                '<option value="%s"%s>%s (%s)</option>',
+                htmlspecialchars((string)$id, ENT_QUOTES, 'UTF-8'),
+                $selected,
+                htmlspecialchars((string)$style['name'], ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars((string)$style['category'], ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        return sprintf(
+            '<section id="%1$s" class="atg-canvas-studio rounded-2xl border border-slate-800 bg-slate-950 text-slate-100 p-4 sm:p-6 shadow-2xl space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold tracking-tight text-white">%2$s</h3>
+                        <p class="text-xs text-slate-400">Deterministic 60fps Canvas &amp; Procedural Web Audio Studio</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label for="%1$s-style" class="sr-only">Visual Style Preset</label>
+                        <select id="%1$s-style" class="atg-studio-style-select min-h-[44px] px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-semibold text-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-400">
+                            %3$s
+                        </select>
+                        <button type="button" class="atg-studio-play min-h-[44px] min-w-[44px] px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-indigo-400">
+                            ▶ Play
+                        </button>
+                        <button type="button" class="atg-studio-mute min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-indigo-400" aria-pressed="false">
+                            🔊 SFX On
+                        </button>
+                        <label class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 whitespace-nowrap flex-shrink-0 cursor-pointer flex items-center gap-1.5 transition-all">
+                            <span>🎙️ Voiceover</span>
+                            <input type="file" accept="audio/*" class="atg-studio-audio-input sr-only" />
+                        </label>
+                        <button type="button" class="atg-studio-export min-h-[44px] min-w-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white whitespace-nowrap flex-shrink-0 transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-400">
+                            ⬇ Export WebM
+                        </button>
+                    </div>
+                </div>
+                <div class="relative w-full overflow-hidden rounded-xl border border-slate-800 bg-black %7$s">
+                    <canvas class="atg-studio-canvas w-full h-full block"></canvas>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="atg-studio-time text-xs font-mono text-slate-400 whitespace-nowrap">0.0s / %6$.1fs</span>
+                    <input type="range" min="0" max="%6$.2f" step="0.05" value="0" aria-label="Timeline scrubber" class="atg-studio-scrubber w-full accent-indigo-500 min-h-[44px]" />
+                </div>
+                <script type="application/json" class="atg-studio-manifest">%4$s</script>
+                <script type="application/json" class="atg-studio-styles">%5$s</script>
+            </section>',
+            $studioId,
+            $title,
+            $styleOptionsHtml,
+            $manifestJson,
+            $stylesJson,
+            $storyboard->getTotalDurationSeconds(),
+            $aspectRatioClass
+        );
     }
 
     private function detectFfmpeg(): ?string

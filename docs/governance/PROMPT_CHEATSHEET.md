@@ -1,31 +1,27 @@
-# 🧭 Prompt Cheat Sheet (1 minute)
+# 🧭 Prompt Cheat Sheet (v5.0 — Zero-Stop Autonomous Loop)
 
-## The only formula to remember
-**WHAT + WHERE + DONE WHEN**
+## Drop a Raw Voice Dump or One-Liner and Walk Away
+**WHAT + WHERE + (optional) DONE WHEN**
 
-> *"Fix/Build **[what]** in **[page or file]**. Done when **[proof]**."*
+> *"Build/Fix **[what]** in **[page or area]**."*
 
-Everything else (tier, 4-lens review, preflight, UK English, spinners, 44px targets) is applied automatically by `AGENTS.md`.
+You no longer need to babysit the laptop. On every prompt, the **10-Stage Autonomous Engine** (`AGENTS.md` v5.0) runs automatically:
+1. **Prompt Transcriber** *(Parakeet)* → Cleans up raw voice/CAPS notes into a `📝 Refined Brief`.
+2. **Deep Researcher** *(Chrome)* → Searches 2–3 industry benchmarks + `shared-lib` precedents and writes a `🔬 5-Bullet Research Brief` before touching code (mandatory on Tier 2/3).
+3. **Snapshot & Parity Guard** → Protects git working state and DB schema parity.
+4. **Lead Editor** *(Claude Code)* → Writes strict PHP 8.2+ / parameterised SQL / `shared-lib` backend.
+5. **UI Animator** *(Hyperframes)* → Applies v2.1 design tokens, Alpine.js, and 6-State UI polish.
+6. **Sensory Designer** *(Epidemic)* → Enforces UK English, tactile button spinners, and toast/haptic feedback.
+7. **Adversarial & Static Gate** → Runs `bash scripts/autonomous_gate.sh` + security PoCs.
+8. **Screen Editor** *(Tella)* → Runs Desktop & Mobile browser QA + `scripts/dom_audit.js`.
+9. **Self-Healing Finisher** *(FFmpeg)* → Loops and fixes any bug up to **5 times autonomously** without waking you.
+10. **Playbook & Proof Capsule** → Updates `/playbook` or `/how-to-use` and presents the final proof.
 
-## Pick ONE starter word
+## Optional Starter Commands
 | You want… | Start with |
 | :--- | :--- |
-| Quick fix or UI tweak | *(nothing, just write it)* |
-| Explore an idea / risks | `/grill-me` |
-| Plan a big build first | `/plan` |
-| Hard bug, security, ATG deep-tech | `/boost` |
-| Large multi-file refactor | `/teamwork` |
-
-## Fill-in-the-blank templates
-**Bug:** `Fix [symptom] on [page]. It works locally but fails live. Done when [browser proof / test passes].`
-
-**Feature:** `Add [feature] to [page]. Include [privacy/edge rule]. Done when preflight passes and I can see it in the browser.`
-
-**Idea:** `/grill-me I want [idea] for [app]. Don't code yet. Give me risks and mitigations.`
-
-**SaaS replacement (ATG):** `/boost Follow docs/governance/atg_deep_tech.md. Replace [service] with a native shared-lib version. Done when benchmark + preflight pass.`
-
-## Habits
-1. Send ALL requirements in ONE message (not 2–3 follow-ups).
-2. Always end with "Done when…".
-3. New unrelated topic = new conversation.
+| Hands-off feature or bug fix | *(nothing — just paste your voice dump or note)* |
+| Critique an idea / process first | `/grill-me` |
+| Plan a massive multi-module build | `/plan` |
+| Overnight multi-goal marathon | `/goal` |
+| Deep security / ATG SaaS replacement | `/boost` |

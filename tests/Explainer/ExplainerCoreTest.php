@@ -341,4 +341,37 @@ class ExplainerCoreTest extends TestCase
         $this->assertStringContainsString('💡 The Solution', $html);
         $this->assertStringContainsString('🚀 Call to Action', $html);
     }
+
+    public function testFallbackBranchNeutralisesPathTraversal(): void
+    {
+        $renderer = new SovereignVideoRenderer(ffmpegPath: '/non/existent/binary');
+        $storyboard = PortfolioExplainerRegistry::buildStoryboard('familyplatform');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Directory traversal attempt detected');
+
+        $renderer->renderHeadlessSandboxed($storyboard, '/tmp/../../etc/passwd.mp4');
+    }
+
+    public function testFallbackBranchGeneratesValidHtmlWithSafePath(): void
+    {
+        $renderer = new SovereignVideoRenderer(ffmpegPath: '/non/existent/binary');
+        $storyboard = PortfolioExplainerRegistry::buildStoryboard('familyplatform');
+        $tempOutput = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'test_explainer_fallback_' . bin2hex(random_bytes(4)) . '.mp4';
+
+        try {
+            $result = $renderer->renderHeadlessSandboxed($storyboard, $tempOutput);
+            $this->assertSame('fallback', $result['status']);
+            $this->assertFileExists($result['path']);
+            $this->assertStringEndsWith('.html', $result['path']);
+            $content = (string)file_get_contents($result['path']);
+            $this->assertStringContainsString('FamilyPlatform', $content);
+            $this->assertStringContainsString('atg-narrative-arc-tracker', $content);
+        } finally {
+            $htmlPath = preg_replace('/\.mp4$/i', '.html', $tempOutput) ?: $tempOutput . '.html';
+            if (file_exists($htmlPath)) {
+                @unlink($htmlPath);
+            }
+        }
+    }
 }

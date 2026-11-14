@@ -40,6 +40,8 @@ class DigitalContractEngine
     public const TYPE_EMPLOYMENT = 'employment';
     public const TYPE_CLIENT_SERVICE = 'client_service';
     public const TYPE_SUPPLIER = 'supplier';
+    public const TYPE_TENANCY_AST = 'tenancy_ast';
+    public const TYPE_GUARANTOR_DEED = 'guarantor_deed';
 
     // ==========================================
     // Contract Status Constants
@@ -63,6 +65,8 @@ class DigitalContractEngine
     public const ROLE_PERFORMER = 'performer';
     public const ROLE_EMPLOYEE = 'employee';
     public const ROLE_EMPLOYER = 'employer';
+    public const ROLE_LANDLORD = 'landlord';
+    public const ROLE_TENANT = 'tenant';
 
     // ==========================================
     // Regulatory Standards
@@ -71,6 +75,7 @@ class DigitalContractEngine
     public const STANDARD_UK_ECA = 'UK Electronic Communications Act 2000 (Section 7)';
     public const STANDARD_UK_ERA = 'UK Employment Rights Act 1996 (Section 1)';
     public const STANDARD_UK_CCA = 'UK Consumer Credit Act 1974 & Consumer Credit Agreements Regulations';
+    public const STANDARD_UK_HOUSING = 'UK Housing Act 1988 & Renters\' Rights Compliance';
 
     /**
      * Default token TTL: 7 days (604,800 seconds).
@@ -830,6 +835,412 @@ SQL;
                 : "ALERT: Tamper detected! The computed SHA-256 checksum does not match the stored audit seal.",
             'audit_record' => $row,
         ];
+    }
+
+    // =========================================================================
+    // 7. TENANCY DOMAIN, MULTI-PARTY ORCHESTRATION & SEALED PDF GENERATION
+    // =========================================================================
+
+    /**
+     * Prepares and validates a UK Assured Shorthold Tenancy (AST) or Guarantor Deed package.
+     * Tailored for TenantScore (`scoretenant`).
+     *
+     * Required in $data:
+     * - tenant_name (string)
+     * - tenant_email (string)
+     * - landlord_name (string)
+     * - landlord_email (string)
+     * - property_address (string)
+     * - monthly_rent (float > 0)
+     * - term_months (int > 0)
+     * - tenancy_start_date (string)
+     *
+     * Optional in $data:
+     * - deposit_amount (float >= 0, defaults to 0.0)
+     * - deposit_scheme (string, e.g. 'DPS', 'TDS', 'MyDeposits')
+     * - guarantor_name (string)
+     * - guarantor_email (string)
+     * - agreement_ref (string)
+     * - tenant_id (string)
+     * - landlord_id (string)
+     *
+     * @param array<string, mixed> $data
+     * @param string|null $signingBaseUrl Optional base URL to build per-signer signing_url
+     * @return array<string, mixed>
+     */
+    public static function prepareTenancyContract(array $data, ?string $signingBaseUrl = null): array
+    {
+        $tenantName = trim((string)($data['tenant_name'] ?? ''));
+        $tenantEmail = strtolower(trim((string)($data['tenant_email'] ?? '')));
+        $landlordName = trim((string)($data['landlord_name'] ?? ''));
+        $landlordEmail = strtolower(trim((string)($data['landlord_email'] ?? '')));
+        $propertyAddress = trim((string)($data['property_address'] ?? ''));
+        $startDate = trim((string)($data['tenancy_start_date'] ?? ''));
+
+        if ($tenantName === '' || !filter_var($tenantEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('A valid tenant_name and tenant_email are strictly required for tenancy contracts.');
+        }
+
+        if ($landlordName === '' || !filter_var($landlordEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('A valid landlord_name and landlord_email are strictly required for tenancy contracts.');
+        }
+
+        if ($propertyAddress === '' || $startDate === '') {
+            throw new InvalidArgumentException('property_address and tenancy_start_date are strictly required for tenancy contracts.');
+        }
+
+        $monthlyRent = (float)($data['monthly_rent'] ?? 0.0);
+        $depositAmount = (float)($data['deposit_amount'] ?? 0.0);
+        $termMonths = (int)($data['term_months'] ?? 0);
+
+        if ($monthlyRent <= 0.0 || $termMonths <= 0 || $depositAmount < 0.0) {
+            throw new InvalidArgumentException('Invalid tenancy terms: monthly_rent and term_months must be positive, and deposit_amount cannot be negative.');
+        }
+
+        $guarantorName = trim((string)($data['guarantor_name'] ?? ''));
+        $guarantorEmail = strtolower(trim((string)($data['guarantor_email'] ?? '')));
+        $hasGuarantor = $guarantorName !== '' && $guarantorEmail !== '';
+        if ($hasGuarantor && !filter_var($guarantorEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('guarantor_email must be a valid email address when provided.');
+        }
+
+        $ref = trim((string)($data['agreement_ref'] ?? ''));
+        if ($ref === '') {
+            $ref = self::generateContractRef('TS-AST');
+        }
+
+        $requiredSigners = [
+            [
+                'role' => self::ROLE_LANDLORD,
+                'name' => $landlordName,
+                'email' => $landlordEmail,
+                'signing_token' => self::generateSigningToken(),
+            ],
+            [
+                'role' => self::ROLE_TENANT,
+                'name' => $tenantName,
+                'email' => $tenantEmail,
+                'signing_token' => self::generateSigningToken(),
+            ],
+        ];
+
+        if ($hasGuarantor) {
+            $requiredSigners[] = [
+                'role' => self::ROLE_GUARANTOR,
+                'name' => $guarantorName,
+                'email' => $guarantorEmail,
+                'signing_token' => self::generateSigningToken(),
+            ];
+        }
+
+        if ($signingBaseUrl !== null && $signingBaseUrl !== '') {
+            foreach ($requiredSigners as $idx => $signer) {
+                $requiredSigners[$idx]['signing_url'] = self::buildSigningUrl(
+                    $signingBaseUrl,
+                    $signer['signing_token'],
+                    ['ref' => $ref, 'role' => $signer['role']]
+                );
+            }
+        }
+
+        $termsPayload = [
+            'contract_type' => self::TYPE_TENANCY_AST,
+            'contract_ref' => $ref,
+            'property_address' => $propertyAddress,
+            'landlord' => [
+                'name' => $landlordName,
+                'email' => $landlordEmail,
+                'id' => (string)($data['landlord_id'] ?? ''),
+            ],
+            'tenant' => [
+                'name' => $tenantName,
+                'email' => $tenantEmail,
+                'id' => (string)($data['tenant_id'] ?? ''),
+            ],
+            'guarantor' => $hasGuarantor ? [
+                'name' => $guarantorName,
+                'email' => $guarantorEmail,
+            ] : null,
+            'tenancy_terms' => [
+                'monthly_rent_gbp' => round($monthlyRent, 2),
+                'deposit_amount_gbp' => round($depositAmount, 2),
+                'deposit_scheme' => (string)($data['deposit_scheme'] ?? 'DPS'),
+                'term_months' => $termMonths,
+                'tenancy_start_date' => $startDate,
+            ],
+            'regulatory_compliance' => [
+                'standard' => self::STANDARD_UK_HOUSING,
+                'eca_standard' => self::STANDARD_UK_ECA,
+            ],
+            'created_at' => gmdate('Y-m-d\TH:i:s\Z'),
+        ];
+
+        $termsChecksum = hash('sha256', json_encode(self::canonicalizeArray($termsPayload), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '');
+        $primaryToken = $requiredSigners[1]['signing_token'];
+
+        $contract = [
+            'contract_type' => self::TYPE_TENANCY_AST,
+            'contract_ref' => $ref,
+            'title' => "Assured Shorthold Tenancy ({$ref}) - {$propertyAddress}",
+            'signer_name' => $tenantName,
+            'signer_email' => $tenantEmail,
+            'signer_role' => self::ROLE_TENANT,
+            'signing_token' => $primaryToken,
+            'required_roles' => array_column($requiredSigners, 'role'),
+            'required_signers' => $requiredSigners,
+            'status' => self::STATUS_SENT,
+            'terms_payload' => $termsPayload,
+            'terms_checksum_sha256' => $termsChecksum,
+            'created_at' => gmdate('Y-m-d H:i:s'),
+            'expires_at' => gmdate('Y-m-d H:i:s', time() + self::DEFAULT_TOKEN_TTL),
+        ];
+
+        if ($signingBaseUrl !== null && $signingBaseUrl !== '') {
+            $contract['signing_url'] = self::buildSigningUrl(
+                $signingBaseUrl,
+                $primaryToken,
+                ['ref' => $ref, 'role' => self::ROLE_TENANT]
+            );
+        }
+
+        return $contract;
+    }
+
+    /**
+     * Evaluates multi-party signing progress for a contract against required roles.
+     *
+     * @param PDO $pdo
+     * @param string $contractRef
+     * @param array<int, string> $requiredRoles
+     * @return array{
+     *     contract_ref: string,
+     *     required_roles: array<int, string>,
+     *     signed_roles: array<int, string>,
+     *     pending_roles: array<int, string>,
+     *     is_fully_signed: bool,
+     *     completion_percentage: float,
+     *     signatures: array<int, array<string, mixed>>
+     * }
+     */
+    public static function getContractSigningProgress(PDO $pdo, string $contractRef, array $requiredRoles): array
+    {
+        $normalizedRequired = [];
+        foreach ($requiredRoles as $role) {
+            $clean = strtolower(trim((string)$role));
+            if ($clean !== '' && !in_array($clean, $normalizedRequired, true)) {
+                $normalizedRequired[] = $clean;
+            }
+        }
+
+        if ($normalizedRequired === []) {
+            throw new InvalidArgumentException('requiredRoles must contain at least one non-empty role.');
+        }
+
+        $signatures = self::getSignaturesByContract($pdo, $contractRef);
+        $signedRoles = [];
+        foreach ($signatures as $sig) {
+            $role = strtolower(trim((string)($sig['signer_role'] ?? '')));
+            if ($role !== '' && !in_array($role, $signedRoles, true)) {
+                $signedRoles[] = $role;
+            }
+        }
+
+        $pendingRoles = array_values(array_diff($normalizedRequired, $signedRoles));
+        $matchedCount = count($normalizedRequired) - count($pendingRoles);
+        $percentage = round(($matchedCount / count($normalizedRequired)) * 100.0, 2);
+
+        return [
+            'contract_ref' => $contractRef,
+            'required_roles' => $normalizedRequired,
+            'signed_roles' => $signedRoles,
+            'pending_roles' => $pendingRoles,
+            'is_fully_signed' => $pendingRoles === [],
+            'completion_percentage' => $percentage,
+            'signatures' => $signatures,
+        ];
+    }
+
+    /**
+     * Records a signature in a multi-party workflow and transitions `digital_contracts`
+     * to `signed` only once every required role has executed its signature.
+     *
+     * @param PDO $pdo
+     * @param array<string, mixed> $params Must include `required_roles` (array<int, string>) plus `recordSignature` fields.
+     *                                     Optional `sync_digital_contracts` (bool, default true) updates `digital_contracts` on completion.
+     * @return array{
+     *     success: bool,
+     *     contract_ref: string,
+     *     checksum_sha256: string,
+     *     signed_at: string,
+     *     is_fully_signed: bool,
+     *     pending_roles: array<int, string>,
+     *     completion_percentage: float,
+     *     composite_checksum_sha256: string|null,
+     *     message: string
+     * }
+     */
+    public static function recordMultiPartySignature(PDO $pdo, array $params): array
+    {
+        $requiredRolesRaw = $params['required_roles'] ?? null;
+        if (!is_array($requiredRolesRaw) || $requiredRolesRaw === []) {
+            throw new InvalidArgumentException('required_roles must be a non-empty array of signer roles.');
+        }
+
+        /** @var array<int, string> $requiredRoles */
+        $requiredRoles = array_values(array_map(static fn($r): string => strtolower(trim((string)$r)), $requiredRolesRaw));
+        $contractRef = trim((string)($params['contract_ref'] ?? ''));
+        $signerRole = strtolower(trim((string)($params['signer_role'] ?? '')));
+
+        if ($signerRole === '' || !in_array($signerRole, $requiredRoles, true)) {
+            throw new InvalidArgumentException("signer_role '{$signerRole}' is not in the contract's required_roles list.");
+        }
+
+        $allowDuplicate = (bool)($params['allow_duplicate_role'] ?? false);
+        if (!$allowDuplicate && $contractRef !== '') {
+            $existing = self::getContractSigningProgress($pdo, $contractRef, $requiredRoles);
+            if (in_array($signerRole, $existing['signed_roles'], true)) {
+                throw new RuntimeException("Role '{$signerRole}' has already signed contract '{$contractRef}'.");
+            }
+        }
+
+        // Prevent recordSignature() from prematurely marking the parent table as 'signed'
+        $recordParams = $params;
+        unset($recordParams['update_contract_table'], $recordParams['required_roles'], $recordParams['allow_duplicate_role'], $recordParams['sync_digital_contracts']);
+        $recordParams['signer_role'] = $signerRole;
+
+        $sigResult = self::recordSignature($pdo, $recordParams);
+        $progress = self::getContractSigningProgress($pdo, $sigResult['contract_ref'], $requiredRoles);
+
+        $compositeHash = null;
+        if ($progress['is_fully_signed']) {
+            $hashes = array_map(
+                static fn(array $s): string => (string)($s['checksum_sha256'] ?? ''),
+                $progress['signatures']
+            );
+            $compositeHash = hash('sha256', implode('|', $hashes));
+
+            $syncMaster = (bool)($params['sync_digital_contracts'] ?? true);
+            if ($syncMaster) {
+                $upd = $pdo->prepare('UPDATE `digital_contracts` SET `status` = :status, `document_hash` = :hash, `signed_at` = :signed_at WHERE `contract_ref` = :ref');
+                $upd->execute([
+                    ':status' => self::STATUS_SIGNED,
+                    ':hash' => $compositeHash,
+                    ':signed_at' => $sigResult['signed_at'],
+                    ':ref' => $sigResult['contract_ref'],
+                ]);
+            }
+        }
+
+        return [
+            'success' => true,
+            'contract_ref' => $sigResult['contract_ref'],
+            'checksum_sha256' => $sigResult['checksum_sha256'],
+            'signed_at' => $sigResult['signed_at'],
+            'is_fully_signed' => $progress['is_fully_signed'],
+            'pending_roles' => $progress['pending_roles'],
+            'completion_percentage' => $progress['completion_percentage'],
+            'composite_checksum_sha256' => $compositeHash,
+            'message' => $progress['is_fully_signed']
+                ? "All required parties have signed contract {$sigResult['contract_ref']}."
+                : "Signature recorded for role '{$signerRole}'. Waiting on: " . implode(', ', $progress['pending_roles']) . '.',
+        ];
+    }
+
+    /**
+     * Appends a cryptographic execution & audit certificate to contract HTML.
+     *
+     * @param PDO $pdo
+     * @param string $contractRef
+     * @param string $contractTitle
+     * @param string $bodyHtml
+     * @param string|null $termsChecksum
+     * @return string Complete HTML document ready for PDF rendering
+     */
+    public static function buildAuditCertificateHtml(
+        PDO $pdo,
+        string $contractRef,
+        string $contractTitle,
+        string $bodyHtml,
+        ?string $termsChecksum = null
+    ): string {
+        $stmt = $pdo->prepare('SELECT `signer_name`, `signer_email`, `signer_role`, `signature_base64`, `ip_address`, `checksum_sha256`, `signed_at`
+            FROM `contract_signatures`
+            WHERE `contract_ref` = :ref
+            ORDER BY `signed_at` ASC');
+        $stmt->execute([':ref' => $contractRef]);
+        $signatures = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $esc = static fn(string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        $rowsHtml = '';
+        foreach ($signatures as $sig) {
+            $sigImg = '';
+            $rawSig = trim((string)($sig['signature_base64'] ?? ''));
+            if (str_starts_with($rawSig, 'data:image/')) {
+                $sigImg = '<img src="' . $esc($rawSig) . '" alt="Signature" style="max-height:48px;max-width:160px;border:1px solid #e2e8f0;padding:2px;background:#fff;" />';
+            }
+
+            $rowsHtml .= '<tr>'
+                . '<td style="padding:8px;border:1px solid #cbd5e1;">' . $esc((string)($sig['signer_name'] ?? '')) . '<br><small style="color:#475569;">' . $esc((string)($sig['signer_email'] ?? '')) . '</small></td>'
+                . '<td style="padding:8px;border:1px solid #cbd5e1;text-transform:uppercase;font-size:11px;">' . $esc((string)($sig['signer_role'] ?? '')) . '</td>'
+                . '<td style="padding:8px;border:1px solid #cbd5e1;font-size:11px;">' . $esc((string)($sig['signed_at'] ?? '')) . ' UTC<br>IP: ' . $esc((string)($sig['ip_address'] ?? '')) . '</td>'
+                . '<td style="padding:8px;border:1px solid #cbd5e1;font-family:monospace;font-size:10px;word-break:break-all;">' . $esc((string)($sig['checksum_sha256'] ?? '')) . '</td>'
+                . '<td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">' . $sigImg . '</td>'
+                . '</tr>';
+        }
+
+        if ($rowsHtml === '') {
+            $rowsHtml = '<tr><td colspan="5" style="padding:10px;border:1px solid #cbd5e1;color:#64748b;">No signatures recorded yet.</td></tr>';
+        }
+
+        $termsRow = $termsChecksum !== null && $termsChecksum !== ''
+            ? '<p style="font-size:11px;color:#334155;margin:4px 0;"><strong>Terms Snapshot SHA-256:</strong> <span style="font-family:monospace;">' . $esc($termsChecksum) . '</span></p>'
+            : '';
+
+        $certificate = '<div style="page-break-before:always;font-family:Arial,Helvetica,sans-serif;color:#0f172a;padding:20px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;">'
+            . '<h2 style="margin:0 0 6px 0;font-size:18px;color:#0f172a;">Cryptographic Execution &amp; Audit Certificate</h2>'
+            . '<p style="font-size:12px;color:#334155;margin:4px 0;"><strong>Document:</strong> ' . $esc($contractTitle) . ' (' . $esc($contractRef) . ')</p>'
+            . $termsRow
+            . '<p style="font-size:11px;color:#475569;margin:4px 0 14px 0;">Executed electronically under ' . $esc(self::STANDARD_UK_ECA) . ' &amp; ' . $esc(self::STANDARD_EIDAS) . '.</p>'
+            . '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#ffffff;">'
+            . '<thead><tr style="background:#e2e8f0;text-align:left;">'
+            . '<th style="padding:8px;border:1px solid #cbd5e1;">Signatory</th>'
+            . '<th style="padding:8px;border:1px solid #cbd5e1;">Role</th>'
+            . '<th style="padding:8px;border:1px solid #cbd5e1;">Timestamp &amp; Origin</th>'
+            . '<th style="padding:8px;border:1px solid #cbd5e1;">SHA-256 Seal</th>'
+            . '<th style="padding:8px;border:1px solid #cbd5e1;">Mark</th>'
+            . '</tr></thead>'
+            . '<tbody>' . $rowsHtml . '</tbody>'
+            . '</table>'
+            . '</div>';
+
+        return $bodyHtml . "\n" . $certificate;
+    }
+
+    /**
+     * Renders a sealed contract with its Cryptographic Audit Certificate into a PDF binary
+     * using SovereignPdfEngine.
+     *
+     * @param PDO $pdo
+     * @param string $contractRef
+     * @param string $contractTitle
+     * @param string $bodyHtml
+     * @param string|null $termsChecksum
+     * @param array<string, mixed> $pdfOptions
+     * @return string Raw PDF binary
+     */
+    public static function renderSealedContractPdf(
+        PDO $pdo,
+        string $contractRef,
+        string $contractTitle,
+        string $bodyHtml,
+        ?string $termsChecksum = null,
+        array $pdfOptions = []
+    ): string {
+        $fullHtml = self::buildAuditCertificateHtml($pdo, $contractRef, $contractTitle, $bodyHtml, $termsChecksum);
+        $options = array_merge(['title' => $contractTitle, 'author' => 'DigitalContractEngine'], $pdfOptions);
+
+        return \Src\Media\SovereignPdfEngine::renderHtmlToPdf($fullHtml, $options);
     }
 
     // =========================================================================
