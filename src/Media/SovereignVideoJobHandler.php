@@ -818,13 +818,19 @@ class SovereignVideoJobHandler
         $saturation = max(0.0, min(2.0, 1.0 + ((float) ($adjustments['saturation'] ?? 0.0)) / 100.0));
         $tint = max(-45.0, min(45.0, (float) ($adjustments['tint'] ?? 0.0)));
         $highlights = max(-50.0, min(50.0, (float) ($adjustments['highlights'] ?? 0.0)));
+        $temp = max(-50.0, min(50.0, (float) ($adjustments['temp'] ?? 0.0)));
         $sharp = max(0.0, min(2.0, ((float) ($adjustments['sharpness'] ?? 0.0)) / 50.0));
+        $vignette = max(0.0, min(1.0, (float) ($adjustments['vignette'] ?? 0.0)));
 
         $parts = [
             sprintf('eq=brightness=%.3f:contrast=%.3f:saturation=%.3f', $combinedBrightness, $contrast, $saturation),
         ];
         if (abs($tint) > 0.01) {
             $parts[] = sprintf('hue=h=%.2f', $tint);
+        }
+        if (abs($temp) > 0.01) {
+            $warmShift = $temp / 250.0;
+            $parts[] = sprintf('colorbalance=rs=%.3f:bs=%.3f', $warmShift, -$warmShift);
         }
         if (abs($highlights) > 0.01) {
             $rimax = max(0.75, min(1.0, 1.0 - ($highlights / 200.0)));
@@ -833,7 +839,33 @@ class SovereignVideoJobHandler
         if ($sharp > 0.0) {
             $parts[] = sprintf('unsharp=5:5:%.2f:5:5:0.0', $sharp);
         }
+        if ($vignette > 0.0) {
+            $angle = 0.25 + ($vignette * 0.55);
+            $parts[] = sprintf('vignette=angle=%.3f', $angle);
+        }
         return implode(',', $parts);
+    }
+
+    /**
+     * NLE Core: Build deterministic FFmpeg video stabilisation filtergraph.
+     * Supports two-pass vidstabtransform or single-pass deshake fallback.
+     */
+    public static function buildStabiliseFilterGraph(
+        float $shakiness = 5.0,
+        float $smoothing = 10.0,
+        bool $twoPass = false
+    ): string {
+        $safeShakiness = max(1, min(10, (int) round($shakiness)));
+        $safeSmoothing = max(1, min(30, (int) round($smoothing)));
+        if ($twoPass) {
+            return sprintf(
+                'vidstabdetect=shakiness=%d:accuracy=10,vidstabtransform=smoothing=%d:zoom=2:optzoom=1',
+                $safeShakiness,
+                $safeSmoothing
+            );
+        }
+        $rx = max(8, min(64, $safeShakiness * 4));
+        return sprintf('deshake=rx=%d:ry=%d:edge=mirror', $rx, $rx);
     }
 
     /**

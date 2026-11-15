@@ -28,7 +28,8 @@ Inspired by the 7-component automated production pipeline—and hardened with 3 
 
 ## 0.1 Prompt Specialist & Auto-Triage Protocol (Stage 1 & 2)
 
-1. **Show `📝 Refined Brief` (3–6 lines) on Turn 1**:
+1. **MANDATORY FIRST-TEXT OUTPUT: Show `📝 Refined Brief` (3–6 lines) on Turn 1 BEFORE calling any tools**:
+   - You MUST emit this text directly to the user at the very start of Turn 1 so the user sees it immediately on their screen before any background commands run.
    - **Goal**, **Where** (route/file), **Tier** (1/2/3 inferred automatically), **Constraints** (UK English, privacy, domain guide), and **Done when**.
 2. **Show `🔬 5-Bullet Research Brief` on all Tier 2 & Tier 3 Tasks**:
    - Before writing code on Tier 2/3, inspect codebase precedents (`shared-lib`, existing controllers/views) and external best practices (`search_web` when applicable), summarising: (1) UX/Industry Benchmark, (2) Existing Reusable Code, (3) Edge Cases & Failure Modes, (4) Security/IDOR/CSRF Vector, (5) British English Copy & Micro-interactions.

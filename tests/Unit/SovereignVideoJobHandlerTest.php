@@ -259,4 +259,21 @@ class SovereignVideoJobHandlerTest extends TestCase
         $this->assertStringContainsString('sin(2*PI*6.00*t)', $lightFg);
         $this->assertStringContainsString('colorbalance=', $lightFg);
     }
+
+    public function test_adjustment_temp_vignette_and_stabilise_filtergraphs(): void
+    {
+        $adjFg = SovereignVideoJobHandler::buildAdjustmentFilterGraph([
+            'temp' => 25,
+            'vignette' => 0.5,
+            'sharpness' => 25,
+        ]);
+        $this->assertStringContainsString('colorbalance=rs=', $adjFg);
+        $this->assertStringContainsString('vignette=angle=', $adjFg);
+
+        $deshake = SovereignVideoJobHandler::buildStabiliseFilterGraph(6.0, 12.0, false);
+        $this->assertSame('deshake=rx=24:ry=24:edge=mirror', $deshake);
+
+        $twoPass = SovereignVideoJobHandler::buildStabiliseFilterGraph(50.0, 99.0, true);
+        $this->assertSame('vidstabdetect=shakiness=10:accuracy=10,vidstabtransform=smoothing=30:zoom=2:optzoom=1', $twoPass);
+    }
 }
