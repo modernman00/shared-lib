@@ -78,9 +78,31 @@ final class WorldEngineStudioTest extends TestCase
         $this->assertStringContainsString('<script nonce="abc123XYZnonce">', $html);
         $this->assertStringContainsString('<style nonce="abc123XYZnonce">', $html);
         $this->assertStringContainsString('WorldEngine.Studio.mount', $html);
+        $this->assertStringContainsString('WE.NLE', $html);
+        $this->assertStringContainsString('WE.Tour', $html);
+        $this->assertStringContainsString('data-tour-menu', $html);
+        $this->assertStringContainsString('wes-tour-overlay', $html);
+        $this->assertStringContainsString('wes-tour-pill', $html);
+        $this->assertStringContainsString('we:tour:seen:', $html);
+        $this->assertStringContainsString('Video &amp; Photo Lab', $html);
         $this->assertStringContainsString('FamilyPlatform', $html);
         // exactly one closing script tag: the bundle can never terminate the inline script early
         $this->assertSame(1, substr_count(strtolower($html), '</script>'));
+    }
+
+    public function testTourEngineUsesBritishEnglishAndSupportsAllRooms(): void
+    {
+        $tourJs = (string) file_get_contents(WorldStudio::resourceDir() . '/js/09-tour-engine.js');
+        $css = (string) file_get_contents(WorldStudio::resourceDir() . '/studio.css');
+        $this->assertNotSame('', $tourJs);
+        foreach (['explainer', 'poster', 'nle', 'buildGrandTour', 'tryIt', 'positionMenu', "e.key === 'Tab'", 'r.width === 0 && r.height === 0'] as $token) {
+            $this->assertStringContainsString($token, $tourJs);
+        }
+        $this->assertStringContainsString('max-height:calc(100vh - 24px)', $css);
+        $copyOnly = str_replace("behavior: 'smooth'", '', $tourJs);
+        foreach (['organize', 'color', 'favorite', 'optimize', 'center ', 'behavior'] as $us) {
+            $this->assertStringNotContainsStringIgnoringCase($us, $copyOnly, "US spelling '$us' in 09-tour-engine.js");
+        }
     }
 
     public function testMaliciousNonceAndAiEndpointAreIgnored(): void
@@ -94,6 +116,22 @@ final class WorldEngineStudioTest extends TestCase
         $this->assertStringNotContainsString('alert(1)', $html);
         $cfg = WorldStudio::clientConfig('party', ['aiEndpoint' => 'https://evil.example/collect']);
         $this->assertNull($cfg['aiEndpoint'], 'Only same-origin relative endpoints are allowed');
+
+        $badMedia = WorldStudio::clientConfig('familyplatform', ['mediaUrl' => 'https://evil.example/p.jpg']);
+        $this->assertNull($badMedia['initialMedia']);
+        $traversalMedia = WorldStudio::clientConfig('familyplatform', ['mediaUrl' => '/uploads/../etc/passwd']);
+        $this->assertNull($traversalMedia['initialMedia']);
+        $goodMedia = WorldStudio::clientConfig('familyplatform', ['mediaUrl' => '/public/uploads/test.jpg', 'mediaKind' => 'image']);
+        $this->assertSame(['url' => '/public/uploads/test.jpg', 'kind' => 'image'], $goodMedia['initialMedia']);
+
+        $seqCfg = WorldStudio::clientConfig('partyplatform', [
+            'initialSequence' => [
+                ['url' => 'https://evil.example/a.mp4', 'kind' => 'video', 'label' => 'Evil'],
+                ['url' => '/uploads/tribute1.webm', 'kind' => 'video', 'label' => 'Auntie Bimbo', 'duration' => 12],
+            ],
+        ]);
+        $this->assertCount(1, $seqCfg['initialSequence']);
+        $this->assertSame('Auntie Bimbo', $seqCfg['initialSequence'][0]['label']);
     }
 
     public function testLegacyExplainerDelegatesToWorldEngine(): void

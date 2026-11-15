@@ -146,6 +146,36 @@ class EcosystemPromoService
             'trigger_keywords' => ['care', 'nurse', 'health', 'carer', 'cqc', 'elderly', 'hospital', 'staffing', 'shift', 'medical', 'clinic', 'first_aid', 'safeguarding'],
             'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="url(#bcp_grad)"/><path d="M16 8V24M8 16H24" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="11" stroke="#70a936" stroke-width="2"/><defs><linearGradient id="bcp_grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#006699"/><stop offset="1" stop-color="#004d73"/></linearGradient></defs></svg>',
         ],
+        'growthforge' => [
+            'name' => 'GrowthForge',
+            'headline' => 'Autonomous AI Growth, AEO Visibility & 34-Channel Media OS',
+            'tagline' => 'OpenSEO + Postiz + Shorts + Ghost Engine',
+            'description' => 'Turn internal meeting notes into 34-channel social campaigns, AI YouTube Shorts, multilingual VideoLingo dubs, and #1 ChatGPT/Google AEO citations.',
+            'cta_text' => 'Launch GrowthForge',
+            'badge' => 'AI GROWTH OS',
+            'accent_color' => '#f97316', // Sovereign Amber-Orange
+            'gradient' => 'linear-gradient(135deg, #ea580c 0%, #f59e0b 100%)',
+            'icon' => 'bi-rocket-takeoff-fill',
+            'default_url' => 'https://growthforgeapp.com',
+            'env_key' => 'GROWTHFORGE_APP_URL',
+            'trigger_keywords' => ['seo', 'aeo', 'marketing', 'social_media', 'newsletter', 'shorts', 'growth', 'leads', 'traffic', 'content'],
+            'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#0f172a"/><path d="M8 22L14 15L18 19L24 10" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 10H24V15" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        ],
+        'hermespulse' => [
+            'name' => 'HermesPulse',
+            'headline' => '24/7 Autonomous AI Concierge & Legacy SaaS Moderniser',
+            'tagline' => 'Persistent-Memory AI Operations Department',
+            'description' => 'Deploy dedicated 24/7 AI concierge agents to chase compliance, references, and leads across WhatsApp, SMS, and Email while replacing bloated legacy SaaS.',
+            'cta_text' => 'Hire AI Concierge',
+            'badge' => '24/7 AI CONCIERGE',
+            'accent_color' => '#14b8a6', // Sovereign Teal
+            'gradient' => 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
+            'icon' => 'bi-robot',
+            'default_url' => 'https://growthforgeapp.com/?suite=hermespulse',
+            'env_key' => 'HERMESPULSE_APP_URL',
+            'trigger_keywords' => ['concierge', 'automation', 'agent', 'outreach', 'follow_up', 'chaser', 'legacy_saas', 'operations', 'whatsapp_bot'],
+            'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#042f2e"/><circle cx="16" cy="16" r="8" stroke="#14b8a6" stroke-width="2.5"/><circle cx="16" cy="16" r="3" fill="#5eead4"/><path d="M16 4V8M16 24V28M4 16H8M24 16H28" stroke="#14b8a6" stroke-width="2" stroke-linecap="round"/></svg>',
+        ],
     ];
 
     /**

@@ -47,6 +47,12 @@
         <div class="wes-rooms" role="tablist">
           <button class="wes-room on" data-room="explainer" role="tab">🎬 Explainer videos</button>
           <button class="wes-room" data-room="poster" role="tab">🖼️ Posters &amp; flyers</button>
+          <button class="wes-room" data-room="nle" role="tab">🎞️ Video &amp; Photo Lab</button>
+        </div>
+        <div class="wes-top-actions">
+          <div class="wes-tour-wrap">
+            <button type="button" class="wes-btn wes-tour-trigger" data-tour-menu aria-haspopup="menu" aria-expanded="false" title="Guided studio tour">❓ Tour</button>
+          </div>
         </div>
       </div>
       <div class="wes-body"></div>
@@ -59,11 +65,15 @@
       $$(el, '.wes-room').forEach((b) => b.classList.toggle('on', b.dataset.room === name));
       if (studio.room && studio.room.destroy) studio.room.destroy();
       const body = $(el, '.wes-body'); body.innerHTML = '';
-      studio.room = name === 'poster' ? posterRoom(body, studio) : explainerRoom(body, studio);
+      studio.room = name === 'poster' ? posterRoom(body, studio) : (name === 'nle' && WE.NLE ? WE.NLE.mount(body, studio, { History }) : explainerRoom(body, studio));
       store.set('we:room:' + cfg.app, name);
     };
+    studio.open = open;
     $$(el, '.wes-room').forEach((b) => b.addEventListener('click', () => open(b.dataset.room)));
-    open(store.get('we:room:' + cfg.app) || 'explainer');
+    open((cfg.initialMedia && cfg.initialMedia.url) || (cfg.initialSequence && cfg.initialSequence.length) ? 'nle' : (store.get('we:room:' + cfg.app) || 'explainer'));
+    if (WE.Tour && typeof WE.Tour.mount === 'function') {
+      studio.tour = WE.Tour.mount(studio);
+    }
     return studio;
   };
 

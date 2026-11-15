@@ -38,7 +38,7 @@ final class WorldStudio
         'interbold' => 'https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuDyYAZ9hiJ-Ek-_EeA.woff2',
     ];
 
-    private const JS_FILES = ['01-core.js', '02-cast.js', '03-audio.js', '04-explainer.js', '05-poster.js', '06-director.js', '07-studio.js'];
+    private const JS_FILES = ['01-core.js', '02-cast.js', '03-audio.js', '04-explainer.js', '05-poster.js', '06-director.js', '07-studio.js', '08-nle-lab.js', '09-tour-engine.js'];
 
     private static ?string $bundleCache = null;
 
@@ -98,6 +98,32 @@ final class WorldStudio
         $cfg['fontFallback'] = self::FONT_CDN;
         $cfg['aiEndpoint'] = isset($options['aiEndpoint']) && is_string($options['aiEndpoint']) && str_starts_with($options['aiEndpoint'], '/') ? $options['aiEndpoint'] : null;
         $cfg['csrf'] = isset($options['csrf']) && is_string($options['csrf']) ? $options['csrf'] : null;
+        $cfg['initialMedia'] = null;
+        if (isset($options['mediaUrl']) && is_string($options['mediaUrl'])) {
+            $mu = trim($options['mediaUrl']);
+            if ($mu !== '' && str_starts_with($mu, '/') && !str_starts_with($mu, '//') && !str_contains($mu, '..') && !str_contains($mu, "\0")) {
+                $kind = isset($options['mediaKind']) && $options['mediaKind'] === 'video' ? 'video' : 'image';
+                $cfg['initialMedia'] = ['url' => $mu, 'kind' => $kind];
+            }
+        }
+        $cfg['initialSequence'] = [];
+        if (isset($options['initialSequence']) && is_array($options['initialSequence'])) {
+            foreach (array_slice($options['initialSequence'], 0, 50) as $item) {
+                if (!is_array($item) || empty($item['url']) || !is_string($item['url'])) {
+                    continue;
+                }
+                $u = trim($item['url']);
+                if ($u === '' || !str_starts_with($u, '/') || str_starts_with($u, '//') || str_contains($u, '..') || str_contains($u, "\0")) {
+                    continue;
+                }
+                $cfg['initialSequence'][] = [
+                    'url' => $u,
+                    'kind' => (($item['kind'] ?? 'video') === 'image') ? 'image' : 'video',
+                    'label' => is_string($item['label'] ?? null) ? mb_substr(trim($item['label']), 0, 80) : 'Clip',
+                    'duration' => max(1.0, min(120.0, (float) ($item['duration'] ?? 6.0))),
+                ];
+            }
+        }
         return $cfg;
     }
 

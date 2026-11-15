@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Progress Report (8 Nov – 15 Nov 2026)</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #1e40af;
+      --accent-soft: #eff6ff;
+      --badge-bg: #f1f5f9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-bottom: 24px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+    .btn:hover { filter: brightness(0.96); }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 15px; margin: 0; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .stat-card {
+      background: var(--accent-soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .stat-value { font-size: 26px; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    h2 {
+      font-size: 20px;
+      margin: 32px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 17px;
+      margin: 22px 0 8px;
+      color: var(--accent);
+    }
+    ul { margin: 8px 0 16px; padding-left: 20px; }
+    li { margin-bottom: 8px; font-size: 15px; }
+    .app-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+      background: #ffffff;
+    }
+    .app-card h3 { margin-top: 0; }
+    .pill {
+      display: inline-block;
+      background: var(--badge-bg);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .toolbar { display: none !important; }
+      h2 { page-break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+      <button class="btn" onclick="downloadMarkdown()">Download Summary (.md)</button>
+    </div>
+
+    <header>
+      <h1>Weekly Progress Report: What We Built &amp; Improved</h1>
+      <p class="subtitle">Period: 8 November 2026 – 15 November 2026 · Plain-English Summary for Stakeholders &amp; Teams</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value">131</div>
+        <div class="stat-label">Completed Updates</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Apps Updated</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">7 Days</div>
+        <div class="stat-label">Reporting Window</div>
+      </div>
+    </div>
+
+    <h2>Key Highlights at a Glance</h2>
+    <ul>
+      <li><strong>Rich New Creative Tools:</strong> Upgraded our video and poster studios with automatic portrait background removal, step-by-step guided tours, and new invitation and festive card collections.</li>
+      <li><strong>Live Streaming &amp; Private Family Chat:</strong> Launched live event broadcasting for party hosts (<em>Virtual Front Row</em>) and private, encrypted family messaging with voice and video calling (<em>FamilyChat</em>).</li>
+      <li><strong>Better Mobile &amp; Accessibility Experience:</strong> Added faster mobile-first explainer videos, easier sharing directly from your phone, and accessibility upgrades so more people can use our tools comfortably.</li>
+      <li><strong>Stronger Privacy &amp; Reliability:</strong> Hardened account protection, secured shared report links, improved file-upload safety, and streamlined how updates are delivered across all 8 apps.</li>
+    </ul>
+
+    <h2>What Changed in Each App</h2>
+
+    <div class="app-card">
+      <h3>FamilyPlatform <span class="pill">41 updates</span></h3>
+      <ul>
+        <li><strong>FamilyChat (formerly Kin Whispers):</strong> Launched private, encrypted family messaging with voice and video calling, member permission controls, and clearer family relationship labels.</li>
+        <li><strong>Easier Phone Sharing:</strong> Added the ability to share photos, links, and content directly into FamilyPlatform from other apps on your phone, plus smart clipboard paste.</li>
+        <li><strong>Unified Creative Studio &amp; Festive Cards:</strong> Brought Flyer Studio, Festive Cards, and Family Tree Studio together into one Creative Studio hub. Launched customisable Festive Cards with animated "Living Envelopes", custom occasions, and safe sharing.</li>
+        <li><strong>Upgraded Video Studio:</strong> Rolled out the new Video Studio with a guided spotlight tour, easy format switching, and faster media uploads.</li>
+        <li><strong>3D Interactive Feed &amp; 60-Day Journey:</strong> Added 3D interactive polls, trivia, and text stage posts to the family feed, plus a 60-day guided discovery journey.</li>
+        <li><strong>Polish &amp; Safety:</strong> Enlarged mobile tap targets for easier use, removed screen flicker on load, and strengthened security across forms and shared content.</li>
+      </ul>
+    </div>
+
+    <div class="app-card">
+      <h3>PartyPlatform <span class="pill">29 updates</span></h3>
+      <ul>
+        <li><strong>Virtual Front Row (Live Event Streaming):</strong> Built a live event streaming studio so hosts can broadcast celebrations, send one-click invite links, and help guests find live streams easily via event search—complete with quick-start host guides.</li>
+        <li><strong>Invitation Design Gallery:</strong> Launched themed invitation collections for Weddings, Babies, Graduations, Corporate Events, Birthday Bashes, and Festive Occasions, with custom photo positioning, zoom controls, acrylic keepsake share images, and rich WhatsApp link previews.</li>
+        <li><strong>Upgraded Video &amp; Poster Studios:</strong> Added the new Video Studio with auto-editing and guided tours, plus smart automatic background removal for event posters so portraits blend cleanly into designs.</li>
+        <li><strong>Guest Seating &amp; Invitations:</strong> Improved automatic guest seating allocation, Goodwill Cinema, planner reminders, and WhatsApp guest invitations.</li>
+      </ul>
+    </div>
+
+    <div class="app-card">
+      <h3>iDecide <span class="pill">13 updates</span></h3>
+      <ul>
+        <li><strong>Mobile-First Tours &amp; Accessibility:</strong> Launched mobile-friendly explainer videos, a 25-second Monte Carlo simulation tour, faster page loading, and accessibility upgrades to meet modern readability and navigation standards.</li>
+        <li><strong>Time Intelligence &amp; Seasonal Demos:</strong> Added Time Intelligence planning features and Black Friday / Christmas decision demos, plus seamless session recovery so users never lose their progress.</li>
+      </ul>
+    </div>
+
+    <div class="app-card">
+      <h3>iAccount <span class="pill">9 updates</span></h3>
+      <ul>
+        <li><strong>Wealth Intelligence Blog:</strong> Launched a new Wealth Intelligence blog and editorial publishing section with article view counts.</li>
+        <li><strong>Account &amp; Payment Security:</strong> Strengthened security checks around user actions and financial signing.</li>
+      </ul>
+    </div>
+
+    <div class="app-card">
+      <h3>ExecMind <span class="pill">8 updates</span></h3>
+      <ul>
+        <li><strong>Unified Deal &amp; Mandate Engine:</strong> Introduced a unified system for managing deals and mandates, complete with structured reporting schedules and tailored outputs for different executive roles.</li>
+        <li><strong>Safer Public Report Sharing:</strong> Upgraded shared report links to use unique, high-security tokens so private reports stay protected.</li>
+      </ul>
+    </div>
+
+    <div class="app-card">
+      <h3>LoanEasyFinance, BCP &amp; ScoreTenant <span class="pill">8 updates combined</span></h3>
+      <ul>
+        <li><strong>Security &amp; Consistency:</strong> Strengthened financial signing security in LoanEasyFinance, synced the latest poster design tools, and rolled out shared reliability, speed, and security upgrades across all three apps.</li>
+      </ul>
+    </div>
+
+    <h2>Behind-the-Scenes Platform Improvements</h2>
+    <ul>
+      <li><strong>Shared Publishing Studio:</strong> Built a central editorial tool so teams can write, preview, and publish blog articles consistently across multiple apps.</li>
+      <li><strong>Digital Contract Signing &amp; Notifications:</strong> Added a reusable digital contract signing tool and improved web push notifications.</li>
+      <li><strong>Updated Brand Adverts:</strong> Refreshed promotional banners for FamilyPlatform and BCP with better ad rotation and tracking.</li>
+      <li><strong>Faster, Safer Rollouts:</strong> Standardised how all 8 apps package and verify updates before release, reducing errors and speeding up deployments.</li>
+    </ul>
+  </div>
+
+  <script>
+    function downloadMarkdown() {
+      const content = document.querySelector('.container').innerText;
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'weekly-progress-report-2026-11-15.md';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

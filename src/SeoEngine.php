@@ -489,4 +489,16 @@ class SeoEngine
 
         return implode("\n", $lines) . "\n";
     }
+
+    /**
+     * Generates an AEO-compliant /llms.txt specification for AI Answer Engines
+     * (ChatGPT Search, Perplexity, Claude, Gemini) inspired by OpenSEO.
+     *
+     * @param array<string, mixed> $brandProfile
+     * @return string Formatted Markdown for /llms.txt
+     */
+    public static function renderLlmsTxt(array $brandProfile): string
+    {
+        return \Src\Growth\AeoVisibilityEngine::generateLlmsTxt($brandProfile);
+    }
 }
