@@ -65,33 +65,33 @@ class Sanitise
      * @throws RuntimeException If CSRF token is invalid or missing
      */
      protected function validateCsrfToken(): self
-{
-    if (isset($this->formData['token'])) {
-
+    {
         $sessionToken = $_SESSION['token'] ?? null;
         $postToken    = $this->formData['token'] ?? null;
-        $headerToken  = $_SERVER['HTTP_X_XSRF_TOKEN'] ?? null;
+        $headerToken  = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_SERVER['HTTP_X_XSRF_TOKEN'] ?? null;
 
-        $valid = false;
+        if (is_string($sessionToken) && $sessionToken !== '') {
+            $valid = false;
 
-        if (is_string($sessionToken) && is_string($headerToken)
-            && hash_equals($sessionToken, $headerToken)) {
-            $valid = true;
+            if (is_string($headerToken) && $headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
+                $valid = true;
+            } elseif (is_string($postToken) && $postToken !== '' && hash_equals($sessionToken, $postToken)) {
+                $valid = true;
+            }
 
-        } elseif (is_string($sessionToken) && is_string($postToken)
-            && hash_equals($sessionToken, $postToken)) {
-            $valid = true;
-        }
-
-        if (!$valid) {
+            if (!$valid) {
+                throw new UnauthorisedException(
+                    'We are not familiar with the nature of your activities.'
+                );
+            }
+        } elseif (isset($this->formData['token']) || (is_string($headerToken) && $headerToken !== '')) {
             throw new UnauthorisedException(
                 'We are not familiar with the nature of your activities.'
             );
         }
-    }
 
-    return $this;
-}
+        return $this;
+    }
 
     /**
      * Validates email format.

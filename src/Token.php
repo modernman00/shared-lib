@@ -140,6 +140,9 @@ class Token extends CheckToken
     public static function verifyToken($code)
     {
         $code = Utility::checkInput($code);
+        if (!is_string($code) || trim($code) === '' || in_array(strtoupper(trim($code)), ['LOCKED', 'USED'], true)) {
+            throw new UnauthorisedException('Cannot verify token. Invalid code provided.');
+        }
         $email = cleanSession($_SESSION['auth']['email']);
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COL_DYNAMICALLY_ID_AND',

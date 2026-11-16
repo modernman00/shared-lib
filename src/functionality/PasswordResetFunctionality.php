@@ -34,28 +34,32 @@ class PasswordResetFunctionality
      *
      * @throws UnauthorisedException
      */
-          public static function show(string $viewPath, string $identifySession = 'token'): void
+    public static function show(string $viewPath, string $identifySession = 'token'): void
     {
-
-            // check if auth.identifyCust is set
-        // check if auth.identifyCust is set
-        if (!isset($_SESSION['auth']['identifyCust']) && !isset($_SESSION['auth']['codeVerified_ts'])) {
+        if (
+            !isset($_SESSION['auth']['identifyCust'])
+            || ($_SESSION['auth']['codeVerified'] ?? false) !== true
+            || !isset($_SESSION['auth']['codeVerified_ts'])
+            || !is_numeric($_SESSION['auth']['codeVerified_ts'])
+        ) {
             $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
+            return;
         }
 
-        if (isset($_SESSION['auth']['codeVerified_ts']) && (time() - ($_SESSION['auth']['codeVerified_ts'])) > 1500) {
-            $diff = time() - $_SESSION['auth']['codeVerified_ts'];
-                        $fallback = $_ENV['401URL'] ?? '/401';
+        if ((time() - (int) $_SESSION['auth']['codeVerified_ts']) > 900) {
+            $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
+            return;
         }
-        
+
         $value = $_SESSION['auth']['identifyCust'];
-        if($value !== null){
+        if ($value !== null) {
             AuthGateMiddleware::enforce('auth.identifyCust', $value);
         } else {
             $fallback = $_ENV['401URL'] ?? '/401';
             redirect($fallback);
+            return;
         }
         view2($viewPath);
     }
@@ -96,10 +100,21 @@ class PasswordResetFunctionality
         if (!$input) {
             throw new NotFoundException('There was no post data');
         }
+
+        // Enforce completed & fresh 2FA code verification before allowing password reset
+        if (
+            ($_SESSION['auth']['codeVerified'] ?? false) !== true
+            || !isset($_SESSION['auth']['codeVerified_ts'])
+            || !is_numeric($_SESSION['auth']['codeVerified_ts'])
+            || (time() - (int) $_SESSION['auth']['codeVerified_ts']) > 900
+        ) {
+            throw new UnauthorisedException('Verification code required or expired. Please restart password recovery.');
+        }
+
         // Extract and sanitise incoming password field
         $cleanData = CheckSanitise::getSanitisedInputData($input, [
             'data' => ['password', 'confirm_password'],
-            'min'  => [6, 6],
+            'min'  => [8, 8],
             'max'  => [30, 30],
         ]);
 
@@ -130,7 +145,9 @@ class PasswordResetFunctionality
             try {
                 $db = \Src\Db::connect2();
                 if ($db) {
-                    $stmt = $db->prepare("UPDATE {$_ENV['DB_TABLE_LOGIN']} SET token_version = token_version + 1 WHERE id = ?");
+                    $loginTable = preg_replace('/[^a-zA-Z0-9_]/', '', (string) ($_ENV['DB_TABLE_LOGIN'] ?? 'users')) ?: 'users';
+                    $sql = sprintf('UPDATE `%s` SET token_version = token_version + 1 WHERE id = ?', $loginTable);
+                    $stmt = $db->prepare($sql);
                     $stmt->execute([$userId]);
                 }
             } catch (\PDOException $e) {

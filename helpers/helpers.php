@@ -653,8 +653,24 @@ function redirect(string $path): void
  */
 function destroyCookie(): void
 {
+    $env = $_ENV['APP_ENV'] ?? 'production';
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+               (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $secure = !in_array($env, ['local', 'development'], true) && $isHttps;
+
     foreach ($_COOKIE as $key => $value) {
-        setcookie($key, '', time() - 3600);
+        $cookieOptions = [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => $secure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieOptions['domain'] = $_ENV['COOKIE_DOMAIN'];
+        }
+        setcookie((string) $key, '', $cookieOptions);
+        unset($_COOKIE[$key]);
     }
 }
 

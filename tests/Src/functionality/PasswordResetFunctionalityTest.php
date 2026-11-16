@@ -68,6 +68,12 @@ class PasswordResetFunctionalityTest extends TestCase
         $_COOKIE['auth_forgot'] = JWT::encode(['iat' => time(), 'exp' => time() + 600, 'data' => ['email' => $email, 'id' => $id]], self::KEY, 'HS256');
     }
 
+    private function markCodeVerified(): void
+    {
+        $_SESSION['auth']['codeVerified'] = true;
+        $_SESSION['auth']['codeVerified_ts'] = time();
+    }
+
     private function process(): array
     {
         ob_start();
@@ -82,8 +88,18 @@ class PasswordResetFunctionalityTest extends TestCase
         $this->assertStringContainsString('There was no post data', $out);
     }
 
+    public function testRejectsUnverifiedSession(): void
+    {
+        $this->resetCookieFor('user@example.com');
+        $_POST = ['password' => 'NewPassword123', 'confirm_password' => 'NewPassword123'];
+        [$ok, $out] = $this->process();
+        $this->assertFalse($ok);
+        $this->assertStringContainsString('Verification code required or expired', $out);
+    }
+
     public function testRejectsMismatchedPasswords(): void
     {
+        $this->markCodeVerified();
         $this->resetCookieFor('user@example.com');
         $_POST = ['password' => 'NewPassword123', 'confirm_password' => 'Different123'];
         [$ok, $out] = $this->process();
@@ -93,6 +109,7 @@ class PasswordResetFunctionalityTest extends TestCase
 
     public function testRequiresTheSignedResetCookie(): void
     {
+        $this->markCodeVerified();
         $_POST = ['password' => 'NewPassword123', 'confirm_password' => 'NewPassword123'];
         [$ok, $out] = $this->process();
         $this->assertFalse($ok);
@@ -101,6 +118,7 @@ class PasswordResetFunctionalityTest extends TestCase
 
     public function testRejectsAResetCookieSignedWithAnotherKey(): void
     {
+        $this->markCodeVerified();
         $_COOKIE['auth_forgot'] = JWT::encode(['exp' => time() + 600, 'data' => ['email' => 'victim@example.com']], 'attacker-key-0123456789abcdef0123456789', 'HS256');
         $_POST = ['password' => 'NewPassword123', 'confirm_password' => 'NewPassword123'];
         $this->recordingDb();
@@ -111,6 +129,7 @@ class PasswordResetFunctionalityTest extends TestCase
 
     public function testChangesThePasswordAndRevokesSessions(): void
     {
+        $this->markCodeVerified();
         $this->resetCookieFor('user@example.com', 'U42');
         $_POST = ['password' => 'NewPassword123', 'confirm_password' => 'NewPassword123'];
         $this->recordingDb();

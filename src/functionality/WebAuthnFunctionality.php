@@ -303,7 +303,15 @@ class WebAuthnFunctionality
                 : (str_contains($ua, 'Windows') ? 'Windows Hello' : 'Biometric Passkey'))));
             $rawDeviceName = !empty($input['deviceName']) && is_string($input['deviceName']) ? trim(strip_tags($input['deviceName'])) : $defaultDevice;
             $deviceName = mb_substr($rawDeviceName !== '' ? $rawDeviceName : $defaultDevice, 0, 120);
-            $publicKey = (string) ($input['rawId'] ?? $input['publicKey'] ?? ('pk_' . bin2hex(random_bytes(16))));
+            $attestationObject = $input['response']['attestationObject'] ?? null;
+            if (is_string($attestationObject) && $attestationObject !== '') {
+                $publicKey = $service->extractPublicKeyFromAttestation($attestationObject);
+            } else {
+                $publicKey = (string) ($input['publicKey'] ?? '');
+                if ($publicKey === '') {
+                    throw new \InvalidArgumentException("Missing attestationObject or publicKey for passkey registration.");
+                }
+            }
 
             if (!$credentialId || !is_string($credentialId) || strlen($credentialId) > 1024 || !preg_match('/^[A-Za-z0-9+\/_=-]+$/', $credentialId)) {
                 throw new \InvalidArgumentException("Invalid or missing credential ID.");
@@ -415,16 +423,9 @@ class WebAuthnFunctionality
     {
         try {
             $input = GetRequestData::getRequestData();
-            
-            $service = new WebAuthnService();
-            $isValid = $service->verifySignature($input);
-
-            if (!$isValid) {
-                throw new \Exception("Invalid Passkey signature.");
-            }
 
             $credentialId = $input['id'] ?? null;
-            if (!$credentialId) {
+            if (!$credentialId || !is_string($credentialId)) {
                 throw new \InvalidArgumentException("Missing credential identifier.");
             }
 
@@ -449,6 +450,13 @@ class WebAuthnFunctionality
 
             if (!$record) {
                 throw new \Exception("Biometric credential not recognized on this device.");
+            }
+
+            $service = new WebAuthnService();
+            $isValid = $service->verifySignature($input, (string) ($record['public_key'] ?? ''));
+
+            if (!$isValid) {
+                throw new \Exception("Invalid Passkey signature.");
             }
 
             if (session_status() === PHP_SESSION_NONE) {

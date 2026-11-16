@@ -174,14 +174,15 @@ class JwtHandler
      *
      * @return string - Encoded JWT string
      */
-    public static function jwtEncodeData(array $user): string
+    public static function jwtEncodeData(array $user, ?int $ttlSeconds = null): string
     {
+        $ttl = $ttlSeconds ?? (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
         $token = [
             'iss' => $_ENV['APP_URL'] ?? '',
             'aud' => $_ENV['APP_URL'] ?? '',
             'iat' => time(),
             'nbf' => time(),
-            'exp' => time() + (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000),
+            'exp' => time() + $ttl,
             'data' => $user,
             'sub' => (string) ($user['id'] ?? ''),
             'role' => $user['role'] ?? 'users',
@@ -196,16 +197,19 @@ class JwtHandler
         return JWT::encode($token, $jwtKey, 'HS256');
     }
 
-    public static function jwtEncodeDataAndSetCookies(array $user, string $cookieName = 'auth_forgot'): string
+    public static function jwtEncodeDataAndSetCookies(array $user, ?string $cookieName = null, ?int $ttlSeconds = null): string
     {
-        $jwt = self::jwtEncodeData($user);
-        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? $cookieName;
+        $jwt = self::jwtEncodeData($user, $ttlSeconds);
+        $cookieName = ($cookieName !== null && $cookieName !== '')
+            ? $cookieName
+            : ($_ENV['COOKIE_NAME_GENERAL'] ?? 'auth_forgot');
         $env = $_ENV['APP_ENV'] ?? 'production';
         $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
         $secure = !in_array($env, ['local', 'development'], true) && $isHttps;
         $httponly = true;
-        $expire = time() + (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
+        $ttl = $ttlSeconds ?? (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
+        $expire = time() + $ttl;
 
         $cookieOptions = [
             'expires' => $expire,
@@ -228,9 +232,11 @@ class JwtHandler
     }
 
     // decode JWT token
-    public static function jwtDecodeData(string $cookieName = 'auth_forgot'): object
+    public static function jwtDecodeData(?string $cookieName = null): object
     {
-        $cookieName = $_ENV['COOKIE_NAME_GENERAL'] ?? $cookieName;
+        $cookieName = ($cookieName !== null && $cookieName !== '')
+            ? $cookieName
+            : ($_ENV['COOKIE_NAME_GENERAL'] ?? 'auth_forgot');
         if (!isset($_COOKIE[$cookieName])) {
             throw new UnauthorisedException("Missing authentication cookie '{$cookieName}' 🍪");
         }

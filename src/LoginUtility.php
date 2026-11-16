@@ -28,7 +28,7 @@ class LoginUtility
         $options = ['cost' => 12];
 
         if (password_verify($textPassword, $dbPassword) === false) {
-            LoginUtility::logAudit($id, $inputData['email'], 'failed', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
+            LoginUtility::logAudit($id, $inputData['email'], 'failure', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
             LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
 
@@ -72,7 +72,7 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-            LoginUtility::logAudit($id, $email, 'failed', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
+            LoginUtility::logAudit($id, $email, 'failure', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
             LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR'] ?? '');
 
@@ -205,8 +205,11 @@ class LoginUtility
             $clean[$safeKey] = self::getSanitisedInputData($value, $limitData, $childOptionalFields);
 
         } else {
-
-            $result = self::setSanitisedData([$safeKey => $value], $limitData, $optionalFields);
+            $fieldPayload = [$safeKey => $value];
+            if ($safeKey !== 'token' && isset($data['token']) && is_string($data['token'])) {
+                $fieldPayload['token'] = $data['token'];
+            }
+            $result = self::setSanitisedData($fieldPayload, $limitData, $optionalFields);
             $clean[$safeKey] = $result[$safeKey] ?? null;
         }
     }
@@ -271,7 +274,7 @@ class LoginUtility
         $stmt = Db::connect2()->prepare("
             SELECT COUNT(*) as attempts 
             FROM audit_logs 
-            WHERE ip_address = :ip AND status = 'failure' AND created_at > (NOW() - INTERVAL 24 HOUR)
+            WHERE ip_address = :ip AND status IN ('failure', 'failed') AND created_at > (NOW() - INTERVAL 24 HOUR)
         ");
         $stmt->execute([':ip' => $ip]);
         $count = (int) $stmt->fetchColumn();
@@ -295,7 +298,7 @@ class LoginUtility
     {
         $stmt = Db::connect2()->prepare("
             SELECT COUNT(*) as attempts FROM audit_logs
-            WHERE email = :email AND status = 'failure' AND created_at > (NOW() - INTERVAL 10 MINUTE)
+            WHERE email = :email AND status IN ('failure', 'failed') AND created_at > (NOW() - INTERVAL 10 MINUTE)
         ");
         $stmt->execute([':email' => $email]);
         $count = (int) $stmt->fetchColumn();

@@ -117,12 +117,12 @@ class PasswordRecoveryService
             // Attempt to locate user record
             $user = CheckSanitise::useEmailToFindData($sanitised);
 
-            // create a JWT token
-            $token = JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot');
-
             if (empty($user)) {
                 throw new NotFoundException('User not found');
             }
+
+            // create a JWT token (short-lived 15-minute TTL for password recovery)
+            $token = JwtHandler::jwtEncodeDataAndSetCookies($user, 'auth_forgot', 900);
 
             // Issue and optionally send recovery token via email and sets sessions $_SESSION['auth']['2FA_token_ts'] and $_SESSION['auth']['identifyCust']
             $pathToSentCodeNotification = $_ENV['PATH_TO_SENT_CODE_NOTIFICATION'];
@@ -148,11 +148,7 @@ class PasswordRecoveryService
         unset($_SESSION['token']);
         session_regenerate_id(true);                // Prevent session fixation attack
 
-        if ($issueJwt) {
-            // Return JWT token to client (e.g. SPA or mobile client)
-            \Src\Utility::msgSuccess(200, 'Recovery token sent to your email successfully', $token);
-        } else {
-            \Src\Utility::msgSuccess(200, 'Recovery token sent to your email successfully');
-        }
+        // Never expose the auth_forgot JWT in the response body; it is managed strictly via HttpOnly cookie.
+        \Src\Utility::msgSuccess(200, 'Recovery token sent to your email successfully');
     }
 }
