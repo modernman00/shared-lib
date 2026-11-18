@@ -60,6 +60,11 @@ class UniversalStatementParser
      */
     public function parsePdfWithDiagnostics(string $filePath): array
     {
+        $natwest = (new NatWestPdfParser())->parseWithDiagnostics($filePath);
+        if ($natwest !== null) {
+            return $natwest;
+        }
+
         if (!class_exists('\Smalot\PdfParser\Parser')) {
             return [
                 'success' => false,
@@ -163,6 +168,11 @@ class UniversalStatementParser
      */
     public function parsePdf(string $filePath): array
     {
+        $natwest = (new NatWestPdfParser())->parse($filePath);
+        if ($natwest !== null) {
+            return $natwest['transactions'];
+        }
+
         if (!class_exists('\Smalot\PdfParser\Parser')) {
             error_log("UniversalStatementParser: Smalot\\PdfParser\\Parser not found");
             return [];
