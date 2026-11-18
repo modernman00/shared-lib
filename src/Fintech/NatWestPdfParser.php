@@ -20,7 +20,18 @@ final class NatWestPdfParser
      * Diagnostics-shaped result (same keys as UniversalStatementParser::parsePdfWithDiagnostics).
      * Returns null when the PDF is not a NatWest statement.
      *
-     * @return array<string, mixed>|null
+     * @return array{
+     *   success: bool,
+     *   bank: string,
+     *   is_scanned: bool,
+     *   transactions: array<int, array{date: string, description: string, merchant: string, amount: float, category: string, type: string, bank_source: string, balance: float}>,
+     *   total_count: int,
+     *   total_inflow: float,
+     *   total_outflow: float,
+     *   net_cashflow: float,
+     *   reconciled: bool,
+     *   error: ?string
+     * }|null
      */
     public function parseWithDiagnostics(string $filePath): ?array
     {
