@@ -253,7 +253,7 @@ class ExplainerStoryboard
     {
         $sum = 0.0;
         foreach ($this->scenes as $scene) {
-            $sum += (float)($scene['duration'] ?? 0.0);
+            $sum += (float)$scene['duration'];
         }
         return $sum;
     }
@@ -293,7 +293,7 @@ class ExplainerStoryboard
         $arc = [];
         foreach ($this->scenes as $scene) {
             $stage = (string)($scene['stage'] ?? self::STAGE_SOLUTION);
-            $arc[$stage] = (string)($scene['title'] ?? '');
+            $arc[$stage] = (string)$scene['title'];
         }
         return $arc;
     }

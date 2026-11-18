@@ -99,6 +99,10 @@ No deliverable may be marked complete without providing the **Empirical Proof Ca
 10. **Shared-Lib Centralization**: Backend logic must leverage `modernman00/shared-lib` (`\Src\ApiResponse::json()`, `\Src\Limiter::limit()`, `\Src\AuditLogger::log()`). Frontend components must leverage `@modernman00/shared-js-lib`. Zero symlinks to `shared-lib` in production; install versioned packages via Composer and propagate updates across all 8 apps.
 11. **Multi-Surface Definition of Done (Anti-Headless)**: Every user-facing feature must have (a) backend/schema tests, (b) clickable navigation entry point (no URL-only hidden pages), (c) zero phantom DOM elements, and (d) browser verification.
 12. **Interactive Playbook Parity**: Every app's `/playbook` or `/how-to-use` must be updated in lockstep with new features, written in domain terms (no raw table/column names).
+13. **Single-Flight Test & Gate Execution (Zero Parallel Playwright/Gate Loops)**:
+    - Never run `autonomous_gate.sh`, `preflight.sh`, Playwright (`npx playwright test`), or Cypress concurrently across subagents, background tasks, or multiple windows (on an 8 GB host this triggers severe swap thrashing).
+    - Before starting a gate or E2E run, check `pgrep -fl "autonomous_gate|preflight\.sh|playwright|chrome-headless-shell"`; wait for an active run you own or terminate stale/orphaned processes before starting a new one.
+    - Keep E2E execution single-worker (`--workers=1` for Playwright) and ensure no orphaned `chrome-headless-shell`, `playwright`, or `autonomous_gate.sh` processes remain when your task finishes.
 
 ### 🚨 Critical Defensive Traps & Fatal Patterns
 - **Trap A: PHP `readonly` Constructor Trap (PHP 8.1+)**:

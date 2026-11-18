@@ -45,15 +45,26 @@ class SovereignVideoRenderer
         $wordTimeline = $this->audioBridge->buildWordTimeline($storyboard, $externalWords);
         $resolvedStyleId = $styleId ?? $storyboard->getTheme();
         $stylePreset = ExplainerStyleAtlas::get($resolvedStyleId);
+        $storyboardArray = $storyboard->toArray();
+        /** @var array<int, array<string, mixed>> $rawScenes */
+        $rawScenes = is_array($storyboardArray['scenes'] ?? null) ? $storyboardArray['scenes'] : [];
+        $varietyAudit = $this->auditStoryboardVariety($rawScenes);
 
         return [
             'mode' => 'client_webcodecs',
-            'storyboard' => $storyboard->toArray(),
+            'storyboard' => $storyboardArray,
             'timeline' => $timeline,
             'style_preset' => $stylePreset,
             'word_timeline' => $wordTimeline,
             'subtitles_vtt' => $vttSubtitles,
             'ducking_envelope' => $duckingEnvelope,
+            'variety_audit' => $varietyAudit,
+            'supported_diagrams' => ['diagram', '168h_ring', 'time_debt', 'cashflow_pareto', 'decision_tree'],
+            'sfx_policy' => [
+                'target_lufs' => -14.0,
+                'max_true_peak_dbtp' => -1.0,
+                'triggers' => ['keyframe_velocity', 'diagram_completion', 'cursor_click', 'transition_entry'],
+            ],
             'export_formats' => ['mp4', 'webm'],
             'max_duration' => ExplainerStoryboard::MAX_DURATION_SECONDS,
             'render_guardrails' => [
@@ -397,7 +408,7 @@ class SovereignVideoRenderer
             ];
         } finally {
             // Clean up temporary sandbox directory recursively
-            if (isset($tempDir) && is_dir($tempDir)) {
+            if (is_dir($tempDir)) {
                 $iterator = new \RecursiveIteratorIterator(
                     new \RecursiveDirectoryIterator($tempDir, \FilesystemIterator::SKIP_DOTS),
                     \RecursiveIteratorIterator::CHILD_FIRST
@@ -501,6 +512,130 @@ class SovereignVideoRenderer
             $storyboard->getTotalDurationSeconds(),
             $aspectRatioClass
         );
+    }
+
+    /**
+     * Generates a seek-safe, stroke-by-stroke SVG handwriting reveal driven strictly by $progress [0..1].
+     */
+    public function renderHandwritingRevealSvg(string $text, float $progress = 1.0, string $accentHex = '#fbbf24'): string
+    {
+        $cleanText = ExplainerSecurityValidator::validateSafeText($text, 120);
+        $p = max(0.0, min(1.0, $progress));
+        $safeAccent = preg_match('/^#[0-9a-fA-F]{6}$/', $accentHex) === 1 ? $accentHex : '#fbbf24';
+        $charCount = max(1, mb_strlen($cleanText));
+        $visibleChars = (int) max(1, ceil($charCount * $p));
+        $visible = htmlspecialchars(mb_substr($cleanText, 0, $visibleChars), ENT_QUOTES, 'UTF-8');
+        $dashLen = (int) round(640 * $p);
+
+        return sprintf(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 96" class="w-full h-auto" role="img" aria-label="%s">'
+            . '<text x="320" y="54" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-weight="700" font-size="30" fill="#ffffff" stroke="%s" stroke-width="1.25" stroke-dasharray="%d 640">%s</text>'
+            . '</svg>',
+            htmlspecialchars($cleanText, ENT_QUOTES, 'UTF-8'),
+            $safeAccent,
+            $dashLen,
+            $visible
+        );
+    }
+
+    /**
+     * Generates a deterministic self-drawing SVG diagram for:
+     * diagram, 168h_ring, time_debt, cashflow_pareto, decision_tree.
+     *
+     * @param array{title?: string, labels?: array<int, string>, values?: array<int, float|int>, accentHex?: string} $data
+     */
+    public function renderSelfDrawingDiagramSvg(string $diagramType, array $data, float $progress = 1.0): string
+    {
+        $allowed = ['diagram', '168h_ring', 'time_debt', 'cashflow_pareto', 'decision_tree'];
+        $safeType = in_array($diagramType, $allowed, true) ? $diagramType : 'diagram';
+        $p = max(0.05, min(1.0, $progress));
+        $title = htmlspecialchars(ExplainerSecurityValidator::validateSafeText((string)($data['title'] ?? 'Sovereign Diagram'), 64), ENT_QUOTES, 'UTF-8');
+        $accent = isset($data['accentHex']) && preg_match('/^#[0-9a-fA-F]{6}$/', (string)$data['accentHex']) === 1
+            ? (string)$data['accentHex']
+            : '#6366f1';
+
+        $labels = is_array($data['labels'] ?? null) ? array_slice($data['labels'], 0, 12) : ['Step 1', 'Step 2', 'Step 3'];
+        $values = is_array($data['values'] ?? null) ? array_slice($data['values'], 0, 12) : [40, 35, 25];
+
+        if ($safeType === '168h_ring') {
+            $circumference = 2 * M_PI * 52;
+            $dash = round($circumference * $p, 2);
+            $totalHrs = (int) round(array_sum(array_map('floatval', $values)));
+            return sprintf(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 180" class="w-full h-auto" data-diagram-type="168h_ring">'
+                . '<rect width="360" height="180" rx="14" fill="#0f172a"/>'
+                . '<text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="700">%s</text>'
+                . '<circle cx="110" cy="102" r="52" fill="none" stroke="#1e293b" stroke-width="14"/>'
+                . '<circle cx="110" cy="102" r="52" fill="none" stroke="%s" stroke-width="14" stroke-dasharray="%.2f %.2f" transform="rotate(-90 110 102)"/>'
+                . '<text x="110" y="108" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="800">%dh</text>'
+                . '</svg>',
+                $title,
+                $accent,
+                $dash,
+                $circumference,
+                (int) round($totalHrs * $p)
+            );
+        }
+
+        $pathLen = 280;
+        $drawn = round($pathLen * $p, 2);
+        return sprintf(
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 180" class="w-full h-auto" data-diagram-type="%s">'
+            . '<rect width="360" height="180" rx="14" fill="#0f172a"/>'
+            . '<text x="16" y="24" fill="#f8fafc" font-size="13" font-weight="700">%s</text>'
+            . '<path d="M 28 138 L 110 96 L 210 112 L 324 52" fill="none" stroke="%s" stroke-width="3.5" stroke-dasharray="%.2f %.2f" stroke-linecap="round"/>'
+            . '<text x="344" y="24" text-anchor="end" fill="#cbd5e1" font-size="10">%d nodes</text>'
+            . '</svg>',
+            htmlspecialchars($safeType, ENT_QUOTES, 'UTF-8'),
+            $title,
+            $accent,
+            $drawn,
+            $pathLen,
+            count($labels)
+        );
+    }
+
+    /**
+     * Audits storyboard scenes to ensure no two consecutive scenes share the same
+     * motion, palette, transition, or cameraAngle (O(n) deterministic pass).
+     *
+     * @param array<int, array<string, mixed>> $scenes
+     * @return array{scenes: array<int, array<string, mixed>>, adjustments: int}
+     */
+    public function auditStoryboardVariety(array $scenes): array
+    {
+        if ($scenes === []) {
+            return ['scenes' => [], 'adjustments' => 0];
+        }
+
+        $motions = ['push_in', 'orbital_pan', 'pull_out', 'dolly_zoom'];
+        $palettes = ['heritage_gold', 'cinema_teal_orange', 'vintage_kodak', 'crisp_natural'];
+        $transitions = ['cross_dissolve', 'whip_pan', 'film_burn', 'slide_left', 'iris_wipe'];
+        $angles = ['wide_establishing', 'medium_two_shot', 'tight_callout', 'isometric_tilt'];
+
+        $audited = $scenes;
+        $adjustments = 0;
+        $count = count($audited);
+
+        for ($i = 1; $i < $count; $i++) {
+            foreach ([
+                'motion' => $motions,
+                'palette' => $palettes,
+                'transition' => $transitions,
+                'cameraAngle' => $angles,
+            ] as $key => $pool) {
+                $curr = $audited[$i][$key] ?? null;
+                $prev = $audited[$i - 1][$key] ?? null;
+                if (is_string($curr) && $curr !== '' && $curr === $prev) {
+                    $idx = array_search($curr, $pool, true);
+                    $nextIdx = ($idx === false ? 0 : $idx + 1) % count($pool);
+                    $audited[$i][$key] = $pool[$nextIdx];
+                    $adjustments++;
+                }
+            }
+        }
+
+        return ['scenes' => $audited, 'adjustments' => $adjustments];
     }
 
     private function detectFfmpeg(): ?string

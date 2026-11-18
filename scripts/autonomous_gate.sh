@@ -71,7 +71,13 @@ while true; do
     if [ -n "$HOLDER_PID" ] && ! kill -0 "$HOLDER_PID" 2>/dev/null; then
         rm -rf "$LOCK_DIR" 2>/dev/null || true
         continue
-    elif [ "$LOCK_TS" -gt 0 ] && [ $(( NOW_TS - LOCK_TS )) -gt 180 ]; then
+    elif [ -z "$HOLDER_PID" ] && [ "$LOCK_TS" -gt 0 ] && [ $(( NOW_TS - LOCK_TS )) -gt 60 ]; then
+        rm -rf "$LOCK_DIR" 2>/dev/null || true
+        continue
+    elif [ "$LOCK_TS" -gt 0 ] && [ $(( NOW_TS - LOCK_TS )) -gt 1200 ]; then
+        if [ -n "$HOLDER_PID" ]; then
+            kill -TERM "$HOLDER_PID" 2>/dev/null || true
+        fi
         rm -rf "$LOCK_DIR" 2>/dev/null || true
         continue
     fi
@@ -90,14 +96,18 @@ echo -e "${BOLD}${BLUE}=========================================================
 
 FAILURES=0
 
-# Collect modified/untracked PHP files
+# Collect modified/untracked PHP & HTML files
 MODIFIED_PHP=()
+MODIFIED_SCAN_FILES=()
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     while IFS= read -r file; do
         if [ -n "$file" ] && [ -f "$file" ]; then
-            MODIFIED_PHP+=("$file")
+            MODIFIED_SCAN_FILES+=("$file")
+            if [[ "$file" =~ \.php$ ]]; then
+                MODIFIED_PHP+=("$file")
+            fi
         fi
-    done < <(git status --porcelain 2>/dev/null | awk '{print $NF}' | grep -E '\.php$' || true)
+    done < <(git status --porcelain 2>/dev/null | awk '{print $NF}' | grep -E '\.(php|html|phtml)$' || true)
 fi
 
 # 1. Incremental PHP Syntax Check
@@ -142,14 +152,18 @@ else
     echo -e "${GREEN}  ✅ No modified core source files requiring PHPStan (or phpstan skipped).${NC}"
 fi
 
-# 3. Engineering Must-Haves Scanner
-echo -e "${BOLD}${CYAN}[FINISHER 3/4] Running verify_engineering_must_haves.php...${NC}"
+# 3. Engineering Must-Haves Scanner (Incremental on dirty files; full scan runs in preflight.sh)
+echo -e "${BOLD}${CYAN}[FINISHER 3/4] Running verify_engineering_must_haves.php (incremental)...${NC}"
 if [ -f "scripts/verify_engineering_must_haves.php" ]; then
-    if php scripts/verify_engineering_must_haves.php; then
-        echo -e "${GREEN}  ✅ Engineering Must-Haves passed (0 violations).${NC}"
+    if [ "${#MODIFIED_SCAN_FILES[@]}" -gt 0 ]; then
+        if php scripts/verify_engineering_must_haves.php --files "${MODIFIED_SCAN_FILES[@]}"; then
+            echo -e "${GREEN}  ✅ Engineering Must-Haves passed on ${#MODIFIED_SCAN_FILES[@]} modified file(s) (0 violations).${NC}"
+        else
+            echo -e "${RED}  ❌ Engineering Must-Haves failed!${NC}"
+            FAILURES=$((FAILURES + 1))
+        fi
     else
-        echo -e "${RED}  ❌ Engineering Must-Haves failed!${NC}"
-        FAILURES=$((FAILURES + 1))
+        echo -e "${GREEN}  ✅ No dirty PHP/HTML files to scan (incremental fast-path).${NC}"
     fi
 fi
 

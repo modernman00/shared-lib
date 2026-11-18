@@ -574,4 +574,12 @@ class AdminService
     {
         return new BlogAdminService($this->db);
     }
+
+    /**
+     * Retrieve the GrowthForge & HermesPulse Admin Engine (OpenSEO/AEO, Postiz, Ghost, Shorts, Concierge).
+     */
+    public function getGrowthAndConciergeService(): GrowthAndConciergeAdminService
+    {
+        return new GrowthAndConciergeAdminService($this->db);
+    }
 }

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests;
 
 use InvalidArgumentException;
+use PDO;
 use PHPUnit\Framework\TestCase;
+use Src\Admin\GrowthAndConciergeAdminService;
 use Src\Concierge\HermesPulseOrchestrator;
 use Src\Concierge\ReaLegacyDeconstructor;
 use Src\EcosystemPromoService;
@@ -60,6 +62,12 @@ final class GrowthAndConciergeEnginesTest extends TestCase
         $this->assertSame('execmind', $matrix['client_id']);
         $this->assertSame(34, $matrix['total_supported_channels']);
         $this->assertSame(5, $matrix['selected_channel_count']);
+        $this->assertFalse($matrix['requires_human_approval']);
+
+        // Verify regulated verticals enforce human-in-the-loop approval
+        $fcaMatrix = OmniChannelPostizEngine::transformBriefToSocialMatrix('loaneasyfinance', 'Clear 6-month terms.');
+        $this->assertTrue($fcaMatrix['requires_human_approval']);
+        $this->assertStringContainsString('FCA Consumer Duty', $fcaMatrix['compliance_notice']);
 
         // Verify British English normalisation ('optimize' -> 'optimise', 'organization' -> 'organisation', 'center' -> 'centre')
         $linkedinBody = $matrix['scheduled_posts']['linkedin']['body'];
@@ -157,5 +165,22 @@ final class GrowthAndConciergeEnginesTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         OmniChannelPostizEngine::transformBriefToSocialMatrix('   ', 'Test note');
+    }
+
+    public function testGrowthAndConciergeAdminServiceProvidesSnapshot(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $adminService = new GrowthAndConciergeAdminService($pdo);
+
+        $snapshot = $adminService->getAppGrowthSnapshot('bcp');
+        $this->assertSame('bcp', $snapshot['app_key']);
+        $this->assertGreaterThanOrEqual(80, $snapshot['aeo_audit']['overall_score']);
+        $this->assertSame('Hermes-CQCGuardian', $snapshot['concierge']['agent_codename']);
+        $this->assertStringContainsString('?client=bcp', $snapshot['growthforge_admin_url']);
+
+        $html = GrowthAndConciergeAdminService::renderAdminCardHtml('scoretenant', 'light');
+        $this->assertStringContainsString('scoreTenant', $html);
+        $this->assertStringContainsString('Hermes-TrustReferee', $html);
+        $this->assertStringContainsString('min-h-[44px]', $html);
     }
 }

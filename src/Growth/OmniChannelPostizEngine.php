@@ -74,6 +74,8 @@ class OmniChannelPostizEngine
      *     core_angle: string,
      *     total_supported_channels: int,
      *     selected_channel_count: int,
+     *     requires_human_approval: bool,
+     *     compliance_notice: string,
      *     scheduled_posts: array<string, array{
      *         platform: string,
      *         label: string,
@@ -148,12 +150,21 @@ class OmniChannelPostizEngine
             ];
         }
 
+        $complianceNotice = match ($cleanClientId) {
+            'loaneasyfinance' => 'FCA Consumer Duty Notice: Capital at risk / affordability checks apply. Verify Representative APR before publishing.',
+            'bcp' => 'CQC Governance Notice: Ensure no service-user or carer PII is included prior to external publication.',
+            default => 'UK GDPR Standard: Review brand tone before scheduling.',
+        };
+        $requiresHumanApproval = in_array($cleanClientId, ['loaneasyfinance', 'bcp'], true);
+
         return [
             'client_id' => $cleanClientId,
             'source_excerpt' => mb_substr($normalisedNotes, 0, 140),
             'core_angle' => $coreAngle,
             'total_supported_channels' => count(self::SUPPORTED_CHANNELS),
             'selected_channel_count' => count($scheduledPosts),
+            'requires_human_approval' => $requiresHumanApproval,
+            'compliance_notice' => $complianceNotice,
             'scheduled_posts' => $scheduledPosts,
         ];
     }
