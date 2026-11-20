@@ -19,13 +19,42 @@
     function parseRgb(colorStr) {
         if (!colorStr) return null;
         const m = colorStr.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/i);
-        if (!m) return null;
-        return {
-            r: parseInt(m[1], 10),
-            g: parseInt(m[2], 10),
-            b: parseInt(m[3], 10),
-            a: m[4] !== undefined ? parseFloat(m[4]) : 1
-        };
+        if (m) {
+            return {
+                r: parseInt(m[1], 10),
+                g: parseInt(m[2], 10),
+                b: parseInt(m[3], 10),
+                a: m[4] !== undefined ? parseFloat(m[4]) : 1
+            };
+        }
+        const sp = colorStr.match(/rgba?\(\s*(\d+)\s+(\d+)\s+(\d+)(?:\s*\/\s*([\d.]+%?))?\s*\)/i);
+        if (sp) {
+            let a = 1;
+            if (sp[4] !== undefined) {
+                a = sp[4].endsWith('%') ? parseFloat(sp[4]) / 100 : parseFloat(sp[4]);
+            }
+            return {
+                r: parseInt(sp[1], 10),
+                g: parseInt(sp[2], 10),
+                b: parseInt(sp[3], 10),
+                a: a
+            };
+        }
+        const srgb = colorStr.match(/color\(\s*srgb\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/i);
+        if (srgb) {
+            const clamp = function (v) { return Math.max(0, Math.min(255, Math.round(parseFloat(v) * 255))); };
+            let a = 1;
+            if (srgb[4] !== undefined) {
+                a = srgb[4].endsWith('%') ? parseFloat(srgb[4]) / 100 : parseFloat(srgb[4]);
+            }
+            return {
+                r: clamp(srgb[1]),
+                g: clamp(srgb[2]),
+                b: clamp(srgb[3]),
+                a: a
+            };
+        }
+        return null;
     }
 
     function relativeLuminance(rgb) {
@@ -51,13 +80,27 @@
         return relativeLuminance(rgb) < 0.12;
     }
 
+    function parseGradientFirstColor(bgImage) {
+        if (!bgImage || bgImage === 'none') return null;
+        const m = bgImage.match(/rgba?\([^)]+\)|color\(\s*srgb[^)]+\)/i);
+        if (!m) return null;
+        return parseRgb(m[0]);
+    }
+
     function getEffectiveBackground(el) {
         let cur = el;
         while (cur && cur !== document.documentElement) {
-            const bg = window.getComputedStyle(cur).backgroundColor;
-            const parsed = parseRgb(bg);
+            const curStyle = window.getComputedStyle(cur);
+            const parsed = parseRgb(curStyle.backgroundColor);
             if (parsed && parsed.a >= 0.5) {
                 return parsed;
+            }
+            if (curStyle.backgroundImage && curStyle.backgroundImage !== 'none' && curStyle.backgroundClip !== 'text' && curStyle.webkitBackgroundClip !== 'text') {
+                const gradColor = parseGradientFirstColor(curStyle.backgroundImage);
+                if (gradColor && gradColor.a >= 0.5) {
+                    return gradColor;
+                }
+                return null;
             }
             cur = cur.parentElement;
         }
@@ -115,17 +158,57 @@
             }
         });
 
-        // 3. Touch Target & Button Integrity Check (Primary Action Controls)
+        // 3. Touch Target, Button Label Integrity & Icon-Only Accessibility Check
+        const minTouchPx = winWidth <= 640 ? 44 : 36;
         const controls = Array.from(document.querySelectorAll('button, input[type="submit"], input[type="button"], [role="button"], .btn'));
         controls.forEach(function (ctrl) {
             if (!isVisible(ctrl)) return;
             const rect = ctrl.getBoundingClientRect();
-            if (rect.width < 36 || rect.height < 36) {
+            const ctrlStyle = window.getComputedStyle(ctrl);
+            const ctrlText = (ctrl.innerText || ctrl.value || '').trim();
+
+            if (rect.width < minTouchPx || rect.height < minTouchPx) {
                 warnings.push({
                     rule: 'TOUCH_TARGET_SMALL',
-                    message: 'Interactive control smaller than safe touch threshold (' + Math.round(rect.width) + 'x' + Math.round(rect.height) + 'px)',
+                    message: 'Interactive control smaller than safe touch threshold (' + Math.round(rect.width) + 'x' + Math.round(rect.height) + 'px < ' + minTouchPx + 'px)',
                     selector: getSelector(ctrl),
-                    text: (ctrl.innerText || '').trim().slice(0, 30)
+                    text: ctrlText.slice(0, 30)
+                });
+            }
+
+            // Button Label Integrity (prevent multi-line wrapping on action buttons/pills)
+            if (ctrlText.length > 0 && ctrlText.length <= 60) {
+                const fontSize = parseFloat(ctrlStyle.fontSize) || 14;
+                const rawLh = parseFloat(ctrlStyle.lineHeight);
+                const lineHeight = Number.isFinite(rawLh) ? rawLh : fontSize * 1.25;
+                if (rect.height > lineHeight * 2.2 && rect.height > 52) {
+                    warnings.push({
+                        rule: 'BUTTON_TEXT_WRAPPING',
+                        message: 'Button label appears to wrap across multiple lines (' + Math.round(rect.height) + 'px tall)',
+                        selector: getSelector(ctrl),
+                        text: ctrlText.slice(0, 40)
+                    });
+                }
+            }
+        });
+
+        // 3b. Unlabelled Icon-Only Interactive Controls (Hallmark Floor Gate)
+        const iconControls = Array.from(document.querySelectorAll('button, a[href], [role="button"], .btn'));
+        iconControls.slice(0, 300).forEach(function (ctrl) {
+            if (!isVisible(ctrl)) return;
+            const ctrlText = (ctrl.innerText || ctrl.value || '').trim();
+            if (ctrlText.length > 0) return;
+            const hasAria = Boolean(
+                (ctrl.getAttribute('aria-label') || '').trim() ||
+                (ctrl.getAttribute('aria-labelledby') || '').trim() ||
+                (ctrl.getAttribute('title') || '').trim()
+            );
+            const imgWithAlt = ctrl.querySelector('img[alt]:not([alt=""])');
+            if (!hasAria && !imgWithAlt) {
+                violations.push({
+                    rule: 'UNLABELLED_ICON_BUTTON',
+                    message: 'Icon-only interactive control is missing aria-label, aria-labelledby, or title',
+                    selector: getSelector(ctrl)
                 });
             }
         });
@@ -138,9 +221,10 @@
             if (!text) return;
 
             const style = window.getComputedStyle(el);
+            if (style.backgroundClip === 'text' || style.webkitBackgroundClip === 'text') return;
             const fg = parseRgb(style.color);
             const bg = getEffectiveBackground(el);
-            if (!fg || !bg) return;
+            if (!fg || fg.a < 0.1 || !bg) return;
 
             if (isRedSurface(bg) && isDarkText(fg)) {
                 violations.push({
@@ -162,7 +246,7 @@
             }
         });
 
-        // 5. Broken Images Check
+        // 5. Broken Images & Missing Alt Check
         const images = Array.from(document.querySelectorAll('img'));
         images.forEach(function (img) {
             if (!isVisible(img)) return;
@@ -173,7 +257,50 @@
                     selector: getSelector(img)
                 });
             }
+            if (!img.hasAttribute('alt')) {
+                warnings.push({
+                    rule: 'MISSING_IMG_ALT',
+                    message: 'Visible <img> is missing an alt attribute',
+                    selector: getSelector(img)
+                });
+            }
         });
+
+        // 6. Anti-AI-Slop Typography & Eyebrow Gates (Hallmark-inspired)
+        const firstH1 = Array.from(document.querySelectorAll('h1')).find(isVisible);
+        const firstH2 = Array.from(document.querySelectorAll('h2')).find(isVisible);
+        if (firstH1 && firstH2) {
+            const h1Size = parseFloat(window.getComputedStyle(firstH1).fontSize) || 0;
+            const h2Size = parseFloat(window.getComputedStyle(firstH2).fontSize) || 0;
+            if (h1Size > 0 && h2Size > 0 && h1Size < h2Size) {
+                warnings.push({
+                    rule: 'HEADING_HIERARCHY_INVERSION',
+                    message: 'Primary <h1> (' + h1Size + 'px) is smaller than <h2> (' + h2Size + 'px)',
+                    selector: getSelector(firstH1)
+                });
+            }
+        }
+
+        let eyebrowCount = 0;
+        const eyebrowCandidates = Array.from(document.querySelectorAll('span, p, div, label'));
+        eyebrowCandidates.slice(0, 300).forEach(function (el) {
+            if (!isVisible(el) || el.children.length > 0) return;
+            const text = (el.innerText || '').trim();
+            if (!text || text.length > 45) return;
+            const style = window.getComputedStyle(el);
+            const fontSize = parseFloat(style.fontSize) || 14;
+            const tracking = parseFloat(style.letterSpacing) || 0;
+            if (style.textTransform === 'uppercase' && tracking >= 1 && fontSize <= 13) {
+                eyebrowCount += 1;
+            }
+        });
+        if (eyebrowCount > 4) {
+            warnings.push({
+                rule: 'AI_SLOP_EYEBROW_OVERUSE',
+                message: 'Detected ' + eyebrowCount + ' small tracked-uppercase eyebrow labels (classic AI template tell; keep <= 4)',
+                selector: 'document'
+            });
+        }
 
         return {
             passed: violations.length === 0,
@@ -182,7 +309,13 @@
             violationCount: violations.length,
             warningCount: warnings.length,
             violations: violations,
-            warnings: warnings.slice(0, 15)
+            warnings: warnings.slice(0, 20),
+            metrics: {
+                formsChecked: forms.length,
+                controlsChecked: controls.length,
+                imagesChecked: images.length,
+                eyebrowCount: eyebrowCount
+            }
         };
     }
 

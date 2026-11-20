@@ -100,6 +100,10 @@ class SovereignVideoRenderer
         ];
         $currentFormatMeta = $formatLabels[$format] ?? $formatLabels[ExplainerStoryboard::FORMAT_MOTION_GRAPHICS];
 
+        $cameraTrack = is_array($timeline['motion_tracks']['camera'] ?? null) ? $timeline['motion_tracks']['camera'] : [];
+        $captionTrack = is_array($timeline['motion_tracks']['captions'] ?? null) ? $timeline['motion_tracks']['captions'] : [];
+        $beatTrack = is_array($timeline['motion_tracks']['beats'] ?? null) ? $timeline['motion_tracks']['beats'] : [];
+
         $sceneTabsHtml = '';
         $sceneCardsHtml = '';
 
@@ -109,6 +113,26 @@ class SovereignVideoRenderer
             $scNarration = htmlspecialchars((string)($sc['narration'] ?? ''), ENT_QUOTES, 'UTF-8');
             $scDuration = (float)($sc['duration'] ?? 5.0);
             $scStage = (string)($sc['stage'] ?? ($idx === 0 ? 'problem' : ($idx === 1 ? 'solution' : 'call_to_action')));
+            $camMeta = is_array($cameraTrack[$idx] ?? null) ? $cameraTrack[$idx] : [];
+            $focusDim = (float)($camMeta['focus_dim'] ?? 0.0);
+            $backdropBlurPx = (int)($camMeta['backdrop_blur_px'] ?? 0);
+            $camEasing = htmlspecialchars((string)($camMeta['easing'] ?? KineticMotionCompiler::EASING_PRESETS['editorial']), ENT_QUOTES, 'UTF-8');
+
+            $kineticBadgesHtml = '';
+            foreach ($captionTrack as $capEntry) {
+                if ((int)($capEntry['scene_index'] ?? -1) === $idx && !empty($capEntry['kinetic_chunks']) && is_array($capEntry['kinetic_chunks'])) {
+                    foreach (array_slice($capEntry['kinetic_chunks'], 0, 4) as $chunk) {
+                        $chunkText = htmlspecialchars((string)($chunk['text'] ?? ''), ENT_QUOTES, 'UTF-8');
+                        if ($chunkText !== '') {
+                            $kineticBadgesHtml .= sprintf(
+                                '<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 whitespace-nowrap">%s</span>',
+                                $chunkText
+                            );
+                        }
+                    }
+                    break;
+                }
+            }
 
             $stageBadge = match ($scStage) {
                 'problem' => '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">🚨 The Problem: Identify Pain Point</span>',
@@ -174,15 +198,27 @@ class SovereignVideoRenderer
             }
 
             $sceneDisplay = $idx === 0 ? 'block' : 'hidden';
+            $focusBackdropHtml = $focusDim > 0.0
+                ? sprintf(
+                    '<div class="pointer-events-none absolute inset-0 rounded-xl transition-all" style="background: rgba(2, 6, 23, %.2f); backdrop-filter: blur(%dpx);"></div>',
+                    min(0.65, $focusDim),
+                    $backdropBlurPx
+                )
+                : '';
+            $kineticStripHtml = $kineticBadgesHtml !== ''
+                ? sprintf('<div class="mt-2 flex flex-wrap gap-1.5" aria-label="Kinetic caption beats">%s</div>', $kineticBadgesHtml)
+                : '';
+
             $sceneCardsHtml .= sprintf(
-                '<div id="atg-scene-%d" class="atg-scene-card %s space-y-3" data-stage="%s">
+                '<div id="atg-scene-%d" class="atg-scene-card %s space-y-3" data-stage="%s" data-easing="%s" data-focus-dim="%.2f" data-backdrop-blur="%d">
                     <div class="flex items-center justify-between gap-2 pb-1">
                         %s
                         <span class="text-[11px] font-mono text-slate-400">Duration: %.1fs</span>
                     </div>
-                    <div class="relative rounded-xl overflow-hidden p-4 shadow-inner" style="%s">
+                    <div class="relative rounded-xl overflow-hidden p-4 shadow-inner transition-all" style="%s transition-timing-function: %s;">
                         %s
-                        <div class="mt-2.5 flex items-center justify-between text-xs text-slate-400">
+                        <div class="relative z-10">%s</div>
+                        <div class="relative z-10 mt-2.5 flex items-center justify-between text-xs text-slate-400">
                             <span class="px-2 py-0.5 rounded bg-slate-800/80 border border-slate-700 text-slate-300">Focus: %s</span>
                             <span class="font-mono text-indigo-400">Zoom: %.1fx</span>
                         </div>
@@ -194,19 +230,26 @@ class SovereignVideoRenderer
                         </div>
                         <p class="line-clamp-3 font-medium text-slate-200" title="%s">%s</p>
                         %s
+                        %s
                     </div>
                 </div>',
                 $idx,
                 $sceneDisplay,
                 htmlspecialchars($scStage, ENT_QUOTES, 'UTF-8'),
+                $camEasing,
+                $focusDim,
+                $backdropBlurPx,
                 $stageBadge,
                 $scDuration,
                 $canvasWrapperStyle,
+                $camEasing,
+                $focusBackdropHtml,
                 $svgContent,
                 $cursorLabel,
                 (float)($sc['camera']['zoom'] ?? 1.0),
                 $scNarration,
                 $scNarration,
+                $kineticStripHtml,
                 $ctaActionBlock
             );
         }
