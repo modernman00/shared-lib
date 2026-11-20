@@ -23,16 +23,7 @@ class SovereignTtsService
      *
      * @param string $text
      * @param string $voice 'oliver'|'serena'|'elders'
-     * @param array{
-     *   cache_dir?: string,
-     *   piper_bin?: string|null,
-     *   piper_models_dir?: string|null,
-     *   piper_runner?: callable|null,
-     *   http_transport?: callable|null,
-     *   rate_limiter?: callable|null,
-     *   user_key?: string,
-     *   enable_huggingface?: bool
-     * } $options
+     * @param array<string, mixed> $options
      * @return array<string, mixed>
      */
     public static function synthesise(string $text, string $voice = 'oliver', array $options = []): array
@@ -101,7 +92,10 @@ class SovereignTtsService
                 if ($piperRunner !== null) {
                     $piperOk = (bool)$piperRunner($piperBin !== '' ? $piperBin : 'piper', $piperModelPath, $cleanText, $tmpWav);
                 } else {
-                    $piperOk = self::runPiperProcess($piperBin, $piperModelPath, $cleanText, $tmpWav);
+                    $piperTimeout = isset($options['piper_timeout_sec']) && is_numeric($options['piper_timeout_sec'])
+                        ? max(1.0, (float)$options['piper_timeout_sec'])
+                        : 25.0;
+                    $piperOk = self::runPiperProcess($piperBin, $piperModelPath, $cleanText, $tmpWav, $piperTimeout);
                 }
             } catch (\Throwable $e) {
                 error_log('SovereignTtsService Piper warning: ' . $e->getMessage());
@@ -156,8 +150,10 @@ class SovereignTtsService
             ];
         }
 
-        $elevenKey = trim((string)($_ENV['ELEVENLABS_API_KEY'] ?? (getenv('ELEVENLABS_API_KEY') !== false ? getenv('ELEVENLABS_API_KEY') : '')));
-        if ($elevenKey !== '' || $httpTransport !== null) {
+        $elevenKey = isset($options['elevenlabs_api_key']) && is_string($options['elevenlabs_api_key'])
+            ? trim($options['elevenlabs_api_key'])
+            : trim((string)($_ENV['ELEVENLABS_API_KEY'] ?? (getenv('ELEVENLABS_API_KEY') !== false ? getenv('ELEVENLABS_API_KEY') : '')));
+        if ($elevenKey !== '') {
             $userKey = isset($options['user_key']) && is_string($options['user_key']) && $options['user_key'] !== ''
                 ? $options['user_key']
                 : (string)($_SESSION['user_id'] ?? (session_id() ?: 'anon'));
@@ -253,7 +249,7 @@ class SovereignTtsService
                             'Content-Type: application/json',
                             'Accept: audio/flac, audio/wav, audio/mpeg, application/json',
                         ],
-                        null,
+                        $httpTransport,
                         $hfToken
                     );
                     $mime = strtolower(trim(explode(';', $res['content_type'])[0]));
@@ -317,7 +313,7 @@ class SovereignTtsService
         return '';
     }
 
-    private static function runPiperProcess(string $piperBin, string $modelPath, string $text, string $outputWavPath): bool
+    private static function runPiperProcess(string $piperBin, string $modelPath, string $text, string $outputWavPath, float $timeoutSec = 25.0): bool
     {
         $descriptors = [
             0 => ['pipe', 'r'],
@@ -332,12 +328,40 @@ class SovereignTtsService
 
         fwrite($pipes[0], $text . "\n");
         fclose($pipes[0]);
-        stream_get_contents($pipes[1]);
-        fclose($pipes[1]);
-        stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
+        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[2], false);
 
-        $exitCode = proc_close($proc);
+        $deadline = microtime(true) + $timeoutSec;
+        $timedOut = false;
+        $exitCode = -1;
+
+        while (true) {
+            @stream_get_contents($pipes[1]);
+            @stream_get_contents($pipes[2]);
+            $status = proc_get_status($proc);
+            if (!$status['running']) {
+                $exitCode = (int)$status['exitcode'];
+                break;
+            }
+            if (microtime(true) >= $deadline) {
+                $timedOut = true;
+                @proc_terminate($proc, 9);
+                $exitCode = -1;
+                break;
+            }
+            usleep(50000);
+        }
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($proc);
+
+        if ($timedOut) {
+            @unlink($outputWavPath);
+            error_log('SovereignTtsService Piper timeout after ' . $timeoutSec . 's');
+            return false;
+        }
+
         return $exitCode === 0 && is_file($outputWavPath);
     }
 
@@ -414,7 +438,9 @@ class SovereignTtsService
         }
         $tmpFile = $path . '.tmp.' . bin2hex(random_bytes(4));
         if (@file_put_contents($tmpFile, $bytes, LOCK_EX) !== false) {
-            @rename($tmpFile, $path);
+            if (!@rename($tmpFile, $path)) {
+                @unlink($tmpFile);
+            }
         }
     }
 }

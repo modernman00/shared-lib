@@ -103,6 +103,10 @@ No deliverable may be marked complete without providing the **Empirical Proof Ca
     - Never run `autonomous_gate.sh`, `preflight.sh`, Playwright (`npx playwright test`), or Cypress concurrently across subagents, background tasks, or multiple windows (on an 8 GB host this triggers severe swap thrashing).
     - Before starting a gate or E2E run, check `pgrep -fl "autonomous_gate|preflight\.sh|playwright|chrome-headless-shell"`; wait for an active run you own or terminate stale/orphaned processes before starting a new one.
     - Keep E2E execution single-worker (`--workers=1` for Playwright) and ensure no orphaned `chrome-headless-shell`, `playwright`, or `autonomous_gate.sh` processes remain when your task finishes.
+14. **Mandatory Shared-Library Media & Graphics Audit (Video / Image / Audio / Canvas / Poster)**:
+    - Before designing, proposing, or implementing **any** video, image, photo, poster, canvas, audio, or media feature, the agent **MUST** inspect all existing capabilities in `shared-js-lib` (`SovereignNleEngine.js`, `SovereignNleWorkspace.js`, `SovereignVideoStudioClient.js`, `AtgUniversalPosterEngine.js`, `CardCanvasGenerator.js`, `HyperReality3DEngine.js`, `LivingHeirloomAnimator.js`, `WebRtcPhotoboothMesh.js`, `VisualSupremacyRuntime.js`, `data/studio_how_to_use.json`) and `shared-lib` (`src/Media/SovereignVideoJobHandler.php`, `src/Media/SovereignMediaEngine.php`, `src/Media/UniversalPosterStudioController.php`, `src/Media/UniversalPosterSynthesisService.php`, `src/Media/ShortsAndDubbingEngine.php`, `src/Media/R2StorageService.php`, `src/Explainer/SovereignVideoRenderer.php`).
+    - Reuse, extend, and surface existing shared-library primitives instead of duplicating media/canvas logic inside app-local Blade views or controllers, and sync updates across all consuming apps.
+    - Never use robotic browser `speechSynthesis` / `SpeechSynthesisUtterance` voiceovers; use on-screen captions paired with deterministic Web Audio motion SFX (`synthesiseMotionSfx()`).
 
 ### 🚨 Critical Defensive Traps & Fatal Patterns
 - **Trap A: PHP `readonly` Constructor Trap (PHP 8.1+)**:
