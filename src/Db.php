@@ -40,10 +40,11 @@ class Db extends CheckToken
         }
         if (!isset(self::$conn)) {
             $dbVar = self::dbVariables();
-            $tz = date('P') ?: '+00:00';
+            $tz = date('P');
             $initAttr = \defined('\Pdo\Mysql::ATTR_INIT_COMMAND') ? \Pdo\Mysql::ATTR_INIT_COMMAND : 1002;
+            $persistent = (($_ENV['DB_PERSISTENT'] ?? 'false') === 'true');
             self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", username: $dbVar['username'], password: $dbVar['password'], options: [
-                PDO::ATTR_PERSISTENT => true,
+                PDO::ATTR_PERSISTENT => $persistent,
                 $initAttr => "SET time_zone = '{$tz}'",
             ]);
 
@@ -65,7 +66,7 @@ class Db extends CheckToken
         }
         if (self::$conn === null) {
             $dbVar = self::dbVariables();
-            $tz = date('P') ?: '+00:00';
+            $tz = date('P');
             $initAttr = \defined('\Pdo\Mysql::ATTR_INIT_COMMAND') ? \Pdo\Mysql::ATTR_INIT_COMMAND : 1002;
             self::$conn = new PDO("mysql:host={$dbVar['host']}; dbname={$dbVar['name']}; charset={$dbVar['charset']}", $dbVar['username'], $dbVar['password'], [
                 PDO::ATTR_PERSISTENT => false,
@@ -101,5 +102,14 @@ class Db extends CheckToken
     public static function clearMockConnection(): void
     {
         self::$mockConnection = null;
+    }
+
+    /**
+     * Explicitly release the shared PDO connection handle before long-running
+     * external I/O (e.g. R2 uploads, AI calls, video processing, or crons).
+     */
+    public static function disconnect(): void
+    {
+        self::$conn = null;
     }
 }

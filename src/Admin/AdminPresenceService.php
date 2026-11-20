@@ -17,6 +17,14 @@ class AdminPresenceService
 {
     private const PRESENCE_TABLE = 'admin_presence';
     private const THROTTLE_SECONDS = 15;
+    private const STATIC_EXTENSIONS = [
+        'css', 'js', 'png', 'jpg', 'jpeg', 'svg', 'webp', 'gif',
+        'ico', 'woff', 'woff2', 'map', 'json', 'txt', 'xml',
+    ];
+    private const NON_PAGE_PATHS = [
+        '/health', '/healthz', '/up', '/ping', '/readyz', '/livez',
+        '/wp-login.php', '/xmlrpc.php',
+    ];
 
     /**
      * Auto-provision the presence table if not present.
@@ -50,8 +58,14 @@ class AdminPresenceService
 
     /**
      * Record or update the active visitor's presence pulse.
+     *
+     * Accepts either an open PDO instance or a lazy factory callable returning PDO.
+     * All request-level guards and the 15s session throttle execute BEFORE resolving
+     * the database connection so throttled, static, or stateless bot hits never open MySQL.
+     *
+     * @param PDO|callable(): PDO $db
      */
-    public static function recordPulse(PDO $db, string $appName = 'app'): void
+    public static function recordPulse(PDO|callable $db, string $appName = 'app'): void
     {
         // Don't record CLI executions unless explicitly testing
         if ((php_sapi_name() === 'cli' && empty($_SERVER['TESTING_CLI_PULSE'])) || !isset($_SERVER['REQUEST_URI'])) {
@@ -59,27 +73,39 @@ class AdminPresenceService
         }
 
         $uri = (string)($_SERVER['REQUEST_URI'] ?? '/');
+        $parsedPath = parse_url($uri, PHP_URL_PATH);
+        $path = is_string($parsedPath) ? $parsedPath : '';
 
         // Skip static asset queries
-        $ext = strtolower(pathinfo(parse_url($uri, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
-        if (in_array($ext, ['css', 'js', 'png', 'jpg', 'jpeg', 'svg', 'webp', 'ico', 'woff', 'woff2', 'map', 'json'], true)) {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if (in_array($ext, self::STATIC_EXTENSIONS, true)) {
+            return;
+        }
+
+        // Skip known non-page / healthcheck / bot probe paths
+        if (in_array(strtolower($path), self::NON_PAGE_PATHS, true)) {
             return;
         }
 
         // Establish or retrieve persistent visitor session id
-        if (session_status() === PHP_SESSION_ACTIVE && session_id() !== '') {
+        $hasActiveSession = (session_status() === PHP_SESSION_ACTIVE && session_id() !== '');
+        if ($hasActiveSession) {
             $sessionId = session_id();
         } else {
             $sessionId = (string)($_COOKIE['_umac_presence_id'] ?? '');
-            if (empty($sessionId) || strlen($sessionId) < 16) {
-                $sessionId = bin2hex(random_bytes(16));
-                @setcookie('_umac_presence_id', $sessionId, [
-                    'expires' => time() + 86400 * 30,
-                    'path' => '/',
-                    'httponly' => true,
-                    'samesite' => 'Lax',
-                    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-                ]);
+            if ($sessionId === '' || strlen($sessionId) < 16) {
+                // Stateless bot/API hit without an active session or valid presence cookie:
+                // issue a cookie for real browsers on subsequent requests, but skip DB I/O now.
+                if (!headers_sent()) {
+                    @setcookie('_umac_presence_id', bin2hex(random_bytes(16)), [
+                        'expires' => time() + 86400 * 30,
+                        'path' => '/',
+                        'httponly' => true,
+                        'samesite' => 'Lax',
+                        'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+                    ]);
+                }
+                return;
             }
         }
 
@@ -124,6 +150,17 @@ class AdminPresenceService
         $device = self::detectDeviceType($userAgent);
         $cleanUrl = substr($uri, 0, 255);
 
+        // Only open/resolve the PDO connection once a DB write is actually required
+        try {
+            $pdo = is_callable($db) ? $db() : $db;
+        } catch (\Throwable) {
+            return;
+        }
+
+        if (!($pdo instanceof PDO)) {
+            return;
+        }
+
         $sql = "INSERT INTO `" . self::PRESENCE_TABLE . "`
             (`session_id`, `app_name`, `user_id`, `user_email`, `user_role`, `ip_address`, `user_agent`, `device`, `current_url`, `first_seen_at`, `last_seen_at`)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
@@ -139,7 +176,7 @@ class AdminPresenceService
                 `last_seen_at` = NOW()";
 
         try {
-            $stmt = $db->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $sessionId,
                 $appName,
@@ -154,8 +191,8 @@ class AdminPresenceService
         } catch (PDOException $e) {
             // Self-heal table schema if missing, then retry once
             try {
-                self::ensureSchema($db);
-                $stmt = $db->prepare($sql);
+                self::ensureSchema($pdo);
+                $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     $sessionId,
                     $appName,
@@ -171,6 +208,16 @@ class AdminPresenceService
                 // Non-blocking fail-silent to protect user journey
             }
         }
+    }
+
+    /**
+     * Explicit lazy wrapper for recordPulse() using a PDO factory callable.
+     *
+     * @param callable(): PDO $dbFactory
+     */
+    public static function recordPulseLazy(callable $dbFactory, string $appName = 'app'): void
+    {
+        self::recordPulse($dbFactory, $appName);
     }
 
     /**

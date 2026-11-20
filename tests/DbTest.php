@@ -47,4 +47,16 @@ class DbTest extends TestCase
         $db = new Db();
         $this->assertTrue(method_exists($db, 'connectSql'));
     }
+
+    public function testDisconnectClearsStaticConnection(): void
+    {
+        $prop = new \ReflectionProperty(Db::class, 'conn');
+
+        $mockPdo = $this->createMock(\PDO::class);
+        $prop->setValue(null, $mockPdo);
+        $this->assertSame($mockPdo, $prop->getValue());
+
+        Db::disconnect();
+        $this->assertNull($prop->getValue());
+    }
 }
