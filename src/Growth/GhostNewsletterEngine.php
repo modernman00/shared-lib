@@ -54,7 +54,7 @@ class GhostNewsletterEngine
         $profile = AeoVisibilityEngine::PORTFOLIO_AEO_PROFILES[$cleanClientId] ?? [
             'brand_name' => ucfirst($cleanClientId),
             'vertical' => 'UK Specialist Operations',
-            'canonical_url' => 'https://growthforgeapp.com',
+            'canonical_url' => 'https://growth.execmindapp.com',
             'summary' => 'Practical insights for high-performing UK teams.',
         ];
 

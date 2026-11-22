@@ -216,7 +216,7 @@ class GrowthAndConciergeAdminService
 
         $aeoAudit = AeoVisibilityEngine::auditDomainVisibility($cleanKey);
         $concierge = HermesPulseOrchestrator::executeConciergeCycle($cleanKey);
-        $baseUrl = rtrim((string) ($_ENV['GROWTHFORGE_APP_URL'] ?? getenv('GROWTHFORGE_APP_URL') ?: 'http://growthforgeapp.test'), '/');
+        $baseUrl = rtrim((string) ($_ENV['GROWTHFORGE_APP_URL'] ?? getenv('GROWTHFORGE_APP_URL') ?: 'https://growth.execmindapp.com'), '/');
         $launchUrl = htmlspecialchars($baseUrl . '/?client=' . rawurlencode($cleanKey), ENT_QUOTES, 'UTF-8');
 
         $score = (int) $aeoAudit['overall_score'];

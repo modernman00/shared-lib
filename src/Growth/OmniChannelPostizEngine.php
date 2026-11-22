@@ -107,7 +107,7 @@ class OmniChannelPostizEngine
         $brandMeta = AeoVisibilityEngine::PORTFOLIO_AEO_PROFILES[$cleanClientId] ?? [
             'brand_name' => ucfirst($cleanClientId),
             'vertical' => 'UK Business Operations',
-            'canonical_url' => 'https://growthforgeapp.com',
+            'canonical_url' => 'https://growth.execmindapp.com',
         ];
 
         $coreAngle = self::extractCoreInsight($normalisedNotes, $brandMeta['brand_name']);

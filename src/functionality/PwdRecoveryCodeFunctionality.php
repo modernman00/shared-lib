@@ -71,8 +71,11 @@ class PwdRecoveryCodeFunctionality
                 Utility::msgException(404, 'There was no post data');
             }
 
-            // Validate session-bound email
-            $code = $input['code'] ?? '';
+            // Validate session-bound email and normalise OTP digits/case
+            $rawCode = (string) ($input['code'] ?? '');
+            $eastern = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩','۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            $western = ['0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9'];
+            $input['code'] = strtoupper(str_replace($eastern, $western, trim($rawCode)));
 
             $sanitised = CheckSanitise::getSanitisedInputData($input, [
                 'data' => ['code'],
@@ -80,11 +83,12 @@ class PwdRecoveryCodeFunctionality
                 'max'  => [15],
             ]);
 
-            $code = $sanitised['code'] ?? '';
+            $code = strtoupper(trim((string) ($sanitised['code'] ?? '')));
 
-            if ((time() - ($_SESSION['auth']['2FA_token_ts'])) > 1000) {
-                $diff = time() - $_SESSION['auth']['2FA_token_ts'];
-                Utility::msgException(401, "Invalid or expired Token $diff");
+            $tokenTs = (int) ($_SESSION['auth']['2FA_token_ts'] ?? 0);
+            if ($tokenTs <= 0 || (time() - $tokenTs) > 1000) {
+                $diff = $tokenTs > 0 ? (time() - $tokenTs) : 0;
+                throw new UnauthorisedException("Invalid or expired Token $diff");
             }
 
             if (isset($input['dToken'])) {

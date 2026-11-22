@@ -109,7 +109,7 @@ class ShortsAndDubbingEngine
         $brandMeta = AeoVisibilityEngine::PORTFOLIO_AEO_PROFILES[$cleanClientId] ?? [
             'brand_name' => ucfirst($cleanClientId),
             'vertical' => 'UK Specialist Operations',
-            'canonical_url' => 'https://growthforgeapp.com',
+            'canonical_url' => 'https://growth.execmindapp.com',
         ];
 
         $cleanTranscript = trim($sourceTranscript);

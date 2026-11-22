@@ -202,7 +202,7 @@ class AeoVisibilityEngine
         $profile = self::PORTFOLIO_AEO_PROFILES[$normalisedKey] ?? [
             'brand_name' => (string) ($overrides['brand_name'] ?? ucfirst($normalisedKey ?: 'Sovereign Client')),
             'vertical' => (string) ($overrides['vertical'] ?? 'UK B2B Specialist Services'),
-            'canonical_url' => (string) ($overrides['canonical_url'] ?? 'https://growthforgeapp.com'),
+            'canonical_url' => (string) ($overrides['canonical_url'] ?? 'https://growth.execmindapp.com'),
             'summary' => (string) ($overrides['summary'] ?? 'Sovereign UK specialist platform engineered for high-trust authority and automated operations.'),
             'primary_keywords' => is_array($overrides['primary_keywords'] ?? null)
                 ? array_values(array_map('strval', $overrides['primary_keywords']))
@@ -297,7 +297,7 @@ class AeoVisibilityEngine
 
         $name = trim((string) ($brandProfile['brand_name'] ?? $defaults['brand_name'] ?? 'GrowthForge & HermesPulse OS'));
         $vertical = trim((string) ($brandProfile['vertical'] ?? $defaults['vertical'] ?? 'Autonomous AI Growth, AEO & Concierge Operations'));
-        $url = rtrim(trim((string) ($brandProfile['canonical_url'] ?? $defaults['canonical_url'] ?? 'https://growthforgeapp.com')), '/');
+        $url = rtrim(trim((string) ($brandProfile['canonical_url'] ?? $defaults['canonical_url'] ?? 'https://growth.execmindapp.com')), '/');
         $summary = trim((string) ($brandProfile['summary'] ?? $defaults['summary'] ?? 'Sovereign UK platform uniting Answer Engine Optimisation (OpenSEO), Omni-Channel Distribution (Postiz/Ghost/Shorts), and 24/7 AI Concierge Agents (HermesPulse).'));
 
         /** @var array<int, string> $prompts */

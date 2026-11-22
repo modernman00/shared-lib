@@ -156,7 +156,7 @@ class EcosystemPromoService
             'accent_color' => '#f97316', // Sovereign Amber-Orange
             'gradient' => 'linear-gradient(135deg, #ea580c 0%, #f59e0b 100%)',
             'icon' => 'bi-rocket-takeoff-fill',
-            'default_url' => 'https://growthforgeapp.com',
+            'default_url' => 'https://growth.execmindapp.com',
             'env_key' => 'GROWTHFORGE_APP_URL',
             'trigger_keywords' => ['seo', 'aeo', 'marketing', 'social_media', 'newsletter', 'shorts', 'growth', 'leads', 'traffic', 'content'],
             'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#0f172a"/><path d="M8 22L14 15L18 19L24 10" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 10H24V15" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -171,7 +171,7 @@ class EcosystemPromoService
             'accent_color' => '#14b8a6', // Sovereign Teal
             'gradient' => 'linear-gradient(135deg, #0f766e 0%, #14b8a6 100%)',
             'icon' => 'bi-robot',
-            'default_url' => 'https://growthforgeapp.com/?suite=hermespulse',
+            'default_url' => 'https://growth.execmindapp.com/?suite=hermespulse',
             'env_key' => 'HERMESPULSE_APP_URL',
             'trigger_keywords' => ['concierge', 'automation', 'agent', 'outreach', 'follow_up', 'chaser', 'legacy_saas', 'operations', 'whatsapp_bot'],
             'svg_icon' => '<svg viewBox="0 0 32 32" width="28" height="28" class="pp-brand-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="8" fill="#042f2e"/><circle cx="16" cy="16" r="8" stroke="#14b8a6" stroke-width="2.5"/><circle cx="16" cy="16" r="3" fill="#5eead4"/><path d="M16 4V8M16 24V28M4 16H8M24 16H28" stroke="#14b8a6" stroke-width="2" stroke-linecap="round"/></svg>',

@@ -122,6 +122,28 @@ class Token extends CheckToken
             $data = ['email' => $email, 'code' => $code];
             SubmitForm::submitForm($table, $data);
         } else {
+            // If an active, unused code was already generated for this exact email
+            // within the last 180 seconds in the current session (e.g. registration
+            // immediately followed by login), preserve that code so the first email's
+            // code remains valid unless an explicit resend requested a rotation.
+            $existingRow = is_array($codeData[0] ?? null) ? $codeData[0] : (is_array($codeData) ? $codeData : []);
+            $existingCode = strtoupper(trim((string) ($existingRow['code'] ?? '')));
+            $sessionEmail = strtolower(trim((string) ($_SESSION['auth']['email'] ?? '')));
+            $tokenTs = (int) ($_SESSION['auth']['2FA_token_ts'] ?? 0);
+            $forceNew = !empty($_SESSION['auth']['force_new_otp']);
+            unset($_SESSION['auth']['force_new_otp']);
+
+            if (
+                !$forceNew
+                && $sessionEmail === strtolower(trim($email))
+                && $tokenTs > 0
+                && (time() - $tokenTs) < 180
+                && preg_match('/^[A-Z0-9]{6}$/', $existingCode) === 1
+                && !in_array($existingCode, ['LOCKED', 'USED'], true)
+            ) {
+                return $existingCode;
+            }
+
             //6.  update login account table with the code
             $updateCodeToCustomer = new Update($table);
             $updateCodeToCustomer->updateTable('code', $code, 'email', $email);
@@ -139,10 +161,16 @@ class Token extends CheckToken
      */
     public static function verifyToken($code)
     {
+        if (is_string($code)) {
+            $eastern = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩','۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            $western = ['0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9'];
+            $code = strtoupper(str_replace($eastern, $western, trim($code)));
+        }
         $code = Utility::checkInput($code);
         if (!is_string($code) || trim($code) === '' || in_array(strtoupper(trim($code)), ['LOCKED', 'USED'], true)) {
             throw new UnauthorisedException('Cannot verify token. Invalid code provided.');
         }
+        $code = strtoupper(trim($code));
         $email = cleanSession($_SESSION['auth']['email']);
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COL_DYNAMICALLY_ID_AND',
