@@ -9,6 +9,8 @@ use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialUserEntity;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\AuthenticatorSelectionCriteria;
+use Src\Exceptions\BadRequestException;
+use Src\Exceptions\UnauthorisedException;
 
 /**
  * Service to handle WebAuthn (Passkeys / FaceID / TouchID) operations.
@@ -196,7 +198,7 @@ class WebAuthnService
             $isAllowed = in_array($originHost, $allowedHosts, true)
                 || str_ends_with($originHost, '.test');
             if (!$isAllowed) {
-                throw new \Exception("Cryptographic Exception: Invalid origin '{$origin}'. Blocked.");
+                throw new UnauthorisedException("Cryptographic Exception: Invalid origin '{$origin}'. Blocked.");
             }
         }
 
@@ -210,17 +212,17 @@ class WebAuthnService
         unset($_SESSION['webauthn_challenge']);
         
         if ($expectedChallenge === '') {
-            throw new \Exception("Invalid or expired challenge.");
+            throw new UnauthorisedException("Invalid or expired challenge. Please try again.");
         }
 
         // 3. FIDO2 Payload Structure & Cryptographic Binding Verification
         $id = $clientData['id'] ?? null;
         $rawId = $clientData['rawId'] ?? null;
         if (!is_string($id) || !is_string($rawId) || $id === '' || $rawId === '' || strlen($id) > 1024 || strlen($rawId) > 1024) {
-            throw new \Exception("Malformed FIDO2 payload.");
+            throw new BadRequestException("Malformed FIDO2 payload.");
         }
         if (!preg_match('/^[A-Za-z0-9+\/_=-]+$/', $id) || !preg_match('/^[A-Za-z0-9+\/_=-]+$/', $rawId)) {
-            throw new \Exception("Malformed FIDO2 credential identifier.");
+            throw new BadRequestException("Malformed FIDO2 credential identifier.");
         }
 
         $clientDataJSON = $clientData['response']['clientDataJSON'] ?? $clientData['clientDataJSON'] ?? null;
@@ -311,7 +313,7 @@ class WebAuthnService
             // Decode stored COSE public key
             $coseKeyRaw = $this->decodeBase64Url($storedPublicKey);
             if ($coseKeyRaw === null) {
-                throw new \Exception("Cryptographic Exception: Invalid or legacy passkey public key. Please re-register your passkey.");
+                throw new UnauthorisedException("Invalid or legacy passkey. Please sign in with your password and re-register Face ID / Touch ID in Account Settings.");
             }
 
             try {
@@ -321,7 +323,7 @@ class WebAuthnService
                 }
                 $coseKey = \Cose\Key\Key::create($coseKeyData);
             } catch (\Throwable $e) {
-                throw new \Exception("Cryptographic Exception: Invalid or legacy passkey public key. Please re-register your passkey.");
+                throw new UnauthorisedException("Invalid or legacy passkey. Please sign in with your password and re-register Face ID / Touch ID in Account Settings.");
             }
 
             $algManager = \Cose\Algorithm\Manager::create()
@@ -343,7 +345,7 @@ class WebAuthnService
 
             $signedData = $authDataRaw . hash('sha256', (string) $clientDataJsonRaw, true);
             if (!$algorithm->verify($signedData, $coseKey, $signatureRaw)) {
-                throw new \Exception("Cryptographic Exception: Invalid WebAuthn signature.");
+                throw new UnauthorisedException("Biometric signature could not be verified. Please try again or sign in with your password.");
             }
         }
 

@@ -65,11 +65,11 @@ class WebAuthnFunctionality
             }
         }
 
+        $authVerified = !empty($_SESSION['auth']['codeVerified']);
         $userId = $_SESSION['user_id']
             ?? $_SESSION['id']
             ?? $_SESSION['manager_id']
-            ?? $_SESSION['auth']['identifyCust']
-            ?? $_SESSION['auth']['id']
+            ?? ($authVerified ? ($_SESSION['auth']['identifyCust'] ?? $_SESSION['auth']['id'] ?? null) : null)
             ?? $_SESSION['staff_email']
             ?? $_SESSION['client_email']
             ?? $_SESSION['landlord_id']
@@ -426,7 +426,7 @@ class WebAuthnFunctionality
 
             $credentialId = $input['id'] ?? null;
             if (!$credentialId || !is_string($credentialId)) {
-                throw new \InvalidArgumentException("Missing credential identifier.");
+                throw new \Src\Exceptions\BadRequestException("Missing credential identifier.");
             }
 
             $db = Db::connect2();
@@ -449,14 +449,14 @@ class WebAuthnFunctionality
             }
 
             if (!$record) {
-                throw new \Exception("Biometric credential not recognized on this device.");
+                throw new \Src\Exceptions\UnauthorisedException("Biometric credential not recognised on this device. Please sign in with your password and re-register Face ID / Touch ID.");
             }
 
             $service = new WebAuthnService();
             $isValid = $service->verifySignature($input, (string) ($record['public_key'] ?? ''));
 
             if (!$isValid) {
-                throw new \Exception("Invalid Passkey signature.");
+                throw new \Src\Exceptions\UnauthorisedException("Invalid Passkey signature.");
             }
 
             if (session_status() === PHP_SESSION_NONE) {
@@ -514,12 +514,12 @@ class WebAuthnFunctionality
             }
 
             if (!$user) {
-                throw new \Exception("Associated user account not found.");
+                throw new \Src\Exceptions\NotFoundException("Associated user account not found.");
             }
 
             $userId = trim((string)($user['id'] ?? $user['no'] ?? $record['user_id'] ?? ''));
             if ($userId === '') {
-                throw new \Exception("Associated user identifier is invalid.");
+                throw new \Src\Exceptions\UnauthorisedException("Associated user identifier is invalid.");
             }
             $email = (string)($user['email'] ?? $user['staffEmail'] ?? $user['clientEmail'] ?? '');
             $name = (string)($user['name'] ?? $user['fullName'] ?? $user['clientName'] ?? $user['staffFirstName'] ?? 'User');
@@ -632,9 +632,13 @@ class WebAuthnFunctionality
      */
     public static function renderActivationPrompt(?string $nonce = null): string
     {
+        if (!empty($_SESSION['needs_tos'])) {
+            return '';
+        }
+
         $uri = strtolower((string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/'));
-        foreach (['/login', '/signin', '/register', '/signup', '/logout', '/signout', '/forgot', '/reset', '/verify'] as $excludedPrefix) {
-            if ($uri === $excludedPrefix || str_ends_with($uri, $excludedPrefix) || str_contains($uri, $excludedPrefix . '/')) {
+        foreach (['/login', '/signin', '/register', '/signup', '/logout', '/signout', '/forgot', '/reset', '/verify', '/code', '/resendcode', '/2fa', '/otp', '/tos', '/auth/', '/error401'] as $excludedPrefix) {
+            if ($uri === $excludedPrefix || str_starts_with($uri, $excludedPrefix) || str_ends_with($uri, $excludedPrefix) || str_contains($uri, $excludedPrefix . '/')) {
                 return '';
             }
         }

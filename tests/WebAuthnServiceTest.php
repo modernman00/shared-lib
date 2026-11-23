@@ -77,4 +77,37 @@ class WebAuthnServiceTest extends TestCase
             'rawId' => 'raw_1'
         ]);
     }
+
+    public function testLegacyOrInvalidPublicKeyThrowsHttpExceptionWithActionableMessage(): void
+    {
+        $service = new WebAuthnService();
+        $challengeBytes = random_bytes(32);
+        $challengeB64 = base64_encode($challengeBytes);
+        $_SESSION['webauthn_challenge'] = $challengeB64;
+
+        $b64url = static function (string $raw): string {
+            return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+        };
+
+        $clientDataJson = json_encode([
+            'type' => 'webauthn.get',
+            'challenge' => $b64url($challengeBytes),
+            'origin' => 'https://iaccountapp.test',
+        ]);
+        $rpIdHash = hash('sha256', 'iaccountapp.test', true);
+        $authData = $rpIdHash . "\x01" . "\x00\x00\x00\x01";
+
+        $this->expectException(\Src\Exceptions\UnauthorisedException::class);
+        $this->expectExceptionMessage('Invalid or legacy passkey. Please sign in with your password and re-register Face ID / Touch ID in Account Settings.');
+
+        $service->verifySignature([
+            'id' => 'cred_legacy',
+            'rawId' => 'cred_legacy',
+            'response' => [
+                'clientDataJSON' => $b64url((string) $clientDataJson),
+                'authenticatorData' => $b64url($authData),
+                'signature' => $b64url('dummy_sig'),
+            ],
+        ], 'legacy_non_cose_placeholder');
+    }
 }
