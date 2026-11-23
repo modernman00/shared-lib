@@ -854,4 +854,62 @@ class PushNotificationServiceTest extends TestCase
         $result = PushNotificationService::sendPush('user_with_no_subs_at_all', 'Hello World');
         $this->assertFalse($result, 'sendPush must return false when user has no registered push subscriptions.');
     }
+
+    public function testAppleApnsOmitsTopicHeaderToPreventBadWebPushTopic(): void
+    {
+        $userId = 'user_apple_apns';
+        $endpoint = 'https://web.push.apple.com/QIsQb5SmYp8w4tQhaBEnogQVdRl78_8QXo_test';
+        $this->insertSubscription($userId, $endpoint);
+
+        $capturedOptions = null;
+
+        $webPushMock = m::mock('overload:Minishlink\WebPush\WebPush');
+        $webPushMock->shouldReceive('setReuseVAPIDHeaders')->andReturnNull();
+        $webPushMock->shouldReceive('queueNotification')
+            ->once()
+            ->andReturnUsing(function ($sub, $payload, $options = []) use (&$capturedOptions) {
+                $capturedOptions = $options;
+                return true;
+            });
+        $webPushMock->shouldReceive('flush')->once()->andReturn([]);
+
+        PushNotificationService::sendPush(
+            userId: $userId,
+            message: 'Time check-in prompt',
+            tag: 'time-reminder',
+            options: [
+                'ttl'     => 3600,
+                'urgency' => 'high',
+            ]
+        );
+
+        $this->assertIsArray($capturedOptions);
+        $this->assertSame(3600, $capturedOptions['TTL']);
+        $this->assertSame('high', $capturedOptions['urgency']);
+        $this->assertArrayNotHasKey('topic', $capturedOptions, 'Apple APNs endpoints must omit Topic header to avoid 400 BadWebPushTopic.');
+    }
+
+    public function testSendPushReturnsFalseOnHttp400EvenWhenReportIsSuccessTrue(): void
+    {
+        $userId = 'user_http_400';
+        $endpoint = 'https://web.push.apple.com/QIsQb5SmYp8w4tQhaBEnogQVdRl78_8QXo_400';
+        $this->insertSubscription($userId, $endpoint);
+
+        $request = new \GuzzleHttp\Psr7\Request('POST', $endpoint);
+        $response = new \GuzzleHttp\Psr7\Response(400, [], '{"reason":"BadWebPushTopic"}');
+        $report = m::mock(\Minishlink\WebPush\MessageSentReport::class);
+        $report->shouldReceive('isSuccess')->andReturn(true);
+        $report->shouldReceive('getRequest')->andReturn($request);
+        $report->shouldReceive('getResponse')->andReturn($response);
+        $report->shouldReceive('getReason')->andReturn('OK');
+        $report->shouldReceive('isSubscriptionExpired')->andReturn(false);
+
+        $webPushMock = m::mock('overload:Minishlink\WebPush\WebPush');
+        $webPushMock->shouldReceive('setReuseVAPIDHeaders')->andReturnNull();
+        $webPushMock->shouldReceive('queueNotification')->once()->andReturn(true);
+        $webPushMock->shouldReceive('flush')->once()->andReturn([$report]);
+
+        $result = PushNotificationService::sendPush($userId, 'Check-in prompt', '/time-monitor', 'Alert', 'time-reminder');
+        $this->assertFalse($result, 'sendPush must return false when all endpoints return HTTP 400.');
+    }
 }

@@ -400,7 +400,15 @@ class PushNotificationService
                         'contentEncoding' => 'aes128gcm',
                     ]);
 
-                    $webPush->queueNotification($subscriptionObject, $payload ?: null, $webPushOptions);
+                    $subOptions = $webPushOptions;
+                    $subHost = strtolower((string) (parse_url($endpoint, PHP_URL_HOST) ?? ''));
+                    if ($subHost === 'push.apple.com' || str_ends_with($subHost, '.push.apple.com')) {
+                        // Apple APNs Web Push rejects custom Topic headers (400 BadWebPushTopic);
+                        // coalescing is handled by the Service Worker via payload 'tag' + 'renotify'.
+                        unset($subOptions['topic']);
+                    }
+
+                    $webPush->queueNotification($subscriptionObject, $payload ?: null, $subOptions);
                     $hasSubscriptions = true;
                 }
             }
@@ -410,41 +418,60 @@ class PushNotificationService
             }
 
             // Flush all queued notifications & prune expired endpoints (Gate 2)
+            $reportCount = 0;
+            $successCount = 0;
             foreach ($webPush->flush() as $report) {
+                $reportCount++;
                 $endpoint = $report->getRequest()->getUri()->__toString();
-                if (!$report->isSuccess()) {
-                    $reason = $report->getReason();
-                    error_log("[PushNotificationService] Failed for {$endpoint}: {$reason}");
+                $response = $report->getResponse();
+                $statusCode = $response ? $response->getStatusCode() : 0;
+                $isReportSuccess = $report->isSuccess() && ($statusCode === 0 || ($statusCode >= 200 && $statusCode < 300));
 
-                    // If subscription has expired (410 Gone / 404 Not Found), delete from DB
-                    if ($report->isSubscriptionExpired()) {
+                if ($isReportSuccess) {
+                    $successCount++;
+                    continue;
+                }
+
+                $reason = $report->getReason();
+                $respBody = '';
+                if ($response) {
+                    try {
+                        $response->getBody()->rewind();
+                        $respBody = trim($response->getBody()->getContents());
+                    } catch (\Throwable) {
+                        $respBody = '';
+                    }
+                }
+                error_log("[PushNotificationService] Failed for {$endpoint} (HTTP {$statusCode}): {$reason}" . ($respBody !== '' ? " {$respBody}" : ''));
+
+                // If subscription has expired (410 Gone / 404 Not Found), delete from DB
+                if ($report->isSubscriptionExpired() || $statusCode === 404 || $statusCode === 410) {
+                    try {
+                        $db = \Src\Db::connect2();
+                        // Prune from pushNotification
                         try {
-                            $db = \Src\Db::connect2();
-                            // Prune from pushNotification
-                            try {
-                                $stmt1 = $db->prepare("DELETE FROM pushNotification WHERE endpoint = ?");
-                                $stmt1->execute([$endpoint]);
-                            } catch (\Throwable $e) {}
+                            $stmt1 = $db->prepare("DELETE FROM pushNotification WHERE endpoint = ?");
+                            $stmt1->execute([$endpoint]);
+                        } catch (\Throwable $e) {}
 
-                            // Prune from user_push_subscriptions
-                            try {
-                                $stmt2 = $db->prepare("DELETE FROM user_push_subscriptions WHERE endpoint = ?");
-                                $stmt2->execute([$endpoint]);
-                            } catch (\Throwable $e) {}
+                        // Prune from user_push_subscriptions
+                        try {
+                            $stmt2 = $db->prepare("DELETE FROM user_push_subscriptions WHERE endpoint = ?");
+                            $stmt2->execute([$endpoint]);
+                        } catch (\Throwable $e) {}
 
-                            // Prune from push_subscriptions (PartyPlatform schema)
-                            try {
-                                $stmt3 = $db->prepare("DELETE FROM push_subscriptions WHERE endpoint = ?");
-                                $stmt3->execute([$endpoint]);
-                            } catch (\Throwable $e) {}
-                        } catch (\Throwable $e) {
-                            error_log("[PushNotificationService] Prune error: " . $e->getMessage());
-                        }
+                        // Prune from push_subscriptions (PartyPlatform schema)
+                        try {
+                            $stmt3 = $db->prepare("DELETE FROM push_subscriptions WHERE endpoint = ?");
+                            $stmt3->execute([$endpoint]);
+                        } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                        error_log("[PushNotificationService] Prune error: " . $e->getMessage());
                     }
                 }
             }
 
-            return true;
+            return $reportCount === 0 ? true : ($successCount > 0);
         } catch (\Throwable $e) {
             error_log('[PushNotificationService] Exception: ' . $e->getMessage());
             return false;
