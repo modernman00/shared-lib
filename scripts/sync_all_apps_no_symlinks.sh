@@ -29,6 +29,7 @@ for app in "${TARGETS[@]}"; do
     echo "  📂 Rsyncing physical shared-lib files into $vendor_pkg_dir..."
     rsync -a --delete \
         --exclude='.git' \
+        --exclude='.env' \
         --exclude='.phpunit.cache' \
         --exclude='node_modules' \
         --exclude='vendor' \
