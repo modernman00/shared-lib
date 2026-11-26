@@ -14,10 +14,6 @@ namespace Src;
  */
 class AuditLogger
 {
-    // __DIR__ is vendor/{vendor}/{package}/src, so 4 levels up reaches the
-    // consuming app's root (vendor/{vendor}/{package}/src/../../../../ = app root).
-    private static string $fallbackLogPath = __DIR__ . '/../../../../bootstrap/log/fallback_audit.log';
-
     /**
      * Log an event immutably.
      *
@@ -30,12 +26,22 @@ class AuditLogger
         $payload['timestamp'] = gmdate('Y-m-d\TH:i:s\Z');
         $payload['app_env'] = $_ENV['APP_ENV'] ?? 'unknown';
 
-        $jsonData = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        $jsonData = (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
 
-        // Define the remote immutable log endpoint (e.g., AWS API Gateway / CloudWatch)
-        // If not set in .env, default to a simulated endpoint
-        $remoteEndpoint = $_ENV['AUDIT_LOG_ENDPOINT'] ?? 'https://audit.mycompany.internal/log';
-        $apiKey = $_ENV['AUDIT_LOG_API_KEY'] ?? '';
+        // Define the remote immutable log endpoint (e.g., AWS API Gateway / CloudWatch).
+        // If unconfigured or still pointing at the internal placeholder, degrade immediately in O(1)
+        // to the local append-only queue instead of blocking PHP-FPM workers for 1500ms on DNS timeout.
+        $remoteEndpoint = trim((string) ($_ENV['AUDIT_LOG_ENDPOINT'] ?? getenv('AUDIT_LOG_ENDPOINT') ?: ''));
+        $apiKey = (string) ($_ENV['AUDIT_LOG_API_KEY'] ?? getenv('AUDIT_LOG_API_KEY') ?: '');
+
+        if (
+            $remoteEndpoint === '' ||
+            str_contains($remoteEndpoint, 'audit.mycompany.internal') ||
+            (function_exists('isTestEnv') && \isTestEnv())
+        ) {
+            self::fallbackToLocalQueue($jsonData, 'local_append_queue_active');
+            return;
+        }
 
         try {
             $ch = curl_init($remoteEndpoint);

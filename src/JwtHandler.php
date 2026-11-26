@@ -174,19 +174,57 @@ class JwtHandler
      *
      * @return string - Encoded JWT string
      */
+    /**
+     * Sensitive columns that must NEVER be serialised into client-side JWT cookies.
+     *
+     * @var list<string>
+     */
+    private const SENSITIVE_USER_KEYS = [
+        'password',
+        'password_hash',
+        'totp_secret',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'recovery_codes',
+        'remember_token',
+        'api_token',
+        'api_key',
+        'secret_key',
+        'national_insurance',
+        'nino',
+        'bank_account_number',
+        'sort_code',
+    ];
+
+    /**
+     * Strip sensitive credential, 2FA, and financial columns before encoding user data into a JWT.
+     *
+     * @param array<string, mixed> $user
+     * @return array<string, mixed>
+     */
+    public static function sanitiseJwtUserClaims(array $user): array
+    {
+        foreach (self::SENSITIVE_USER_KEYS as $sensitiveKey) {
+            unset($user[$sensitiveKey]);
+        }
+        return $user;
+    }
+
     public static function jwtEncodeData(array $user, ?int $ttlSeconds = null): string
     {
+        $safeUser = self::sanitiseJwtUserClaims($user);
         $ttl = $ttlSeconds ?? (int) ($_ENV['COOKIE_EXPIRE'] ?? 2592000);
+        $appUrl = rtrim((string) ($_ENV['APP_URL'] ?? ''), '/');
         $token = [
-            'iss' => $_ENV['APP_URL'] ?? '',
-            'aud' => $_ENV['APP_URL'] ?? '',
+            'iss' => $appUrl,
+            'aud' => $appUrl,
             'iat' => time(),
             'nbf' => time(),
             'exp' => time() + $ttl,
-            'data' => $user,
-            'sub' => (string) ($user['id'] ?? ''),
-            'role' => $user['role'] ?? 'users',
-            'token_version' => $user['token_version'] ?? 1,
+            'data' => $safeUser,
+            'sub' => (string) ($safeUser['id'] ?? ''),
+            'role' => $safeUser['role'] ?? 'users',
+            'token_version' => $safeUser['token_version'] ?? 1,
         ];
 
         $jwtKey = $_ENV['JWT_KEY'] ?? $_ENV['JWT_TOKEN'] ?? '';
@@ -272,11 +310,22 @@ class JwtHandler
                 throw new UnauthorisedException("Invalid JWT signature");
             }
         }
-        $userId = $decoded->data->id ?? $decoded->id;
-        $userEmail = $decoded->data->email ?? $decoded->email;
+        $userId = $decoded->data->id ?? $decoded->id ?? null;
+        $userEmail = $decoded->data->email ?? $decoded->email ?? null;
         $userParam = $userId ?? $userEmail;
 
-          if (!$userParam) {
+        // Enforce cryptographic domain separation (iss & aud) when APP_URL is configured
+        // so a JWT minted on one portfolio app cannot be replayed against another app sharing a key.
+        $expectedAppUrl = rtrim((string) ($_ENV['APP_URL'] ?? ''), '/');
+        if ($expectedAppUrl !== '') {
+            $tokenIss = isset($decoded->iss) ? rtrim((string) $decoded->iss, '/') : '';
+            $tokenAud = isset($decoded->aud) ? rtrim((string) $decoded->aud, '/') : '';
+            if (($tokenIss !== '' && $tokenIss !== $expectedAppUrl) || ($tokenAud !== '' && $tokenAud !== $expectedAppUrl)) {
+                throw new UnauthorisedException('JWT issuer or audience mismatch for this application domain');
+            }
+        }
+
+        if (!$userParam) {
             throw new UnauthorisedException("JWT missing user identifier");
         }
 

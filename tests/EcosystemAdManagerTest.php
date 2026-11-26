@@ -166,11 +166,29 @@ class EcosystemAdManagerTest extends TestCase
         $this->assertStringContainsString('pp-brand-logo-svg', $bcp['svg_icon']);
         $this->assertStringContainsString('#006699', $bcp['svg_icon']);
 
-        // 3. PartyPlatform must use authentic electric violet/fuchsia gradient
+        // 3. PartyPlatform must use authentic electric violet/fuchsia gradient, official logo_url, ribbon-P SVG, and marketable copy
         $this->assertArrayHasKey('partyplatform', $catalog);
         $party = $catalog['partyplatform'];
         $this->assertEquals('#9B5CFB', $party['accent_color']);
         $this->assertStringContainsString('#7b03fc', $party['gradient']);
+        $this->assertEquals('/public/images/ecosystem/partyplatform.png', $party['logo_url']);
+        $this->assertStringContainsString('pp_star_gold', $party['svg_icon']);
+        $this->assertNotEmpty($party['value_pills']);
+    }
+
+    public function testPromoDeckForContextRotatesAcrossFullSisterPortfolio(): void
+    {
+        $promoService = new EcosystemPromoService();
+        $deck = $promoService->getPromoDeckForContext('familyplatform', 'family_feed');
+
+        $this->assertGreaterThanOrEqual(8, count($deck));
+        $targetApps = array_column($deck, 'target_app');
+        $this->assertNotContains('familyplatform', $targetApps);
+        $this->assertContains('partyplatform', $targetApps);
+        $this->assertContains('idecide', $targetApps);
+        $this->assertContains('iaccount', $targetApps);
+        $this->assertContains('scoretenant', $targetApps);
+        $this->assertContains('execmind', $targetApps);
     }
 
     public function testAdvertsRotationAcrossImpressions(): void

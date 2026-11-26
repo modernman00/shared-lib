@@ -267,6 +267,10 @@ class EcosystemAdManager
             'gradient' => $gradient,
             'icon' => (string) ($ad['icon'] ?? ($matchedMeta['icon'] ?? 'bi-stars')),
             'svg_icon' => $svgIcon,
+            'logo_url' => !empty($ad['logo_url']) ? (string) $ad['logo_url'] : (string) ($matchedMeta['logo_url'] ?? ''),
+            'value_pills' => !empty($ad['value_pills']) && is_array($ad['value_pills'])
+                ? array_values($ad['value_pills'])
+                : array_values((array) ($matchedMeta['value_pills'] ?? [])),
             'disclosure_type' => (string) ($ad['disclosure_type'] ?? 'promotion'),
             'disclosure_text' => (string) ($ad['disclosure_text'] ?? 'Verified Partner Promotion — Curated across our Ecosystem Studio.'),
             'dismissible' => true,

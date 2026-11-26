@@ -60,7 +60,9 @@ final class AiPrivacyGuard
             return '';
         }
 
-        $cleaned = $text;
+        // 0. Strip invisible Unicode format/zero-width characters (\u200B, \u200C, \u200D, \uFEFF, BiDi overrides)
+        // that offensive AI agents insert to split tokens and evade regex PII/injection filters.
+        $cleaned = (string)preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}-\x{206F}\x{FEFF}]/u', '', $text);
 
         // 1. Redact National Insurance Numbers
         $cleaned = (string)preg_replace(self::REGEX_UK_NINO, '[REDACTED_NINO]', $cleaned);

@@ -39,8 +39,14 @@ class Select extends Db
         ?string $limit = null,
         ?array $colArray = null
     ): string {
-        // for col dynamically -
+        // for col dynamically - validate every element in $colArray against SQL identifier injection
+        $implodeColArray = '';
         if ($colArray) {
+            foreach ($colArray as $colItem) {
+                if (!is_string($colItem) || !Utility::onlyLettersNumbersUnderscore($colItem)) {
+                    throw new \Src\Exceptions\ValidationException('colArray identifier not well formed');
+                }
+            }
             $implodeColArray = implode(separator: ', ', array: $colArray);
         }
 
@@ -193,6 +199,9 @@ class Select extends Db
      */
     public function selectCountAll($table): mixed
     {
+        if (!is_string($table) || !Utility::onlyLettersNumbersUnderscore($table)) {
+            throw new \Src\Exceptions\ValidationException('table not well formed');
+        }
         $query = "SELECT COUNT(*) FROM $table";
 
         return $this->connect()->query($query)->fetchColumn();

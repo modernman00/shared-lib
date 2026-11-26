@@ -134,7 +134,7 @@ class UniversalPosterStudioController
                             'venue' => 'TAPE LONDON',
                             'address' => '17 HANOVER SQUARE, LONDON W1S 1HU',
                             'dressCode' => 'ALL BLACK AFFAIR • WEAR ALL BLACK',
-                            'rsvpContact' => 'MARCH 31, 2026 • 020 7946 0192',
+                            'rsvpContact' => 'RSVP BY MAY 01 • 020 7946 0192',
                             'photoMode' => 'ghost_double',
                             'qrUrl' => 'https://partyplatform.com/e/aarons-birthday',
                         ],
@@ -1524,7 +1524,7 @@ class UniversalPosterStudioController
             <div class="form-row-2">
                 <div class="form-group">
                     <label class="form-label" for="inpDressCode" id="lblInpDressCode">Dress Code / Admission</label>
-                    <input type="text" id="inpDressCode" class="form-input" placeholder="e.g. ALL BLACK AFFAIR">
+                    <input type="text" id="inpDressCode" class="form-input" placeholder="e.g. ALL BLACK AFFAIR (leave blank to hide)">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="inpAccentMetric" id="lblInpAccentMetric">Rate / APR / Metric Pill</label>
@@ -1539,8 +1539,8 @@ class UniversalPosterStudioController
 
             <div class="form-row-2">
                 <div class="form-group">
-                    <label class="form-label" for="inpRsvpContact" id="lblInpRsvpContact">RSVP / Contact / Website</label>
-                    <input type="text" id="inpRsvpContact" class="form-input" placeholder="e.g. +44 7700 900077">
+                    <label class="form-label" for="inpRsvpContact" id="lblInpRsvpContact">RSVP Details / Contact / Link</label>
+                    <input type="text" id="inpRsvpContact" class="form-input" placeholder="e.g. SCAN QR OR VISIT LINK • +44 7700 900077">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="inpQrUrl" id="lblInpQrUrl">Dynamic QR Target URL</label>

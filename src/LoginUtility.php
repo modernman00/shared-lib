@@ -12,6 +12,12 @@ use Src\Sanitise\Sanitise;
 class LoginUtility
 {
     /**
+     * Pre-computed dummy bcrypt hash used for constant-time verification when an email is not found,
+     * preventing timing-oracle account enumeration by agentic scanners.
+     */
+    private const DUMMY_TIMING_HASH = '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
+
+    /**
      * @param mixed $inputData this is the form data
      * @param mixed $databaseData this must be database data that already has the database password
      *
@@ -26,11 +32,12 @@ class LoginUtility
         $id = $databaseData['id'];
         $tableDB = $_ENV['DB_TABLE_LOGIN'] ??'account' ?? 'login';
         $options = ['cost' => 12];
+        $clientIp = Utility::getUserIpAddr();
 
         if (password_verify($textPassword, $dbPassword) === false) {
-            LoginUtility::logAudit($id, $inputData['email'], 'failure', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
+            LoginUtility::logAudit($id, $inputData['email'], 'failure', $clientIp, $_SERVER['HTTP_USER_AGENT'] ?? null);
 
-            LoginUtility::checkSuspiciousActivity($inputData['email'], $_SERVER['REMOTE_ADDR']);
+            LoginUtility::checkSuspiciousActivity($inputData['email'], $clientIp);
 
             throw new UnauthorisedException('There is a problem with your login credential! - Password');
         }
@@ -72,9 +79,14 @@ class LoginUtility
         $emailData = Select::selectFn2(query: $query, bind: [$email]);
 
         if (empty($emailData)) {
-            LoginUtility::logAudit($id, $email, 'failure', $_SERVER['REMOTE_ADDR'] ?? null, $_SERVER['HTTP_USER_AGENT'] ?? null);
+            // Equalise CPU timing against valid-account password checks to neutralise timing enumeration
+            $candidatePassword = is_string($inputData['password'] ?? null) ? $inputData['password'] : 'dummy_timing_guard';
+            password_verify($candidatePassword, self::DUMMY_TIMING_HASH);
 
-            LoginUtility::checkSuspiciousActivity($email, $_SERVER['REMOTE_ADDR'] ?? '');
+            $clientIp = Utility::getUserIpAddr();
+            LoginUtility::logAudit($id, $email, 'failure', $clientIp, $_SERVER['HTTP_USER_AGENT'] ?? null);
+
+            LoginUtility::checkSuspiciousActivity($email, $clientIp);
 
             throw new UnauthorisedException('We do not recognise your account');
         }
@@ -98,7 +110,6 @@ class LoginUtility
         if (!$data) {
             throw new NotFoundException('We cannot find your email');
         }
-        foreach ($data as $data);
 
         return $data;
     }
@@ -191,8 +202,12 @@ class LoginUtility
     $clean = [];
 
     foreach ($data as $key => $value) {
-        // Clean the key
-        $safeKey = preg_replace('/[^a-zA-Z0-9_.]/', '', (string)$key);
+        // Clean the key: allow only strict alphanumeric and underscore characters (no dots!)
+        // so sanitised keys can never inject table.column qualifiers or break PDO :named placeholders.
+        $safeKey = (string) preg_replace('/[^a-zA-Z0-9_]/', '', (string)$key);
+        if ($safeKey === '') {
+            continue;
+        }
 
         if (is_array($value)) {
             // Propagate optional status to child keys if parent is optional
@@ -223,11 +238,11 @@ class LoginUtility
      *
      * @param mixed $email
      *
-     * @return array
+     * @return array|int|string
      *
      * @throws \Exception
      */
-    public static function findUserByEmailPassword(string $email, string $password): array
+    public static function findUserByEmailPassword(string $email, string $password): array|int|string
     {
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COUNT_TWO',
@@ -304,6 +319,14 @@ class LoginUtility
         $count = (int) $stmt->fetchColumn();
 
         if ($count >= 5) {
+            // Throttle alert emails to at most 1 every 15 minutes per target email
+            // so an agentic brute-force swarm cannot trigger an SMTP email bomb.
+            $cooldownFile = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'suspicious_alert_' . md5(strtolower(trim($email))) . '.lock';
+            if (is_file($cooldownFile) && (time() - (int) @filemtime($cooldownFile)) < 900) {
+                return;
+            }
+            @file_put_contents($cooldownFile, (string) time(), LOCK_EX);
+
             // create email data
             $emailData = [
                 'email'      => $email,

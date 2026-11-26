@@ -209,7 +209,7 @@ class BotGuard
         if (self::isBotHoneypotHit($input)) {
             // Log security incident
             \Src\AuditLogger::log('bot_honeypot_triggered', [
-                'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'ip' => ClientIp::fromGlobals(),
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
             ]);
 
@@ -221,7 +221,7 @@ class BotGuard
             if (self::isDisposableEmail($input['email'])) {
                 \Src\AuditLogger::log('disposable_email_blocked', [
                     'email' => $input['email'],
-                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'ip' => ClientIp::fromGlobals(),
                 ]);
 
                 throw new BadRequestException('Please provide a valid permanent email address from an established provider.');

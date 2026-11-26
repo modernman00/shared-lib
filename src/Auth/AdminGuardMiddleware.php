@@ -102,23 +102,7 @@ final class AdminGuardMiddleware
 
     public static function getClientIp(): string
     {
-        $remoteAddr = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $trustedProxiesRaw = (string) ($_ENV['TRUSTED_PROXIES'] ?? getenv('TRUSTED_PROXIES') ?: '');
-
-        if ($trustedProxiesRaw !== '') {
-            $trustedProxies = array_filter(array_map('trim', explode(',', $trustedProxiesRaw)));
-            if (in_array($remoteAddr, $trustedProxies, true)) {
-                if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-                    return trim((string) $_SERVER['HTTP_CF_CONNECTING_IP']);
-                }
-                if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                    $ips = explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR']);
-                    return trim($ips[0]);
-                }
-            }
-        }
-
-        return $remoteAddr;
+        return \Src\ClientIp::fromGlobals();
     }
 
     public static function renderDisguised404(): void

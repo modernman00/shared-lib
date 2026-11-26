@@ -33,6 +33,15 @@ class SubmitForm extends Db
             throw new NotFoundException();
         }
 
+        if (!Utility::onlyLettersNumbersUnderscore($table) || strlen($table) > 64) {
+            throw new \Src\Exceptions\ValidationException('table not well formed');
+        }
+        foreach (array_keys($fields) as $colKey) {
+            if (!is_string($colKey) || !Utility::onlyLettersNumbersUnderscore($colKey) || strlen($colKey) > 64) {
+                throw new \Src\Exceptions\ValidationException('column identifier not well formed');
+            }
+        }
+
         try {
             $connection = $pdo ?? Db::connect2(); // Trusts that connect2() returns a valid PDO instance
 
@@ -72,6 +81,17 @@ class SubmitForm extends Db
 
     public static function submitFormDynamic($table, $field)
     {
+        if (!is_string($table) || !Utility::onlyLettersNumbersUnderscore($table) || strlen($table) > 64) {
+            throw new \Src\Exceptions\ValidationException('table not well formed');
+        }
+        if (!is_array($field) || empty($field)) {
+            throw new \Src\Exceptions\ValidationException('fields cannot be empty');
+        }
+        foreach (array_keys($field) as $colKey) {
+            if (!is_string($colKey) || !Utility::onlyLettersNumbersUnderscore($colKey) || strlen($colKey) > 64) {
+                throw new \Src\Exceptions\ValidationException('column identifier not well formed');
+            }
+        }
 
         try {
             $DYNAMIC = strtoupper($table);
@@ -123,6 +143,18 @@ class SubmitForm extends Db
 
     public static function submitFormDynamicLastId($table, $field, $lastIdCol)
     {
+        if (!is_string($table) || !Utility::onlyLettersNumbersUnderscore($table) || strlen($table) > 64) {
+            throw new \Src\Exceptions\ValidationException('table not well formed');
+        }
+        if (!is_array($field) || empty($field)) {
+            throw new \Src\Exceptions\ValidationException('fields cannot be empty');
+        }
+        foreach (array_keys($field) as $colKey) {
+            if (!is_string($colKey) || !Utility::onlyLettersNumbersUnderscore($colKey) || strlen($colKey) > 64) {
+                throw new \Src\Exceptions\ValidationException('column identifier not well formed');
+            }
+        }
+
         try {
             // Prepare the SQL statement
             $columns = implode(', ', array_keys($field));

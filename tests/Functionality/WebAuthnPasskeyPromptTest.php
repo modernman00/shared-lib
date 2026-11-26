@@ -68,8 +68,27 @@ class WebAuthnPasskeyPromptTest extends TestCase
         $this->assertStringContainsString('/webauthn/register/options', $html);
         $this->assertStringContainsString('window.BiometricPasskeyPrompt', $html);
 
-        // Must be suppressed on /login or /signin routes
-        $_SERVER['REQUEST_URI'] = '/login';
+        // Must be suppressed on /login, /signin, /code, /reset-password, /tos, /auth/* routes
+        foreach (['/login', '/signin', '/code', '/reset-password', '/tos', '/auth/google'] as $authUri) {
+            $_SERVER['REQUEST_URI'] = $authUri;
+            $this->assertSame('', WebAuthnFunctionality::renderActivationPrompt('test-nonce-123'), "Prompt must be suppressed on {$authUri}");
+        }
+    }
+
+    public function testPreTwoFactorPendingSessionIsNotTreatedAsAuthenticated(): void
+    {
+        $_SESSION = [
+            'auth' => [
+                'identifyCust' => 'USR_999',
+                'email' => 'pending@example.co.uk',
+                '2FA_token_ts' => time(),
+            ],
+        ];
+        $_SERVER['REQUEST_URI'] = '/dashboard';
+
+        $this->assertNull(WebAuthnFunctionality::resolveAuthenticatedUser());
+        $state = WebAuthnFunctionality::getClientPromptState(false);
+        $this->assertFalse($state['authenticated']);
         $this->assertSame('', WebAuthnFunctionality::renderActivationPrompt('test-nonce-123'));
     }
 

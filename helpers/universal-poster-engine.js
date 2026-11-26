@@ -1522,24 +1522,33 @@ class AtgUniversalPosterEngine {
     // Right Half: Doors & Entry (avoid duplicating "DOORS")
     const rawTime = (this.data.time || '10PM').toUpperCase().replace(/^DOORS\s+/i, '');
     const rightLine1 = `DOORS ${rawTime}`;
-    const rightLine2 = (this.data.dressCode || 'ENTRY FREE').toUpperCase();
+    const rawDressNeon = (this.data.dressCode === undefined || this.data.dressCode === null)
+      ? 'ENTRY FREE'
+      : String(this.data.dressCode).trim();
+    const rightLine2 = rawDressNeon.toUpperCase();
     ctx.textAlign = 'left';
     ctx.fillText(rightLine1, cx + 28, boxY + 54);
-    ctx.fillText(rightLine2, cx + 28, boxY + 94);
+    if (rightLine2 !== '') {
+      ctx.fillText(rightLine2, cx + 28, boxY + 94);
+    }
     ctx.restore();
 
     // 7. Bottom Ticket Footer
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.font = '500 18px "Montserrat", sans-serif';
-    ctx.fillStyle = '#cbd5e1';
-    this._drawTrackedText(ctx, 'BOOK YOUR TICKET ON:', cx, h * 0.865, 5);
+    const rawRsvpNeon = (this.data.rsvpContact === undefined || this.data.rsvpContact === null)
+      ? 'WWW.PARTYPLATFORM.COM'
+      : String(this.data.rsvpContact).trim();
+    if (rawRsvpNeon !== '') {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = '500 18px "Montserrat", sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      this._drawTrackedText(ctx, 'BOOK YOUR TICKET / RSVP:', cx, h * 0.865, 5);
 
-    ctx.font = '800 24px "Montserrat", sans-serif';
-    ctx.fillStyle = '#ffffff';
-    const cleanSite = (this.data.rsvpContact || 'WWW.PARTYPLATFORM.COM').toUpperCase();
-    this._drawTrackedText(ctx, cleanSite, cx, h * 0.895, 3);
-    ctx.restore();
+      ctx.font = '800 24px "Montserrat", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      this._drawTrackedText(ctx, rawRsvpNeon.toUpperCase(), cx, h * 0.895, 3);
+      ctx.restore();
+    }
   }
 
   /* =========================================================================
@@ -1703,33 +1712,69 @@ class AtgUniversalPosterEngine {
       ctx.fillText(part, splitX + 22, gridY + 20 + idx * 20);
     });
 
-    // Row 2: DRESS CODE
-    gridY += 105;
-    ctx.textAlign = 'right';
-    ctx.font = '500 30px "Oswald", "Montserrat", sans-serif';
-    ctx.fillStyle = '#eab308';
-    ctx.fillText(lbl('dressLine1', 'DRESS'), splitX, gridY);
-    ctx.fillText(lbl('dressLine2', 'CODE'), splitX, gridY + 32);
+    // Row 2: DRESS CODE (only render when non-empty so unlinked sample copy never bleeds into real events)
+    const rawDressCode = (this.data.dressCode === undefined || this.data.dressCode === null)
+      ? (isFamily ? 'TRADITIONAL ROYAL GOLD & IVORY • CELEBRATION ATTIRE' : 'ALL BLACK AFFAIR • WEAR ALL BLACK')
+      : String(this.data.dressCode).trim();
+    if (rawDressCode !== '') {
+      gridY += 105;
+      ctx.textAlign = 'right';
+      ctx.font = '500 30px "Oswald", "Montserrat", sans-serif';
+      ctx.fillStyle = '#eab308';
+      ctx.fillText(lbl('dressLine1', 'DRESS'), splitX, gridY);
+      ctx.fillText(lbl('dressLine2', 'CODE'), splitX, gridY + 32);
 
-    ctx.textAlign = 'left';
-    const dressTokens = (this.data.dressCode || (isFamily ? 'TRADITIONAL ROYAL GOLD & IVORY • CELEBRATION ATTIRE' : 'ALL BLACK AFFAIR • WEAR ALL BLACK')).toUpperCase().split(/•|\|/);
-    ctx.font = '800 21px "Montserrat", sans-serif';
-    ctx.fillStyle = '#eab308';
-    ctx.fillText(((this.strictContent ? (dressTokens[0] || '') : (dressTokens[0] || (isFamily ? 'TRADITIONAL ROYAL GOLD' : 'ALL BLACK AFFAIR')))).trim(), splitX + 22, gridY - 4);
+      ctx.textAlign = 'left';
+      const dressTokens = rawDressCode.toUpperCase().split(/•|\|/);
+      const dressLine1 = (dressTokens[0] || '').trim();
+      const dressLine2 = (dressTokens[1] || '').trim();
+      ctx.font = '800 21px "Montserrat", sans-serif';
+      ctx.fillStyle = '#eab308';
+      ctx.fillText(dressLine1, splitX + 22, dressLine2 !== '' ? gridY - 4 : gridY + 10);
 
-    ctx.font = '600 17px "Montserrat", sans-serif';
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillText(((this.strictContent ? (dressTokens[1] || '') : (dressTokens[1] || (isFamily ? 'WEAR ROYAL GOLD & IVORY' : 'WEAR ALL BLACK')))).trim(), splitX + 22, gridY + 22);
+      if (dressLine2 !== '') {
+        ctx.font = '600 17px "Montserrat", sans-serif';
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(dressLine2, splitX + 22, gridY + 22);
+      }
+    }
 
-    // Bottom-Left RSVP Block
-    const rsvpY = h * 0.825;
-    ctx.font = 'italic 400 44px "Great Vibes", "Alex Brush", cursive';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(lbl('rsvp', 'rsvp'), leftCx - w * 0.16, rsvpY);
+    // Bottom-Left RSVP Block (clear uppercase label + dynamic contact/QR instruction)
+    const rawRsvp = (this.data.rsvpContact === undefined || this.data.rsvpContact === null)
+      ? (isFamily ? 'FAMILY PORTAL RSVP • +44 7700 900200' : 'RSVP BY MAY 01 • 020 7946 0192')
+      : String(this.data.rsvpContact).trim();
+    const rsvpDisplayText = rawRsvp !== ''
+      ? rawRsvp.toUpperCase()
+      : (this.data.qrUrl ? 'SCAN QR CODE TO RSVP' : '');
 
-    ctx.font = '700 20px "Montserrat", sans-serif';
-    ctx.fillStyle = '#eab308';
-    ctx.fillText((this.data.rsvpContact || (isFamily ? 'FAMILY PORTAL RSVP • +44 7700 900200' : 'MARCH 31, 2026 • 020 7946 0192')).toUpperCase(), leftCx - w * 0.16, rsvpY + 28);
+    if (rsvpDisplayText !== '') {
+      const rsvpY = rawDressCode !== '' ? h * 0.825 : h * 0.77;
+      const rsvpX = leftCx - w * 0.16;
+      const maxRsvpW = w * 0.44;
+      ctx.textAlign = 'left';
+      ctx.font = '700 24px "Oswald", "Montserrat", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      this._drawTrackedText(ctx, lbl('rsvp', 'RSVP').toUpperCase(), rsvpX, rsvpY, 4);
+
+      ctx.font = '700 18px "Montserrat", sans-serif';
+      ctx.fillStyle = '#eab308';
+      const rsvpWords = rsvpDisplayText.split(/\s+/);
+      let rsvpLine = '';
+      let rsvpLineIdx = 0;
+      rsvpWords.forEach((word) => {
+        const testLine = rsvpLine ? `${rsvpLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxRsvpW && rsvpLine !== '') {
+          ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 22);
+          rsvpLine = word;
+          rsvpLineIdx += 1;
+        } else {
+          rsvpLine = testLine;
+        }
+      });
+      if (rsvpLine !== '' && rsvpLineIdx < 2) {
+        ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 22);
+      }
+    }
     ctx.restore();
 
     // Wax Crest Seal for Family Heirloom Gala

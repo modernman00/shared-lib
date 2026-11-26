@@ -36,6 +36,7 @@ class Token extends CheckToken
         $_SESSION['auth']['2FA_token_ts'] = time(); // Use 'auth' namespace
         $_SESSION['auth']['identifyCust'] = $id; // Use 'auth' namespace
         $_SESSION['auth']['email'] = $email;
+        $_SESSION['auth']['2FA_challenge_mac'] = self::computeChallengeMac((string) $email);
         //TODO send text to the user with the code - xxx
 
         //3. ACCOMPANY EMAIL CONTENT (Heuristic-compliant subject for iOS 17+ / Android OTP autofill)
@@ -126,7 +127,7 @@ class Token extends CheckToken
             // within the last 180 seconds in the current session (e.g. registration
             // immediately followed by login), preserve that code so the first email's
             // code remains valid unless an explicit resend requested a rotation.
-            $existingRow = is_array($codeData[0] ?? null) ? $codeData[0] : (is_array($codeData) ? $codeData : []);
+            $existingRow = is_array($codeData[0] ?? null) ? $codeData[0] : $codeData;
             $existingCode = strtoupper(trim((string) ($existingRow['code'] ?? '')));
             $sessionEmail = strtolower(trim((string) ($_SESSION['auth']['email'] ?? '')));
             $tokenTs = (int) ($_SESSION['auth']['2FA_token_ts'] ?? 0);
@@ -153,6 +154,23 @@ class Token extends CheckToken
     }
 
     /**
+     * Maximum validity window for a 2FA OTP challenge in seconds (15 minutes).
+     */
+    public const OTP_TTL_SECONDS = 900;
+
+    /**
+     * Compute a session-bound HMAC tying the 2FA challenge to the client's /24 subnet and User-Agent.
+     */
+    public static function computeChallengeMac(string $email): string
+    {
+        $ip = Utility::getUserIpAddr();
+        $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $subnet = \Src\Auth\AdminGuardMiddleware::extractSubnet($ip);
+        $secret = (string) ($_ENV['APP_KEY'] ?? $_ENV['JWT_KEY'] ?? 'sovereign-2fa-challenge-salt');
+        return hash_hmac('sha256', strtolower(trim($email)) . '|' . $subnet . '|' . $ua, $secret);
+    }
+
+    /**
      * Checks if the token is valid.
      *
      * @param mixed $code
@@ -171,7 +189,37 @@ class Token extends CheckToken
             throw new UnauthorisedException('Cannot verify token. Invalid code provided.');
         }
         $code = strtoupper(trim($code));
-        $email = cleanSession($_SESSION['auth']['email']);
+        $email = cleanSession($_SESSION['auth']['email'] ?? null);
+        if (!is_string($email) || trim($email) === '') {
+            throw new UnauthorisedException('Cannot verify token. No active verification session.');
+        }
+
+        // 1. Enforce strict 15-minute OTP TTL check if timestamp was recorded in session
+        $tokenTs = (int) ($_SESSION['auth']['2FA_token_ts'] ?? 0);
+        if ($tokenTs > 0 && (time() - $tokenTs) > self::OTP_TTL_SECONDS) {
+            $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
+            $updateCode->updateTable('code', 'LOCKED', 'email', $email);
+            unset($_SESSION['auth']['otp_attempts'], $_SESSION['auth']['pendingUser']);
+            throw new UnauthorisedException('Your verification code has expired. Please request a new one.');
+        }
+
+        // 2. Verify pre-auth challenge MAC if set (prevents cross-subnet session fixation / OTP replay)
+        if (!empty($_SESSION['auth']['2FA_challenge_mac'])) {
+            $expectedMac = self::computeChallengeMac($email);
+            if (!hash_equals((string) $_SESSION['auth']['2FA_challenge_mac'], $expectedMac)) {
+                unset($_SESSION['auth']['pendingUser']);
+                throw new UnauthorisedException('Verification session network mismatch. Please log in again.');
+            }
+        }
+
+        // 3. Enforce DB-backed rate limiter so stateless cookie-dropping agents cannot bypass 3-attempt session lockouts
+        try {
+            Limiter::limit('otp_verify:' . strtolower($email), 'login');
+        } catch (\Src\Exceptions\TooManyRequestsException $e) {
+            $updateCode = new Update($_ENV['DB_TABLE_CODE_MGT']);
+            $updateCode->updateTable('code', 'LOCKED', 'email', $email);
+            throw new UnauthorisedException('Too many failed attempts. Your verification code has been locked. Please request a new one.');
+        }
         $query = Select::formAndMatchQuery(
             selection: 'SELECT_COL_DYNAMICALLY_ID_AND',
             table: $_ENV['DB_TABLE_CODE_MGT'],

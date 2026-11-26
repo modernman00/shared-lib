@@ -16,8 +16,33 @@ use Src\Exceptions\NotFoundException;
  */
 class Update extends Db
 {
+    /**
+     * Columns guarded against unapproved mass-assignment via makeUpdate() / updateMultiplePOST().
+     * Direct single-column updateTable() calls by internal services remain allowed.
+     *
+     * @var array<string, bool>
+     */
+    private const MASS_ASSIGNMENT_GUARDED_COLUMNS = [
+        'is_admin' => true,
+        'is_super_admin' => true,
+        'token_version' => true,
+    ];
+
     public function __construct(public string $table)
     {
+        self::assertValidIdentifier($this->table, 'table');
+    }
+
+    /**
+     * Strictly validate a SQL table or column identifier against injection.
+     *
+     * @throws \Src\Exceptions\ValidationException
+     */
+    public static function assertValidIdentifier(string $identifier, string $label = 'identifier'): void
+    {
+        if (!Utility::onlyLettersNumbersUnderscore($identifier) || strlen($identifier) > 64) {
+            throw new \Src\Exceptions\ValidationException("{$label} not well formed");
+        }
     }
 
     /**
@@ -32,6 +57,10 @@ class Update extends Db
      */
     public function updateTable(string $column, int|string|array $columnAnswer, string $identifier, int|string $identifierAnswer): bool
     {
+        self::assertValidIdentifier($this->table, 'table');
+        self::assertValidIdentifier($column, 'column');
+        self::assertValidIdentifier($identifier, 'identifier');
+
         try {
             // Prepare the query with parameterized values
             $query = "UPDATE $this->table SET $column = :columnValue WHERE $identifier = :identifierValue";
@@ -50,6 +79,9 @@ class Update extends Db
 
     public function updateTableMulti(string $column, string $columnAnswer, array $identifiers)
     {
+        self::assertValidIdentifier($this->table, 'table');
+        self::assertValidIdentifier($column, 'column');
+
         try {
             // Build the SET clause for the column to update
             $setClause = "$column = ?";
@@ -59,6 +91,7 @@ class Update extends Db
             $params = [$columnAnswer];
 
             foreach ($identifiers as $identifier => $value) {
+                self::assertValidIdentifier((string) $identifier, 'identifier');
                 if ($whereClause !== '') {
                     $whereClause .= ' AND ';
                 }
@@ -81,6 +114,11 @@ class Update extends Db
 
     public function updateTwoColumns(array $columns, array $columnAnswers, array $identifiers)
     {
+        self::assertValidIdentifier($this->table, 'table');
+        foreach ($columns as $col) {
+            self::assertValidIdentifier((string) $col, 'column');
+        }
+
         try {
             // Build the SET clause for the columns to update
             $setClause = implode(' = ?, ', $columns) . ' = ?';
@@ -90,6 +128,7 @@ class Update extends Db
             $params = array_merge($columnAnswers, array_values($identifiers));
 
             foreach ($identifiers as $identifier => $value) {
+                self::assertValidIdentifier((string) $identifier, 'identifier');
                 if ($whereClause !== '') {
                     $whereClause .= ' AND ';
                 }
@@ -150,6 +189,18 @@ class Update extends Db
                 throw new BadRequestException('No data to update.');
             }
 
+            self::assertValidIdentifier($this->table, 'table');
+            foreach (array_keys($data) as $colKey) {
+                $colStr = (string) $colKey;
+                self::assertValidIdentifier($colStr, 'column');
+                if (isset(self::MASS_ASSIGNMENT_GUARDED_COLUMNS[strtolower($colStr)])) {
+                    throw new \Src\Exceptions\ValidationException("Mass-assignment of guarded privilege column '{$colStr}' is forbidden.");
+                }
+            }
+            foreach ($identifiers as $id) {
+                self::assertValidIdentifier((string) $id, 'identifier');
+            }
+
             // Build SET clause
             $setClause = implode(' = ?, ', array_keys($data)) . ' = ?';
 
@@ -191,6 +242,16 @@ class Update extends Db
                 throw new BadRequestException('No data to update.');
             }
 
+            self::assertValidIdentifier($this->table, 'table');
+            self::assertValidIdentifier($identifier, 'identifier');
+            foreach (array_keys($data) as $colKey) {
+                $colStr = (string) $colKey;
+                self::assertValidIdentifier($colStr, 'column');
+                if (isset(self::MASS_ASSIGNMENT_GUARDED_COLUMNS[strtolower($colStr)])) {
+                    throw new \Src\Exceptions\ValidationException("Mass-assignment of guarded privilege column '{$colStr}' is forbidden.");
+                }
+            }
+
             // Build SQL
             $fields = implode(' = ?, ', array_keys($data)) . ' = ?';
             $sql = "UPDATE {$this->table} SET $fields WHERE $identifier = ?";
@@ -210,6 +271,11 @@ class Update extends Db
 
         public static function updateWithTimestamp($table, $likesColumn, $likesValue, $timestampColumn, $whereColumn, $whereValue)
     {
+        self::assertValidIdentifier((string) $table, 'table');
+        self::assertValidIdentifier((string) $likesColumn, 'column');
+        self::assertValidIdentifier((string) $timestampColumn, 'timestampColumn');
+        self::assertValidIdentifier((string) $whereColumn, 'whereColumn');
+
         $query = "UPDATE $table
         SET $likesColumn = :likesValue, $timestampColumn = CURRENT_TIMESTAMP
         WHERE $whereColumn = :whereValue
@@ -229,6 +295,8 @@ class Update extends Db
 
     public function updateWhereRaw(string $setColumn, $setValue, string $where, array $params)
 {
+    self::assertValidIdentifier($this->table, 'table');
+    self::assertValidIdentifier($setColumn, 'setColumn');
     $sql = "UPDATE {$this->table} SET {$setColumn} = ? {$where}";
     $stmt = parent::connect2()->prepare($sql);
     $stmt->execute(array_merge([$setValue], $params));
