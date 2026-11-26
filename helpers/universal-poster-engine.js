@@ -1282,23 +1282,27 @@ class AtgUniversalPosterEngine {
     ctx.fillText(this.data.kicker || 'Presents', leftCx, h * 0.174);
     ctx.restore();
 
-    // 4. Massive 3-Line Stacked Condensed Headline ("SUNDAY / POOL / PARTY")
-    const rawWords = (this.data.title || 'SUNDAY\nPOOL\nPARTY')
-      .toUpperCase()
-      .split(/\r\n|\r|\n|\s+/)
-      .filter(Boolean);
-    const lines = rawWords.length >= 3 ? rawWords.slice(0, 3) : ['SUNDAY', 'POOL', 'PARTY'];
+    // 4. Massive Stacked Condensed Headline (dynamic from event title + secondary title)
+    const rawTitleWords = (this.data.title !== undefined && this.data.title !== null)
+      ? String(this.data.title).trim().toUpperCase().split(/\r\n|\r|\n|\s+/).filter(Boolean)
+      : ['SUNDAY', 'POOL', 'PARTY'];
+    const secWords = (this.data.titleSecondary && rawTitleWords.length > 0 && rawTitleWords.length < 3)
+      ? String(this.data.titleSecondary).trim().toUpperCase().split(/\s+/).filter(Boolean)
+      : [];
+    const combinedWords = rawTitleWords.length > 0 ? [...rawTitleWords, ...secWords] : ['SUNDAY', 'POOL', 'PARTY'];
+    const lines = combinedWords.slice(0, 3);
 
     const primaryGreen = isPastel ? '#0284c7' : '#4d9b36';
     const highlightGreen = isPastel ? '#38bdf8' : '#65b741';
     const extrudeDark = isPastel ? '#0c4a6e' : '#1b4311';
     const baseTitleY = isSquare ? h * 0.30 : h * 0.285;
     const lineSpacing = isSquare ? h * 0.105 : h * 0.098;
-    const fontSize = isSquare ? 112 : 124;
+    const baseFontSize = isSquare ? 112 : 124;
 
     lines.forEach((word, idx) => {
+      const wordFontSize = word.length > 7 ? Math.max(58, Math.round(baseFontSize * (7.2 / word.length))) : baseFontSize;
       const yPos = baseTitleY + idx * lineSpacing;
-      this._renderCondensedBlockText(ctx, word, leftCx, yPos, fontSize, highlightGreen, primaryGreen, extrudeDark, 1.0, 1.12);
+      this._renderCondensedBlockText(ctx, word, leftCx, yPos, wordFontSize, highlightGreen, primaryGreen, extrudeDark, 1.0, 1.12);
     });
 
     // 5. Rounded Black Date Pill
@@ -1453,17 +1457,22 @@ class AtgUniversalPosterEngine {
     const scriptWord = this.data.title || 'purple';
     this._renderNeonScriptText(ctx, scriptWord, cx, h * 0.435, 225, '#ffffff', '#e879f9', -0.08);
 
-    // 5. Featured Artist / Lineup Billing
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.font = '500 21px "Montserrat", sans-serif';
-    ctx.fillStyle = '#cbd5e1';
-    this._drawTrackedText(ctx, 'FEATURED ARTIST', cx, h * 0.625, 6);
+    // 5. Featured Artist / Lineup Billing (only render when non-empty)
+    const rawLineupNeon = (this.data.musicBy === undefined && this.data.hosts === undefined)
+      ? 'DJ FRANCOIS | DJ SEBASTIAN'
+      : String(this.data.musicBy || this.data.hosts || '').trim();
+    if (rawLineupNeon !== '') {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.font = '500 21px "Montserrat", sans-serif';
+      ctx.fillStyle = '#cbd5e1';
+      this._drawTrackedText(ctx, 'FEATURED ARTIST', cx, h * 0.625, 6);
 
-    ctx.font = '800 36px "Montserrat", sans-serif';
-    ctx.fillStyle = '#ffffff';
-    this._drawTrackedText(ctx, (this.data.musicBy || this.data.hosts || 'DJ FRANCOIS | DJ SEBASTIAN').toUpperCase(), cx, h * 0.662, 3);
-    ctx.restore();
+      ctx.font = '800 36px "Montserrat", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      this._drawTrackedText(ctx, rawLineupNeon.toUpperCase(), cx, h * 0.662, 3);
+      ctx.restore();
+    }
 
     // 6. Chamfered (45° Cut-Corner) Neon Glass Capsule with Vertical Divider
     const boxW = w * 0.74;
@@ -1751,20 +1760,44 @@ class AtgUniversalPosterEngine {
       const rsvpY = rawDressCode !== '' ? h * 0.825 : h * 0.77;
       const rsvpX = leftCx - w * 0.16;
       const maxRsvpW = w * 0.44;
-      ctx.textAlign = 'left';
-      ctx.font = '700 24px "Oswald", "Montserrat", sans-serif';
-      ctx.fillStyle = '#ffffff';
-      this._drawTrackedText(ctx, lbl('rsvp', 'RSVP').toUpperCase(), rsvpX, rsvpY, 4);
+      const rsvpLabel = lbl('rsvp', 'RSVP').toUpperCase();
 
-      ctx.font = '700 18px "Montserrat", sans-serif';
+      // High-contrast gold accent badge for RSVP so it pops immediately on dark bokeh
+      ctx.save();
+      ctx.font = '800 17px "Montserrat", sans-serif';
+      const badgeTextW = ctx.measureText(rsvpLabel).width;
+      const badgePadX = 14;
+      const badgeW = Math.max(76, badgeTextW + badgePadX * 2);
+      const badgeH = 28;
+      const badgeY = rsvpY - 22;
+
+      ctx.shadowColor = 'rgba(234, 179, 8, 0.35)';
+      ctx.shadowBlur = 12;
       ctx.fillStyle = '#eab308';
+      this._roundRect(ctx, rsvpX, badgeY, badgeW, badgeH, 6);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#09090b';
+      ctx.fillText(rsvpLabel, rsvpX + badgeW / 2, badgeY + badgeH / 2 + 1);
+      ctx.restore();
+
+      ctx.save();
+      ctx.textAlign = 'left';
+      ctx.font = '700 19px "Montserrat", sans-serif';
+      ctx.fillStyle = '#fef08a';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.92)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 2;
       const rsvpWords = rsvpDisplayText.split(/\s+/);
       let rsvpLine = '';
       let rsvpLineIdx = 0;
       rsvpWords.forEach((word) => {
         const testLine = rsvpLine ? `${rsvpLine} ${word}` : word;
         if (ctx.measureText(testLine).width > maxRsvpW && rsvpLine !== '') {
-          ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 22);
+          ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 24);
           rsvpLine = word;
           rsvpLineIdx += 1;
         } else {
@@ -1772,8 +1805,9 @@ class AtgUniversalPosterEngine {
         }
       });
       if (rsvpLine !== '' && rsvpLineIdx < 2) {
-        ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 22);
+        ctx.fillText(rsvpLine, rsvpX, rsvpY + 28 + rsvpLineIdx * 24);
       }
+      ctx.restore();
     }
     ctx.restore();
 
@@ -1818,25 +1852,53 @@ class AtgUniversalPosterEngine {
       rimColor: '#ec4899'
     });
 
-    // 3. Upper-Right Editorial Stack: Script Greeting + Giant Date + Neon Script "Party"
+    // 3. Upper-Right Editorial Stack: Celebrant Name / Script Greeting + Giant Date + Neon Script "Party"
     const rightCx = w * 0.74;
 
     const greetLines = (this.data.kicker || (this.data.title || 'Happy\nBirthday')).split(/\r\n|\r|\n/);
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = '400 60px "Great Vibes", "Sacramento", "Alex Brush", cursive';
+    const firstGreet = (greetLines[0] || '').trim();
+    const greetFontSize = firstGreet.length > 12 ? 64 : 78;
+    ctx.font = `400 ${greetFontSize}px "Great Vibes", "Sacramento", "Alex Brush", cursive`;
     ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(251, 113, 133, 0.85)';
+    ctx.shadowBlur = 18;
     greetLines.slice(0, 3).forEach((line, idx) => {
-      ctx.fillText(line.trim(), rightCx, h * 0.095 + idx * 52);
+      const yPos = h * 0.105 + idx * 56;
+      ctx.fillText(line.trim(), rightCx, yPos);
+      // Second pass for crisp core legibility over dark velvet
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(line.trim(), rightCx, yPos);
     });
     ctx.restore();
 
-    // Giant Serif Date ("28 / NOV / 09 PM")
-    const dateParts = (this.data.date || '28 NOV').toUpperCase().split(/\s+/);
-    const dayNum = (this.strictContent ? (dateParts[0] || '') : (dateParts[0] || '28'));
-    const monthStr = (this.strictContent ? (dateParts[1] || '') : (dateParts[1] || 'NOV'));
+    // Giant Serif Date ("28 / SAT NOV / 6:00 PM") — handle both "28 NOV" and "SAT NOV 28"
+    const dateParts = (this.data.date || '28 NOV').toUpperCase().split(/\s+/).filter(Boolean);
+    let dayNum = '28';
+    let monthStr = 'NOV';
+    if (this.strictContent && dateParts.length === 0) {
+      dayNum = '';
+      monthStr = '';
+    } else if (dateParts.length >= 3 && /^\d+$/.test(dateParts[2])) {
+      dayNum = dateParts[2];
+      monthStr = `${dateParts[0]} • ${dateParts[1]}`;
+    } else if (dateParts.length >= 2) {
+      if (/^\d+$/.test(dateParts[0])) {
+        dayNum = dateParts[0];
+        monthStr = dateParts.slice(1).join(' ');
+      } else if (/^\d+$/.test(dateParts[1])) {
+        dayNum = dateParts[1];
+        monthStr = dateParts[0];
+      } else {
+        dayNum = dateParts[0];
+        monthStr = dateParts[1];
+      }
+    } else if (dateParts.length === 1) {
+      dayNum = dateParts[0];
+      monthStr = '';
+    }
     const timeStr = (this.data.time || '09 PM').toUpperCase();
 
     ctx.save();
@@ -1844,14 +1906,14 @@ class AtgUniversalPosterEngine {
     ctx.fillStyle = '#ffffff';
     ctx.shadowColor = 'rgba(236, 72, 153, 0.45)';
     ctx.shadowBlur = 18;
-    ctx.font = '900 155px "Playfair Display", Georgia, serif';
-    ctx.fillText(dayNum, rightCx, h * 0.355);
-
-    ctx.font = '700 64px "Playfair Display", Georgia, serif';
-    this._drawTrackedText(ctx, monthStr, rightCx, h * 0.415, 6);
+    ctx.font = '900 142px "Playfair Display", Georgia, serif';
+    ctx.fillText(dayNum, rightCx, h * 0.325);
 
     ctx.font = '700 44px "Playfair Display", Georgia, serif';
-    this._drawTrackedText(ctx, timeStr, rightCx, h * 0.462, 4);
+    this._drawTrackedText(ctx, monthStr, rightCx, h * 0.388, 5);
+
+    ctx.font = '700 36px "Playfair Display", Georgia, serif';
+    this._drawTrackedText(ctx, timeStr, rightCx, h * 0.436, 4);
     ctx.restore();
 
     // Neon Pink Script ("Party")
@@ -1859,55 +1921,71 @@ class AtgUniversalPosterEngine {
       ctx,
       this.data.titleSecondary || 'Party',
       rightCx,
-      h * 0.565,
-      102,
+      h * 0.545,
+      96,
       '#fb7185',
       '#e11d48',
       -0.06
     );
 
-    // 4. LAYER A (UNDERNEATH FOREGROUND PEONIES):
-    // Full-Width Tall Condensed 3D Metallic Silver/Chrome Headline ("BIRTHDAY")
-    const bigWord = (this.data.title || 'BIRTHDAY').toUpperCase();
-    this._renderChrome3DText(ctx, bigWord, w / 2, h * 0.79, w * 0.92);
+    // Subtle dark editorial scrim behind the 3D headline so it stays 100% legible over portrait base
+    const headlineScrim = ctx.createLinearGradient(0, h * 0.62, 0, h * 0.85);
+    headlineScrim.addColorStop(0, 'rgba(9, 4, 24, 0)');
+    headlineScrim.addColorStop(0.45, 'rgba(9, 4, 24, 0.62)');
+    headlineScrim.addColorStop(1, 'rgba(9, 4, 24, 0.88)');
+    ctx.fillStyle = headlineScrim;
+    ctx.fillRect(0, h * 0.62, w, h * 0.23);
 
-    // 5. LAYER B (FOREGROUND OVERLAP ON TOP OF 3D CHROME TEXT):
-    // Photorealistic Crimson Peony Bouquet overlapping the bottom-left/centre of "BIRTHDAY"
+    // 4. LAYER A (FULL-WIDTH 3D CHROME HEADLINE — CLEAR OF PEONY OVERLAP):
+    const bigWord = (this.data.title || 'BIRTHDAY').toUpperCase();
+    this._renderChrome3DText(ctx, bigWord, w / 2, h * 0.745, w * 0.88);
+
+    // 5. LAYER B (FOREGROUND CRIMSON PEONY FRAME AT BOTTOM-LEFT BELOW HEADLINE):
     const peonyAsset = this.studioAssetCache.fg_crimson_peonies;
     if (peonyAsset) {
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
       ctx.shadowBlur = 22;
       ctx.shadowOffsetY = 8;
-      const pw = w * 0.68;
+      const pw = w * 0.52;
       const ph = pw * (peonyAsset.height / Math.max(1, peonyAsset.width));
-      ctx.drawImage(peonyAsset, -w * 0.04, h * 0.82 - ph * 0.62, pw, ph);
+      ctx.drawImage(peonyAsset, -w * 0.04, h * 0.92 - ph * 0.52, pw, ph);
       ctx.restore();
     } else {
-      this._renderPeonyCluster(ctx, w * 0.14, h * 0.80, 125, '#be123c', '#fb7185');
-      this._renderPeonyCluster(ctx, w * 0.30, h * 0.83, 105, '#9f1239', '#f43f5e');
-      this._renderPeonyCluster(ctx, w * 0.46, h * 0.79, 118, '#881337', '#e11d48');
+      this._renderPeonyCluster(ctx, w * 0.12, h * 0.87, 105, '#be123c', '#fb7185');
+      this._renderPeonyCluster(ctx, w * 0.26, h * 0.90, 88, '#9f1239', '#f43f5e');
+      this._renderPeonyCluster(ctx, w * 0.39, h * 0.87, 96, '#881337', '#e11d48');
     }
 
-    // 6. Bottom-Right DJ Billing & Perks + Full-Width Clean Footer Bar
+    // 6. Bottom-Right DJ Billing & Perks + Full-Width Clean Footer Bar (only render when non-empty)
     ctx.save();
-    ctx.textAlign = 'right';
-    ctx.font = '900 38px "Playfair Display", Georgia, serif';
-    ctx.fillStyle = '#fb7185';
-    ctx.fillText((this.data.musicBy || 'DJ MAX GOSHA').toUpperCase(), w * 0.94, h * 0.875);
+    const rawMusic4 = (this.data.musicBy === undefined || this.data.musicBy === null) ? 'DJ MAX GOSHA' : String(this.data.musicBy).trim();
+    if (rawMusic4 !== '') {
+      ctx.textAlign = 'right';
+      ctx.font = '900 38px "Playfair Display", Georgia, serif';
+      ctx.fillStyle = '#fb7185';
+      ctx.fillText(rawMusic4.toUpperCase(), w * 0.94, h * 0.875);
+    }
 
     const perksLine = Array.isArray(this.data.perks)
       ? this.data.perks.join('  |  ')
-      : String(this.data.perks || 'LIVE MUSIC | DRINKS | SHISHA LOUNGE');
-    ctx.font = '700 22px "Playfair Display", Georgia, serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(perksLine.toUpperCase(), w * 0.94, h * 0.912);
+      : (this.data.perks === undefined || this.data.perks === null ? 'LIVE MUSIC | DRINKS | SHISHA LOUNGE' : String(this.data.perks).trim());
+    if (perksLine !== '') {
+      ctx.textAlign = 'right';
+      ctx.font = '700 22px "Playfair Display", Georgia, serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(perksLine.toUpperCase(), w * 0.94, h * 0.912);
+    }
 
-    ctx.textAlign = 'center';
-    ctx.font = '600 18px "Montserrat", sans-serif';
-    ctx.fillStyle = '#e2e8f0';
-    const footerCopy = (this.data.footerStrip || 'ENTRY £15  •  DOORS OPEN 9PM  •  FREE PARKING  •  2 DRINKS FREE').toUpperCase();
-    this._drawTrackedText(ctx, footerCopy, w / 2, h * 0.962, 3);
+    const footerCopy = (this.data.footerStrip === undefined || this.data.footerStrip === null)
+      ? 'ENTRY £15  •  DOORS OPEN 9PM  •  FREE PARKING  •  2 DRINKS FREE'
+      : String(this.data.footerStrip).trim();
+    if (footerCopy !== '') {
+      ctx.textAlign = 'center';
+      ctx.font = '600 18px "Montserrat", sans-serif';
+      ctx.fillStyle = '#e2e8f0';
+      this._drawTrackedText(ctx, footerCopy.toUpperCase(), w / 2, h * 0.962, 3);
+    }
     ctx.restore();
   }
 
@@ -1941,47 +2019,51 @@ class AtgUniversalPosterEngine {
     // Top 3-Column Header Bar: [RSVP ONLY] | [YOUR CLUB PRESENTS] | [QR CODE]
     ctx.save();
     ctx.fillStyle = '#ffffff';
-    ctx.font = '700 32px "Oswald", "Anton", sans-serif';
+    ctx.font = '700 28px "Oswald", "Anton", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('RSVP', w * 0.06, h * 0.065);
-    ctx.fillText('ONLY', w * 0.06, h * 0.098);
+    ctx.fillText('RSVP', w * 0.06, h * 0.055);
+    ctx.fillText('ONLY', w * 0.06, h * 0.085);
 
     ctx.textAlign = 'center';
-    ctx.font = '700 26px "Oswald", "Montserrat", sans-serif';
+    ctx.font = '700 24px "Oswald", "Montserrat", sans-serif';
     const clubLabel = (this.data.badge || 'YOUR CLUB PRESENTS').toUpperCase();
-    this._drawTrackedText(ctx, clubLabel, cx, h * 0.08, 3);
+    this._drawTrackedText(ctx, clubLabel, cx, h * 0.065, 3);
     ctx.restore();
 
     if (this.data.qrUrl) {
-      this._renderScannableQrBadge(ctx, w - 138, h * 0.04, 84, this.data.qrUrl, 'light_compact');
+      this._renderScannableQrBadge(ctx, w - 138, h * 0.035, 84, this.data.qrUrl, 'light_compact');
     }
 
-    // 2. LAYER A (BEHIND SUBJECT): Giant Stacked Gold Condensed "FRIDAY / FRIDAY"
+    // 2. LAYER A (BEHIND SUBJECT): Giant Stacked Gold Condensed Backdrop Text
     const bgWord = (this.data.watermarkText || 'FRIDAY').toUpperCase();
-    this._renderCondensedGoldBackdropText(ctx, bgWord, cx, h * 0.335, 205, 1.0, 1.18);
-    this._renderCondensedGoldBackdropText(ctx, bgWord, cx, h * 0.505, 205, 1.0, 1.18);
+    const bgWordSize = bgWord.length > 8 ? Math.max(96, Math.round(205 * (6.2 / bgWord.length))) : 205;
+    this._renderCondensedGoldBackdropText(ctx, bgWord, cx, h * 0.325, bgWordSize, 1.0, 1.16);
+    this._renderCondensedGoldBackdropText(ctx, bgWord, cx, h * 0.485, bgWordSize, 1.0, 1.16);
 
-    // 3. LAYER B (SUBJECT CUTOUT IN FRONT OF 'FRIDAY' WATERMARK)
+    // 3. LAYER B (SUBJECT CUTOUT IN FRONT OF BACKDROP TEXT — CLEAR OF TOP HEADER & BOTTOM HEADLINE)
     const defaultSubject = this.studioAssetCache.subject_club_dj || null;
     this._renderStagedSubject(ctx, w, h, {
       defaultAsset: defaultSubject,
       alignX: 0.5,
-      alignY: 0.16,
-      widthRatio: 0.54,
+      alignY: 0.135,
+      widthRatio: 0.44,
       ghostEcho: false,
       rimColor: '#f59e0b'
     });
 
-    // 4. LAYER C (FOREGROUND HEADLINE): Wide 3D Gold "NIGHT" + Glowing White Script "Party"
+    // 4. LAYER C (FOREGROUND HEADLINE): Wide 3D Gold Headline + Glowing White Script Kicker
     const mainBottomWord = (this.data.title || this.data.titleSecondary || 'NIGHT').toUpperCase();
+    const bottomFontSize = mainBottomWord.length > 14 ? 64 : (mainBottomWord.length > 9 ? 88 : 124);
     ctx.save();
     ctx.translate(cx, h * 0.77);
-    ctx.scale(1.18, 0.96);
-    this._renderMetallicGoldText(ctx, mainBottomWord, 0, 0, 132, '"Montserrat", "Anton", sans-serif', 'center');
+    ctx.scale(1.04, 1.0);
+    this._renderMetallicGoldText(ctx, mainBottomWord, 0, 0, bottomFontSize, '"Montserrat", "Anton", sans-serif', 'center');
     ctx.restore();
 
-    // Glowing White Neon Script ("Party") overlapping top of "NIGHT"
-    this._renderNeonScriptText(ctx, this.data.kicker || 'Party', cx, h * 0.675, 122, '#ffffff', '#f59e0b', -0.05);
+    // Glowing White Neon Script overlapping top of Headline
+    const kicker5 = this.data.kicker || 'Party';
+    const kicker5Size = kicker5.length > 12 ? 96 : 118;
+    this._renderNeonScriptText(ctx, kicker5, cx, h * 0.675, kicker5Size, '#ffffff', '#f59e0b', -0.05);
 
     // 5. Flanked Footer Strip: [12 PM] | MUSIC // DANCE // VIP TABLES + Venue | [27 AUG]
     const footerY = h * 0.875;
@@ -2016,28 +2098,45 @@ class AtgUniversalPosterEngine {
     ctx.lineTo(rightBoxX + 42, footerY + 42);
     ctx.stroke();
 
-    const dateTokens = (this.data.date || '27 AUG').toUpperCase().split(/\s+/);
+    const dateTokens = (this.data.date || '27 AUG').toUpperCase().split(/\s+/).filter(Boolean);
+    let boxDay = '27';
+    let boxMonth = 'AUG';
+    if (this.strictContent && dateTokens.length === 0) {
+      boxDay = '';
+      boxMonth = '';
+    } else if (dateTokens.length >= 3 && /^\d+$/.test(dateTokens[2])) {
+      boxDay = dateTokens[2];
+      boxMonth = `${dateTokens[0]} ${dateTokens[1]}`;
+    } else if (dateTokens.length >= 2) {
+      boxDay = dateTokens[0];
+      boxMonth = dateTokens.slice(1).join(' ');
+    } else if (dateTokens.length === 1) {
+      boxDay = dateTokens[0];
+      boxMonth = '';
+    }
     ctx.font = '900 32px "Montserrat", sans-serif';
     ctx.fillStyle = '#eab308';
-    ctx.fillText((this.strictContent ? (dateTokens[0] || '') : (dateTokens[0] || '27')), rightBoxX, footerY - 2);
-    ctx.font = '800 22px "Montserrat", sans-serif';
+    ctx.fillText(boxDay, rightBoxX, footerY - 2);
+    ctx.font = `800 ${boxMonth.length > 5 ? 17 : 22}px "Montserrat", sans-serif`;
     ctx.fillStyle = '#ffffff';
-    ctx.fillText((this.strictContent ? (dateTokens[1] || '') : (dateTokens[1] || 'AUG')), rightBoxX, footerY + 26);
+    ctx.fillText(boxMonth, rightBoxX, footerY + 26);
 
-    // Centre Perks + Compact Single-Line Venue & Phone
-    const perksArr = Array.isArray(this.data.perks)
+    // Centre Perks (only when non-empty) + Compact Single-Line Venue & Phone
+    const perksRaw5 = Array.isArray(this.data.perks)
       ? this.data.perks
-      : String(this.data.perks || 'MUSIC, DANCE, VIP TABLES').split(',');
-    const perksText = perksArr.map((s) => s.trim().toUpperCase()).filter(Boolean).join(' // ');
+      : (this.data.perks === undefined || this.data.perks === null ? ['MUSIC', 'DANCE', 'VIP TABLES'] : String(this.data.perks).split(','));
+    const perksText = perksRaw5.map((s) => s.trim().toUpperCase()).filter(Boolean).join(' // ');
 
-    ctx.font = '900 26px "Montserrat", sans-serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(perksText, cx, footerY - 2);
+    if (perksText !== '') {
+      ctx.font = '900 26px "Montserrat", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(perksText, cx, footerY - 2);
+    }
 
     ctx.font = '700 16px "Montserrat", sans-serif';
     ctx.fillStyle = '#f59e0b';
     const venueShort = [this.data.venue, this.data.rsvpContact].filter(Boolean).join('  •  ').toUpperCase();
-    ctx.fillText(venueShort, cx, footerY + 28);
+    ctx.fillText(venueShort, cx, perksText !== '' ? footerY + 28 : footerY + 10);
     ctx.restore();
   }
 
@@ -5195,7 +5294,7 @@ class AtgUniversalPosterEngine {
     const pal = this._getArchetypeAtmosphere(archetype);
 
     if ('filter' in g) {
-      g.filter = 'contrast(1.04) brightness(1.02) saturate(1.06)';
+      g.filter = pal.light ? 'contrast(1.03) brightness(1.02) saturate(0.95)' : 'contrast(1.06) brightness(0.92) saturate(0.86)';
     }
     g.drawImage(img, 0, 0, targetW, targetH);
     if ('filter' in g) {
@@ -5209,8 +5308,12 @@ class AtgUniversalPosterEngine {
       isOpaque = (p1 + p2) > 400;
     } catch (_) {}
 
-    // Subtle warm rim highlight on the outer contour
+    // Subtle ambient palette wash & warm rim highlight so subject shares poster lighting
     g.globalCompositeOperation = 'source-atop';
+    g.globalAlpha = pal.light ? 0.08 : 0.12;
+    g.fillStyle = pal.rim;
+    g.fillRect(0, 0, targetW, targetH);
+
     g.globalAlpha = 0.55;
     const rimGrad = g.createLinearGradient(targetW, 0, targetW * 0.70, 0);
     rimGrad.addColorStop(0, pal.rim + '55');
@@ -5218,25 +5321,41 @@ class AtgUniversalPosterEngine {
     g.fillStyle = rimGrad;
     g.fillRect(0, 0, targetW, targetH);
 
-    // Fade bottom edge seamlessly into poster base (only the bottom 20%)
+    // Dark atmospheric grounding at base & left edge so portrait melts into the dark editorial column
+    if (!pal.light) {
+      g.globalAlpha = 1.0;
+      const baseShade = g.createLinearGradient(0, targetH * 0.58, 0, targetH);
+      baseShade.addColorStop(0, 'rgba(4, 4, 6, 0)');
+      baseShade.addColorStop(1, 'rgba(4, 4, 6, 0.62)');
+      g.fillStyle = baseShade;
+      g.fillRect(0, 0, targetW, targetH);
+
+      const leftShade = g.createLinearGradient(0, 0, targetW * 0.24, 0);
+      leftShade.addColorStop(0, 'rgba(4, 4, 6, 0.45)');
+      leftShade.addColorStop(1, 'rgba(4, 4, 6, 0)');
+      g.fillStyle = leftShade;
+      g.fillRect(0, 0, targetW * 0.24, targetH);
+    }
+
+    // Fade bottom edge seamlessly into poster base + gentle left feathering even on cutouts
     g.globalCompositeOperation = 'destination-out';
-    const fadeBottom = g.createLinearGradient(0, targetH * 0.80, 0, targetH);
+    const fadeBottom = g.createLinearGradient(0, targetH * 0.76, 0, targetH);
     fadeBottom.addColorStop(0, 'rgba(0, 0, 0, 0)');
     fadeBottom.addColorStop(1, 'rgba(0, 0, 0, 1)');
     g.fillStyle = fadeBottom;
     g.fillRect(0, 0, targetW, targetH);
 
+    const softLeftW = targetW * (isOpaque ? 0.14 : 0.08);
+    const fadeLeft = g.createLinearGradient(0, 0, softLeftW, 0);
+    fadeLeft.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    fadeLeft.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = fadeLeft;
+    g.fillRect(0, 0, softLeftW, targetH);
+
     if (isOpaque) {
       // Subtle feathering for rectangular photos so there are NO sharp box borders
-      const leftW = targetW * 0.12;
-      const rightW = targetW * 0.08;
-      const topH = targetH * 0.06;
-
-      const fadeLeft = g.createLinearGradient(0, 0, leftW, 0);
-      fadeLeft.addColorStop(0, 'rgba(0, 0, 0, 1)');
-      fadeLeft.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      g.fillStyle = fadeLeft;
-      g.fillRect(0, 0, leftW, targetH);
+      const rightW = targetW * 0.10;
+      const topH = targetH * 0.08;
 
       const fadeRight = g.createLinearGradient(targetW, 0, targetW - rightW, 0);
       fadeRight.addColorStop(0, 'rgba(0, 0, 0, 1)');
@@ -5317,13 +5436,25 @@ class AtgUniversalPosterEngine {
           ectx.fillStyle = vFade;
           ectx.fillRect(0, 0, echoW, echoH);
 
-          const hFade = ectx.createLinearGradient(0, 0, echoW * 0.26, 0);
-          hFade.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+          const tFade = ectx.createLinearGradient(0, 0, 0, echoH * 0.14);
+          tFade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+          tFade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ectx.fillStyle = tFade;
+          ectx.fillRect(0, 0, echoW, echoH * 0.14);
+
+          const hFade = ectx.createLinearGradient(0, 0, echoW * 0.30, 0);
+          hFade.addColorStop(0, 'rgba(0, 0, 0, 0.92)');
           hFade.addColorStop(1, 'rgba(0, 0, 0, 0)');
           ectx.fillStyle = hFade;
-          ectx.fillRect(0, 0, echoW * 0.26, echoH);
+          ectx.fillRect(0, 0, echoW * 0.30, echoH);
 
-          ctx.globalAlpha = 0.26;
+          const rFade = ectx.createLinearGradient(echoW, 0, echoW * 0.76, 0);
+          rFade.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+          rFade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ectx.fillStyle = rFade;
+          ectx.fillRect(echoW * 0.76, 0, echoW * 0.24, echoH);
+
+          ctx.globalAlpha = 0.18;
           ctx.drawImage(echoCanvas, echoX, echoY, echoW, echoH);
           drewMaskedEcho = true;
         }

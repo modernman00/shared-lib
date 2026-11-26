@@ -1731,6 +1731,7 @@ class UniversalPosterStudioController
                     engine.setArchetype(arch.id);
                     renderArchetypeCards(activeAppKey);
                     engine.render();
+                    window.dispatchEvent(new CustomEvent('atg-poster-archetype-changed', { detail: { archetype: arch.id } }));
                     showToast('Switched layout archetype to: ' + arch.name);
                 });
                 archetypeGridEl.appendChild(btn);
@@ -1820,6 +1821,8 @@ class UniversalPosterStudioController
             renderArchetypeCards(appKey);
             syncRatioButtons();
             engine.render();
+            window.__atgPosterPresetLoaded = true;
+            window.dispatchEvent(new CustomEvent('atg-poster-preset-loaded', { detail: { appKey, presetKey } }));
             showToast('Loaded preset: ' + preset.label);
         }
 
