@@ -133,7 +133,7 @@ class UniversalPosterStudioController
                             'time' => '9:00 PM',
                             'venue' => 'TAPE LONDON',
                             'address' => '17 HANOVER SQUARE, LONDON W1S 1HU',
-                            'dressCode' => 'ALL BLACK AFFAIR • WEAR ALL BLACK',
+                            'dressCode' => '',
                             'rsvpContact' => 'RSVP BY MAY 01 • 020 7946 0192',
                             'photoMode' => 'ghost_double',
                             'qrUrl' => 'https://partyplatform.com/e/aarons-birthday',

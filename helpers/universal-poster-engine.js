@@ -1721,9 +1721,9 @@ class AtgUniversalPosterEngine {
       ctx.fillText(part, splitX + 22, gridY + 20 + idx * 20);
     });
 
-    // Row 2: DRESS CODE (only render when non-empty so unlinked sample copy never bleeds into real events)
+    // Row 2: DRESS CODE (only render when explicitly provided)
     const rawDressCode = (this.data.dressCode === undefined || this.data.dressCode === null)
-      ? (isFamily ? 'TRADITIONAL ROYAL GOLD & IVORY • CELEBRATION ATTIRE' : 'ALL BLACK AFFAIR • WEAR ALL BLACK')
+      ? (isFamily ? 'TRADITIONAL ROYAL GOLD & IVORY • CELEBRATION ATTIRE' : '')
       : String(this.data.dressCode).trim();
     if (rawDressCode !== '') {
       gridY += 105;
